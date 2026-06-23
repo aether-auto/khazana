@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "sources": [
+    { "id": "hn-frontpage", "type": "hn", "url": "https://hnrss.org/frontpage", "channels": ["tech", "ai", "ideas"], "trustScore": 0.7 },
+    { "id": "netflix-techblog", "type": "eng-blog", "url": "https://netflixtechblog.com/feed", "channels": ["tech", "data-science"], "trustScore": 0.8 },
+    { "id": "stripe-blog", "type": "eng-blog", "url": "https://stripe.com/blog/feed.rss", "channels": ["tech", "finance"], "trustScore": 0.8 },
+    { "id": "cloudflare-blog", "type": "eng-blog", "url": "https://blog.cloudflare.com/rss/", "channels": ["tech"], "trustScore": 0.8 },
+    { "id": "uber-eng", "type": "eng-blog", "url": "https://www.uber.com/blog/engineering/rss/", "channels": ["tech", "data-science"], "trustScore": 0.75 },
+    { "id": "google-research", "type": "eng-blog", "url": "https://research.google/blog/rss/", "channels": ["ai", "data-science", "science"], "trustScore": 0.8 },
+    { "id": "arxiv-cs-ai", "type": "arxiv", "url": "https://rss.arxiv.org/rss/cs.AI", "channels": ["ai"], "trustScore": 0.7 },
+    { "id": "arxiv-quant-ph", "type": "arxiv", "url": "https://rss.arxiv.org/rss/quant-ph", "channels": ["quantum"], "trustScore": 0.7 },
+    { "id": "r-dataisbeautiful", "type": "reddit", "url": "https://www.reddit.com/r/dataisbeautiful/top/.json?t=day", "channels": ["data-science"], "trustScore": 0.5 },
+    { "id": "r-geopolitics", "type": "reddit", "url": "https://www.reddit.com/r/geopolitics/top/.json?t=day", "channels": ["geopolitics", "politics"], "trustScore": 0.5 },
+    { "id": "r-3dprinting", "type": "reddit", "url": "https://www.reddit.com/r/3Dprinting/top/.json?t=week", "channels": ["3d-printing", "diy"], "trustScore": 0.5 },
+    { "id": "quanta-magazine", "type": "rss", "url": "https://www.quantamagazine.org/feed/", "channels": ["science", "quantum", "ai"], "trustScore": 0.8 }
+  ]
+}
