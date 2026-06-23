@@ -143,19 +143,55 @@ Written daily by the **Claude Code Action on your subscription, in the cloud** �
 synthesizing the day's top clusters + your taste profile, in **your writing style**
 (a `STYLE.md` voice guide we author together).
 
-### 6.1 Formats (storytelling engines)
-Different topics deserve different storytelling. A blog declares its `format`:
+### 6.1 The format system (storytelling engine)
+Formats are khazana's editorial identity. A `Format` is a **first-class pluggable
+spec**, not a hardcoded branch:
 
-- **Dispatch** — data-driven Pudding/Distill-style explainer. Interactive charts woven
-  into prose, scroll-driven reveals. For DS, finance, science, tech, AI, quantum.
-- **Chronicle** — *historical fiction storytelling*. Immersive, scene-driven,
-  present-tense narrative prose that reads like a novel — but every fact is grounded
-  and cited (sources in margin notes, not breaking the spell). For history,
-  geopolitics, geography.
-- **Field Notes** — concise synthesis / briefing. For fast-moving news clusters.
+```ts
+interface Format {
+  name: string;                 // "chronicle", "teardown", ...
+  intent: 'narrate' | 'explain' | 'synthesize' | 'build' | 'weigh';
+  length: 'brief' | 'feature';  // ~300–500w vs ~1500–2500w
+  voiceProfile: string;         // prompt profile / tone guide
+  componentKit: string[];       // signature visual treatment (see §6.2)
+  topics: string[];             // topic affinity
+  trigger: TriggerHeuristic;    // when the generator should pick it
+  series?: { cadence: 'daily' | 'weekly'; day?: string }; // recurring column
+}
+```
 
-Formats are templates in the component library; adding a format = one template + a
-prompt profile. (More can be added later; these three ship in v1.)
+Adding a format = one template + one prompt profile + register it. The system grows
+forever. **Format-aware generation:** the daily job picks a format *per cluster* from
+its characteristics (topic, source mix, how much hard data exists, recency). Each
+format has a **signature component kit** so readers instantly recognize a Chronicle
+vs a Teardown.
+
+**v1 lineup (6 formats), grouped by intent:**
+
+- **Narrate** — **Chronicle**: historical-fiction narrative. Immersive, scene-driven,
+  present-tense prose that reads like a novel — every fact grounded and cited (sources
+  in margin notes, never breaking the spell). For history, geopolitics, geography.
+- **Explain** — **Dispatch**: data-driven Pudding/Distill explainer, interactive
+  charts woven into prose, scroll-driven reveals (DS, finance, science, AI, quantum).
+  **Teardown**: deep "how X actually works" technical deconstruction with interactive
+  code + diagrams (powers the company engineering blogs; AI/quantum/embedded deep
+  dives). **Primer**: evergreen foundational explainer with interactive sandboxes
+  (builds a timeless knowledge base alongside the timely feed).
+- **Synthesize** — **Field Notes**: short, sharp briefing for fast-moving news
+  clusters — what happened, why it matters to you, links to sources.
+- **Build** — **Build Log**: DIY/project walkthrough (parts, steps, runnable code)
+  that powers the Workshop board (3D printing, IoT, embedded, AI projects).
+
+**Backlog formats** (plugins, pull in later): The Thread (synthesize a Reddit/X/HN
+discussion), Counterfactual (what-if), Profile (person/org/place portrait), Atlas
+(map-driven geography story), Debate (steelmanned opposing views w/ perspective
+toggle), Annotated (interactively annotate a primary source).
+
+### 6.1.1 Rhythm — columns + on-demand
+khazana runs **both**: a few **recurring columns** for a publication-like heartbeat
+(e.g. a Sunday Chronicle, a weekly Ledger/markets brief) *plus* **on-demand**
+generation for whatever the day's signal warrants. Columns are Formats with a `series`
+cadence; on-demand picks are chosen fresh from the day's top clusters.
 
 ### 6.2 Interactive component library
 A reusable MDX component set so *every* flagship is consistently gorgeous:
@@ -180,6 +216,9 @@ motion via Motion/GSAP. Interactive, animated, alive — never static screenshot
   and a **minimum-history guard** — quiet until it has enough signal, then
   **aggressively** personalizes ranking (founder's stated preference: automatic,
   aggressive, not jumpy on short history).
+- **Format affinity:** the profile also tracks which *formats* (Chronicle, Teardown,
+  …) you actually read and dwell on, and biases flagship generation toward them.
+  khazana learns not just *what* you like but *how you like to consume it*.
 - **Ranking:** `tasteScore = f(affinity, recency, source quality, cluster size)`.
 - **Taste dashboard:** a transparent page showing what khazana thinks you like,
   tunable. Automatic, but not a black box.
@@ -237,7 +276,9 @@ motion via Motion/GSAP. Interactive, animated, alive — never static screenshot
 
 - **Feed refresh + curation:** every ~2–3h (public repo = unlimited Actions minutes).
 - **Taste profile recompute:** daily.
-- **Flagship generation + verification:** daily (Claude Code Action).
+- **Flagship generation + verification:** daily (Claude Code Action) — on-demand
+  picks from the day's clusters, plus any **recurring column** due that day
+  (e.g. Sunday Chronicle, weekly Ledger).
 - **Digest:** daily/weekly.
 - All jobs commit results and trigger the static rebuild + Pages deploy.
 
