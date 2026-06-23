@@ -3,3 +3,4 @@ export * from "./vocab.js";
 export * from "./feed-item.js";
 export * from "./source.js";
 export * from "./registry.js";
+export * from "./format.js";
