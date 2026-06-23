@@ -104,6 +104,30 @@ logs a warning and is skipped for that run — never breaks the pipeline.
 quantum computing, data science (esp. **DS × sports** + data-strategy applications),
 finance — plus Workshop idea-streams (DIY / 3D printing / IoT / embedded / AI projects).
 
+### 4.1 Source Scout — the self-improving source loop (nightly)
+
+The source set is **data, not config-as-code**: a machine-editable **`sources.json`
+registry** the Scout grows and prunes on its own. khazana hunts for better sources so
+it never goes stale. Each night, the Scout (runs **inside the Claude Action** because
+it needs **web search/fetch**):
+
+- **Discovers candidates** from multiple angles — domains you keep reading external
+  articles from (→ propose their RSS via feed autodiscovery), outbound links in
+  high-ranked items, citations in research papers, blogrolls / OPML / "awesome lists",
+  related subreddits, and reputable sources Claude finds via web search in your channels.
+- **Evaluates** each on a **trust + signal score**: verifiable & reputable? signal vs
+  noise? working feed? healthy cadence? not duplicative of an existing source?
+- **Acts** — **auto-adds high-confidence** sources to the registry; **queues borderline**
+  ones on a **review surface** (one-tap approve/reject); **prunes/demotes** dead feeds
+  (repeated failures), stale sources, and low-engagement / low-trust ones.
+- **Maintains entries** — repairs changed feed URLs, upgrades to a better feed, retags
+  channels.
+
+Each source carries a **trust score** that flows into ranking (§7) and into the
+AI-blog verification step (§6.3). The loop closes with taste: what you *engage* with
+shapes *which sources exist*. Reasoning tiering per §10.1 — free LLM screens the bulk,
+Claude (Sonnet) makes the credibility calls, Opus only for genuinely hard ones.
+
 ---
 
 ## 5. The common format — `FeedItem`
@@ -260,6 +284,17 @@ motion via Motion/GSAP. Interactive, animated, alive — never static screenshot
 - **Interactive layer** — Observable Plot / D3, Sandpack, Motion / GSAP, scrollama.
 - **Search** — Pagefind. **Hosting** — GitHub Pages (public repo).
 
+### 10.1 Model tiering policy (keeps everything inside free limits)
+
+| Tier | Used for | Cost |
+|---|---|---|
+| **Free LLM** (Gemini / NVIDIA NIM) | high-volume per-item enrichment: tag, summarize, entities | $0, free tier |
+| **Claude Sonnet** (subscription, in Action; has WebSearch/WebFetch) | Source Scout discovery + credibility reasoning; most blog copywriting (Dispatch, Field Notes, Teardown, Primer, Build Log); verification passes | subscription, default Claude tier |
+| **Claude Opus** (subscription) | reserved: highest-value flagship prose (e.g. Chronicle) + genuinely hard credibility calls. Used sparingly. | subscription, used rarely |
+
+Rule of thumb: **free LLM for volume, Sonnet for the work, Opus only when quality
+truly demands it.** This keeps khazana fully automated without burning weekly limits.
+
 ---
 
 ## 11. Cofounder scaffolding (built first, for *us*)
@@ -276,6 +311,8 @@ motion via Motion/GSAP. Interactive, animated, alive — never static screenshot
 
 - **Feed refresh + curation:** every ~2–3h (public repo = unlimited Actions minutes).
 - **Taste profile recompute:** daily.
+- **Source Scout:** nightly — discover/evaluate/add/prune sources, repair feeds
+  (Claude Action with web access; tiered per §10.1).
 - **Flagship generation + verification:** daily (Claude Code Action) — on-demand
   picks from the day's clusters, plus any **recurring column** due that day
   (e.g. Sunday Chronicle, weekly Ledger).
@@ -292,10 +329,11 @@ motion via Motion/GSAP. Interactive, animated, alive — never static screenshot
 4. Astro site shell — Feed / Reads / Workshop surfaces.
 5. Interactive component library + the three flagship formats.
 6. Curation: enrich → cluster/dedup → rank.
-7. Claude flagship generation + grounding/verification.
-8. Search / graph / PWA / digest / taste dashboard.
-9. Actions cron wiring (ingest, curate, generate, build, deploy).
-10. **Deploy** to GitHub Pages.
+7. Claude flagship generation + grounding/verification (model tiering §10.1).
+8. Source Scout: registry + discovery/evaluation/prune + review surface.
+9. Search / graph / PWA / digest / taste dashboard.
+10. Actions cron wiring (ingest, curate, generate, scout, build, deploy).
+11. **Deploy** to GitHub Pages.
 
 ---
 
