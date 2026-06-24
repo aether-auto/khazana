@@ -1,0 +1,32 @@
+/* apps/site/src/components/mdx/RunnableCode.css */
+.rc-panel { display: flex; flex-direction: column; }
+.rc-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--s-2) var(--s-3); border-bottom: var(--hair) solid var(--rule); background: var(--bg-inset);
+}
+.rc-run {
+  font-family: var(--font-mono); font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.06em;
+  background: transparent; color: var(--accent);
+  border: var(--hair) solid color-mix(in oklab, var(--accent) 45%, var(--rule));
+  border-radius: var(--r-sm); padding: var(--s-1) var(--s-3); cursor: pointer;
+}
+.rc-run:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+  text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 50%, transparent);
+}
+.rc-run:disabled { color: var(--ink-faint); cursor: progress; }
+.rc-editor { font-family: var(--font-mono); font-size: var(--t-sm); }
+.rc-editor :global(.cm-editor) { background: var(--bg-inset); color: var(--ink); }
+.rc-editor :global(.cm-gutters) { background: var(--bg-inset); color: var(--ink-faint); border: none; }
+.rc-editor :global(.cm-activeLine) { background: color-mix(in oklab, var(--accent) 6%, transparent); }
+.rc-editor :global(.cm-cursor) { border-left-color: var(--accent); }
+.rc-fallback, .rc-output {
+  font-family: var(--font-mono); font-size: var(--t-sm); line-height: 1.5;
+  background: var(--bg-inset); padding: var(--s-3) var(--s-4);
+}
+.rc-output { border-top: var(--hair) solid var(--rule); min-height: 2.4em; color: var(--ink-dim); }
+.rc-hint { color: var(--ink-faint); }
+.rc-line { white-space: pre-wrap; }
+.rc-value { color: var(--good); }
+.rc-error { color: var(--editorial); }
+.rc-meta { color: var(--ink-faint); font-size: var(--t-xs); margin-top: var(--s-2); }
