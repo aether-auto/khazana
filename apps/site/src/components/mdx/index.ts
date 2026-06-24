@@ -10,3 +10,5 @@ export { default as DataTable } from "./DataTable.js";
 export type { DataTableProps } from "./DataTable.js";
 export type { TimelineEvent } from "./lib/timeline-scale.js";
 export type { Column, Row } from "./lib/table-sort.js";
+export { default as Scrolly, ScrollyStep } from "./Scrolly.js";
+export type { ScrollyProps, ScrollyStepProps } from "./Scrolly.js";

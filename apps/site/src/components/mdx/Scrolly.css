@@ -1,0 +1,28 @@
+/* apps/site/src/components/mdx/Scrolly.css */
+.scrolly-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-6); align-items: start; }
+.scrolly-sticky { position: sticky; top: 12vh; height: 76vh; display: flex; align-items: center; }
+.scrolly-graphic { width: 100%; padding: var(--s-4); }
+.scrolly-steps { display: flex; flex-direction: column; gap: 40vh; padding: 30vh 0; }
+.scrolly-step {
+  font-family: var(--font-read); font-size: var(--t-md); line-height: var(--lh-read);
+  color: var(--ink-faint); transition: color 200ms ease, opacity 200ms ease; opacity: 0.45;
+}
+.scrolly-step--active { color: var(--ink); opacity: 1; }
+.scrolly-step--active::before {
+  content: ""; display: block; width: 2rem; height: 2px; background: var(--editorial); margin-bottom: var(--s-3);
+}
+/* stacked fallback */
+.scrolly--stacked .scrolly-stacked-step { margin-bottom: var(--s-8); }
+.scrolly--stacked .scrolly-graphic { margin-bottom: var(--s-4); }
+.scrolly--stacked .scrolly-prose {
+  font-family: var(--font-read); font-size: var(--t-md); line-height: var(--lh-read); color: var(--ink);
+}
+@media (max-width: 720px) {
+  .scrolly-grid { grid-template-columns: 1fr; }
+  .scrolly-sticky { position: static; height: auto; }
+  .scrolly-steps { gap: var(--s-6); padding: var(--s-6) 0; }
+  .scrolly-step { opacity: 1; color: var(--ink); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scrolly-step { transition: none; }
+}
