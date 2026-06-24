@@ -1,0 +1,80 @@
+---
+import FormatBadge from "./FormatBadge.astro";
+interface Props {
+  slug: string;
+  title: string;
+  format: string;
+  summary: string;
+  publishedAt: Date;
+}
+const { slug, title, format, summary, publishedAt } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const date = publishedAt.toISOString().slice(0, 10);
+---
+
+<article class="read-card">
+  <a class="read-link" href={`${base}/reads/${slug}`}>
+    <div class="read-top">
+      <FormatBadge format={format} />
+      <time class="read-date" datetime={publishedAt.toISOString()}>{date}</time>
+    </div>
+    <h2 class="read-title">{title}</h2>
+    <p class="read-summary">{summary}</p>
+    <span class="read-cta" aria-hidden="true">read →</span>
+  </a>
+</article>
+
+<style>
+  .read-card {
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-md);
+    background: var(--bg-raised);
+    transition: border-color 0.18s ease;
+  }
+  .read-card:hover {
+    border-color: var(--editorial);
+  }
+  .read-link {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    padding: var(--s-5);
+    height: 100%;
+  }
+  .read-link:hover {
+    text-decoration: none;
+  }
+  .read-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-3);
+  }
+  .read-date {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+  }
+  .read-title {
+    margin: 0;
+    font-family: var(--font-read);
+    font-size: var(--t-lg);
+    line-height: var(--lh-tight);
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .read-summary {
+    margin: 0;
+    font-family: var(--font-read);
+    color: var(--ink-dim);
+    font-size: var(--t-base);
+    line-height: 1.5;
+  }
+  .read-cta {
+    margin-top: auto;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--editorial);
+    letter-spacing: 0.04em;
+  }
+</style>

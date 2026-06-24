@@ -1,0 +1,32 @@
+---
+import { FORMATS, type FormatName } from "@khazana/core";
+interface Props {
+  format: string;
+}
+const { format } = Astro.props;
+const meta = FORMATS[format as FormatName];
+const intent = meta?.intent ?? "";
+---
+
+<span class="fmt" data-format={format} title={intent ? `intent: ${intent}` : undefined}>
+  <span class="fmt-bracket" aria-hidden="true">«</span>{format}<span
+    class="fmt-bracket"
+    aria-hidden="true">»</span>
+</span>
+
+<style>
+  .fmt {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--editorial);
+    border: var(--hair) solid color-mix(in oklab, var(--editorial) 45%, var(--rule));
+    border-radius: var(--r-sm);
+    padding: 0.12em 0.5em;
+    white-space: nowrap;
+  }
+  .fmt-bracket {
+    color: color-mix(in oklab, var(--editorial) 70%, transparent);
+  }
+</style>

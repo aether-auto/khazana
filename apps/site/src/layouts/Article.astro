@@ -1,0 +1,178 @@
+---
+import Shell from "./Shell.astro";
+import FormatBadge from "../components/FormatBadge.astro";
+import ChannelChip from "../components/ChannelChip.astro";
+
+interface Source {
+  title: string;
+  url: string;
+}
+interface Props {
+  title: string;
+  format: string;
+  channels: string[];
+  summary: string;
+  publishedAt: Date;
+  sources: Source[];
+}
+const { title, format, channels, summary, publishedAt, sources } = Astro.props;
+const dateLabel = publishedAt.toISOString().slice(0, 10);
+---
+
+<Shell title={`${title} — khazana reads`} description={summary} active="reads">
+  <article class="article">
+    <header class="article-head">
+      <div class="article-kicker">
+        <FormatBadge format={format} />
+        <time datetime={publishedAt.toISOString()}>{dateLabel}</time>
+      </div>
+      <h1 class="article-title">{title}</h1>
+      <p class="article-standfirst">{summary}</p>
+      <div class="article-channels">
+        {channels.map((c) => <ChannelChip channel={c} />)}
+      </div>
+    </header>
+
+    <div class="article-rule" aria-hidden="true"></div>
+
+    <div class="prose">
+      <!-- SEAM (P5B): MDX interactive components (<Chart>/<Scrolly>/<Annotation>/…)
+           are provided here via MDXProvider/components mapping. In P5, MDX renders
+           as semantic prose only. -->
+      <slot />
+    </div>
+
+    {
+      sources.length > 0 && (
+        <aside class="sources" aria-label="Sources">
+          <p class="eyebrow">sources</p>
+          <ol>
+            {sources.map((s) => (
+              <li>
+                <a href={s.url} rel="noopener noreferrer">
+                  {s.title}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </aside>
+      )
+    }
+  </article>
+</Shell>
+
+<style>
+  .article {
+    max-width: var(--measure);
+    margin-inline: auto;
+  }
+  .article-head {
+    margin-bottom: var(--s-6);
+  }
+  .article-kicker {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    margin-bottom: var(--s-4);
+  }
+  .article-title {
+    font-family: var(--font-read);
+    font-size: var(--t-3xl);
+    line-height: 1.08;
+    letter-spacing: -0.015em;
+    margin: 0 0 var(--s-4);
+    color: var(--ink);
+  }
+  .article-standfirst {
+    font-family: var(--font-read);
+    font-size: var(--t-lg);
+    line-height: 1.4;
+    color: var(--ink-dim);
+    font-style: italic;
+    margin: 0 0 var(--s-4);
+    max-width: 56ch;
+  }
+  .article-channels {
+    display: flex;
+    gap: var(--s-2);
+    flex-wrap: wrap;
+  }
+  .article-rule {
+    height: var(--hair);
+    background: var(--editorial);
+    width: 5rem;
+    margin: var(--s-6) 0;
+  }
+
+  /* editorial reading typography */
+  .prose {
+    font-family: var(--font-read);
+    font-size: var(--t-md);
+    line-height: var(--lh-read);
+    color: var(--ink);
+  }
+  .prose :global(p) {
+    margin: 0 0 var(--s-5);
+    max-width: var(--measure);
+  }
+  .prose :global(h2) {
+    font-size: var(--t-xl);
+    line-height: 1.2;
+    margin: var(--s-8) 0 var(--s-3);
+    letter-spacing: -0.01em;
+  }
+  .prose :global(h3) {
+    font-size: var(--t-lg);
+    margin: var(--s-6) 0 var(--s-2);
+  }
+  .prose :global(blockquote) {
+    margin: var(--s-6) 0;
+    padding-left: var(--s-5);
+    border-left: 2px solid var(--editorial);
+    color: var(--ink-dim);
+    font-style: italic;
+  }
+  .prose :global(em) {
+    color: var(--ink);
+  }
+  .prose :global(a) {
+    color: var(--accent);
+    border-bottom: var(--hair) solid color-mix(in oklab, var(--accent) 40%, transparent);
+  }
+  .prose :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--bg-raised);
+    padding: 0.1em 0.35em;
+    border-radius: var(--r-sm);
+  }
+  .prose :global(pre) {
+    font-family: var(--font-mono);
+    background: var(--bg-inset);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-md);
+    padding: var(--s-4);
+    overflow-x: auto;
+    font-size: var(--t-sm);
+    line-height: 1.5;
+  }
+
+  .sources {
+    margin-top: var(--s-10);
+    padding-top: var(--s-5);
+    border-top: var(--hair) solid var(--rule);
+  }
+  .sources ol {
+    margin: 0;
+    padding-left: 1.4em;
+    font-family: var(--font-mono);
+    font-size: var(--t-sm);
+    color: var(--ink-dim);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+  }
+</style>
