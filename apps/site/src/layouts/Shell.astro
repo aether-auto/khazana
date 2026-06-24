@@ -3,6 +3,7 @@ import "../styles/global.css";
 import Wordmark from "../components/Wordmark.astro";
 import Ticker from "../components/Ticker.astro";
 import Beacon from "../components/Beacon.astro";
+import CommandPalette from "../components/cmdk/CommandPalette.tsx";
 import { CHANNELS } from "@khazana/core";
 
 interface Props {
@@ -73,8 +74,7 @@ const nav: { id: "feed" | "reads" | "workshop"; label: string; href: string }[] 
             ))
           }
         </nav>
-        <!-- SEAM (P5B): ⌘K command palette. Non-functional hint only. -->
-        <button class="cmdk" type="button" disabled aria-label="Command palette (coming soon)">
+        <button class="cmdk" type="button" aria-label="Open command palette" aria-keyshortcuts="Meta+K Control+K">
           <span class="cmdk-keys">⌘K</span>
         </button>
       </div>
@@ -105,7 +105,7 @@ const nav: { id: "feed" | "reads" | "workshop"; label: string; href: string }[] 
       </span>
     </footer>
 
-    <!-- SEAM (P5B): ⌘K palette mount + Pagefind search index load go here. -->
+    <CommandPalette base={base} client:idle />
     <Beacon />
   </body>
 </html>
@@ -174,7 +174,11 @@ const nav: { id: "feed" | "reads" | "workshop"; label: string; href: string }[] 
     font-family: var(--font-mono);
     font-size: var(--t-xs);
     padding: var(--s-1) var(--s-3);
-    cursor: not-allowed;
+    cursor: pointer;
+  }
+  .cmdk:hover {
+    color: var(--ink-dim);
+    border-color: var(--rule-bright);
   }
   .cmdk-keys {
     letter-spacing: 0.05em;
