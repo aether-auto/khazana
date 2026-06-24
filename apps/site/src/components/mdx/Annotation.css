@@ -1,0 +1,36 @@
+/* apps/site/src/components/mdx/Annotation.css */
+.mdx-annot { position: relative; }
+.mdx-annot__term {
+  font: inherit;            /* sit in the serif reading flow */
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: help;
+  color: var(--ink);
+  border-bottom: 1px dotted color-mix(in oklab, var(--accent) 70%, transparent);
+}
+.mdx-annot__term:hover { color: var(--accent); }
+.mdx-annot__note {
+  position: absolute;
+  left: 0;
+  top: calc(100% + var(--s-2));
+  z-index: 5;
+  width: min(22rem, 70vw);
+  background: var(--bg-raised);
+  border: var(--hair) solid var(--rule);
+  border-left: 2px solid var(--editorial);
+  border-radius: var(--r-md);
+  padding: var(--s-3) var(--s-4);
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  line-height: var(--lh-read);
+  color: var(--ink-dim);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-2px);
+  transition: opacity 120ms ease, transform 120ms ease, visibility 120ms;
+}
+.mdx-annot__note--open { opacity: 1; visibility: visible; transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  .mdx-annot__note { transition: none; }
+}

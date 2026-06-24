@@ -1,0 +1,37 @@
+/* src/components/mdx/mdx.css — shared frame for every MDX island.
+   Tokens come from tokens.css (loaded globally on every Reads page). */
+.mdx-figure {
+  margin: var(--s-6) 0;
+  /* break out of the 68ch measure for breathing room, but stay within the column */
+  max-width: var(--measure);
+}
+.mdx-figure--wide {
+  /* widen interactives slightly past the reading measure */
+  max-width: min(100%, 52rem);
+  margin-inline: auto;
+}
+.mdx-panel {
+  background: var(--bg-raised);
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-md);
+  overflow: clip;
+}
+.mdx-caption {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  margin-top: var(--s-3);
+}
+.mdx-caption::before { content: "fig — "; color: var(--editorial); }
+.mdx-label {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+@media (prefers-reduced-motion: reduce) {
+  .mdx-figure :global(*) { transition: none !important; animation: none !important; }
+}

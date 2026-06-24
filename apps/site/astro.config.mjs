@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
+import react from "@astrojs/react";
 
 // $0 GitHub Pages project pages: site + base are env-configurable with safe defaults.
 // PUBLIC_SITE_URL e.g. "https://arnavmarda.github.io"; PUBLIC_BASE_PATH e.g. "/khazana".
@@ -12,6 +13,6 @@ export default defineConfig({
   base,
   output: "static",
   trailingSlash: "ignore",
-  integrations: [mdx()],
+  integrations: [react(), mdx()],
   build: { assets: "_assets" },
 });
