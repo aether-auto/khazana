@@ -1,0 +1,63 @@
+---
+// Endpoint is resolved at build time and inlined; empty → the script no-ops.
+const endpoint = (import.meta.env.PUBLIC_WORKER_URL ?? "").trim();
+const isRead = Astro.url.pathname.includes("/reads/") && !Astro.url.pathname.endsWith("/reads/");
+---
+
+<script is:inline define:vars={{ endpoint, isRead }}>
+  // Taste-capture beacon. No framework, no deps at runtime: we re-implement the
+  // tiny sendBeacon call inline so this stays a zero-island static script.
+  // Mirrors @khazana/worker's client contract: POST `${endpoint}/event` with
+  // { itemId, type, at, deviceId, dwellMs? }. Fully no-ops when endpoint is "".
+  (function () {
+    if (!endpoint) return; // graceful no-op without PUBLIC_WORKER_URL
+
+    function deviceId() {
+      try {
+        var k = "khazana:deviceId";
+        var v = localStorage.getItem(k);
+        if (!v) {
+          v = crypto.randomUUID();
+          localStorage.setItem(k, v);
+        }
+        return v;
+      } catch (_e) {
+        return "anon";
+      }
+    }
+
+    function emit(body) {
+      try {
+        var full = Object.assign({ at: new Date().toISOString(), deviceId: deviceId() }, body);
+        var url = endpoint + "/event";
+        var json = JSON.stringify(full);
+        if (navigator.sendBeacon) navigator.sendBeacon(url, json);
+        else fetch(url, { method: "POST", keepalive: true, headers: { "Content-Type": "application/json" }, body: json });
+      } catch (_e) {
+        /* never throw, never block navigation */
+      }
+    }
+
+    // `open` on outbound feed/workshop clicks tagged data-track="open".
+    document.addEventListener(
+      "click",
+      function (ev) {
+        var el = ev.target && ev.target.closest ? ev.target.closest('[data-track="open"]') : null;
+        if (!el) return;
+        var id = el.getAttribute("data-item-id");
+        if (id) emit({ itemId: id, type: "open" });
+      },
+      { capture: true },
+    );
+
+    // On a Read detail page: `open` immediately, `dwell` on unload.
+    if (isRead) {
+      var slug = location.pathname.replace(/\/$/, "").split("/").pop() || location.pathname;
+      var start = Date.now();
+      emit({ itemId: slug, type: "open" });
+      window.addEventListener("pagehide", function () {
+        emit({ itemId: slug, type: "dwell", dwellMs: Date.now() - start });
+      });
+    }
+  })();
+</script>
