@@ -1,0 +1,179 @@
+---
+import type { FeedItem } from "@khazana/core";
+import ChannelChip from "./ChannelChip.astro";
+import SourceBadge from "./SourceBadge.astro";
+import Metric from "./Metric.astro";
+import TimeAgo from "./TimeAgo.astro";
+
+interface Props {
+  item: FeedItem;
+  now: string;
+  revealDelay?: number;
+}
+const { item, now, revealDelay = 0 } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const channelHref = (c: string) => `${base}/?channel=${c}`;
+---
+
+<article
+  class="feature card"
+  data-channels={item.topics.join(" ")}
+  data-kind={item.kind}
+  data-bento="feature"
+  data-reveal
+  style={`--reveal-delay:${revealDelay}ms`}
+>
+  <!-- amber progress hairline that traces the top edge on hover (scaleX) -->
+  <span class="feature-trace" aria-hidden="true"></span>
+
+  <div class="feature-meta">
+    <span class="feature-flag">lead</span>
+    <SourceBadge source={item.source} sourceType={item.sourceType} trustScore={item.trustScore} />
+    <TimeAgo iso={item.publishedAt} now={now} />
+  </div>
+
+  <h2 class="feature-title display">
+    <a href={item.url} data-track="open" data-item-id={item.id} rel="noopener noreferrer">
+      {item.title}
+    </a>
+  </h2>
+
+  {item.summary && <p class="feature-summary">{item.summary}</p>}
+
+  <div class="feature-foot">
+    <span class="chips">
+      {item.topics.slice(0, 5).map((c) => <ChannelChip channel={c} href={channelHref(c)} />)}
+    </span>
+    <Metric score={item.metrics?.score} comments={item.metrics?.comments} />
+  </div>
+</article>
+
+<style>
+  .feature {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-4);
+    padding: var(--s-6);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-md);
+    background: color-mix(in oklab, var(--bg-raised) 70%, transparent);
+    box-shadow:
+      inset 0 var(--hair) 0 color-mix(in oklab, var(--ink) calc(var(--glass) * 7%), transparent),
+      0 1px 0 var(--rule);
+    backdrop-filter: blur(calc(var(--glass) * 10px));
+    overflow: hidden;
+    /* spring lift on hover */
+    transition:
+      transform var(--dur) var(--ease-overshoot),
+      border-color var(--dur) var(--ease-out),
+      box-shadow var(--dur) var(--ease-out);
+    will-change: transform;
+  }
+  /* a faint amber pool behind the title, top-left, for editorial weight */
+  .feature::before {
+    content: "";
+    position: absolute;
+    top: -30%;
+    left: -10%;
+    width: 60%;
+    height: 80%;
+    background: radial-gradient(
+      closest-side,
+      color-mix(in oklab, var(--accent) 10%, transparent),
+      transparent
+    );
+    opacity: 0.7;
+    pointer-events: none;
+    transition: opacity var(--dur-slow) var(--ease-out);
+  }
+  .feature:hover {
+    transform: translateY(-5px);
+    border-color: color-mix(in oklab, var(--accent) 30%, var(--rule));
+    box-shadow: 0 20px 50px -16px rgba(0, 0, 0, 0.55);
+  }
+  .feature:hover::before {
+    opacity: 1;
+  }
+  .feature-trace {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--editorial));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--dur-slow) var(--ease-out);
+  }
+  .feature:hover .feature-trace {
+    transform: scaleX(1);
+  }
+
+  .feature-meta {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-3);
+    flex-wrap: wrap;
+    position: relative;
+  }
+  .feature-flag {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--bg);
+    background: var(--accent);
+    border-radius: var(--r-sm);
+    padding: 0.1em 0.5em;
+  }
+  .feature-title {
+    margin: 0;
+    font-size: var(--t-display-sm);
+    position: relative;
+  }
+  .feature-title a {
+    color: var(--ink);
+    background-image: linear-gradient(var(--accent), var(--accent));
+    background-size: 0% 2px;
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      background-size var(--dur) var(--ease-out);
+  }
+  .feature:hover .feature-title a {
+    color: var(--accent);
+    background-size: 100% 2px;
+    text-decoration: none;
+  }
+  .feature-summary {
+    margin: 0;
+    color: var(--ink-dim);
+    font-family: var(--font-read);
+    font-size: var(--t-md);
+    line-height: 1.55;
+    max-width: 54ch;
+  }
+  .feature-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-3);
+    flex-wrap: wrap;
+    margin-top: auto;
+  }
+  .chips {
+    display: inline-flex;
+    gap: var(--s-2);
+    flex-wrap: wrap;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .feature,
+    .feature::before,
+    .feature-trace,
+    .feature-title a {
+      transition: none;
+    }
+  }
+</style>
