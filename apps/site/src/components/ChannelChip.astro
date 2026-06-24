@@ -1,0 +1,29 @@
+---
+interface Props {
+  channel: string;
+  href?: string;
+}
+const { channel, href } = Astro.props;
+const Tag = href ? "a" : "span";
+---
+
+<Tag class="chip" {...href ? { href } : {}}>{channel}</Tag>
+
+<style>
+  .chip {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-dim);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-sm);
+    padding: 0.1em 0.45em;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  a.chip:hover {
+    color: var(--accent);
+    border-color: var(--rule-bright);
+    text-decoration: none;
+  }
+</style>

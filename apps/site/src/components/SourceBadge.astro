@@ -1,0 +1,40 @@
+---
+interface Props {
+  source: string;
+  sourceType: string;
+  trustScore?: number;
+}
+const { source, sourceType, trustScore } = Astro.props;
+const trustPct = trustScore != null ? Math.round(trustScore * 100) : null;
+---
+
+<span class="src">
+  <span class="src-type">{sourceType}</span>
+  <span class="src-name">{source}</span>
+  {trustPct != null && <span class="src-trust" title="trust score">{trustPct}</span>}
+</span>
+
+<style>
+  .src {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4em;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+  }
+  .src-type {
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .src-name {
+    color: var(--ink-dim);
+  }
+  .src-trust {
+    color: var(--good);
+  }
+  .src-trust::before {
+    content: "◆ ";
+    color: var(--good);
+  }
+</style>

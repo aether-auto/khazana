@@ -1,0 +1,27 @@
+---
+interface Props {
+  score?: number;
+  comments?: number;
+}
+const { score, comments } = Astro.props;
+const fmt = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`);
+---
+
+{
+  (score != null || comments != null) && (
+    <span class="metric">
+      {score != null && <span class="m">▲ {fmt(score)}</span>}
+      {comments != null && <span class="m">✦ {fmt(comments)}</span>}
+    </span>
+  )
+}
+
+<style>
+  .metric {
+    display: inline-flex;
+    gap: var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+  }
+</style>

@@ -1,0 +1,19 @@
+---
+import { timeAgo } from "../lib/format.js";
+interface Props {
+  iso: string;
+  now: string;
+}
+const { iso, now } = Astro.props;
+const label = timeAgo(iso, new Date(now));
+---
+
+<time class="ago" datetime={iso}>{label}</time>
+
+<style>
+  .ago {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+  }
+</style>

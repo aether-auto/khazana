@@ -1,8 +1,103 @@
 ---
 import Shell from "../layouts/Shell.astro";
+import FeedCard from "../components/FeedCard.astro";
+import { loadCurated, filterByChannel, tickerTitles } from "../lib/feed.js";
+import { CHANNELS } from "@khazana/core";
+import { dataDir } from "../lib/data.js";
+
+const now = new Date().toISOString();
+const all = loadCurated(dataDir());
+const ticker = tickerTitles(all, 8);
+// SSR-safe: at static build time there is no request channel; the inline script
+// applies the ?channel= filter on the client. We render ALL cards, tagged with
+// data-channels, and let the script show/hide. This keeps it framework-free and
+// works for static hosting.
+const items = all;
+const channels = CHANNELS;
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 ---
 
-<Shell title="khazana" active="feed" tickerTitles={["shell online", "tokens loaded", "ticker live"]}>
-  <p class="eyebrow">feed</p>
-  <p>Shell scaffold online. Feed surface arrives in T3.</p>
+<Shell title="khazana — feed" active="feed" tickerTitles={ticker}>
+  <header class="feed-head">
+    <p class="eyebrow">feed</p>
+    <h1 class="feed-h1">the signal, ranked</h1>
+    <div class="filters" role="group" aria-label="Filter by channel">
+      <a class="filter is-active" href={`${base}/`} data-filter="">all</a>
+      {channels.map((c) => <a class="filter" href={`${base}/?channel=${c}`} data-filter={c}>{c}</a>)}
+    </div>
+  </header>
+
+  <section class="feed-list" aria-live="polite">
+    {items.map((item) => <FeedCard item={item} now={now} />)}
+    <p class="empty" hidden>No items in this channel yet.</p>
+  </section>
 </Shell>
+
+<style>
+  .feed-head {
+    margin-bottom: var(--s-5);
+  }
+  .feed-h1 {
+    font-family: var(--font-sans);
+    font-size: var(--t-2xl);
+    line-height: var(--lh-tight);
+    letter-spacing: -0.02em;
+    margin: 0 0 var(--s-5);
+    font-weight: 600;
+  }
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+  }
+  .filter {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-dim);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-sm);
+    padding: 0.15em 0.55em;
+  }
+  .filter:hover {
+    color: var(--accent);
+    text-decoration: none;
+    border-color: var(--rule-bright);
+  }
+  .filter.is-active {
+    color: var(--bg);
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .feed-list {
+    border-top: var(--hair) solid var(--rule);
+  }
+  .empty {
+    padding: var(--s-8) 0;
+    color: var(--ink-faint);
+    font-family: var(--font-mono);
+    text-align: center;
+  }
+</style>
+
+<script>
+  // Framework-free channel filter, driven by the ?channel= query param.
+  // Progressive enhancement: with JS off, all cards show and the filter links
+  // still navigate (each is a real href). No island, no hydration.
+  const params = new URLSearchParams(location.search);
+  const active = params.get("channel") ?? "";
+
+  const cards = document.querySelectorAll<HTMLElement>(".feed-list .card");
+  const empty = document.querySelector<HTMLElement>(".feed-list .empty");
+  let shown = 0;
+  cards.forEach((card) => {
+    const channels = (card.dataset.channels ?? "").split(" ");
+    const match = active === "" || channels.includes(active);
+    card.hidden = !match;
+    if (match) shown++;
+  });
+  if (empty) empty.hidden = shown !== 0;
+
+  document.querySelectorAll<HTMLElement>(".filter").forEach((el) => {
+    el.classList.toggle("is-active", (el.dataset.filter ?? "") === active);
+  });
+</script>
