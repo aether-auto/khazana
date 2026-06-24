@@ -2,11 +2,12 @@ import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, test } from "vitest";
+import type { FeedItem } from "@khazana/core";
 import { loadCurated, filterByChannel, selectIdeas, tickerTitles } from "./feed.js";
 
 let dir: string;
 
-const item = (over: Record<string, unknown>) => ({
+const item = (over: Record<string, unknown>): FeedItem => ({
   id: "id1",
   source: "s",
   sourceType: "rss",
@@ -20,7 +21,7 @@ const item = (over: Record<string, unknown>) => ({
   media: [],
   kind: "link",
   ...over,
-});
+} as FeedItem);
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), "khz-site-"));
