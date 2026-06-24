@@ -10,8 +10,8 @@ const fmt = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`);
 {
   (score != null || comments != null) && (
     <span class="metric">
-      {score != null && <span class="m">▲ {fmt(score)}</span>}
-      {comments != null && <span class="m">✦ {fmt(comments)}</span>}
+      {score != null && <span class="m">^ {fmt(score)}</span>}
+      {comments != null && <span class="m"># {fmt(comments)}</span>}
     </span>
   )
 }

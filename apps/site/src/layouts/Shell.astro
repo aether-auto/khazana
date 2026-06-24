@@ -3,6 +3,7 @@ import "../styles/global.css";
 import Wordmark from "../components/Wordmark.astro";
 import Ticker from "../components/Ticker.astro";
 import Beacon from "../components/Beacon.astro";
+import { CHANNELS } from "@khazana/core";
 
 interface Props {
   title: string;
@@ -27,6 +28,11 @@ const channelGroups: { label: string; channels: readonly string[] }[] = [
   { label: "data", channels: ["data-science", "ds-sports", "data-strategy", "finance"] },
   { label: "make", channels: ["ideas", "diy", "3d-printing", "iot", "embedded", "ai-projects"] },
 ];
+
+// Build-time drift guard: every channel in CHANNELS must appear in at least one group.
+const grouped = new Set(channelGroups.flatMap((g) => g.channels));
+const missing = CHANNELS.filter((c) => !grouped.has(c));
+if (missing.length) throw new Error(`Shell nav missing channels: ${missing.join(", ")}`);
 
 const buildTime = new Date().toISOString();
 const nav: { id: "feed" | "reads" | "workshop"; label: string; href: string }[] = [
@@ -115,7 +121,7 @@ const nav: { id: "feed" | "reads" | "workshop"; label: string; href: string }[] 
     z-index: 10000;
     font-family: var(--font-mono);
   }
-  .skip-link:focus {
+  .skip-link:focus-visible {
     left: var(--s-3);
     top: var(--s-3);
   }

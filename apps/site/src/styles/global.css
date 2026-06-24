@@ -74,7 +74,6 @@ img {
 
 .shell-main {
   max-width: var(--maxw);
-  margin: 0 inline;
   margin-inline: auto;
   padding: var(--s-6) var(--s-5) var(--s-12);
 }
