@@ -16,7 +16,6 @@ gsap.registerPlugin(ScrollTrigger);
 const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 let lenis: Lenis | null = null;
-let rafId = 0;
 
 function startLenis() {
   if (reduce || lenis) return;
@@ -74,21 +73,17 @@ function killScrollTriggers() {
 }
 
 function init() {
+  // Lenis is a no-op under reduced-motion (native scroll). ScrollTrigger works
+  // on either smooth (Lenis-driven) or native scroll, so the header condense /
+  // reading-progress state is wired the same way in both modes.
   startLenis();
-  if (!reduce) initScrollState();
-  // also expose a no-Lenis rAF fallback only matters if Lenis is on; reduced
-  // motion uses native scroll + the class toggle above (still works via ST).
-  if (reduce) {
-    // ScrollTrigger still works on native scroll; keep the header state synced.
-    initScrollState();
-    ScrollTrigger.refresh();
-  }
+  initScrollState();
+  ScrollTrigger.refresh();
 }
 
 function teardown() {
   killScrollTriggers();
   stopLenis();
-  if (rafId) cancelAnimationFrame(rafId);
 }
 
 // Initial load.
