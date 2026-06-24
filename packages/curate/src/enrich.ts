@@ -70,6 +70,7 @@ export async function enrichItems(
   opts: { concurrency?: number } = {},
 ): Promise<FeedItem[]> {
   if (client === null) return items.map((it) => ({ ...it }));
+  const nonNullClient: LlmClient = client;
   const concurrency = opts.concurrency ?? 4;
   const out: FeedItem[] = new Array<FeedItem>(items.length);
   let next = 0;
@@ -78,7 +79,7 @@ export async function enrichItems(
       const i = next;
       next += 1;
       if (i >= items.length) return;
-      out[i] = await enrichOne(items[i]!, client);
+      out[i] = await enrichOne(items[i]!, nonNullClient);
     }
   }
   const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker());
