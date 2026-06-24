@@ -1,0 +1,34 @@
+---
+title: "The Week in Silicon: When Inference Moved to the Edge"
+format: dispatch
+channels: ["ai", "tech", "embedded"]
+summary: "Three signals from the week — an on-device NPU price drop, a sparse-MoE paper, and a quiet Netflix latency post — point at the same shift: compute is leaving the datacenter."
+publishedAt: 2026-06-23T06:00:00.000Z
+sources:
+  - title: "Sparse Mixtures of Experts Are Implicit Curriculum Learners"
+    url: "https://arxiv.org/abs/2606.01234"
+  - title: "Rebuilding the Edge Tier (Netflix)"
+    url: "https://netflixtechblog.com/rebuilding-the-edge-tier"
+---
+
+Three things happened this week that look unrelated until you line them up.
+
+First, a research paper argued that the routing inside mixture-of-experts models
+is doing something subtler than load balancing — it's reproducing a *curriculum*,
+teaching the model easy tokens before hard ones. That makes these models cheaper
+to run well, which matters most where compute is scarce.
+
+Second, the marginal cost of inference on a commodity edge NPU dropped below a
+threshold that a year ago looked like a 2028 problem. Cheap inference at the edge
+changes where intelligence lives.
+
+Third — and quietest — an engineering team collapsed three network hops into one
+programmable edge tier and cut tail latency by a factor of five. Not an AI story
+on its face. But it's the same story: the smart part of the system is moving
+*outward*, toward the user, away from the center.
+
+The throughline is economics, not novelty. When the cost curve bends, the
+architecture follows.
+
+<!-- SEAM (P5B): interactive <Chart> + scroll-driven <Scrolly> steps mount here.
+     In P5 the dispatch reads as clean long-form prose. -->
