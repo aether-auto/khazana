@@ -8,6 +8,7 @@ interface Source {
   url: string;
 }
 interface Props {
+  slug?: string;
   title: string;
   format: string;
   channels: string[];
@@ -15,7 +16,7 @@ interface Props {
   publishedAt: Date;
   sources: Source[];
 }
-const { title, format, channels, summary, publishedAt, sources } = Astro.props;
+const { slug, title, format, channels, summary, publishedAt, sources } = Astro.props;
 const dateLabel = publishedAt.toISOString().slice(0, 10);
 ---
 
@@ -26,7 +27,7 @@ const dateLabel = publishedAt.toISOString().slice(0, 10);
         <FormatBadge format={format} />
         <time datetime={publishedAt.toISOString()}>{dateLabel}</time>
       </div>
-      <h1 class="article-title">{title}</h1>
+      <h1 class="article-title" transition:name={slug ? `read-title-${slug}` : undefined}>{title}</h1>
       <p class="article-standfirst">{summary}</p>
       <div class="article-channels">
         {channels.map((c) => <ChannelChip channel={c} />)}
@@ -138,9 +139,22 @@ const dateLabel = publishedAt.toISOString().slice(0, 10);
   .prose :global(em) {
     color: var(--ink);
   }
+  /* animated underline: a left-anchored gradient that grows to full on hover.
+     A faint persistent baseline keeps the link affordance. background-size only
+     (no width/layout thrash) — surrounding text never reflows. */
   .prose :global(a) {
     color: var(--accent);
-    border-bottom: var(--hair) solid color-mix(in oklab, var(--accent) 40%, transparent);
+    text-decoration: none;
+    border-bottom: var(--hair) solid color-mix(in oklab, var(--accent) 28%, transparent);
+    background-image: linear-gradient(currentColor, currentColor);
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    background-size: 0% var(--hair);
+    transition: background-size var(--dur) var(--ease-out);
+  }
+  .prose :global(a:hover) {
+    background-size: 100% var(--hair);
+    text-decoration: none;
   }
   .prose :global(code) {
     font-family: var(--font-mono);

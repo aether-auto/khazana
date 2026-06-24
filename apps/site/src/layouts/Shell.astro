@@ -4,7 +4,13 @@ import Wordmark from "../components/Wordmark.astro";
 import Ticker from "../components/Ticker.astro";
 import Beacon from "../components/Beacon.astro";
 import CommandPalette from "../components/cmdk/CommandPalette.tsx";
+import { ClientRouter } from "astro:transitions";
 import { CHANNELS } from "@khazana/core";
+
+// Liquid-glass toggle (single source of truth). Flip to `false` to remove the
+// optional dark-glass treatment site-wide; it adds `class="glass"` to <html>.
+// See p8-polish-report.md → "How to toggle glass off".
+const GLASS = true;
 
 interface Props {
   title: string;
@@ -46,7 +52,7 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class:list={[{ glass: GLASS }]}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -56,6 +62,15 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
     <link rel="manifest" href={withBase("/manifest.webmanifest")} />
     <link rel="icon" href={withBase("/icon.svg")} type="image/svg+xml" />
     <meta name="generator" content={Astro.generator} />
+    <ClientRouter />
+    <script is:inline>
+      // Gate the reveal hidden-state ASAP (before paint) so JS-on visitors
+      // don't flash the final layout, while no-JS/SSR keeps everything visible.
+      // Skipped under reduced-motion so those users never get opacity:0.
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        document.documentElement.classList.add("reveal-ready");
+      }
+    </script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -109,6 +124,46 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
 
     <CommandPalette base={base} client:idle />
     <Beacon />
+
+    <script>
+      // ── Shared scroll-reveal observer ───────────────────────────────────
+      // ONE IntersectionObserver for the whole page. Adds `.is-in` to
+      // `[data-reveal]` elements as they enter, then unobserves (one-shot).
+      // No scroll handlers. Re-runs after View Transition navigations.
+      // Reduced-motion + no-IO browsers: reveal everything immediately.
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      function revealAll() {
+        document.documentElement.classList.add("reveal-ready");
+        for (const el of document.querySelectorAll("[data-reveal]")) {
+          el.classList.add("is-in");
+        }
+      }
+
+      function initReveals() {
+        if (reduce || !("IntersectionObserver" in window)) {
+          revealAll();
+          return;
+        }
+        const io = new IntersectionObserver(
+          (entries, obs) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              entry.target.classList.add("is-in");
+              obs.unobserve(entry.target);
+            }
+          },
+          { rootMargin: "0px 0px -8% 0px", threshold: 0.05 },
+        );
+        for (const el of document.querySelectorAll("[data-reveal]:not(.is-in)")) {
+          io.observe(el);
+        }
+      }
+
+      initReveals();
+      // View Transitions swaps the DOM without a full reload — re-init each nav.
+      document.addEventListener("astro:page-load", initReveals);
+    </script>
   </body>
 </html>
 
@@ -136,6 +191,18 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
     backdrop-filter: blur(8px);
     border-bottom: var(--hair) solid var(--rule);
   }
+  /* glass top bar: deeper blur + a faint lit top edge so content scrolls under
+     it premium-ly. Falls back to the matte translucent bar where unsupported. */
+  :global(html.glass) .topbar {
+    background: color-mix(in oklab, var(--bg) 78%, transparent);
+  }
+  @supports (backdrop-filter: blur(1px)) {
+    :global(html.glass) .topbar {
+      backdrop-filter: blur(12px) saturate(118%);
+      box-shadow: inset 0 var(--hair) 0
+        color-mix(in oklab, var(--ink) calc(var(--glass) * 8%), transparent);
+    }
+  }
   .topbar-inner {
     max-width: var(--maxw);
     margin-inline: auto;
@@ -151,21 +218,44 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
     font-size: var(--t-sm);
   }
   .nav-link {
+    position: relative;
     color: var(--ink-dim);
     text-transform: lowercase;
     letter-spacing: 0.02em;
+    transition: color var(--dur-fast) var(--ease-out);
   }
   .nav-link::before {
     content: "/";
     color: var(--ink-faint);
     margin-right: 0.15em;
   }
+  /* underline-sweep via transform-scaleX (no width/layout thrash) */
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.25em;
+    height: var(--hair);
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--dur) var(--ease-out);
+  }
   .nav-link:hover {
     color: var(--ink);
     text-decoration: none;
   }
+  .nav-link:hover::after,
+  .nav-link:focus-visible::after {
+    transform: scaleX(1);
+  }
   .nav-link.current {
     color: var(--accent);
+  }
+  .nav-link.current::after {
+    transform: scaleX(1);
+    transform-origin: left;
   }
   .cmdk {
     flex: none;
@@ -177,10 +267,18 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
     font-size: var(--t-xs);
     padding: var(--s-1) var(--s-3);
     cursor: pointer;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
   }
   .cmdk:hover {
     color: var(--ink-dim);
     border-color: var(--rule-bright);
+    transform: translateY(-1px);
+  }
+  .cmdk:active {
+    transform: translateY(0);
   }
   .cmdk-keys {
     letter-spacing: 0.05em;
@@ -207,6 +305,7 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
   }
   .ch {
     color: var(--ink-dim);
+    transition: color var(--dur-fast) var(--ease-out);
   }
   .ch:hover {
     color: var(--accent);

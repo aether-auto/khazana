@@ -49,7 +49,29 @@
   --r-md: 4px;
   --hair: 1px;
   --maxw: 1180px;
+
+  /* motion — GPU-cheap, snappy. Animate ONLY transform/opacity with these. */
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 340ms;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-spring: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+
+  /* liquid-glass — monochrome/amber, restrained. Gated behind :root.glass.
+     `--glass` flips 0→1 when glass is on; pseudo-element sheens read it as opacity. */
+  --glass: 0;
+  --glass-bg: rgba(14, 14, 16, 0.72);
+  --glass-blur: 14px;
+  --glass-edge: color-mix(in oklab, var(--ink) 14%, transparent);
+  --glass-sheen: color-mix(in oklab, var(--accent) 22%, transparent);
+
   color-scheme: dark;
+}
+
+/* Single root toggle for the optional liquid-glass treatment.
+   Remove the `glass` class on <html> (Shell.astro) to disable everything. */
+:root.glass {
+  --glass: 1;
 }
 
 @media (prefers-color-scheme: light) {

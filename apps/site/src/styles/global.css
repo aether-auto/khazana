@@ -14,6 +14,18 @@ html {
   html {
     scroll-behavior: auto;
   }
+  /* Global safety net: neutralize all motion for reduced-motion users.
+     Components express motion via transform/opacity transitions + sheen
+     pseudo-elements; this collapses durations to ~0 and stops sheen sweeps
+     so nothing animates, while final (hover) states still apply instantly. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 body {
@@ -134,4 +146,34 @@ img {
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* ── Scroll-reveal system ──────────────────────────────────────────────
+   One shared IntersectionObserver (wired in Shell.astro) adds `.is-in` to
+   `[data-reveal]` elements as they enter the viewport, once. The hidden
+   start-state is gated behind `html.reveal-ready` (set by the script), so
+   with JS off / SSR everything is visible — no permanent opacity:0.
+   Animates transform + opacity ONLY. Stagger via inline `--reveal-delay`. */
+html.reveal-ready [data-reveal] {
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: transform, opacity;
+}
+html.reveal-ready [data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Reduced motion: no transform, instant. Content always visible. */
+  html.reveal-ready [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    will-change: auto;
+  }
 }
