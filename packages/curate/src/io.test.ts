@@ -2,7 +2,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, test } from "vitest";
-import { readRawFeed, readEvents, writeCuratedFeed } from "./io.js";
+import { readRawFeed, readEvents, writeCuratedFeed, writeTaste } from "./io.js";
 
 let dir: string;
 
@@ -56,4 +56,11 @@ test("writeCuratedFeed writes the array and returns the path", () => {
   const path = writeCuratedFeed(dir, [item as never]);
   expect(path).toContain(join("feed", "curated.json"));
   expect(JSON.parse(readFileSync(path, "utf8"))).toHaveLength(1);
+});
+
+test("writeTaste writes taste.json and returns the path", () => {
+  const payload = { ready: true, topics: { ai: 1 }, entities: {}, formatAffinity: { dispatch: 1 } };
+  const path = writeTaste(dir, payload as never);
+  expect(path).toContain("taste.json");
+  expect(JSON.parse(readFileSync(path, "utf8"))).toEqual(payload);
 });

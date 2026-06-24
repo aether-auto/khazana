@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { EngagementEventSchema, FeedItemSchema, type EngagementEvent, type FeedItem } from "@khazana/core";
+import type { TastePayload } from "./format-affinity.js";
 
 // Re-exported from @khazana/core so the worker and curate share one contract.
 export { EngagementEventSchema };
@@ -36,5 +37,12 @@ export function writeCuratedFeed(dataDir: string, items: FeedItem[]): string {
   const path = join(dataDir, "feed", "curated.json");
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, JSON.stringify(items, null, 2) + "\n");
+  return path;
+}
+
+export function writeTaste(dataDir: string, payload: TastePayload): string {
+  const path = join(dataDir, "taste.json");
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, JSON.stringify(payload, null, 2) + "\n");
   return path;
 }

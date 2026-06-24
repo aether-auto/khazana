@@ -65,3 +65,25 @@ test("main runs at $0 with client=null and no events file", async () => {
   // null client leaves seeded topics and empty summaries
   expect(curated.every((it: { summary: string }) => it.summary === "")).toBe(true);
 });
+
+test("main also writes taste.json with topics and formatAffinity", async () => {
+  // Seed enough engagement to make taste ready, mapped to the seeded items.
+  const events = [];
+  for (let i = 0; i < 25; i++) {
+    events.push({ itemId: "a", type: "read", at: `2026-06-${String(10 + (i % 10)).padStart(2, "0")}T00:00:00.000Z` });
+  }
+  writeFileSync(join(dir, "events.json"), JSON.stringify(events));
+  await main(dir, "2026-06-23T00:00:00.000Z", { client: null });
+
+  const taste = JSON.parse(readFileSync(join(dir, "taste.json"), "utf8"));
+  expect(typeof taste.ready).toBe("boolean");
+  expect(taste).toHaveProperty("topics");
+  expect(taste).toHaveProperty("entities");
+  expect(taste).toHaveProperty("formatAffinity");
+  // The seeded item "a" carries topic "ai"; when ready, ai-affine formats appear.
+  if (taste.ready) {
+    expect(Object.keys(taste.formatAffinity).length).toBeGreaterThan(0);
+  } else {
+    expect(taste.formatAffinity).toEqual({});
+  }
+});

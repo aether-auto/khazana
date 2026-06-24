@@ -5,3 +5,4 @@ export * from "./cluster.js";
 export * from "./taste.js";
 export * from "./rank.js";
 export * from "./curate.js";
+export * from "./format-affinity.js";
