@@ -3,7 +3,7 @@ import type { EngagementEvent } from "./io.js";
 import type { TasteProfile } from "./taste.js";
 import { DEFAULT_TASTE_OPTS } from "./taste.js";
 
-export type TastePayload = TasteProfile & { formatAffinity: Record<FormatName, number> };
+export type TastePayload = TasteProfile & { formatAffinity: Partial<Record<FormatName, number>> };
 
 const EVENT_WEIGHTS: Record<EngagementEvent["type"], number> = { open: 1, read: 3, dwell: 2 };
 const MS_PER_DAY = 86_400_000;
@@ -18,8 +18,8 @@ export function computeFormatAffinity(
   events: EngagementEvent[],
   itemsById: Map<string, FeedItem>,
   opts: FormatAffinityOpts,
-): Record<FormatName, number> {
-  if (!opts.ready) return {} as Record<FormatName, number>;
+): Partial<Record<FormatName, number>> {
+  if (!opts.ready) return {};
   const halfLifeDays = opts.halfLifeDays ?? DEFAULT_TASTE_OPTS.halfLifeDays;
   const nowMs = Date.parse(opts.now);
 
@@ -42,7 +42,7 @@ export function computeFormatAffinity(
 
   let max = 0;
   for (const v of scores.values()) if (v > max) max = v;
-  const out = {} as Record<FormatName, number>;
+  const out: Partial<Record<FormatName, number>> = {};
   if (max === 0) return out;
   for (const name of FORMAT_NAMES) {
     const v = scores.get(name);
