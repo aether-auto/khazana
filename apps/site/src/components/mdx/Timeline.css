@@ -1,0 +1,29 @@
+/* apps/site/src/components/mdx/Timeline.css */
+.tl-panel { padding: var(--s-5) var(--s-4); }
+.tl-svg { width: 100%; height: auto; display: block; }
+.tl-axis { stroke: var(--rule); stroke-width: 1; }
+.tl-tick line { stroke: var(--rule); stroke-width: 1; }
+.tl-tick-label, .tl-label, .tl-detail {
+  font-family: var(--font-mono);
+  fill: var(--ink-faint);
+}
+.tl-tick-label { font-size: 11px; text-anchor: middle; }
+.tl-label { font-size: 11px; text-anchor: middle; fill: var(--ink-dim); }
+.tl-detail { font-size: 11px; text-anchor: middle; fill: var(--accent); }
+.tl-stem { stroke: var(--rule-bright); stroke-width: 1; }
+.tl-dot { fill: var(--bg-raised); stroke: var(--editorial); stroke-width: 2; transition: r 120ms ease; }
+.tl-pt { cursor: pointer; }
+.tl-pt:focus { outline: none; }
+.tl-pt--active .tl-dot { fill: var(--accent); stroke: var(--accent); r: 6; }
+.tl-pt--active .tl-label { fill: var(--ink); }
+.tl-pt:focus-visible .tl-dot { stroke: var(--focus); }
+.tl-fallback {
+  display: none; /* hidden when SVG/JS present; shown via the no-JS path below */
+  list-style: none; margin: 0; padding: var(--s-3) 0 0;
+  font-family: var(--font-mono); font-size: var(--t-sm); color: var(--ink-dim);
+}
+.tl-fallback li { padding: var(--s-1) 0; }
+.tl-fallback-detail { color: var(--ink-faint); }
+@media (prefers-reduced-motion: reduce) {
+  .tl-dot { transition: none; }
+}
