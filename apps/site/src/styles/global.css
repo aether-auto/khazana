@@ -1,4 +1,10 @@
 @import "./tokens.css";
+/* Self-hosted display serif (Fraunces variable). $0/OFL, bundled by Vite —
+   no Google Fonts CDN. wght axis, normal + italic; latin subset via the
+   package's own unicode-range. The opsz/SOFT axes are still reachable through
+   font-variation-settings on the wght face's [100..900] weight range. */
+@import "@fontsource-variable/fraunces/wght.css";
+@import "@fontsource-variable/fraunces/wght-italic.css";
 
 *,
 *::before,
@@ -40,26 +46,51 @@ body {
   min-height: 100dvh;
 }
 
-/* faint scanline/grain overlay — atmosphere, not noise. Off in reduced-motion + light. */
+/* Grain overlay — the #1 "human-made" signal (design-patterns §2.2). A tiled
+   SVG feTurbulence noise at ~4%, fixed above the background but below content,
+   pointer-events:none. It is STATIC (no animation) so it stays on under
+   reduced-motion; it only softens in light mode where the dark grain would muddy. */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 9999;
-  opacity: 0.025;
-  background-image: repeating-linear-gradient(
-    0deg,
-    transparent 0,
-    transparent 2px,
-    var(--ink) 2px,
-    var(--ink) 3px
-  );
+  z-index: 1; /* above the fixed mesh bg (z-index:-1), below all content */
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
 }
-@media (prefers-reduced-motion: reduce), (prefers-color-scheme: light) {
+@media (prefers-color-scheme: light) {
   body::after {
-    display: none;
+    opacity: 0.03;
+    mix-blend-mode: multiply;
   }
+}
+
+/* ── Living mesh-gradient background ────────────────────────────────────
+   The WebGL canvas (MeshBackground island) renders here at z-index:-1, fixed.
+   This is the STATIC fallback gradient painted on <body>: low-contrast warm
+   pools that read as "felt, not loud". The canvas fades in over it once GL is
+   ready; under reduced-motion / no-JS / no-WebGL this gradient is all you get. */
+body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(60% 80% at 18% 8%, color-mix(in oklab, var(--accent) 7%, transparent) 0%, transparent 60%),
+    radial-gradient(55% 70% at 92% 18%, color-mix(in oklab, var(--editorial) 6%, transparent) 0%, transparent 58%),
+    radial-gradient(80% 90% at 50% 110%, color-mix(in oklab, var(--accent) 4%, transparent) 0%, transparent 55%);
+  background-attachment: fixed;
+}
+.mesh-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 900ms var(--ease-out);
+}
+.mesh-bg.is-live {
+  opacity: 1;
 }
 
 a {
@@ -106,6 +137,26 @@ img {
 .eyebrow::after {
   content: " ]";
   color: var(--ink-faint);
+}
+
+/* ── Display voice (Fraunces) ───────────────────────────────────────────
+   The editorial counterweight. Reserved for hero/feature titles + pull-quotes.
+   opsz pushed toward the display end + a soft optical wonk; tight tracking and
+   leading so the big sizes feel set, not stretched. */
+.display {
+  font-family: var(--font-display);
+  font-weight: 460;
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0;
+  line-height: var(--lh-display);
+  letter-spacing: -0.018em;
+  text-wrap: balance;
+}
+.display em,
+.display .em {
+  font-style: italic;
+  font-variation-settings: "opsz" 144, "SOFT" 4, "WONK" 1;
+  color: var(--accent);
 }
 
 /* utility: blinking block cursor */

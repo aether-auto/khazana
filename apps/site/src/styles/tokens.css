@@ -1,13 +1,14 @@
 :root {
-  /* palette — dark default */
-  --bg: #0a0a0b;
-  --bg-raised: #111113;
-  --bg-inset: #070708;
-  --ink: #e8e6df;
-  --ink-dim: #a3a097;
-  --ink-faint: #6a6862;
-  --rule: #26252b;
-  --rule-bright: #3a3942;
+  /* palette — warm dark ground (v2). Not pure-black: a touch of olive warmth
+     so the page reads "made", not "default-dark". See design-patterns.md §2.2. */
+  --bg: #0a0a08;
+  --bg-raised: #121210;
+  --bg-inset: #070705;
+  --ink: #ece6d8;
+  --ink-dim: #a6a193;
+  --ink-faint: #6c6a60;
+  --rule: #272620;
+  --rule-bright: #3b3a30;
   --accent: #ffb627;
   --accent-dim: #b8851d;
   --editorial: #c1554a;
@@ -19,8 +20,13 @@
   --font-mono: "Berkeley Mono", "JetBrains Mono", "SF Mono", ui-monospace, "IBM Plex Mono", Menlo, monospace;
   --font-read: "Iowan Old Style", "Charter", "Palatino Linotype", "Palatino", "Source Serif 4", Georgia, serif;
   --font-sans: "Söhne", ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  /* display voice — Fraunces (variable, self-hosted via fontsource). The
+     editorial counterweight to the engineered mono. Used for hero/feature
+     titles + pull-quotes only; opsz axis driven per-use via font-variation. */
+  --font-display: "Fraunces Variable", "Fraunces", "Iowan Old Style", "Charter", Georgia, serif;
 
-  /* type scale (1.25) */
+  /* type scale (1.25 chrome) + a dramatic display ramp (≈1.5) for the big
+     editorial moments — the jump must feel substantial, not incremental. */
   --t-xs: 0.75rem;
   --t-sm: 0.8125rem;
   --t-base: 1rem;
@@ -29,8 +35,11 @@
   --t-xl: 1.75rem;
   --t-2xl: 2.25rem;
   --t-3xl: 3.25rem;
+  --t-display: clamp(2.75rem, 6.5vw, 5.25rem);
+  --t-display-sm: clamp(1.9rem, 3.6vw, 2.9rem);
   --measure: 68ch;
   --lh-tight: 1.15;
+  --lh-display: 0.98;
   --lh-read: 1.62;
 
   /* spacing (8px base) */
@@ -56,6 +65,8 @@
   --dur-slow: 340ms;
   --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
   --ease-spring: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  /* physical overshoot for hover lifts / card interactions (design-patterns §2.3) */
+  --ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* liquid-glass — monochrome/amber, restrained. Gated behind :root.glass.
      `--glass` flips 0→1 when glass is on; pseudo-element sheens read it as opacity. */

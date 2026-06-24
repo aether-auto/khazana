@@ -4,6 +4,7 @@ import Wordmark from "../components/Wordmark.astro";
 import Ticker from "../components/Ticker.astro";
 import Beacon from "../components/Beacon.astro";
 import CommandPalette from "../components/cmdk/CommandPalette.tsx";
+import MeshBackground from "../components/bg/MeshBackground.tsx";
 import { ClientRouter } from "astro:transitions";
 import { CHANNELS } from "@khazana/core";
 
@@ -73,6 +74,11 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
     </script>
   </head>
   <body>
+    <!-- Living mesh-gradient background. client:only (WebGL is browser-only);
+         reduced-motion / no-WebGL fall back to the static CSS gradient on body.
+         transition:persist keeps the GL context alive across View Transitions
+         so it never re-inits (and never flashes) on navigation. -->
+    <MeshBackground client:only="react" transition:persist="mesh-bg" />
     <a class="skip-link" href="#main">Skip to content</a>
     <Ticker titles={tickerTitles} />
     <header class="topbar">
@@ -124,6 +130,13 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
 
     <CommandPalette base={base} client:idle />
     <Beacon />
+
+    <!-- v2 motion foundation: Lenis smooth scroll + GSAP/ScrollTrigger, wired to
+         the View Transitions lifecycle. Reduced-motion → native scroll, no smooth.
+         Bundled module (no CDN). -->
+    <script>
+      import "../scripts/motion-core";
+    </script>
 
     <script>
       // ── Shared scroll-reveal observer ───────────────────────────────────
@@ -187,9 +200,70 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
     position: sticky;
     top: 0;
     z-index: 50;
-    background: color-mix(in oklab, var(--bg) 88%, transparent);
+    background: color-mix(in oklab, var(--bg) 70%, transparent);
     backdrop-filter: blur(8px);
-    border-bottom: var(--hair) solid var(--rule);
+    border-bottom: var(--hair) solid transparent;
+    /* condense on scroll is a transform/opacity-only affair: we animate an
+       inner padding token via a custom prop + the inner's transform, never the
+       bar's own box. The border/blur deepen as a class flip (cheap). */
+    transition:
+      background var(--dur) var(--ease-out),
+      border-color var(--dur) var(--ease-out);
+  }
+  /* reading-progress hairline along the very top edge of the header (amber),
+     scaleX-driven by the --read-progress custom prop set in Shell's script. */
+  .topbar::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--editorial));
+    transform: scaleX(var(--read-progress, 0));
+    transform-origin: left;
+    opacity: 0;
+    transition: opacity var(--dur) var(--ease-out);
+    z-index: 1;
+  }
+  :global(html.is-scrolled) .topbar::before {
+    opacity: 0.9;
+  }
+  :global(html.is-scrolled) .topbar {
+    background: color-mix(in oklab, var(--bg) 86%, transparent);
+    border-bottom-color: var(--rule);
+  }
+  /* the inner row eases up + tightens (translate/scale only) when condensed */
+  .topbar-inner {
+    transition: transform var(--dur) var(--ease-out);
+  }
+  :global(html.is-scrolled) .topbar-inner {
+    transform: translateY(-1px) scale(0.985);
+    transform-origin: left center;
+  }
+  /* channel row tucks away gracefully on scroll — opacity + a slight lift,
+     and we clip it with a max-height that is NOT transitioned (set instantly)
+     to avoid animating layout; the fade is the perceived motion. */
+  .channels {
+    transition:
+      opacity var(--dur) var(--ease-out),
+      transform var(--dur) var(--ease-out);
+    transform-origin: top;
+  }
+  :global(html.is-scrolled) .channels {
+    opacity: 0;
+    transform: translateY(-4px);
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :global(html.is-scrolled) .channels {
+      opacity: 1;
+      transform: none;
+      pointer-events: auto;
+    }
+    :global(html.is-scrolled) .topbar-inner {
+      transform: none;
+    }
   }
   /* glass top bar: deeper blur + a faint lit top edge so content scrolls under
      it premium-ly. Falls back to the matte translucent bar where unsupported. */
