@@ -34,11 +34,13 @@ async function handleEvent(req: Request, env: Env): Promise<Response> {
 }
 
 async function handleEvents(req: Request, env: Env): Promise<Response> {
-  if (env.EXPORT_TOKEN) {
-    const auth = req.headers.get("Authorization");
-    if (auth !== `Bearer ${env.EXPORT_TOKEN}`) {
-      return json({ error: "unauthorized" }, 401, env);
-    }
+  // Fail-secure: export requires EXPORT_TOKEN to be configured.
+  if (!env.EXPORT_TOKEN) {
+    return json({ error: "EXPORT_TOKEN not configured" }, 503, env);
+  }
+  const auth = req.headers.get("Authorization");
+  if (auth !== `Bearer ${env.EXPORT_TOKEN}`) {
+    return json({ error: "unauthorized" }, 401, env);
   }
   const since = new URL(req.url).searchParams.get("since");
   const { keys } = await env.KV.list({ prefix: "evt:" });

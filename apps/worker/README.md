@@ -11,9 +11,9 @@ Cloudflare Workers + KV **free tier**. Deployed with one CLI tool: Wrangler.
   `@khazana/core`; stores it in KV under `evt:<deviceId|anon>:<at>:<uuid>`;
   returns `202`. Invalid bodies → `400`.
 - `GET /events[?since=<ISO>]` → returns stored `EngagementEvent[]` sorted by `at`
-  ascending. Requires `Authorization: Bearer <EXPORT_TOKEN>` when the
-  `EXPORT_TOKEN` secret is set. The nightly GitHub Action fetches this and writes
-  `data/events.json` for curate.
+  ascending. Requires `Authorization: Bearer <EXPORT_TOKEN>`; returns `503` until
+  `EXPORT_TOKEN` is set (run `wrangler secret put EXPORT_TOKEN`). The nightly
+  GitHub Action fetches this and writes `data/events.json` for curate.
 - `GET /health` → `200 { ok: true }`.
 
 ## One-time setup (founder runs these)

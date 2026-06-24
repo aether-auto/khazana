@@ -82,6 +82,12 @@ test("POST /event with non-JSON body returns 400", async () => {
   expect(res.status).toBe(400);
 });
 
+test("GET /events returns 503 when EXPORT_TOKEN is not configured", async () => {
+  const res = await handleRequest(new Request("https://w.dev/events"), makeEnv());
+  expect(res.status).toBe(503);
+  expect(await res.json()).toEqual({ error: "EXPORT_TOKEN not configured" });
+});
+
 test("GET /events returns stored events sorted by at ascending", async () => {
   const kv = createFakeKV({
     "evt:anon:2026-06-23T02:00:00.000Z:b": JSON.stringify({
@@ -91,7 +97,11 @@ test("GET /events returns stored events sorted by at ascending", async () => {
       itemId: "i1", type: "open", at: "2026-06-23T01:00:00.000Z",
     }),
   });
-  const res = await handleRequest(new Request("https://w.dev/events"), { KV: kv });
+  const env = makeEnv({ KV: kv, EXPORT_TOKEN: "secret" });
+  const res = await handleRequest(
+    new Request("https://w.dev/events", { headers: { Authorization: "Bearer secret" } }),
+    env,
+  );
   expect(res.status).toBe(200);
   const events = (await res.json()) as EngagementEvent[];
   expect(events.map((e) => e.itemId)).toEqual(["i1", "i2"]);
@@ -107,8 +117,10 @@ test("GET /events?since filters out earlier events", async () => {
     }),
   });
   const res = await handleRequest(
-    new Request("https://w.dev/events?since=2026-06-23T02:00:00.000Z"),
-    { KV: kv },
+    new Request("https://w.dev/events?since=2026-06-23T02:00:00.000Z", {
+      headers: { Authorization: "Bearer secret" },
+    }),
+    { KV: kv, EXPORT_TOKEN: "secret" },
   );
   const events = (await res.json()) as EngagementEvent[];
   expect(events.map((e) => e.itemId)).toEqual(["new"]);
@@ -121,7 +133,10 @@ test("GET /events ignores malformed stored values", async () => {
       itemId: "ok", type: "open", at: "2026-06-23T02:00:00.000Z",
     }),
   });
-  const res = await handleRequest(new Request("https://w.dev/events"), { KV: kv });
+  const res = await handleRequest(
+    new Request("https://w.dev/events", { headers: { Authorization: "Bearer secret" } }),
+    { KV: kv, EXPORT_TOKEN: "secret" },
+  );
   const events = (await res.json()) as EngagementEvent[];
   expect(events.map((e) => e.itemId)).toEqual(["ok"]);
 });
