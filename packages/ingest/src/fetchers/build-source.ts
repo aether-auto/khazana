@@ -23,7 +23,7 @@ export function buildSource(entry: SourceEntry, fetchFn: FetchFn = defaultFetch)
     type: entry.type,
     channels: entry.channels,
     async fetch(ctx: FetchContext): Promise<FeedItem[]> {
-      const headers = entry.type === "reddit" ? { "User-Agent": USER_AGENT } : {};
+      const headers: Record<string, string> = entry.type === "reddit" ? { "User-Agent": USER_AGENT } : {};
       const res = await fetchFn(entry.url, { headers });
       if (!res.ok) throw new Error(`${entry.id}: HTTP ${res.status}`);
       const items =
