@@ -1,0 +1,64 @@
+---
+import Shell from "../layouts/Shell.astro";
+import IdeaCard from "../components/IdeaCard.astro";
+import { loadCurated, selectIdeas, tickerTitles } from "../lib/feed.js";
+import { dataDir } from "../lib/data.js";
+
+const now = new Date().toISOString();
+const all = loadCurated(dataDir());
+const ideas = selectIdeas(all);
+const ticker = tickerTitles(ideas, 8);
+---
+
+<Shell title="khazana — workshop" active="workshop" tickerTitles={ticker}>
+  <header class="ws-head">
+    <p class="eyebrow">workshop</p>
+    <h1 class="ws-h1">things worth building</h1>
+    <p class="ws-sub">
+      Buildable ideas mined from the feed — DIY, 3D printing, IoT, embedded, AI
+      projects. A maker's pinboard.
+    </p>
+  </header>
+
+  {
+    ideas.length > 0 ? (
+      <section class="ws-board">
+        {ideas.map((item) => (
+          <IdeaCard item={item} now={now} />
+        ))}
+      </section>
+    ) : (
+      <p class="ws-empty">No ideas in the workshop yet — check back after the next ingest.</p>
+    )
+  }
+</Shell>
+
+<style>
+  .ws-head {
+    margin-bottom: var(--s-8);
+    max-width: var(--measure);
+  }
+  .ws-h1 {
+    font-family: var(--font-sans);
+    font-size: var(--t-2xl);
+    line-height: var(--lh-tight);
+    letter-spacing: -0.02em;
+    margin: 0 0 var(--s-3);
+    font-weight: 600;
+  }
+  .ws-sub {
+    font-family: var(--font-read);
+    color: var(--ink-dim);
+    font-size: var(--t-md);
+    margin: 0;
+  }
+  .ws-board {
+    columns: 3 18rem;
+    column-gap: var(--s-5);
+  }
+  .ws-empty {
+    color: var(--ink-faint);
+    font-family: var(--font-mono);
+    padding: var(--s-8) 0;
+  }
+</style>

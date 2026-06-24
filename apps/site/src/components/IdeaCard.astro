@@ -1,0 +1,103 @@
+---
+import type { FeedItem } from "@khazana/core";
+import ChannelChip from "./ChannelChip.astro";
+import SourceBadge from "./SourceBadge.astro";
+import Metric from "./Metric.astro";
+import TimeAgo from "./TimeAgo.astro";
+
+interface Props {
+  item: FeedItem;
+  now: string;
+}
+const { item, now } = Astro.props;
+const image = item.media.find((m) => m.type === "image");
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const channelHref = (c: string) => `${base}/?channel=${c}`;
+---
+
+<article class="idea" data-channels={item.topics.join(" ")}>
+  {
+    image && (
+      <a class="idea-media" href={item.url} rel="noopener noreferrer" data-track="open" data-item-id={item.id}>
+        <img src={image.url} alt={image.alt ?? item.title} loading="lazy" />
+      </a>
+    )
+  }
+  <div class="idea-body">
+    <div class="idea-meta">
+      <SourceBadge source={item.source} sourceType={item.sourceType} trustScore={item.trustScore} />
+      <TimeAgo iso={item.publishedAt} now={now} />
+    </div>
+    <h2 class="idea-title">
+      <a href={item.url} rel="noopener noreferrer" data-track="open" data-item-id={item.id}>{item.title}</a>
+    </h2>
+    {item.summary && <p class="idea-summary">{item.summary}</p>}
+    <div class="idea-foot">
+      {item.topics.slice(0, 3).map((c) => <ChannelChip channel={c} href={channelHref(c)} />)}
+      <Metric score={item.metrics?.score} comments={item.metrics?.comments} />
+    </div>
+  </div>
+</article>
+
+<style>
+  .idea {
+    break-inside: avoid;
+    margin-bottom: var(--s-5);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-md);
+    background: var(--bg-raised);
+    overflow: hidden;
+    transition: border-color 0.18s ease;
+  }
+  .idea:hover {
+    border-color: var(--rule-bright);
+  }
+  .idea-media {
+    display: block;
+  }
+  .idea-media img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    border-bottom: var(--hair) solid var(--rule);
+  }
+  .idea-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    padding: var(--s-4);
+  }
+  .idea-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--s-2);
+  }
+  .idea-title {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: var(--t-base);
+    line-height: var(--lh-tight);
+    font-weight: 560;
+  }
+  .idea-title a {
+    color: var(--ink);
+  }
+  .idea-title a:hover {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .idea-summary {
+    margin: 0;
+    font-family: var(--font-read);
+    font-size: var(--t-sm);
+    color: var(--ink-dim);
+    line-height: 1.45;
+  }
+  .idea-foot {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    flex-wrap: wrap;
+  }
+</style>
