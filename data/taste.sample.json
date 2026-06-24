@@ -1,0 +1,29 @@
+{
+  "ready": true,
+  "topics": {
+    "ai": 1.0,
+    "tech": 0.82,
+    "data-science": 0.64,
+    "history": 0.48,
+    "geopolitics": 0.39,
+    "quantum": 0.27,
+    "finance": 0.21,
+    "science": 0.18
+  },
+  "entities": {
+    "OpenAI": 1.0,
+    "Netflix": 0.71,
+    "NVIDIA": 0.66,
+    "Envoy": 0.4,
+    "Leningrad": 0.33,
+    "ECB": 0.22
+  },
+  "formatAffinity": {
+    "dispatch": 1.0,
+    "teardown": 0.78,
+    "primer": 0.55,
+    "field-notes": 0.41,
+    "chronicle": 0.3,
+    "build-log": 0.19
+  }
+}

@@ -6,3 +6,9 @@ export function dataDir(): string {
   const here = dirname(fileURLToPath(import.meta.url)); // apps/site/src/lib
   return join(here, "..", "..", "..", "..", "data", "feed");
 }
+
+/** Absolute path to the repo `data/` root (parent of `data/feed`). */
+export function repoDataDir(): string {
+  const here = dirname(fileURLToPath(import.meta.url)); // apps/site/src/lib
+  return join(here, "..", "..", "..", "..", "data");
+}

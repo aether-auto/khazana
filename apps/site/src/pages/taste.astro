@@ -1,0 +1,208 @@
+---
+import Shell from "../layouts/Shell.astro";
+import { loadTaste, topN, formatBars } from "../lib/taste.js";
+import { repoDataDir } from "../lib/data.js";
+import { FORMATS } from "@khazana/core";
+
+const taste = loadTaste(repoDataDir());
+const topics = topN(taste.topics, 10);
+const entities = topN(taste.entities, 10);
+const formats = formatBars(taste.formatAffinity);
+
+const pct = (v: number) => `${Math.round(v * 100)}%`;
+const fmtName = (label: string) =>
+  label in FORMATS ? FORMATS[label as keyof typeof FORMATS].name : label;
+---
+
+<Shell title="khazana — taste" active="taste">
+  <header class="taste-head">
+    <p class="eyebrow">taste</p>
+    <h1 class="taste-h1">what khazana thinks you like</h1>
+    <p class="taste-sub">
+      A transparent read on your reading — topics and entities you return to, and
+      the formats you spend time in. Computed locally from your engagement; nothing
+      leaves your device.
+    </p>
+  </header>
+
+  {
+    !taste.ready ? (
+      <section class="taste-learning">
+        <p class="taste-learning-h">still learning</p>
+        <p class="taste-learning-b">
+          khazana needs more reading history before it can model your taste. Open a
+          few reads and come back — affinities appear once there's enough signal.
+        </p>
+      </section>
+    ) : (
+      <div class="taste-cols">
+        <section class="taste-block" aria-labelledby="t-topics">
+          <h2 id="t-topics" class="taste-block-h">topic affinity</h2>
+          {topics.length === 0 ? (
+            <p class="taste-none">no topic signal yet</p>
+          ) : (
+            <ul class="bars">
+              {topics.map((b) => (
+                <li class="bar-row">
+                  <span class="bar-label">{b.label}</span>
+                  <span class="bar-track">
+                    <span class="bar-fill bar-fill--topic" style={`width:${pct(b.value)}`} />
+                  </span>
+                  <span class="bar-val">{pct(b.value)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section class="taste-block" aria-labelledby="t-entities">
+          <h2 id="t-entities" class="taste-block-h">entity affinity</h2>
+          {entities.length === 0 ? (
+            <p class="taste-none">no entity signal yet</p>
+          ) : (
+            <ul class="bars">
+              {entities.map((b) => (
+                <li class="bar-row">
+                  <span class="bar-label">{b.label}</span>
+                  <span class="bar-track">
+                    <span class="bar-fill bar-fill--entity" style={`width:${pct(b.value)}`} />
+                  </span>
+                  <span class="bar-val">{pct(b.value)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section class="taste-block taste-block--wide" aria-labelledby="t-formats">
+          <h2 id="t-formats" class="taste-block-h">how you like to read</h2>
+          {formats.length === 0 ? (
+            <p class="taste-none">no format signal yet</p>
+          ) : (
+            <ul class="bars">
+              {formats.map((b) => (
+                <li class="bar-row">
+                  <span class="bar-label">{fmtName(b.label)}</span>
+                  <span class="bar-track">
+                    <span class="bar-fill bar-fill--format" style={`width:${pct(b.value)}`} />
+                  </span>
+                  <span class="bar-val">{pct(b.value)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+    )
+  }
+</Shell>
+
+<style>
+  .taste-head {
+    margin-bottom: var(--s-6);
+    max-width: var(--measure);
+  }
+  .taste-h1 {
+    font-family: var(--font-sans);
+    font-size: var(--t-2xl);
+    line-height: var(--lh-tight);
+    letter-spacing: -0.02em;
+    margin: 0 0 var(--s-3);
+    font-weight: 600;
+  }
+  .taste-sub {
+    color: var(--ink-dim);
+    font-size: var(--t-sm);
+    margin: 0;
+  }
+  .taste-learning {
+    border: var(--hair) solid var(--rule);
+    border-left: 2px solid var(--accent);
+    border-radius: var(--r-md);
+    background: var(--bg-raised);
+    padding: var(--s-5);
+    max-width: var(--measure);
+  }
+  .taste-learning-h {
+    font-family: var(--font-mono);
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: var(--t-xs);
+    margin: 0 0 var(--s-2);
+  }
+  .taste-learning-b {
+    color: var(--ink-dim);
+    margin: 0;
+    font-size: var(--t-sm);
+  }
+  .taste-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s-6) var(--s-8);
+  }
+  .taste-block--wide {
+    grid-column: 1 / -1;
+  }
+  .taste-block-h {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    margin: 0 0 var(--s-4);
+    padding-bottom: var(--s-2);
+    border-bottom: var(--hair) solid var(--rule);
+  }
+  .bars {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+  }
+  .bar-row {
+    display: grid;
+    grid-template-columns: 9rem 1fr 2.5rem;
+    align-items: center;
+    gap: var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--t-sm);
+  }
+  .bar-label {
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .bar-track {
+    height: 0.5rem;
+    background: var(--bg-inset);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-sm);
+    overflow: hidden;
+  }
+  .bar-fill {
+    display: block;
+    height: 100%;
+  }
+  .bar-fill--topic { background: var(--accent); }
+  .bar-fill--entity { background: var(--editorial); }
+  .bar-fill--format { background: var(--good); }
+  .bar-val {
+    color: var(--ink-faint);
+    font-size: var(--t-xs);
+    text-align: right;
+  }
+  .taste-none {
+    color: var(--ink-faint);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    margin: 0;
+  }
+  @media (max-width: 640px) {
+    .taste-cols { grid-template-columns: 1fr; }
+    .bar-row { grid-template-columns: 7rem 1fr 2.5rem; }
+  }
+</style>
