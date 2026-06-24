@@ -11,7 +11,7 @@ const ticker = tickerTitles(ideas, 8);
 ---
 
 <Shell title="khazana — workshop" active="workshop" tickerTitles={ticker}>
-  <header class="ws-head">
+  <header class="ws-head" data-reveal>
     <p class="eyebrow">workshop</p>
     <h1 class="ws-h1">things worth building</h1>
     <p class="ws-sub">
@@ -23,8 +23,8 @@ const ticker = tickerTitles(ideas, 8);
   {
     ideas.length > 0 ? (
       <section class="ws-board">
-        {ideas.map((item) => (
-          <IdeaCard item={item} now={now} />
+        {ideas.map((item, i) => (
+          <IdeaCard item={item} now={now} revealDelay={Math.min(i, 6) * 45} />
         ))}
       </section>
     ) : (

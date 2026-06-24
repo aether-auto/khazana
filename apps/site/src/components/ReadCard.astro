@@ -6,19 +6,20 @@ interface Props {
   format: string;
   summary: string;
   publishedAt: Date;
+  revealDelay?: number;
 }
-const { slug, title, format, summary, publishedAt } = Astro.props;
+const { slug, title, format, summary, publishedAt, revealDelay = 0 } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const date = publishedAt.toISOString().slice(0, 10);
 ---
 
-<article class="read-card">
+<article class="read-card" data-reveal style={`--reveal-delay:${revealDelay}ms`}>
   <a class="read-link" href={`${base}/reads/${slug}`}>
     <div class="read-top">
       <FormatBadge format={format} />
       <time class="read-date" datetime={publishedAt.toISOString()}>{date}</time>
     </div>
-    <h2 class="read-title">{title}</h2>
+    <h2 class="read-title" transition:name={`read-title-${slug}`}>{title}</h2>
     <p class="read-summary">{summary}</p>
     <span class="read-cta" aria-hidden="true">read →</span>
   </a>
@@ -26,20 +27,57 @@ const date = publishedAt.toISOString().slice(0, 10);
 
 <style>
   .read-card {
+    position: relative;
     border: var(--hair) solid var(--rule);
     border-radius: var(--r-md);
     background: var(--bg-raised);
-    transition: border-color 0.18s ease;
+    overflow: hidden;
+    transition:
+      border-color var(--dur) var(--ease-out),
+      transform var(--dur) var(--ease-out);
   }
   .read-card:hover {
     border-color: var(--editorial);
+    transform: translateY(-2px) scale(1.005);
+  }
+  .read-card:active {
+    transform: translateY(0) scale(1);
+  }
+  /* specular sheen sweep — diagonal amber-tinted band translated across on
+     hover (transform only). Opacity gated by --glass so it vanishes when
+     glass is off. */
+  .read-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      var(--glass-sheen) 48%,
+      transparent 62%
+    );
+    opacity: calc(var(--glass) * 1);
+    transform: translateX(-120%);
+    transition: transform var(--dur-slow) var(--ease-out);
+  }
+  .read-card:hover::after {
+    transform: translateX(120%);
   }
   .read-link {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     gap: var(--s-3);
     padding: var(--s-5);
     height: 100%;
+  }
+  .read-cta {
+    transition: transform var(--dur) var(--ease-out);
+  }
+  .read-card:hover .read-cta {
+    transform: translateX(3px);
   }
   .read-link:hover {
     text-decoration: none;

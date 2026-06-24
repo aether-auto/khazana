@@ -9,7 +9,7 @@ const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
 ---
 
 <Shell title="khazana — reads" active="reads">
-  <header class="reads-head">
+  <header class="reads-head" data-reveal>
     <p class="eyebrow">reads</p>
     <h1 class="reads-h1">long-form, in your voice</h1>
     <p class="reads-sub">
@@ -20,13 +20,14 @@ const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
 
   <section class="reads-grid">
     {
-      posts.map((post) => (
+      posts.map((post, i) => (
         <ReadCard
           slug={post.id}
           title={post.data.title}
           format={post.data.format}
           summary={post.data.summary}
           publishedAt={post.data.publishedAt}
+          revealDelay={Math.min(i, 6) * 60}
         />
       ))
     }

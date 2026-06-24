@@ -32,6 +32,24 @@
   letter-spacing: 0.06em;
   color: var(--ink-faint);
 }
+/* Tasteful entrance for MDX figures as they scroll into view. Uses a scroll
+   view-timeline (no JS, no IntersectionObserver, no island-hydration race) —
+   transform/opacity only. Progressive: browsers without animation-timeline
+   just show the figure. Disabled under reduced-motion. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .mdx-figure {
+      animation: mdx-figure-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+      will-change: transform, opacity;
+    }
+    @keyframes mdx-figure-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: none; }
+    }
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .mdx-figure :global(*) { transition: none !important; animation: none !important; }
 }

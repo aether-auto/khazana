@@ -8,13 +8,21 @@ import TimeAgo from "./TimeAgo.astro";
 interface Props {
   item: FeedItem;
   now: string;
+  /** Scroll-reveal stagger delay in ms (capped by the caller). */
+  revealDelay?: number;
 }
-const { item, now } = Astro.props;
+const { item, now, revealDelay = 0 } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const channelHref = (c: string) => `${base}/?channel=${c}`;
 ---
 
-<article class="card" data-channels={item.topics.join(" ")} data-kind={item.kind}>
+<article
+  class="card"
+  data-channels={item.topics.join(" ")}
+  data-kind={item.kind}
+  data-reveal
+  style={`--reveal-delay:${revealDelay}ms`}
+>
   <div class="card-meta">
     <SourceBadge source={item.source} sourceType={item.sourceType} trustScore={item.trustScore} />
     <TimeAgo iso={item.publishedAt} now={now} />
@@ -39,11 +47,33 @@ const channelHref = (c: string) => `${base}/?channel=${c}`;
 
 <style>
   .card {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: var(--s-3);
-    padding: var(--s-5) 0;
+    padding: var(--s-5) 0 var(--s-5) 0;
     border-bottom: var(--hair) solid var(--rule);
+    transition: transform var(--dur) var(--ease-out);
+  }
+  /* hover: a thin amber accent grows in from the left edge (transform-scaleY,
+     no layout shift) + the row eases a hair to the right. */
+  .card::before {
+    content: "";
+    position: absolute;
+    left: calc(-1 * var(--s-3));
+    top: var(--s-5);
+    bottom: var(--s-5);
+    width: 2px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform var(--dur) var(--ease-out);
+  }
+  .card:hover::before {
+    transform: scaleY(1);
+  }
+  .card:hover {
+    transform: translateX(2px);
   }
   .card-meta {
     display: flex;
@@ -61,6 +91,7 @@ const channelHref = (c: string) => `${base}/?channel=${c}`;
   }
   .card-title a {
     color: var(--ink);
+    transition: color var(--dur-fast) var(--ease-out);
   }
   .card-title a:hover {
     color: var(--accent);

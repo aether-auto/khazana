@@ -8,14 +8,15 @@ import TimeAgo from "./TimeAgo.astro";
 interface Props {
   item: FeedItem;
   now: string;
+  revealDelay?: number;
 }
-const { item, now } = Astro.props;
+const { item, now, revealDelay = 0 } = Astro.props;
 const image = item.media.find((m) => m.type === "image");
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const channelHref = (c: string) => `${base}/?channel=${c}`;
 ---
 
-<article class="idea" data-channels={item.topics.join(" ")}>
+<article class="idea" data-channels={item.topics.join(" ")} data-reveal style={`--reveal-delay:${revealDelay}ms`}>
   {
     image && (
       <a class="idea-media" href={item.url} rel="noopener noreferrer" data-track="open" data-item-id={item.id}>
@@ -41,25 +42,57 @@ const channelHref = (c: string) => `${base}/?channel=${c}`;
 
 <style>
   .idea {
+    position: relative;
     break-inside: avoid;
     margin-bottom: var(--s-5);
     border: var(--hair) solid var(--rule);
     border-radius: var(--r-md);
     background: var(--bg-raised);
     overflow: hidden;
-    transition: border-color 0.18s ease;
+    transition:
+      border-color var(--dur) var(--ease-out),
+      transform var(--dur) var(--ease-out);
   }
   .idea:hover {
     border-color: var(--rule-bright);
+    transform: translateY(-2px) scale(1.005);
+  }
+  .idea:active {
+    transform: translateY(0) scale(1);
+  }
+  /* sheen sweep (glass-gated) */
+  .idea::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      var(--glass-sheen) 48%,
+      transparent 62%
+    );
+    opacity: calc(var(--glass) * 1);
+    transform: translateX(-120%);
+    transition: transform var(--dur-slow) var(--ease-out);
+  }
+  .idea:hover::after {
+    transform: translateX(120%);
   }
   .idea-media {
     display: block;
+    overflow: hidden;
   }
   .idea-media img {
     width: 100%;
     aspect-ratio: 16 / 10;
     object-fit: cover;
     border-bottom: var(--hair) solid var(--rule);
+    transition: transform var(--dur-slow) var(--ease-out);
+  }
+  .idea:hover .idea-media img {
+    transform: scale(1.03);
   }
   .idea-body {
     display: flex;

@@ -18,7 +18,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 ---
 
 <Shell title="khazana — feed" active="feed" tickerTitles={ticker}>
-  <header class="feed-head">
+  <header class="feed-head" data-reveal>
     <p class="eyebrow">feed</p>
     <h1 class="feed-h1">the signal, ranked</h1>
     <div class="filters" role="group" aria-label="Filter by channel">
@@ -28,7 +28,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   </header>
 
   <section class="feed-list" aria-live="polite">
-    {items.map((item) => <FeedCard item={item} now={now} />)}
+    {items.map((item, i) => <FeedCard item={item} now={now} revealDelay={Math.min(i, 6) * 45} />)}
     <p class="empty" hidden>No items in this channel yet.</p>
   </section>
 </Shell>
@@ -57,11 +57,19 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     border: var(--hair) solid var(--rule);
     border-radius: var(--r-sm);
     padding: 0.15em 0.55em;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
   }
   .filter:hover {
     color: var(--accent);
     text-decoration: none;
     border-color: var(--rule-bright);
+    transform: translateY(-1px);
+  }
+  .filter:active {
+    transform: translateY(0);
   }
   .filter.is-active {
     color: var(--bg);

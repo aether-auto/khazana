@@ -16,6 +16,9 @@ const intent = meta?.intent ?? "";
 
 <style>
   .fmt {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
     font-family: var(--font-mono);
     font-size: var(--t-xs);
     text-transform: uppercase;
@@ -25,6 +28,26 @@ const intent = meta?.intent ?? "";
     border-radius: var(--r-sm);
     padding: 0.12em 0.5em;
     white-space: nowrap;
+  }
+  /* thin diagonal specular sheen (glass-gated) sweeping on hover of the
+     enclosing card/link — transform-translated pseudo, no bg thrash. */
+  .fmt::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      105deg,
+      transparent 35%,
+      var(--glass-sheen) 50%,
+      transparent 65%
+    );
+    opacity: calc(var(--glass) * 1);
+    transform: translateX(-130%);
+    transition: transform var(--dur-slow) var(--ease-out);
+  }
+  .fmt:hover::after {
+    transform: translateX(130%);
   }
   .fmt-bracket {
     color: color-mix(in oklab, var(--editorial) 70%, transparent);

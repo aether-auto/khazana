@@ -15,7 +15,7 @@ const fmtName = (label: string) =>
 ---
 
 <Shell title="khazana — taste" active="taste">
-  <header class="taste-head">
+  <header class="taste-head" data-reveal>
     <p class="eyebrow">taste</p>
     <h1 class="taste-h1">what khazana thinks you like</h1>
     <p class="taste-sub">
@@ -36,7 +36,7 @@ const fmtName = (label: string) =>
       </section>
     ) : (
       <div class="taste-cols">
-        <section class="taste-block" aria-labelledby="t-topics">
+        <section class="taste-block" aria-labelledby="t-topics" data-reveal>
           <h2 id="t-topics" class="taste-block-h">topic affinity</h2>
           {topics.length === 0 ? (
             <p class="taste-none">no topic signal yet</p>
@@ -55,7 +55,7 @@ const fmtName = (label: string) =>
           )}
         </section>
 
-        <section class="taste-block" aria-labelledby="t-entities">
+        <section class="taste-block" aria-labelledby="t-entities" data-reveal style="--reveal-delay:80ms">
           <h2 id="t-entities" class="taste-block-h">entity affinity</h2>
           {entities.length === 0 ? (
             <p class="taste-none">no entity signal yet</p>
@@ -74,7 +74,7 @@ const fmtName = (label: string) =>
           )}
         </section>
 
-        <section class="taste-block taste-block--wide" aria-labelledby="t-formats">
+        <section class="taste-block taste-block--wide" aria-labelledby="t-formats" data-reveal style="--reveal-delay:160ms">
           <h2 id="t-formats" class="taste-block-h">how you like to read</h2>
           {formats.length === 0 ? (
             <p class="taste-none">no format signal yet</p>
@@ -186,6 +186,17 @@ const fmtName = (label: string) =>
   .bar-fill {
     display: block;
     height: 100%;
+    transform-origin: left;
+  }
+  /* When the block reveals, grow the fill in (transform-scaleX, GPU-cheap).
+     No-JS / reduced-motion: fills render at full width immediately. */
+  :global(html.reveal-ready) .taste-block[data-reveal] .bar-fill {
+    transform: scaleX(0);
+    transition: transform var(--dur-slow) var(--ease-out);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  :global(html.reveal-ready) .taste-block[data-reveal].is-in .bar-fill {
+    transform: scaleX(1);
   }
   .bar-fill--topic { background: var(--accent); }
   .bar-fill--entity { background: var(--editorial); }
