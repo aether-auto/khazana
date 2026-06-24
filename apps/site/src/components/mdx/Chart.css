@@ -1,0 +1,23 @@
+/* apps/site/src/components/mdx/Chart.css */
+.chart-panel { padding: var(--s-4); }
+.chart-host { width: 100%; min-height: 1px; }
+.chart-host:empty + .chart-fallback { display: block; } /* show fallback pre-hydration */
+.chart-host:not(:empty) + .chart-fallback { display: none; } /* hide once Plot mounts */
+.chart-fallback {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--ink-faint);
+  padding: var(--s-4) 0;
+}
+/* Style Plot's emitted SVG to the terminal aesthetic. */
+.chart-host :global(svg) { color: var(--ink-dim); }
+.chart-host :global(svg [aria-label="x-axis tick label"]),
+.chart-host :global(svg [aria-label="y-axis tick label"]) {
+  font-family: var(--font-mono);
+  fill: var(--ink-faint);
+}
+.chart-host :global(.plot-d6e2ef-swatches) { /* Plot legend */
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--ink-faint);
+}

@@ -11,28 +11,26 @@ sources:
     url: "https://netflixtechblog.com/rebuilding-the-edge-tier"
 ---
 
-import { Annotation } from "../../components/mdx";
+import { Annotation, Chart } from "../../components/mdx";
 
 Inference at the <Annotation client:load term="edge" note="The network edge: compute physically close to users — CDN POPs, on-device NPUs — rather than a central datacenter." /> is getting cheap.
 
+<Chart
+  client:visible
+  mark="line"
+  x="month"
+  y="value"
+  series="tier"
+  height={300}
+  caption="Marginal inference cost (placeholder)"
+  data={[
+    { month: "2025-09", value: 1.2, tier: "datacenter" },
+    { month: "2026-06", value: 0.85, tier: "datacenter" },
+    { month: "2025-09", value: 3.1, tier: "edge-npu" },
+    { month: "2026-06", value: 0.6, tier: "edge-npu" }
+  ]}
+/>
+
 Three things happened this week that look unrelated until you line them up.
 
-First, a research paper argued that the routing inside mixture-of-experts models
-is doing something subtler than load balancing — it's reproducing a *curriculum*,
-teaching the model easy tokens before hard ones. That makes these models cheaper
-to run well, which matters most where compute is scarce.
-
-Second, the marginal cost of inference on a commodity edge NPU dropped below a
-threshold that a year ago looked like a 2028 problem. Cheap inference at the edge
-changes where intelligence lives.
-
-Third — and quietest — an engineering team collapsed three network hops into one
-programmable edge tier and cut tail latency by a factor of five. Not an AI story
-on its face. But it's the same story: the smart part of the system is moving
-*outward*, toward the user, away from the center.
-
-The throughline is economics, not novelty. When the cost curve bends, the
-architecture follows.
-
-{/* SEAM (P5B): interactive Chart + scroll-driven Scrolly steps mount here.
-     In P5 the dispatch reads as clean long-form prose. */}
+{/* SEAM (P5B): T7 finalizes this post fully */}
