@@ -14,3 +14,5 @@ export { default as Scrolly, ScrollyStep } from "./Scrolly.js";
 export type { ScrollyProps, ScrollyStepProps } from "./Scrolly.js";
 export { default as RunnableCode } from "./RunnableCode.js";
 export type { RunnableCodeProps } from "./RunnableCode.js";
+export { default as Map } from "./Map.js";
+export type { MapProps } from "./Map.js";

@@ -1,0 +1,8 @@
+/* apps/site/src/components/mdx/Map.css */
+.map-panel { padding: var(--s-3); }
+.map-readout { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--ink-dim); padding: var(--s-2) var(--s-2) var(--s-3); }
+.map-svg { width: 100%; height: auto; display: block; background: var(--bg-inset); border-radius: var(--r-sm); }
+.map-country { stroke: var(--rule); stroke-width: 0.4; transition: fill 120ms ease; outline: none; }
+.map-country--hover { stroke: var(--accent); stroke-width: 0.8; }
+.map-country:focus-visible { stroke: var(--focus); stroke-width: 1; }
+@media (prefers-reduced-motion: reduce) { .map-country { transition: none; } }
