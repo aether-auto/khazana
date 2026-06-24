@@ -5,6 +5,7 @@ import Ticker from "../components/Ticker.astro";
 import Beacon from "../components/Beacon.astro";
 import CommandPalette from "../components/cmdk/CommandPalette.tsx";
 import MeshBackground from "../components/bg/MeshBackground.tsx";
+import NavRail from "../components/header/NavRail.tsx";
 import { ClientRouter } from "astro:transitions";
 import { CHANNELS } from "@khazana/core";
 
@@ -85,20 +86,18 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
       <div class="topbar-inner">
         <Wordmark />
         <nav class="nav" aria-label="Surfaces">
-          {
-            nav.map((n) => (
-              <a
-                class:list={["nav-link", { current: active === n.id }]}
-                href={n.href}
-                aria-current={active === n.id ? "page" : undefined}
-              >
-                {n.label}
-              </a>
-            ))
-          }
+          <NavRail items={nav} active={active} client:load />
         </nav>
-        <button class="cmdk" type="button" aria-label="Open command palette" aria-keyshortcuts="Meta+K Control+K">
-          <span class="cmdk-keys">⌘K</span>
+        <button
+          class="cmdk"
+          type="button"
+          data-magnetic
+          aria-label="Open command palette"
+          aria-keyshortcuts="Meta+K Control+K"
+        >
+          <span class="cmdk-icon" aria-hidden="true">⌘</span>
+          <span class="cmdk-label">command</span>
+          <kbd class="cmdk-keys" aria-hidden="true">⌘K</kbd>
         </button>
       </div>
       <nav class="channels" aria-label="Channels">
@@ -136,6 +135,7 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
          Bundled module (no CDN). -->
     <script>
       import "../scripts/motion-core";
+      import "../scripts/magnetic-hover";
     </script>
 
     <script>
@@ -285,77 +285,64 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
     gap: var(--s-5);
     padding: var(--s-3) var(--s-5);
   }
+  /* .nav is now just the right-aligned flex slot; the NavRail island owns the
+     tab styling + sliding indicator (see header/NavRail.css). */
   .nav {
     display: flex;
-    gap: var(--s-4);
     margin-left: auto;
-    font-size: var(--t-sm);
   }
-  .nav-link {
-    position: relative;
-    color: var(--ink-dim);
-    text-transform: lowercase;
-    letter-spacing: 0.02em;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-  .nav-link::before {
-    content: "/";
-    color: var(--ink-faint);
-    margin-right: 0.15em;
-  }
-  /* underline-sweep via transform-scaleX (no width/layout thrash) */
-  .nav-link::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -0.25em;
-    height: var(--hair);
-    background: currentColor;
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform var(--dur) var(--ease-out);
-  }
-  .nav-link:hover {
-    color: var(--ink);
-    text-decoration: none;
-  }
-  .nav-link:hover::after,
-  .nav-link:focus-visible::after {
-    transform: scaleX(1);
-  }
-  .nav-link.current {
-    color: var(--accent);
-  }
-  .nav-link.current::after {
-    transform: scaleX(1);
-    transform-origin: left;
-  }
+  /* ⌘K — prominent, crafted trigger. Magnetic (data-magnetic, header script).
+     A faint amber wash + lit edge so it reads as the primary affordance. */
   .cmdk {
     flex: none;
-    background: var(--bg-raised);
-    border: var(--hair) solid var(--rule);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    background: color-mix(in oklab, var(--accent) 7%, var(--bg-raised));
+    border: var(--hair) solid color-mix(in oklab, var(--accent) 22%, var(--rule));
     border-radius: var(--r-md);
-    color: var(--ink-faint);
+    color: var(--ink-dim);
     font-family: var(--font-mono);
     font-size: var(--t-xs);
-    padding: var(--s-1) var(--s-3);
+    padding: var(--s-2) var(--s-3);
     cursor: pointer;
+    will-change: transform;
     transition:
       color var(--dur-fast) var(--ease-out),
       border-color var(--dur-fast) var(--ease-out),
-      transform var(--dur-fast) var(--ease-out);
+      background var(--dur-fast) var(--ease-out),
+      transform var(--dur) var(--ease-overshoot);
   }
   .cmdk:hover {
-    color: var(--ink-dim);
-    border-color: var(--rule-bright);
-    transform: translateY(-1px);
+    color: var(--ink);
+    border-color: color-mix(in oklab, var(--accent) 45%, var(--rule));
+    background: color-mix(in oklab, var(--accent) 12%, var(--bg-raised));
   }
   .cmdk:active {
-    transform: translateY(0);
+    transform: scale(0.97);
+  }
+  .cmdk-icon {
+    color: var(--accent);
+    font-size: var(--t-sm);
+    line-height: 1;
+  }
+  .cmdk-label {
+    letter-spacing: 0.04em;
   }
   .cmdk-keys {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
     letter-spacing: 0.05em;
+    color: var(--ink-faint);
+    background: color-mix(in oklab, var(--ink) 7%, transparent);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-sm);
+    padding: 0.05em 0.3em;
+  }
+  @media (max-width: 760px) {
+    .cmdk-label {
+      display: none;
+    }
   }
 
   .channels {

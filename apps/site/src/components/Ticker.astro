@@ -9,7 +9,9 @@ const run = [...items, ...items];
 ---
 
 <div class="ticker" role="marquee" aria-label="Latest signal">
-  <span class="ticker-label" aria-hidden="true">›&nbsp;LIVE</span>
+  <span class="ticker-label" aria-hidden="true">
+    <span class="ticker-pulse"></span>LIVE
+  </span>
   <div class="ticker-viewport">
     <div class="ticker-track">
       {
@@ -40,9 +42,47 @@ const run = [...items, ...items];
   }
   .ticker-label {
     flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
     color: var(--accent);
     letter-spacing: 0.1em;
     text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 50%, transparent);
+  }
+  /* live beacon — a soft amber pulse. opacity/transform only. */
+  .ticker-pulse {
+    position: relative;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px color-mix(in oklab, var(--accent) 70%, transparent);
+  }
+  .ticker-pulse::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    border: 1px solid var(--accent);
+    opacity: 0.6;
+    animation: ticker-ping 2.4s var(--ease-out) infinite;
+  }
+  @keyframes ticker-ping {
+    0% {
+      transform: scale(0.6);
+      opacity: 0.7;
+    }
+    70%,
+    100% {
+      transform: scale(2.6);
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-pulse::after {
+      animation: none;
+      opacity: 0;
+    }
   }
   .ticker-viewport {
     overflow: hidden;

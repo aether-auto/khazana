@@ -1,0 +1,85 @@
+/* Header nav rail — sliding active indicator + magnetic tabs.
+   Animates transform/opacity/width on the indicator only (the indicator is a
+   tiny pill; width here is a deliberate, infrequent, GPU-promoted change on a
+   single small element, not a layout-thrash on content). Tabs translate via
+   transform for the magnetic pull. */
+.navrail {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  margin: 0 0 0 auto;
+  padding: 0;
+  list-style: none;
+  font-size: var(--t-sm);
+}
+.navrail-item {
+  position: relative;
+}
+.navrail-link {
+  position: relative;
+  display: inline-block;
+  color: var(--ink-dim);
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+  padding: 0.25em 0.1em;
+  will-change: transform;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    transform var(--dur) var(--ease-overshoot);
+}
+.navrail-link::before {
+  content: "/";
+  color: var(--ink-faint);
+  margin-right: 0.15em;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.navrail-link:hover,
+.navrail-link:focus-visible {
+  color: var(--ink);
+  text-decoration: none;
+}
+.navrail-link.is-current {
+  color: var(--accent);
+}
+.navrail-link.is-current::before {
+  color: color-mix(in oklab, var(--accent) 55%, transparent);
+}
+
+/* the single gliding indicator — a soft amber underline pill */
+.navrail-indicator {
+  position: absolute;
+  left: 0;
+  bottom: -0.35em;
+  height: 2px;
+  width: 0;
+  opacity: 0;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--editorial));
+  box-shadow: 0 0 10px color-mix(in oklab, var(--accent) 45%, transparent);
+  transform: translateX(0);
+  transform-origin: left;
+  pointer-events: none;
+  transition:
+    transform var(--dur) var(--ease-spring),
+    width var(--dur) var(--ease-spring),
+    opacity var(--dur-fast) var(--ease-out);
+  will-change: transform, width;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navrail-link {
+    transition: color var(--dur-fast) var(--ease-out);
+    transform: none !important;
+  }
+  .navrail-indicator {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .navrail {
+    margin-left: 0;
+    gap: var(--s-3);
+  }
+}
