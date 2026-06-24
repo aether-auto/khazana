@@ -1,0 +1,73 @@
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, expect, test } from "vitest";
+import { listDrafts, readCurated, readDraft, readStyle, readTaste, writeBrief, writeReport } from "./io.js";
+
+let dir: string;
+
+const item = {
+  id: "1",
+  source: "hn",
+  sourceType: "hn",
+  url: "https://e.com/a",
+  title: "A",
+  publishedAt: "2026-06-20T00:00:00.000Z",
+  fetchedAt: "2026-06-23T00:00:00.000Z",
+  topics: ["tech"],
+  entities: [],
+  summary: "",
+  media: [],
+  kind: "link",
+};
+
+beforeEach(() => {
+  dir = mkdtempSync(join(tmpdir(), "khz-gen-io-"));
+});
+afterEach(() => rmSync(dir, { recursive: true, force: true }));
+
+test("readCurated returns [] when missing and validates when present", () => {
+  expect(readCurated(dir)).toEqual([]);
+  mkdirSync(join(dir, "feed"), { recursive: true });
+  writeFileSync(join(dir, "feed", "curated.json"), JSON.stringify([item, { id: "bad" }]));
+  const items = readCurated(dir);
+  expect(items).toHaveLength(1);
+  expect(items[0]!.id).toBe("1");
+});
+
+test("readTaste falls back to a not-ready empty payload", () => {
+  const t = readTaste(dir);
+  expect(t).toEqual({ ready: false, topics: {}, entities: {}, formatAffinity: {} });
+  writeFileSync(join(dir, "taste.json"), JSON.stringify({ ready: true, topics: { ai: 1 }, entities: {}, formatAffinity: { dispatch: 1 } }));
+  expect(readTaste(dir).ready).toBe(true);
+  expect(readTaste(dir).formatAffinity.dispatch).toBe(1);
+});
+
+test("readStyle reads STYLE.md and returns '' when absent", () => {
+  expect(readStyle(dir)).toBe("");
+  writeFileSync(join(dir, "STYLE.md"), "# voice\nBe sharp.");
+  expect(readStyle(dir)).toContain("Be sharp.");
+});
+
+test("writeBrief writes briefs/<slug>.md and returns the path", () => {
+  const path = writeBrief(dir, "my-slug", "# Brief\nbody");
+  expect(path).toContain(join("generation", "briefs", "my-slug.md"));
+  expect(readFileSync(path, "utf8")).toContain("# Brief");
+});
+
+test("listDrafts lists only .mdx files; readDraft reads one", () => {
+  const content = join(dir, "content");
+  mkdirSync(content, { recursive: true });
+  writeFileSync(join(content, "a.mdx"), "A");
+  writeFileSync(join(content, "b.mdx"), "B");
+  writeFileSync(join(content, "notes.txt"), "ignore");
+  const drafts = listDrafts(content).sort();
+  expect(drafts).toHaveLength(2);
+  expect(readDraft(drafts[0]!)).toBe("A");
+});
+
+test("writeReport writes generation/report.json", () => {
+  const path = writeReport(dir, { ok: true, drafts: [], generatedAt: "2026-06-23T00:00:00.000Z" } as never);
+  expect(path).toContain(join("generation", "report.json"));
+  expect(JSON.parse(readFileSync(path, "utf8")).ok).toBe(true);
+});
