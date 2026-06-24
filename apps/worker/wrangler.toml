@@ -1,0 +1,17 @@
+name = "khazana-events"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Created with: pnpm dlx wrangler kv namespace create KV
+# Paste the printed id below (replace the placeholder).
+[[kv_namespaces]]
+binding = "KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[vars]
+# Set to the Cloudflare Pages origin once the site is deployed (P5).
+ALLOWED_ORIGIN = "*"
+
+# EXPORT_TOKEN is a secret, NOT a var. Set it with:
+#   pnpm dlx wrangler secret put EXPORT_TOKEN
