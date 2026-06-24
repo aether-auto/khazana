@@ -1,0 +1,108 @@
+import matter from "gray-matter";
+import { z } from "zod";
+import { CHANNELS, FORMAT_NAMES } from "@khazana/core";
+
+// Mirrors apps/site/src/content.config.ts `blog` collection EXACTLY so generated
+// MDX builds under astro:content. Field names + constraints must not drift.
+const formatEnum = z.enum([...FORMAT_NAMES] as [string, ...string[]]);
+const channelEnum = z.enum([...CHANNELS] as [string, ...string[]]);
+
+export const BlogFrontmatterSchema = z.object({
+  title: z.string(),
+  format: formatEnum,
+  channels: z.array(channelEnum).min(1),
+  summary: z.string(),
+  publishedAt: z.coerce.date(),
+  sources: z.array(z.object({ title: z.string(), url: z.string().url() })).default([]),
+  draft: z.boolean().default(false),
+});
+export type BlogFrontmatter = z.infer<typeof BlogFrontmatterSchema>;
+
+// The P5B component barrel (apps/site/src/components/mdx/index.ts).
+export const KNOWN_COMPONENTS = [
+  "Annotation",
+  "Chart",
+  "Timeline",
+  "DataTable",
+  "Scrolly",
+  "ScrollyStep",
+  "RunnableCode",
+  "Map",
+] as const;
+
+export interface DraftResult {
+  ok: boolean;
+  slug: string;
+  errors: string[];
+}
+
+function slugFromTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+// Component names used in JSX (<Foo ...>) and imported from the mdx barrel.
+function usedComponentNames(body: string): Set<string> {
+  const names = new Set<string>();
+  for (const m of body.matchAll(/<([A-Z][A-Za-z0-9]*)\b/g)) names.add(m[1]!);
+  for (const m of body.matchAll(/import\s*\{([^}]*)\}\s*from\s*["'][^"']*mdx["']/g)) {
+    for (const part of m[1]!.split(",")) {
+      const name = part.trim().split(/\s+as\s+/)[0]!.trim();
+      if (/^[A-Z]/.test(name)) names.add(name);
+    }
+  }
+  return names;
+}
+
+export function validateDraft(
+  mdx: string,
+  knownSourceUrls: ReadonlySet<string>,
+  knownComponents: readonly string[] = KNOWN_COMPONENTS,
+): DraftResult {
+  const errors: string[] = [];
+
+  let parsed: matter.GrayMatterFile<string>;
+  try {
+    parsed = matter(mdx);
+  } catch {
+    return { ok: false, slug: "unknown", errors: ["frontmatter: failed to parse"] };
+  }
+
+  const fm = parsed.data;
+  if (!fm || Object.keys(fm).length === 0) {
+    return { ok: false, slug: "unknown", errors: ["frontmatter: missing or empty"] };
+  }
+
+  const result = BlogFrontmatterSchema.safeParse(fm);
+  let slug = "unknown";
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      errors.push(`frontmatter ${issue.path.join(".") || "(root)"}: ${issue.message}`);
+    }
+    if (typeof fm.title === "string") slug = slugFromTitle(fm.title);
+  } else {
+    const data = result.data;
+    slug = slugFromTitle(data.title);
+
+    // Grounding: at least one source, each url traceable to a known FeedItem.
+    if (data.sources.length === 0) {
+      errors.push("sources: at least one cited source is required (grounding)");
+    }
+    for (const src of data.sources) {
+      if (!knownSourceUrls.has(src.url)) {
+        errors.push(`grounding: source url not in known sources: ${src.url}`);
+      }
+    }
+  }
+
+  // Components: every used/imported component must be in the allow-list.
+  const allowed = new Set(knownComponents);
+  for (const name of usedComponentNames(parsed.content)) {
+    if (!allowed.has(name)) errors.push(`component: unknown component <${name}>`);
+  }
+
+  return { ok: errors.length === 0, slug, errors };
+}
