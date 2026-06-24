@@ -1,15 +1,10 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { z } from "zod";
-import { FeedItemSchema, type FeedItem } from "@khazana/core";
+import { EngagementEventSchema, FeedItemSchema, type EngagementEvent, type FeedItem } from "@khazana/core";
 
-export const EngagementEventSchema = z.object({
-  itemId: z.string(),
-  type: z.enum(["open", "read", "dwell"]),
-  at: z.string().datetime(),
-  dwellMs: z.number().optional(),
-});
-export type EngagementEvent = z.infer<typeof EngagementEventSchema>;
+// Re-exported from @khazana/core so the worker and curate share one contract.
+export { EngagementEventSchema };
+export type { EngagementEvent } from "@khazana/core";
 
 function readJsonArray(path: string): unknown[] {
   if (!existsSync(path)) return [];
