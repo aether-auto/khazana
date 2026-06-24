@@ -8,3 +8,5 @@ dist/
 *.log
 .DS_Store
 .superpowers/
+data/sources.json
+data/feed/
