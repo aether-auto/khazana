@@ -1,0 +1,87 @@
+---
+interface Props {
+  titles: string[];
+}
+const { titles } = Astro.props;
+const items = titles.length > 0 ? titles : ["khazana — your personal signal terminal"];
+// duplicate the run so the marquee loops seamlessly
+const run = [...items, ...items];
+---
+
+<div class="ticker" role="marquee" aria-label="Latest signal">
+  <span class="ticker-label" aria-hidden="true">›&nbsp;LIVE</span>
+  <div class="ticker-viewport">
+    <div class="ticker-track">
+      {
+        run.map((t, i) => (
+          <span class="ticker-item">
+            <span class="dot" aria-hidden="true">
+              ·
+            </span>
+            {t}
+          </span>
+        ))
+      }
+    </div>
+  </div>
+</div>
+
+<style>
+  .ticker {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    background: var(--bg-inset);
+    border-bottom: var(--hair) solid var(--rule);
+    padding: var(--s-2) var(--s-4);
+    font-size: var(--t-xs);
+    color: var(--ink-dim);
+    overflow: hidden;
+  }
+  .ticker-label {
+    flex: none;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 50%, transparent);
+  }
+  .ticker-viewport {
+    overflow: hidden;
+    flex: 1 1 auto;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+  }
+  .ticker-track {
+    display: inline-flex;
+    gap: var(--s-5);
+    white-space: nowrap;
+    will-change: transform;
+    animation: marquee 48s linear infinite;
+  }
+  .ticker:hover .ticker-track,
+  .ticker:focus-within .ticker-track {
+    animation-play-state: paused;
+  }
+  .ticker-item {
+    color: var(--ink-dim);
+  }
+  .dot {
+    color: var(--editorial);
+    margin-right: var(--s-3);
+  }
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-track {
+      animation: none;
+    }
+    .ticker-viewport {
+      overflow-x: auto;
+    }
+  }
+</style>

@@ -1,0 +1,73 @@
+:root {
+  /* palette — dark default */
+  --bg: #0a0a0b;
+  --bg-raised: #111113;
+  --bg-inset: #070708;
+  --ink: #e8e6df;
+  --ink-dim: #a3a097;
+  --ink-faint: #6a6862;
+  --rule: #26252b;
+  --rule-bright: #3a3942;
+  --accent: #ffb627;
+  --accent-dim: #b8851d;
+  --editorial: #c1554a;
+  --editorial-dim: #8f3c34;
+  --good: #7faa6e;
+  --focus: #ffb627;
+
+  /* type stacks — system/self-hostable only ($0) */
+  --font-mono: "Berkeley Mono", "JetBrains Mono", "SF Mono", ui-monospace, "IBM Plex Mono", Menlo, monospace;
+  --font-read: "Iowan Old Style", "Charter", "Palatino Linotype", "Palatino", "Source Serif 4", Georgia, serif;
+  --font-sans: "Söhne", ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif;
+
+  /* type scale (1.25) */
+  --t-xs: 0.75rem;
+  --t-sm: 0.8125rem;
+  --t-base: 1rem;
+  --t-md: 1.125rem;
+  --t-lg: 1.375rem;
+  --t-xl: 1.75rem;
+  --t-2xl: 2.25rem;
+  --t-3xl: 3.25rem;
+  --measure: 68ch;
+  --lh-tight: 1.15;
+  --lh-read: 1.62;
+
+  /* spacing (8px base) */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-8: 3rem;
+  --s-10: 4rem;
+  --s-12: 6rem;
+
+  /* misc */
+  --r-sm: 2px;
+  --r-md: 4px;
+  --hair: 1px;
+  --maxw: 1180px;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f4f2ec;
+    --bg-raised: #fbfaf6;
+    --bg-inset: #ece9e0;
+    --ink: #1a1916;
+    --ink-dim: #52504a;
+    --ink-faint: #8a877e;
+    --rule: #dcd9cf;
+    --rule-bright: #c4c0b4;
+    --accent: #b8851d;
+    --accent-dim: #8a6314;
+    --editorial: #a8463c;
+    --editorial-dim: #7d3129;
+    --good: #5e8a4e;
+    --focus: #b8851d;
+    color-scheme: light;
+  }
+}

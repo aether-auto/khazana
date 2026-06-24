@@ -1,0 +1,20 @@
+---
+interface Props {
+  accent?: boolean;
+}
+const { accent = false } = Astro.props;
+---
+
+<hr class:list={["rule", { accent }]} />
+
+<style>
+  .rule {
+    border: 0;
+    border-top: var(--hair) solid var(--rule);
+    margin: 0;
+    height: 0;
+  }
+  .rule.accent {
+    border-top-color: var(--editorial);
+  }
+</style>

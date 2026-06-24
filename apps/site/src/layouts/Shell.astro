@@ -1,0 +1,231 @@
+---
+import "../styles/global.css";
+import { CHANNELS } from "@khazana/core";
+import Wordmark from "../components/Wordmark.astro";
+import Ticker from "../components/Ticker.astro";
+
+interface Props {
+  title: string;
+  description?: string;
+  active?: "feed" | "reads" | "workshop";
+  tickerTitles?: string[];
+}
+const {
+  title,
+  description = "A personal signal terminal: a self-curating feed of the world's best signal and gorgeous, AI-authored interactive reads.",
+  active,
+  tickerTitles = [],
+} = Astro.props;
+
+const base = import.meta.env.BASE_URL;
+const withBase = (p: string) => `${base.replace(/\/$/, "")}/${p.replace(/^\//, "")}`;
+
+// CHANNELS grouped sensibly for the nav (canonical vocab, never redefined).
+const channelGroups: { label: string; channels: readonly string[] }[] = [
+  { label: "world", channels: ["history", "geopolitics", "politics", "geography"] },
+  { label: "science", channels: ["science", "tech", "ai", "quantum"] },
+  { label: "data", channels: ["data-science", "ds-sports", "data-strategy", "finance"] },
+  { label: "make", channels: ["ideas", "diy", "3d-printing", "iot", "embedded", "ai-projects"] },
+];
+
+const buildTime = new Date().toISOString();
+const nav: { id: "feed" | "reads" | "workshop"; label: string; href: string }[] = [
+  { id: "feed", label: "feed", href: withBase("/") },
+  { id: "reads", label: "reads", href: withBase("/reads") },
+  { id: "workshop", label: "workshop", href: withBase("/workshop") },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#0a0a0b" />
+    <link rel="manifest" href={withBase("/manifest.webmanifest")} />
+    <link rel="icon" href={withBase("/icon.svg")} type="image/svg+xml" />
+    <meta name="generator" content={Astro.generator} />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Ticker titles={tickerTitles} />
+    <header class="topbar">
+      <div class="topbar-inner">
+        <Wordmark />
+        <nav class="nav" aria-label="Surfaces">
+          {
+            nav.map((n) => (
+              <a
+                class:list={["nav-link", { current: active === n.id }]}
+                href={n.href}
+                aria-current={active === n.id ? "page" : undefined}
+              >
+                {n.label}
+              </a>
+            ))
+          }
+        </nav>
+        <!-- SEAM (P5B): ⌘K command palette. Non-functional hint only. -->
+        <button class="cmdk" type="button" disabled aria-label="Command palette (coming soon)">
+          <span class="cmdk-keys">⌘K</span>
+        </button>
+      </div>
+      <nav class="channels" aria-label="Channels">
+        {
+          channelGroups.map((g) => (
+            <span class="chgroup">
+              <span class="chgroup-label">{g.label}/</span>
+              {g.channels.map((c) => (
+                <a class="ch" href={`${withBase("/")}?channel=${c}`} data-channel={c}>
+                  {c}
+                </a>
+              ))}
+            </span>
+          ))
+        }
+      </nav>
+    </header>
+
+    <main id="main" class="shell-main">
+      <slot />
+    </main>
+
+    <footer class="footer">
+      <span>khazana — a personal treasury · static, $0, open source</span>
+      <span class="build">
+        build <time datetime={buildTime}>{buildTime.slice(0, 16).replace("T", " ")}Z</time>
+      </span>
+    </footer>
+
+    <!-- SEAM (P5B): ⌘K palette mount + Pagefind search index load go here. -->
+  </body>
+</html>
+
+<style>
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--accent);
+    color: #000;
+    padding: var(--s-2) var(--s-4);
+    z-index: 10000;
+    font-family: var(--font-mono);
+  }
+  .skip-link:focus {
+    left: var(--s-3);
+    top: var(--s-3);
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: color-mix(in oklab, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: var(--hair) solid var(--rule);
+  }
+  .topbar-inner {
+    max-width: var(--maxw);
+    margin-inline: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--s-5);
+    padding: var(--s-3) var(--s-5);
+  }
+  .nav {
+    display: flex;
+    gap: var(--s-4);
+    margin-left: auto;
+    font-size: var(--t-sm);
+  }
+  .nav-link {
+    color: var(--ink-dim);
+    text-transform: lowercase;
+    letter-spacing: 0.02em;
+  }
+  .nav-link::before {
+    content: "/";
+    color: var(--ink-faint);
+    margin-right: 0.15em;
+  }
+  .nav-link:hover {
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .nav-link.current {
+    color: var(--accent);
+  }
+  .cmdk {
+    flex: none;
+    background: var(--bg-raised);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-md);
+    color: var(--ink-faint);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    padding: var(--s-1) var(--s-3);
+    cursor: not-allowed;
+  }
+  .cmdk-keys {
+    letter-spacing: 0.05em;
+  }
+
+  .channels {
+    max-width: var(--maxw);
+    margin-inline: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-4) var(--s-5);
+    padding: 0 var(--s-5) var(--s-3);
+    font-size: var(--t-xs);
+  }
+  .chgroup {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--s-2);
+  }
+  .chgroup-label {
+    color: var(--ink-faint);
+    letter-spacing: 0.06em;
+  }
+  .ch {
+    color: var(--ink-dim);
+  }
+  .ch:hover {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .footer {
+    max-width: var(--maxw);
+    margin-inline: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--s-3);
+    padding: var(--s-6) var(--s-5);
+    border-top: var(--hair) solid var(--rule);
+    color: var(--ink-faint);
+    font-size: var(--t-xs);
+  }
+  .build time {
+    color: var(--ink-dim);
+  }
+
+  @media (max-width: 640px) {
+    .topbar-inner {
+      flex-wrap: wrap;
+      gap: var(--s-3);
+    }
+    .nav {
+      margin-left: 0;
+    }
+    .cmdk {
+      display: none;
+    }
+  }
+</style>
