@@ -1,0 +1,76 @@
+.cg {
+  position: relative;
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-md);
+  background: var(--bg-raised);
+  overflow: hidden;
+}
+.cg-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  background:
+    radial-gradient(circle at 50% 40%, color-mix(in oklab, var(--accent) 5%, transparent), transparent 60%),
+    var(--bg-inset);
+}
+/* When the SVG has rendered nodes, hide the static list fallback. */
+.cg:has(.cg-nodes a) .cg-fallback {
+  display: none;
+}
+.cg-edge {
+  stroke: var(--rule-bright);
+  stroke-opacity: 0.7;
+}
+.cg-edge--dim {
+  stroke-opacity: 0.12;
+}
+.cg-node {
+  cursor: pointer;
+  transition: opacity 120ms ease;
+}
+.cg-node--post {
+  fill: var(--accent);
+}
+.cg-node--item {
+  fill: var(--editorial);
+}
+.cg-node--dim {
+  opacity: 0.22;
+}
+.cg-node-link:focus-visible .cg-node {
+  outline: 2px solid var(--focus);
+}
+.cg-node-label {
+  fill: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  paint-order: stroke;
+  stroke: var(--bg-inset);
+  stroke-width: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cg-node { transition: none; }
+}
+/* SSR / no-JS fallback list */
+.cg-fallback {
+  list-style: none;
+  margin: 0;
+  padding: var(--s-4);
+  columns: 2;
+  column-gap: var(--s-6);
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+}
+.cg-fallback-item {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-1) 0;
+  break-inside: avoid;
+}
+.cg-fallback-item--post a { color: var(--accent); }
+.cg-fallback-item--item a { color: var(--editorial); }
+.cg-fallback-deg { color: var(--ink-faint); font-size: var(--t-xs); }
+@media (max-width: 640px) {
+  .cg-fallback { columns: 1; }
+}

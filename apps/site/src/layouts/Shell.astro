@@ -9,7 +9,7 @@ import { CHANNELS } from "@khazana/core";
 interface Props {
   title: string;
   description?: string;
-  active?: "feed" | "reads" | "workshop";
+  active?: "feed" | "reads" | "workshop" | "graph" | "taste";
   tickerTitles?: string[];
 }
 const {
@@ -36,10 +36,12 @@ const missing = CHANNELS.filter((c) => !grouped.has(c));
 if (missing.length) throw new Error(`Shell nav missing channels: ${missing.join(", ")}`);
 
 const buildTime = new Date().toISOString();
-const nav: { id: "feed" | "reads" | "workshop"; label: string; href: string }[] = [
+const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: string; href: string }[] = [
   { id: "feed", label: "feed", href: withBase("/") },
   { id: "reads", label: "reads", href: withBase("/reads") },
   { id: "workshop", label: "workshop", href: withBase("/workshop") },
+  { id: "graph", label: "graph", href: withBase("/graph") },
+  { id: "taste", label: "taste", href: withBase("/taste") },
 ];
 ---
 

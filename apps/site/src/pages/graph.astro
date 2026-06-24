@@ -1,0 +1,81 @@
+---
+import Shell from "../layouts/Shell.astro";
+import ConnectionsGraph from "../components/graph/ConnectionsGraph.tsx";
+import { loadCurated, tickerTitles } from "../lib/feed.js";
+import { dataDir } from "../lib/data.js";
+import { buildGraph, type GraphItem, type GraphPost } from "../components/graph/lib/build-graph.js";
+import { getCollection } from "astro:content";
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const items = loadCurated(dataDir());
+const ticker = tickerTitles(items, 8);
+
+const posts = await getCollection("blog", ({ data }) => !data.draft);
+
+const graphItems: GraphItem[] = items.map((it) => ({
+  id: it.id,
+  title: it.title,
+  topics: it.topics,
+  entities: it.entities,
+  url: it.url,
+}));
+const graphPosts: GraphPost[] = posts.map((p) => ({
+  slug: p.id,
+  title: p.data.title,
+  channels: p.data.channels,
+}));
+
+const model = buildGraph(graphItems, graphPosts, { minShared: 2, maxNodes: 60, base });
+---
+
+<Shell title="khazana — graph" active="graph" tickerTitles={ticker}>
+  <header class="graph-head">
+    <p class="eyebrow">graph</p>
+    <h1 class="graph-h1">how the signal connects</h1>
+    <p class="graph-sub">
+      Curated items <span class="dot dot--item">●</span> and reads
+      <span class="dot dot--post">●</span> linked where they share topics or
+      entities. Hover to trace neighbors; click to open.
+    </p>
+  </header>
+
+  {
+    model.nodes.length === 0 ? (
+      <p class="graph-empty">No items to connect yet — the graph fills in as the feed grows.</p>
+    ) : (
+      <ConnectionsGraph model={model} client:visible />
+    )
+  }
+</Shell>
+
+<style>
+  .graph-head {
+    margin-bottom: var(--s-5);
+    max-width: var(--measure);
+  }
+  .graph-h1 {
+    font-family: var(--font-sans);
+    font-size: var(--t-2xl);
+    line-height: var(--lh-tight);
+    letter-spacing: -0.02em;
+    margin: 0 0 var(--s-3);
+    font-weight: 600;
+  }
+  .graph-sub {
+    color: var(--ink-dim);
+    font-size: var(--t-sm);
+    margin: 0;
+  }
+  .dot {
+    font-size: 0.7em;
+    vertical-align: middle;
+  }
+  .dot--item { color: var(--editorial); }
+  .dot--post { color: var(--accent); }
+  .graph-empty {
+    padding: var(--s-8) 0;
+    color: var(--ink-faint);
+    font-family: var(--font-mono);
+    text-align: center;
+  }
+</style>
