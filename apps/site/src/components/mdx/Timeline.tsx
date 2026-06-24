@@ -51,11 +51,11 @@ export default function Timeline({ events, caption }: TimelineProps) {
               onFocus={() => setActive(i)}
               onBlur={() => setActive(null)}
             >
-              <line x1={p.x} y1={AXIS_Y} x2={p.x} y2={28} className="tl-stem" />
-              <circle cx={p.x} cy={28} r={5} className="tl-dot" />
-              <text x={p.x} y={18} className="tl-label">{p.label}</text>
+              <line x1={p.x} y1={AXIS_Y} x2={p.x} y2={30} className="tl-stem" />
+              <circle cx={p.x} cy={30} r={active === i ? 7 : 5} className="tl-dot" />
+              <text x={p.x} y={20} className="tl-label">{p.label}</text>
               {active === i && p.detail ? (
-                <text x={p.x} y={AXIS_Y + 40} className="tl-detail">{p.detail}</text>
+                <text x={p.x} y={AXIS_Y + 44} className="tl-detail">{p.detail}</text>
               ) : null}
             </g>
           ))}

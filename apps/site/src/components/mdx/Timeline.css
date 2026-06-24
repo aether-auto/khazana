@@ -1,29 +1,102 @@
 /* apps/site/src/components/mdx/Timeline.css */
-.tl-panel { padding: var(--s-5) var(--s-4); }
-.tl-svg { width: 100%; height: auto; display: block; }
-.tl-axis { stroke: var(--rule); stroke-width: 1; }
-.tl-tick line { stroke: var(--rule); stroke-width: 1; }
-.tl-tick-label, .tl-label, .tl-detail {
+
+/* Panel padding — gives the SVG room to breathe */
+.tl-panel { padding: var(--s-5) var(--s-4) var(--s-6); }
+
+.tl-svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+/* Axis: hairline ink rule, fully legible (was var(--rule) ≈ invisible) */
+.tl-axis {
+  stroke: var(--ink-dim);
+  stroke-width: 1;
+}
+
+/* Year ticks — the short serifs on the axis */
+.tl-tick line {
+  stroke: var(--ink-faint);
+  stroke-width: 1;
+}
+.tl-tick-label {
   font-family: var(--font-mono);
+  font-size: 11px;
+  text-anchor: middle;
   fill: var(--ink-faint);
 }
-.tl-tick-label { font-size: 11px; text-anchor: middle; }
-.tl-label { font-size: 11px; text-anchor: middle; fill: var(--ink-dim); }
-.tl-detail { font-size: 11px; text-anchor: middle; fill: var(--accent); }
-.tl-stem { stroke: var(--rule-bright); stroke-width: 1; }
-.tl-dot { fill: var(--bg-raised); stroke: var(--editorial); stroke-width: 2; transition: r 120ms ease; }
+
+/* Event stems — visible connecting lines from label to axis */
+.tl-stem {
+  stroke: var(--ink-faint);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+/* Amber event dots — the primary visual signal */
+.tl-dot {
+  fill: var(--bg-raised);
+  stroke: var(--accent);
+  stroke-width: 2;
+  transition: r var(--dur-fast) var(--ease-out);
+  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--accent) 40%, transparent));
+}
+
+/* Event labels: elevated ink (was ink-faint, hard to read at 11px) */
+.tl-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-anchor: middle;
+  fill: var(--ink-dim);
+}
+
+/* Detail text on active event: amber, sits below the axis */
+.tl-detail {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-anchor: middle;
+  fill: var(--accent);
+}
+
+/* Point interaction */
 .tl-pt { cursor: pointer; }
 .tl-pt:focus { outline: none; }
-.tl-pt--active .tl-dot { fill: var(--accent); stroke: var(--accent); r: 6; }
-.tl-pt--active .tl-label { fill: var(--ink); }
-.tl-pt:focus-visible .tl-dot { stroke: var(--focus); }
+
+/* Active state: filled amber dot, elevated label, glow */
+.tl-pt--active .tl-dot {
+  fill: var(--accent);
+  stroke: var(--accent);
+  r: 7;
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--accent) 55%, transparent));
+}
+.tl-pt--active .tl-label {
+  fill: var(--ink);
+  font-weight: 600;
+}
+.tl-pt--active .tl-stem {
+  stroke: var(--accent);
+  stroke-dasharray: none;
+  opacity: 0.6;
+}
+
+/* Focus ring via stroke (keyboard nav) */
+.tl-pt:focus-visible .tl-dot {
+  stroke: var(--focus);
+  stroke-width: 3;
+}
+
+/* SSR / no-JS fallback list — shown when SVG/JS absent */
 .tl-fallback {
-  display: none; /* hidden when SVG/JS present; shown via the no-JS path below */
-  list-style: none; margin: 0; padding: var(--s-3) 0 0;
-  font-family: var(--font-mono); font-size: var(--t-sm); color: var(--ink-dim);
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: var(--s-3) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--ink-dim);
 }
 .tl-fallback li { padding: var(--s-1) 0; }
 .tl-fallback-detail { color: var(--ink-faint); }
+
+/* Accessibility: no animation on stems/dots for prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
-  .tl-dot { transition: none; }
+  .tl-dot { transition: none; filter: none; }
+  .tl-pt--active .tl-dot { filter: none; }
 }
