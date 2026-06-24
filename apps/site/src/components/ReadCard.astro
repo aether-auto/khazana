@@ -30,7 +30,14 @@ const date = publishedAt.toISOString().slice(0, 10);
     position: relative;
     border: var(--hair) solid var(--rule);
     border-radius: var(--r-md);
-    background: var(--bg-raised);
+    /* glass surface: dark translucent panel + lit top edge */
+    background: color-mix(
+      in oklab,
+      var(--glass-bg) calc(var(--glass) * 100%),
+      var(--bg-raised) calc(100% - var(--glass) * 100%)
+    );
+    box-shadow: inset 0 var(--hair) 0 color-mix(in oklab, var(--ink) calc(var(--glass) * 10%), transparent);
+    backdrop-filter: blur(calc(var(--glass) * 10px)) saturate(calc(1 + var(--glass) * 0.15));
     overflow: hidden;
     transition:
       border-color var(--dur) var(--ease-out),
@@ -45,7 +52,7 @@ const date = publishedAt.toISOString().slice(0, 10);
   }
   /* specular sheen sweep — diagonal amber-tinted band translated across on
      hover (transform only). Opacity gated by --glass so it vanishes when
-     glass is off. */
+     glass is off. Boosted slightly vs original for more presence. */
   .read-card::after {
     content: "";
     position: absolute;
@@ -53,9 +60,9 @@ const date = publishedAt.toISOString().slice(0, 10);
     pointer-events: none;
     background: linear-gradient(
       105deg,
-      transparent 30%,
-      var(--glass-sheen) 48%,
-      transparent 62%
+      transparent 28%,
+      color-mix(in oklab, var(--accent) 28%, transparent) 46%,
+      transparent 60%
     );
     opacity: calc(var(--glass) * 1);
     transform: translateX(-120%);

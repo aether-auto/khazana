@@ -28,9 +28,24 @@ const intent = meta?.intent ?? "";
     border-radius: var(--r-sm);
     padding: 0.12em 0.5em;
     white-space: nowrap;
+    /* glass-gated: subtle dark translucent background + always-on lit top edge */
+    background: color-mix(in oklab, var(--glass-bg) calc(var(--glass) * 80%), transparent);
+    box-shadow: inset 0 var(--hair) 0 color-mix(in oklab, var(--editorial) calc(var(--glass) * 28%), transparent);
   }
-  /* thin diagonal specular sheen (glass-gated) sweeping on hover of the
-     enclosing card/link — transform-translated pseudo, no bg thrash. */
+  /* always-on faint specular highlight (glass-gated): a static diagonal glint
+     sits in the upper-left corner so the badge reads as glass even at rest. */
+  .fmt::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--ink) calc(var(--glass) * 12%), transparent) 0%,
+      transparent 50%
+    );
+  }
+  /* hover sweep — bolder than the resting glint */
   .fmt::after {
     content: "";
     position: absolute;
@@ -38,9 +53,9 @@ const intent = meta?.intent ?? "";
     pointer-events: none;
     background: linear-gradient(
       105deg,
-      transparent 35%,
-      var(--glass-sheen) 50%,
-      transparent 65%
+      transparent 30%,
+      color-mix(in oklab, var(--editorial) 32%, transparent) 48%,
+      transparent 64%
     );
     opacity: calc(var(--glass) * 1);
     transform: translateX(-130%);

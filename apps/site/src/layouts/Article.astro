@@ -69,8 +69,32 @@ const dateLabel = publishedAt.toISOString().slice(0, 10);
   }
   .article-head {
     margin-bottom: var(--s-6);
+    position: relative;
+    /* glass-gated: translucent editorial header panel with lit top edge */
+    padding: var(--s-6) var(--s-6) var(--s-5);
+    margin-inline: calc(-1 * var(--s-6));
+    border-radius: var(--r-md);
+    background: color-mix(in oklab, var(--glass-bg) calc(var(--glass) * 72%), transparent);
+    box-shadow:
+      inset 0 var(--hair) 0 color-mix(in oklab, var(--ink) calc(var(--glass) * 12%), transparent),
+      inset 0 0 0 var(--hair) color-mix(in oklab, var(--editorial) calc(var(--glass) * 10%), transparent);
+    backdrop-filter: blur(calc(var(--glass) * 12px)) saturate(calc(1 + var(--glass) * 0.12));
+  }
+  /* always-on diagonal glint for the hero glass panel */
+  .article-head::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: var(--r-md);
+    pointer-events: none;
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--ink) calc(var(--glass) * 6%), transparent) 0%,
+      transparent 45%
+    );
   }
   .article-kicker {
+    position: relative;
     display: flex;
     align-items: center;
     gap: var(--s-3);
@@ -80,6 +104,7 @@ const dateLabel = publishedAt.toISOString().slice(0, 10);
     margin-bottom: var(--s-4);
   }
   .article-title {
+    position: relative;
     font-family: var(--font-read);
     font-size: var(--t-3xl);
     line-height: 1.08;
@@ -88,6 +113,7 @@ const dateLabel = publishedAt.toISOString().slice(0, 10);
     color: var(--ink);
   }
   .article-standfirst {
+    position: relative;
     font-family: var(--font-read);
     font-size: var(--t-lg);
     line-height: 1.4;
@@ -97,6 +123,7 @@ const dateLabel = publishedAt.toISOString().slice(0, 10);
     max-width: 56ch;
   }
   .article-channels {
+    position: relative;
     display: flex;
     gap: var(--s-2);
     flex-wrap: wrap;
