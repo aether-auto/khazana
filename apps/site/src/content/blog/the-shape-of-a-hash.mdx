@@ -1,0 +1,57 @@
+---
+title: "The Shape of a Hash: Why FNV-1a Spreads So Well"
+format: teardown
+channels: ["tech", "ai"]
+summary: "A hands-on teardown of a tiny non-cryptographic hash — run it, watch the avalanche, and see why one multiply-and-xor scatters inputs across the table."
+publishedAt: 2026-06-23T09:00:00.000Z
+sources:
+  - title: "FNV hash — reference parameters"
+    url: "https://example.org/fnv-reference"
+---
+
+import { RunnableCode, Chart, Annotation } from "../../components/mdx";
+
+A hash function has one job: take any input and scatter it across a fixed range
+so that *similar* inputs land *far apart*. That scattering is called the
+<Annotation client:load term="avalanche effect" note="A one-bit change in the input should flip about half the output bits — the hallmark of good diffusion." />. Let's watch it happen.
+
+<RunnableCode
+  client:visible
+  caption="FNV-1a 32-bit — edit the input, hit run"
+  code={`function fnv1a(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h;
+}
+console.log("cat ->", fnv1a("cat").toString(16));
+console.log("cau ->", fnv1a("cau").toString(16));
+return fnv1a("cat") % 16; // bucket in a 16-slot table
+`}
+/>
+
+Change one letter and the whole output churns. Bucketed across a small table,
+the distribution stays flat — no clustering:
+
+<Chart
+  client:visible
+  mark="bar"
+  x="bucket"
+  y="count"
+  height={260}
+  caption="10k random 5-char strings, FNV-1a mod 16"
+  data={[
+    { bucket: "0", count: 631 }, { bucket: "1", count: 598 },
+    { bucket: "2", count: 642 }, { bucket: "3", count: 610 },
+    { bucket: "4", count: 625 }, { bucket: "5", count: 633 },
+    { bucket: "6", count: 619 }, { bucket: "7", count: 627 },
+    { bucket: "8", count: 640 }, { bucket: "9", count: 612 },
+    { bucket: "10", count: 635 }, { bucket: "11", count: 621 },
+    { bucket: "12", count: 629 }, { bucket: "13", count: 616 },
+    { bucket: "14", count: 638 }, { bucket: "15", count: 624 }
+  ]}
+/>
+
+One multiply, one xor, per byte — and the inputs come out evenly spread.

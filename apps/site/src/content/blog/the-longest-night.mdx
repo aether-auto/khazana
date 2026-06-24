@@ -11,28 +11,36 @@ sources:
     url: "https://example.org/road-of-life"
 ---
 
+import { Map, Timeline, Annotation } from "../../components/mdx";
+
 The metronome never stops. From a single loudspeaker bolted to a lamppost on
 Nevsky Prospekt, it ticks through the dark — sixty beats a minute when the city
-is calm, faster when the bombers are coming. Tonight it is slow. Tonight, that
-is the only mercy.
+is calm, faster when the bombers are coming. Tonight it is slow.
 
-Anna pulls the blanket tighter and listens past the metronome for the other
-sound: the groan of truck engines far to the east, out on the ice of Lake
-Ladoga, where the road runs that should not exist. Thirty centimeters of black
-ice carrying a column of one-and-a-half-ton trucks, headlights off, drivers
-leaning out of open doors so they can jump when the ice gives. It gives often.
+Anna listens past the metronome for the other sound: the groan of truck engines
+far to the east, out on the ice of <Annotation client:load term="Lake Ladoga" note="The largest lake in Europe; its winter ice carried the 'Road of Life' supply route into besieged Leningrad." />, where the road runs that should not exist.
+
+<Map
+  client:visible
+  caption="The siege in its theatre — relative scale of the combatant states"
+  labels={{ RUS: "USSR", DEU: "Germany", FIN: "Finland" }}
+  values={{ RUS: 100, DEU: 70, FIN: 20 }}
+/>
 
 > The ration today was 125 grams of bread. Half of it is sawdust and cellulose.
-> She weighs it in her palm before she eats it, the way you would weigh
-> something precious, because it is.
 
-By the river the anti-aircraft crews stamp their feet against a cold that has
-its own arithmetic: at minus thirty, a wound stops bleeding before it can be
-dressed, because the blood freezes first. The crews know this. They have stopped
-talking about it.
+The siege has its own grim calendar. The nights are the worst of it:
+
+<Timeline
+  client:load
+  caption="Leningrad, 1941–1943"
+  events={[
+    { date: "1941-09-08", label: "Siege begins", detail: "Last land route severed." },
+    { date: "1941-11-20", label: "Ration low", detail: "125g bread for non-workers." },
+    { date: "1942-01-24", label: "Ration raised", detail: "Road of Life resupplies the city." },
+    { date: "1943-01-18", label: "Corridor opened", detail: "Operation Iskra breaks the ring." }
+  ]}
+/>
 
 *The metronome ticks. The trucks crawl west across the ice. The city, impossibly,
 holds.*
-
-{/* SEAM (P5B): interactive Map, Timeline, and margin Annotation components
-     mount here. In P5 the chronicle reads as clean long-form prose. */}

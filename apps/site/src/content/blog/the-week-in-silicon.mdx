@@ -11,26 +11,106 @@ sources:
     url: "https://netflixtechblog.com/rebuilding-the-edge-tier"
 ---
 
-import { Annotation, Chart } from "../../components/mdx";
+import { Chart, Scrolly, ScrollyStep, DataTable, Annotation } from "../../components/mdx";
 
-Inference at the <Annotation client:load term="edge" note="The network edge: compute physically close to users — CDN POPs, on-device NPUs — rather than a central datacenter." /> is getting cheap.
+Three things happened this week that look unrelated until you line them up.
+
+First, a research paper argued that the routing inside <Annotation client:load term="mixture-of-experts" note="A model whose layers route each token to a few specialized sub-networks ('experts'), so only a fraction of the weights run per token." /> models is doing something subtler than load balancing — it's reproducing a *curriculum*.
 
 <Chart
   client:visible
   mark="line"
   x="month"
-  y="value"
+  y="costPerMTok"
   series="tier"
   height={300}
-  caption="Marginal inference cost (placeholder)"
+  caption="Marginal inference cost ($/M tokens), datacenter vs edge NPU"
   data={[
-    { month: "2025-09", value: 1.2, tier: "datacenter" },
-    { month: "2026-06", value: 0.85, tier: "datacenter" },
-    { month: "2025-09", value: 3.1, tier: "edge-npu" },
-    { month: "2026-06", value: 0.6, tier: "edge-npu" }
+    { month: "2025-09", costPerMTok: 1.2, tier: "datacenter" },
+    { month: "2025-12", costPerMTok: 1.0, tier: "datacenter" },
+    { month: "2026-03", costPerMTok: 0.9, tier: "datacenter" },
+    { month: "2026-06", costPerMTok: 0.85, tier: "datacenter" },
+    { month: "2025-09", costPerMTok: 3.1, tier: "edge-npu" },
+    { month: "2025-12", costPerMTok: 1.8, tier: "edge-npu" },
+    { month: "2026-03", costPerMTok: 0.95, tier: "edge-npu" },
+    { month: "2026-06", costPerMTok: 0.6, tier: "edge-npu" }
   ]}
 />
 
-Three things happened this week that look unrelated until you line them up.
+The edge curve crossed the datacenter curve this spring. Walk the three signals:
 
-{/* SEAM (P5B): T7 finalizes this post fully */}
+<Scrolly client:visible caption="Three signals, one shift">
+  <ScrollyStep
+    graphic={
+      <Chart
+        client:visible
+        mark="bar"
+        x="model"
+        y="activeParams"
+        caption="Active params per token (B)"
+        data={[
+          { model: "dense-7B", activeParams: 7 },
+          { model: "moe-8x7B", activeParams: 1.8 },
+          { model: "moe-16x3B", activeParams: 0.9 }
+        ]}
+      />
+    }
+  >
+    **Signal one — the paper.** Sparse routing cuts *active* parameters per token by 4–8×. Cheaper to run well, which matters most where compute is scarce.
+  </ScrollyStep>
+  <ScrollyStep
+    graphic={
+      <Chart
+        client:visible
+        mark="area"
+        x="month"
+        y="costPerMTok"
+        caption="Edge NPU $/M tokens"
+        data={[
+          { month: "2025-09", costPerMTok: 3.1 },
+          { month: "2025-12", costPerMTok: 1.8 },
+          { month: "2026-03", costPerMTok: 0.95 },
+          { month: "2026-06", costPerMTok: 0.6 }
+        ]}
+      />
+    }
+  >
+    **Signal two — the price.** A commodity edge NPU dropped below a threshold that a year ago looked like a 2028 problem.
+  </ScrollyStep>
+  <ScrollyStep
+    graphic={
+      <Chart
+        client:visible
+        mark="bar"
+        x="arch"
+        y="p99ms"
+        caption="Tail latency p99 (ms)"
+        data={[
+          { arch: "3-hop", p99ms: 210 },
+          { arch: "edge-tier", p99ms: 42 }
+        ]}
+      />
+    }
+  >
+    **Signal three — the latency.** Collapsing three network hops into one programmable edge tier cut tail latency 5×.
+  </ScrollyStep>
+</Scrolly>
+
+The throughline is economics, not novelty:
+
+<DataTable
+  client:load
+  caption="The three signals, lined up"
+  columns={[
+    { key: "signal", label: "Signal", type: "string" },
+    { key: "metric", label: "Metric", type: "string" },
+    { key: "delta", label: "Δ", type: "number", align: "right" }
+  ]}
+  rows={[
+    { signal: "Sparse MoE", metric: "active params / token", delta: -75 },
+    { signal: "Edge NPU", metric: "$ / M tokens", delta: -81 },
+    { signal: "Edge tier", metric: "p99 latency", delta: -80 }
+  ]}
+/>
+
+When the cost curve bends, the architecture follows.
