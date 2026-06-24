@@ -8,8 +8,23 @@
   padding-top: 14vh;
   background: color-mix(in oklab, var(--bg-inset) 72%, transparent);
   backdrop-filter: blur(3px);
+  animation: cmdk-overlay-in var(--dur) var(--ease-out);
+}
+html.glass .cmdk-overlay {
+  background: color-mix(in oklab, var(--bg-inset) 60%, transparent);
+}
+@supports (backdrop-filter: blur(1px)) {
+  html.glass .cmdk-overlay { backdrop-filter: blur(5px); }
+}
+@keyframes cmdk-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cmdk-overlay { animation: none; }
 }
 .cmdk-dialog {
+  position: relative;
   width: min(640px, 92vw);
   max-height: 64vh;
   display: flex;
@@ -19,14 +34,50 @@
   border-radius: var(--r-md);
   box-shadow: 0 24px 60px color-mix(in oklab, #000 55%, transparent);
   overflow: hidden;
-  animation: cmdk-in 120ms ease-out;
+  animation: cmdk-in 160ms var(--ease-spring);
 }
+/* Liquid-glass panel (glass-gated): translucent near-black + backdrop blur,
+   a 1px lit top edge. Falls back to the opaque raised bg where unsupported. */
+@supports (backdrop-filter: blur(1px)) {
+  html.glass .cmdk-dialog {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur)) saturate(120%);
+    box-shadow:
+      0 24px 60px color-mix(in oklab, #000 60%, transparent),
+      inset 0 var(--hair) 0 var(--glass-edge);
+  }
+}
+/* Amber specular sheen sweeping once across the panel on open (glass-gated).
+   Transform-translated pseudo — no background-position thrash. */
+.cmdk-dialog::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    var(--glass-sheen) 50%,
+    transparent 65%
+  );
+  opacity: calc(var(--glass) * 1);
+  transform: translateX(-130%);
+  animation: cmdk-sheen 900ms var(--ease-out) 120ms 1;
+}
+.cmdk-input-row,
+.cmdk-list,
+.cmdk-note { position: relative; z-index: 1; }
 @keyframes cmdk-in {
-  from { opacity: 0; transform: translateY(-6px); }
+  from { opacity: 0; transform: translateY(-8px) scale(0.985); }
   to { opacity: 1; transform: none; }
+}
+@keyframes cmdk-sheen {
+  to { transform: translateX(130%); }
 }
 @media (prefers-reduced-motion: reduce) {
   .cmdk-dialog { animation: none; }
+  .cmdk-dialog::before { animation: none; opacity: 0; }
 }
 .cmdk-input-row {
   display: flex;
@@ -64,16 +115,33 @@
   overflow-y: auto;
 }
 .cmdk-row {
+  position: relative;
   display: flex;
   align-items: baseline;
   gap: var(--s-3);
   padding: var(--s-2) var(--s-4);
   cursor: pointer;
   font-size: var(--t-sm);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+/* active marker bar: transform-scaleY (no box-shadow spread animation) */
+.cmdk-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform var(--dur-fast) var(--ease-out);
 }
 .cmdk-row--active {
   background: color-mix(in oklab, var(--accent) 12%, transparent);
-  box-shadow: inset 2px 0 0 var(--accent);
+}
+.cmdk-row--active::before {
+  transform: scaleY(1);
 }
 .cmdk-tag {
   flex: none;
