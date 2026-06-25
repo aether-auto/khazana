@@ -1,0 +1,41 @@
+/* apps/site/src/components/mdx/DrawChart.css
+   Draw-on-scroll line — amber signal stroke over a paper panel. The stroke is
+   revealed via stroke-dashoffset (composited; no layout). Tokens from tokens.css. */
+.dchart-panel {
+  position: relative;
+  padding: var(--s-4);
+}
+.dchart-svg {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.dchart-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--accent) 35%, transparent));
+}
+.dchart-area {
+  fill: color-mix(in oklab, var(--accent) 10%, transparent);
+  stroke: none;
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out) 240ms;
+}
+.dchart-area.is-drawn {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dchart-line {
+    transition: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+  .dchart-area {
+    transition: none;
+    opacity: 1;
+  }
+}

@@ -1,0 +1,95 @@
+/* apps/site/src/components/mdx/Model3D.css
+   Inline 3D viewer — instrument register (metal panel). The live canvas sits
+   over a baked CSS fallback that is itself on-brand, so no reader ever sees an
+   empty box. Tokens from tokens.css. */
+.m3d-panel {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  min-height: 280px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 50% 30%, color-mix(in oklab, var(--accent) 6%, transparent), transparent 60%),
+    var(--bg-inset);
+}
+
+/* ── live canvas ─────────────────────────────────────────────────────── */
+.m3d-canvas-wrap,
+.m3d-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.m3d-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  touch-action: pan-y; /* let vertical page scroll through; drag rotates */
+  cursor: grab;
+}
+.m3d-canvas:active {
+  cursor: grabbing;
+}
+
+/* ── baked static fallback: an isometric CSS lattice motif ───────────── */
+.m3d-fallback {
+  position: relative;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-5);
+}
+/* a repeating amber grid sheared into an iso plane — reads as printed infill */
+.m3d-lattice {
+  width: clamp(120px, 38%, 220px);
+  aspect-ratio: 1;
+  background-image:
+    linear-gradient(45deg, color-mix(in oklab, var(--accent) 22%, transparent) 1px, transparent 1px),
+    linear-gradient(-45deg, color-mix(in oklab, var(--accent) 22%, transparent) 1px, transparent 1px),
+    linear-gradient(45deg, transparent 49%, color-mix(in oklab, var(--accent) 10%, transparent) 49% 51%, transparent 51%);
+  background-size: 22px 22px, 22px 22px, 22px 22px;
+  transform: rotateX(54deg) rotateZ(45deg);
+  border: var(--hair) solid color-mix(in oklab, var(--accent) 28%, var(--rule));
+  box-shadow:
+    0 0 40px -10px color-mix(in oklab, var(--accent) 30%, transparent),
+    inset 0 0 30px -8px color-mix(in oklab, var(--accent) 25%, transparent);
+  opacity: 0.85;
+}
+.m3d-fallback-note {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--ink-faint);
+  text-align: center;
+  max-width: 32ch;
+  letter-spacing: 0.02em;
+}
+/* once the live canvas is up, the fallback recedes (still visible faintly as
+   depth, never a hard cut). */
+.m3d-panel:has(canvas) .m3d-fallback {
+  opacity: 0.12;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+/* drag hint — mono, lower-right, instrument telemetry */
+.m3d-hint {
+  position: absolute;
+  z-index: 2;
+  right: var(--s-3);
+  bottom: var(--s-2);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  pointer-events: none;
+  text-transform: lowercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m3d-panel:has(canvas) .m3d-fallback {
+    transition: none;
+  }
+}

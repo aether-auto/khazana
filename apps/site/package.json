@@ -22,6 +22,13 @@
     "@khazana/core": "workspace:*",
     "@khazana/worker": "workspace:*",
     "@observablehq/plot": "^0.6.17",
+    "@react-three/drei": "^10.0.0",
+    "@react-three/fiber": "^9.0.0",
+    "@visx/axis": "^3.12.0",
+    "@visx/curve": "^3.12.0",
+    "@visx/group": "^3.12.0",
+    "@visx/scale": "^3.12.0",
+    "@visx/shape": "^3.12.0",
     "astro": "^5.0.0",
     "d3": "^7.9.0",
     "d3-geo": "^3.1.1",
@@ -31,6 +38,7 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "scrollama": "^3.2.0",
+    "three": "^0.171.0",
     "topojson-client": "^3.1.0",
     "world-atlas": "^2.0.2"
   },
@@ -42,6 +50,7 @@
     "@types/node": "^26.0.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.171.0",
     "@types/topojson-client": "^3.1.5",
     "pagefind": "^1.1.0"
   }

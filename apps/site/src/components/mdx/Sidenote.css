@@ -1,0 +1,60 @@
+/* apps/site/src/components/mdx/Sidenote.css
+   Marginalia: a numbered superscript in the prose whose note floats into the
+   right gutter on wide screens, and folds inline on narrow ones. Instrument
+   voice (mono, numbered) so it reads as the observatory's annotation without
+   disturbing the calm reading body. Tokens from tokens.css. */
+.sidenote {
+  position: relative;
+}
+.sidenote-ref {
+  font-family: var(--font-mono);
+  font-size: 0.62em;
+  line-height: 0;
+  color: var(--accent);
+  font-feature-settings: "tnum" 1;
+  margin-left: 0.1em;
+  vertical-align: super;
+  cursor: default;
+}
+
+.sidenote-body {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  line-height: 1.5;
+  color: var(--ink-faint);
+  letter-spacing: 0.01em;
+}
+.sidenote-num {
+  color: var(--accent);
+  margin-right: 0.5ch;
+}
+.sidenote-src {
+  color: var(--editorial);
+  border-bottom: var(--hair) solid color-mix(in oklab, var(--editorial) 30%, transparent);
+}
+
+/* ── WIDE: float the note into the right margin of the study column ──────
+   The Article gives the prose a right gutter (--sidenote-gutter); the note
+   floats there, aligned to its reference. Pure layout, no motion. */
+@media (min-width: 1100px) {
+  .sidenote-body {
+    position: absolute;
+    left: calc(100% + var(--s-5));
+    top: -0.4em;
+    width: var(--sidenote-w, 15rem);
+    display: block;
+    padding-left: var(--s-3);
+    border-left: var(--hair) solid var(--rule);
+    text-align: left;
+  }
+}
+
+/* ── NARROW: inline footnote, quietly indented under the paragraph ──────── */
+@media (max-width: 1099px) {
+  .sidenote-body {
+    display: block;
+    margin: var(--s-2) 0 var(--s-3);
+    padding-left: var(--s-3);
+    border-left: var(--hair) solid var(--rule);
+  }
+}
