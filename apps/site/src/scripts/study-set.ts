@@ -49,17 +49,33 @@ function setTheType() {
   // No animation under reduced motion — leave the title solid and bail.
   if (reduce) return;
 
-  // Gate the faint start-state ON only now (so no-JS never sees blank glyphs).
+  // FAIL-SAFE backstop: once we gate the faint start-state on, the title glyphs
+  // are at opacity:0.001 until the animation resolves them. If SplitText or the
+  // GSAP timeline ever throws (plugin missing, bundle error), the glyphs must
+  // NOT stay invisible. Always remove `set-ready` on any failure, and a timeout
+  // unconditionally un-hides the title if the animation never completed.
   document.documentElement.classList.add("set-ready");
+  const unhideTitle = () => document.documentElement.classList.remove("set-ready");
+  const backstop = window.setTimeout(unhideTitle, 2000);
 
-  // Split into chars tagged with .set-char (Article.astro styles the faint
-  // light start-state on that class).
-  split = SplitText.create(title, {
-    type: "chars",
-    charsClass: "set-char",
-  });
-
-  const chars = split.chars;
+  let chars: Element[];
+  try {
+    // Split into chars tagged with .set-char (Article.astro styles the faint
+    // light start-state on that class).
+    split = SplitText.create(title, {
+      type: "chars",
+      charsClass: "set-char",
+    });
+    chars = split.chars;
+  } catch {
+    window.clearTimeout(backstop);
+    unhideTitle();
+    if (split) {
+      split.revert();
+      split = null;
+    }
+    return;
+  }
   // Each glyph arrives from faint amber light, rises a hair, and settles into
   // solid ink — the letterpress "set". Directional left→right stagger so the
   // line reads as being composed, not flickering on.
@@ -81,6 +97,7 @@ function setTheType() {
       ease: "power3.out",
       stagger: { each: 0.026, from: "start" },
       onComplete: () => {
+        window.clearTimeout(backstop);
         // hand the glyphs back to CSS so nothing lingers in inline styles
         gsap.set(chars, { clearProps: "color,textShadow,transform,opacity" });
         document.documentElement.classList.remove("set-ready");

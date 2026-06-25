@@ -75,6 +75,19 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
       // Skipped under reduced-motion so those users never get opacity:0.
       if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
         document.documentElement.classList.add("reveal-ready");
+        // HARD FAIL-SAFE: this inline script just committed to hiding every
+        // [data-reveal]. The deferred module that un-hides them might fail to
+        // load entirely (bundle 404, parse error, an unrelated throw). So set an
+        // independent backstop HERE that un-hides everything if the reveal system
+        // never took over — content must NEVER stay permanently invisible.
+        window.addEventListener("load", function () {
+          setTimeout(function () {
+            if (document.documentElement.hasAttribute("data-reveals-armed")) return;
+            for (var el of document.querySelectorAll("[data-reveal]:not(.is-in)")) {
+              el.classList.add("is-in");
+            }
+          }, 3000);
+        });
       }
     </script>
   </head>
@@ -175,7 +188,10 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
         }
       }
 
+      let observerLive = false;
+
       function initReveals() {
+        observerLive = false;
         if (reduce || !("IntersectionObserver" in window)) {
           revealAll();
           return;
@@ -193,11 +209,34 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
         for (const el of document.querySelectorAll("[data-reveal]:not(.is-in)")) {
           io.observe(el);
         }
+        observerLive = true; // only reached if observe() didn't throw
+        // Tell the inline-head backstop the reveal system is live so it stands
+        // down (it only un-hides if THIS never ran).
+        document.documentElement.setAttribute("data-reveals-armed", "");
       }
 
-      initReveals();
+      // FAIL-SAFE: the inline head script set `reveal-ready` (which hides every
+      // [data-reveal] at opacity:0) before paint. The reveal is a PURE progressive
+      // enhancement that must NEVER leave content permanently hidden. So:
+      //   • try/catch the init — any throw immediately un-hides everything;
+      //   • a short backstop un-hides everything if the observer never came up
+      //     (e.g. init was aborted by an unrelated error) — but when the observer
+      //     IS live we let it run so the scroll-reveal stays intact.
+      function safeInit() {
+        try {
+          initReveals();
+        } catch {
+          revealAll();
+        }
+      }
+      function backstop() {
+        if (!observerLive) revealAll();
+      }
+      safeInit();
+      window.addEventListener("load", backstop);
+      setTimeout(backstop, 2500);
       // View Transitions swaps the DOM without a full reload — re-init each nav.
-      document.addEventListener("astro:page-load", initReveals);
+      document.addEventListener("astro:page-load", safeInit);
     </script>
   </body>
 </html>

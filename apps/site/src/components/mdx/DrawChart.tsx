@@ -32,7 +32,14 @@ const BOX: Box = { width: 640, height: 300, padX: 16, padY: 18 };
 
 export default function DrawChart({ data, caption, unit = "", duration = 1400 }: DrawChartProps) {
   const ref = useRef<HTMLElement | null>(null);
-  const [drawn, setDrawn] = useState(false);
+  // FAIL-SAFE default: the chart renders FULLY DRAWN. The draw-on-scroll is a
+  // pure progressive enhancement — only an effect that actually runs may arm the
+  // "undrawn" start state and animate it in. If JS never hydrates (or throws),
+  // `drawn` stays true and the figure is fully visible — never a blank chart.
+  const [drawn, setDrawn] = useState(true);
+  // Has the client effect taken control? Until it has, we never emit the
+  // hidden (offset = len) state, so SSR / failed-hydration shows the full line.
+  const [armed, setArmed] = useState(false);
 
   const { d, area, len } = useMemo(() => {
     const scales = makeScales(data, BOX);
@@ -46,10 +53,13 @@ export default function DrawChart({ data, caption, unit = "", duration = 1400 }:
   useEffect(() => {
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (reduce || !("IntersectionObserver" in window) || !ref.current) {
-      setDrawn(true); // show fully drawn immediately
+      setDrawn(true); // show fully drawn immediately (no animation)
       return;
     }
     const el = ref.current;
+    // Arm the animation: start from undrawn, then draw in when scrolled into view.
+    setDrawn(false);
+    setArmed(true);
     const io = new IntersectionObserver(
       (entries, obs) => {
         for (const e of entries) {
@@ -64,6 +74,9 @@ export default function DrawChart({ data, caption, unit = "", duration = 1400 }:
     io.observe(el);
     return () => io.disconnect();
   }, []);
+
+  // Only honour the undrawn start once the client has armed it; otherwise full.
+  const offset = armed && !drawn ? len : 0;
 
   return (
     <figure className="mdx-figure mdx-figure--wide dchart" ref={ref}>
@@ -81,7 +94,7 @@ export default function DrawChart({ data, caption, unit = "", duration = 1400 }:
             d={d}
             style={{
               strokeDasharray: len,
-              strokeDashoffset: drawn ? 0 : len,
+              strokeDashoffset: offset,
               transition: `stroke-dashoffset ${duration}ms cubic-bezier(0.2,0.7,0.2,1)`,
             }}
           />
