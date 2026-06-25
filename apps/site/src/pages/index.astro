@@ -2,7 +2,6 @@
 import Shell from "../layouts/Shell.astro";
 import FeedCard from "../components/FeedCard.astro";
 import FeatureCard from "../components/FeatureCard.astro";
-import Hero from "../components/constellation/Hero.astro";
 import { loadCurated, tickerTitles } from "../lib/feed.js";
 import { assignBento } from "../lib/bento.js";
 import { CHANNELS } from "@khazana/core";
@@ -32,8 +31,17 @@ const delay = (i: number) => Math.min(i, 8) * 60;
   signalCount={all.length}
   freshCount={freshCount}
 >
-  <!-- First Light: the constellation of today's signal, settling into the feed -->
-  <Hero items={all} now={now} />
+  <!-- compact editorial masthead — no canvas, no WebGL -->
+  <div class="masthead" data-reveal>
+    <p class="mh-eyebrow">
+      <span class="mh-dot" aria-hidden="true"></span>
+      the observatory
+    </p>
+    <h1 class="mh-title display">first light<span class="mh-stop">.</span></h1>
+    <p class="mh-sub reading">
+      {all.length} signals · <span class="mh-fresh">{freshCount} fresh</span> — the day's best catch, ranked by resonance.
+    </p>
+  </div>
 
   <header class="feed-head" data-reveal>
     <div class="filterbar" role="group" aria-label="Filter by channel">
@@ -65,6 +73,75 @@ const delay = (i: number) => Math.min(i, 8) * 60;
 </Shell>
 
 <style>
+  /* ── compact masthead ─────────────────────────────────────────────── */
+  .masthead {
+    padding: var(--s-8) 0 var(--s-6);
+    position: relative;
+  }
+  /* soft amber glow behind the title — CSS only, no canvas */
+  .masthead::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 30% 60%, color-mix(in oklab, var(--accent) 8%, transparent), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .mh-eyebrow {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5ch;
+    margin: 0 0 var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.06em;
+    text-transform: lowercase;
+    color: var(--ink-faint);
+  }
+  .mh-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: var(--halo-star);
+    animation: mh-pulse 2.6s ease-in-out infinite;
+  }
+  @keyframes mh-pulse {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 1; }
+  }
+  .mh-title {
+    position: relative;
+    z-index: 1;
+    margin: 0 0 var(--s-3);
+    font-size: clamp(var(--t-xl), 5vw, var(--t-display));
+    color: var(--ink);
+    line-height: 0.95;
+  }
+  .mh-stop {
+    color: var(--accent);
+    text-shadow: var(--halo-display);
+  }
+  .mh-sub {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    color: var(--ink-dim);
+    font-size: var(--t-sm);
+    max-width: 52ch;
+  }
+  .mh-fresh {
+    color: var(--accent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mh-dot {
+      animation: none;
+      opacity: 1;
+    }
+  }
+
   /* the feed's controls sit just under the hero, as the instrument's tuning row.
      A hairline above ties the filter bar to the constellation it settled from. */
   .feed-head {
