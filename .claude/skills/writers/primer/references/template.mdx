@@ -1,0 +1,63 @@
+---
+# PRIMER — annotated skeleton. Underlying question first; scaffold up; sandbox
+# before explanation; timeless examples. Keep frontmatter exactly. Delete comments.
+title: "[The underlying question, as a title]"
+format: primer
+channels:
+  - [channel from the brief, e.g. science]
+summary: "[One sentence: the foundational idea this primer makes intuitive.]"
+publishedAt: 2026-06-24T08:00:00.000Z
+sources:
+  - title: "[Real reference / source title]"
+    url: "[verbatim brief source URL]"
+draft: false
+---
+
+import { RunnableCode, Chart, Annotation } from "../../components/mdx";
+
+{/* OPENING QUESTION — 100–150w. The underlying question, no jargon, no current
+    events. Why a smart person should care. */}
+
+{/* COMMON MISCONCEPTION — 150–200w. The wrong mental model most readers arrive
+    with. A <RunnableCode> sandbox that BREAKS it (its output defies the wrong
+    model). "Run this. Notice X doesn't happen. Here's why." */}
+<RunnableCode
+  client:visible
+  caption="[run this first — predict the output, then check]"
+  code={`// self-contained JS; the output should surprise the naive model
+function demo(x) {
+  return x;
+}
+console.log(demo("predict me"));
+return demo(0);`}
+/>
+
+{/* CONCEPT 1 — FOUNDATION — 300–400w. The simplest true thing. Definition +
+    worked example IMMEDIATELY + then the general case. Cite the definition. */}
+<Annotation client:load term="[the foundational term]" note="[cited definition]" />
+is the floor everything else stands on.
+<Chart
+  client:visible
+  mark="line"
+  x="[x]"
+  y="[y]"
+  caption="[the concept, visualized]"
+  data={[ /* values, cited or runnable-generated */ ]}
+/>
+
+{/* CONCEPT 2 — BUILD ON FOUNDATION — 300–400w. One step up; requires Concept 1.
+    A <RunnableCode> the reader modifies to see the effect. */}
+<RunnableCode
+  client:visible
+  caption="[change a parameter and watch the effect]"
+  code={`function build(param) {
+  return param * 2;
+}
+return build(3);`}
+/>
+
+{/* CONCEPT 3 — THE INTERESTING PART — 300–400w. Where it gets surprising. The
+    "aha". This is the payoff the scaffold was building toward. */}
+
+{/* SYNTHESIS + WHERE TO GO NEXT — 150–200w. Recap as a MENTAL MODEL, not a list.
+    Links to cited deeper resources. One question for the reader to sit with. */}

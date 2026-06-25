@@ -1,0 +1,74 @@
+---
+# CHRONICLE — annotated structural skeleton. Replace every […] with grounded,
+# cited content from the brief. Keep the frontmatter field set EXACTLY as below
+# (see references/mdx-contract.md). Delete these comment lines in the real file.
+title: "[Evocative title: a place + a moment]"
+format: chronicle
+channels:
+  - [channel from the brief, e.g. history]
+summary: "[One sentence: the scene and the stake, concrete, no hedging.]"
+publishedAt: 2026-06-24T07:00:00.000Z
+sources:
+  - title: "[Real source article title from the brief]"
+    url: "[verbatim brief source URL]"
+  - title: "[Second source if cited]"
+    url: "[verbatim brief source URL]"
+draft: false
+---
+
+import { Scrolly, ScrollyStep, Annotation, Timeline, Map } from "../../components/mdx";
+
+{/* HOOK SCENE — 200–300w. Present tense. A named actor. One grounded, cited
+    detail in the first two sentences. The reader is THERE before any context. */}
+<Annotation client:load term="[a named place/term]" note="[short cited gloss]" /> grounds
+the opening fact; the scene continues, sensory and specific.
+
+{/* Anchor the geography or chronology immediately, before the narrative deepens. */}
+<Map
+  client:visible
+  caption="[what the map situates]"
+  labels={{ ISO3: "[Name]" }}
+  values={{ ISO3: 100 }}
+/>
+
+{/* CONTEXT BEAT 1 — 150–200w. Third person, fast. What led here, in causal terms.
+    Every figure/name an <Annotation>. */}
+
+{/* CORE SCENE — 300–400w. Peak tension. <Scrolly> reveals the sequence, one beat
+    per step; the pinned graphic advances as the prose steps. Calm, readable prose
+    blocks; the drama is the graphic resolving, never the text moving. */}
+<Scrolly client:visible caption="[the sequence this reveals]">
+  <ScrollyStep graphic={
+      <Timeline client:visible caption="[beat 1 framing]" events={[
+        { date: "[YYYY-MM-DD]", label: "[event]", detail: "[cited detail]" }
+      ]} />
+    }>
+    **[Beat one.]** Present-tense scene prose. One cited detail
+    (<Annotation client:load term="[fact]" note="[cited gloss]" />).
+  </ScrollyStep>
+  <ScrollyStep graphic={
+      <Timeline client:visible caption="[beat 2 framing]" events={[
+        { date: "[YYYY-MM-DD]", label: "[event]", detail: "[cited detail]" },
+        { date: "[YYYY-MM-DD]", label: "[event]", detail: "[cited detail]" }
+      ]} />
+    }>
+    **[Beat two.]** The turn. Named actor, named action, cited.
+  </ScrollyStep>
+</Scrolly>
+
+{/* CONTEXT BEAT 2 — 100–150w. The pivot: what changed, and why. */}
+
+{/* AFTERMATH SCENE — 300–400w. Characters react. Present tense. Sources cited. */}
+
+{/* CONSEQUENCE — 200–300w. Lift to the long arc. <Timeline> carries the legacy
+    facts; the final sentence is short, declarative, present tense. */}
+<Timeline
+  client:load
+  caption="[the long arc / legacy]"
+  events={[
+    { date: "[YYYY-MM-DD]", label: "[milestone]", detail: "[cited]" },
+    { date: "[YYYY-MM-DD]", label: "[milestone]", detail: "[cited]" }
+  ]}
+/>
+
+*[Final line: short. Declarative. Present tense. The echo forward.]*

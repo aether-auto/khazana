@@ -1,0 +1,70 @@
+---
+# TEARDOWN — annotated skeleton. Intuition first, then go all the way down. Code
+# runs (self-contained JS). Keep frontmatter exactly as below. Delete comments.
+title: "[How X actually works: the sharp angle]"
+format: teardown
+channels:
+  - [channel from the brief, e.g. tech]
+summary: "[One sentence: what X is and the one non-obvious thing this teardown shows.]"
+publishedAt: 2026-06-24T09:00:00.000Z
+sources:
+  - title: "[Real spec / engineering post / paper title]"
+    url: "[verbatim brief source URL]"
+draft: false
+---
+
+import { RunnableCode, Chart, Annotation } from "../../components/mdx";
+
+{/* THE PROBLEM — 150–200w. One concrete sentence: what X solves. Then: why is it
+    harder than it looks? Optional <Chart> of the cliff/failure that motivates X. */}
+<Chart
+  client:visible
+  mark="line"
+  x="[x]"
+  y="[y]"
+  height={260}
+  caption="[the performance cliff / failure case]"
+  data={[ /* real or runnable-generated values */ ]}
+/>
+
+{/* INTUITION LAYER — 300–400w. The simple mental model, right 80% of the time.
+    The simplest possible <RunnableCode>. Reader runs it. */}
+<RunnableCode
+  client:visible
+  caption="[the simplest version — edit and run]"
+  code={`// self-contained JS; console.log for traces, return for the result
+function simplest(x) {
+  return x; // the naive model
+}
+console.log(simplest("hello"));
+return simplest(42);`}
+/>
+
+{/* THE ACTUAL MECHANISM — 400–600w. The crux. Go line by line. Cite each design
+    decision with <Annotation>. The hard part gets the MOST space. */}
+The real version turns on
+<Annotation client:load term="[the key design decision]" note="[cited why, from source]" />.
+
+<RunnableCode
+  client:visible
+  caption="[the real example — modify a parameter, watch the effect]"
+  code={`function real(x) {
+  // the actual mechanism, correct and runnable
+  return x;
+}
+return real("input");`}
+/>
+
+{/* FAILURE MODES + TRADE-OFFS — 300–400w. What breaks, when, why the designers
+    accepted it. <Chart> of the boundary condition. */}
+<Chart
+  client:visible
+  mark="bar"
+  x="[condition]"
+  y="[metric]"
+  caption="[where it falls over]"
+  data={[ /* real */ ]}
+/>
+
+{/* PRACTICAL TAKEAWAY — 200–300w. When to use X, when not to, what to watch in
+    production. Short, declarative. Not a recap. */}

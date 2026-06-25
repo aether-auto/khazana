@@ -1,0 +1,75 @@
+---
+# BUILD LOG — annotated skeleton. A maker must be able to reproduce this. Parts
+# first; exact commands; honest failures. Keep frontmatter exactly. Delete comments.
+title: "[What you built, plainly]"
+format: build-log
+channels:
+  - [channel from the brief, e.g. iot]
+summary: "[One sentence: what this build is, what it does, why you'd want one.]"
+publishedAt: 2026-06-24T10:00:00.000Z
+sources:
+  - title: "[Real datasheet / project writeup / docs title]"
+    url: "[verbatim brief source URL]"
+draft: false
+---
+
+import { RunnableCode, DataTable, Annotation } from "../../components/mdx";
+
+{/* WHAT WE'RE BUILDING — 100–150w. What it is, what it does, why you'd want one. */}
+
+{/* PARTS + TOOLS — <DataTable>. Component, qty, source, approx cost. Reader can
+    order everything before reading on. Source links cited. */}
+<DataTable
+  client:load
+  caption="Parts & tools"
+  columns={[
+    { key: "part", label: "Part", type: "string" },
+    { key: "qty", label: "Qty", type: "number", align: "right" },
+    { key: "source", label: "Source", type: "string" },
+    { key: "cost", label: "Cost ($)", type: "number", align: "right" }
+  ]}
+  rows={[
+    { part: "[exact part name + spec]", qty: 1, source: "[vendor]", cost: 0 }
+  ]}
+/>
+
+{/* STEP-BY-STEP — 600–1000w, NUMBERED. Each step: action -> expected result ->
+    exact command (fenced block) or <RunnableCode> for runnable JS. Gotcha callouts. */}
+
+### 1. [First completable action]
+[exact instruction]. Expected result: [what the reader should see].
+
+```bash
+# exact command — copy-pasteable, not paraphrased
+sudo apt install -y [package]
+```
+
+### 2. [Next action]
+[instruction], citing the datasheet value where relevant
+(<Annotation client:load term="[pin/parameter]" note="[cited datasheet value]" />).
+
+{/* Runnable JS logic only (the worker runs JS); shell/config use fenced blocks. */}
+<RunnableCode
+  client:visible
+  caption="[runnable check the reader can try]"
+  code={`function check(input) {
+  return input; // a small, self-contained, correct JS routine
+}
+return check("ok");`}
+/>
+
+{/* WHAT WENT WRONG — 200–300w. Real error messages, real conditions, real fixes.
+    The most-read section. */}
+### What went wrong
+[the real error]. It happened because [condition]. The fix:
+
+```bash
+# the actual fix
+```
+
+{/* RESULTS — 100–150w. Does it work? Measurements. A <DataTable> for benchmarks. */}
+
+{/* REPRODUCE THIS — numbered checklist of every file/command/config in order. */}
+### Reproduce this
+1. [command/file/config]
+2. [command/file/config]
