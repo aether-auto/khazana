@@ -22,6 +22,11 @@ import type { Star } from "./lib/constellation.js";
 const DPR_CAP = 1.5;
 
 const VERT = /* glsl */ `
+precision mediump float;   // MUST match the fragment shader's float precision:
+                           // GLSL ES 1.0 requires shared uniforms (uSettle, …) to
+                           // have identical precision in both stages, or the program
+                           // fails to LINK on strict drivers (e.g. ANGLE/Metal) —
+                           // which silently breaks the whole hero. Keep in lock-step.
 attribute vec2 polar;      // x = angle (rad), y = radius [0,1]
 attribute float bright;    // brightness (0,1], 1 = lead/brightest catch
 attribute float depth;     // z-parallax depth [-1,1]
@@ -200,6 +205,21 @@ export function initConstellation(
     },
   });
 
+  // Guard: if the program did not LINK (e.g. a strict driver rejects the
+  // shaders), OGL never builds `program.uniformLocations`, and the FIRST
+  // `renderer.render()` throws `Cannot read properties of undefined (reading
+  // 'forEach')` as a window pageerror — which aborts the page's module graph and
+  // leaves the whole site looking static. Detect that here and bail to the baked
+  // SVG fallback instead, so a GL failure is always graceful, never fatal.
+  if (
+    !(program as unknown as { uniformLocations?: unknown }).uniformLocations ||
+    !gl.getProgramParameter(program.program, gl.LINK_STATUS)
+  ) {
+    program.remove?.();
+    geometry.remove?.();
+    return null;
+  }
+
   const mesh = new Mesh(gl, { geometry, program, mode: gl.POINTS });
 
   function resize() {
@@ -209,9 +229,17 @@ export function initConstellation(
     program.uniforms.uRes.value = [renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight];
   }
 
+  let renderFailed = false;
   function render(timeMs: number) {
+    if (renderFailed) return;
     program.uniforms.uTime.value = timeMs / 1000;
-    renderer.render({ scene: mesh });
+    try {
+      renderer.render({ scene: mesh });
+    } catch {
+      // Belt-and-braces: a GL draw should never throw a pageerror that breaks the
+      // page. If it ever does, stop rendering and leave the baked SVG showing.
+      renderFailed = true;
+    }
   }
 
   function setPointer(x: number, y: number) {
