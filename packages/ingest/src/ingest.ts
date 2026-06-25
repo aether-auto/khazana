@@ -1,5 +1,6 @@
 import type { FeedItem, Registry } from "@khazana/core";
 import { buildSource, defaultFetch, type FetchFn } from "./fetchers/build-source.js";
+import { enrichContent, type EnrichContentOptions } from "./enrich-content.js";
 
 export interface SourceResult {
   id: string;
@@ -14,7 +15,13 @@ export interface IngestResult {
 
 export async function runIngest(
   registry: Registry,
-  opts: { now: string; fetchFn?: FetchFn; limitPerSource?: number },
+  opts: {
+    now: string;
+    fetchFn?: FetchFn;
+    limitPerSource?: number;
+    /** Full-text / transcript extraction. Default ON; pass `{ enabled: false }` to skip (e.g. offline tests). */
+    extract?: EnrichContentOptions;
+  },
 ): Promise<IngestResult> {
   const fetchFn = opts.fetchFn ?? defaultFetch;
   const results: SourceResult[] = [];
@@ -35,5 +42,7 @@ export async function runIngest(
     seen.add(it.id);
     return true;
   });
+  // Best-effort full-text/transcript enrichment of body. Resilient: never throws.
+  await enrichContent(items, fetchFn, opts.extract);
   return { items, results };
 }

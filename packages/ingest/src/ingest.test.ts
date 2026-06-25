@@ -20,7 +20,7 @@ test("one source failing does not break the run; results are recorded", async ()
     if (url.includes("b.com")) throw new Error("network down");
     return { ok: true, status: 200, text: async () => RSS("Hello", "https://a.com/1"), json: async () => ({}) };
   };
-  const { items, results } = await runIngest(registry, { now: "2026-06-23T00:00:00.000Z", fetchFn });
+  const { items, results } = await runIngest(registry, { now: "2026-06-23T00:00:00.000Z", fetchFn, extract: { enabled: false } });
   expect(items).toHaveLength(1);
   expect(results.find((r) => r.id === "good")!.ok).toBe(true);
   expect(results.find((r) => r.id === "flaky")!.ok).toBe(false);
@@ -36,6 +36,6 @@ test("items duplicated across sources are deduped by id", async () => {
     ],
   };
   const fetchFn: FetchFn = async () => ({ ok: true, status: 200, text: async () => RSS("Same", "https://same.com/1"), json: async () => ({}) });
-  const { items } = await runIngest(dup, { now: "2026-06-23T00:00:00.000Z", fetchFn });
+  const { items } = await runIngest(dup, { now: "2026-06-23T00:00:00.000Z", fetchFn, extract: { enabled: false } });
   expect(items).toHaveLength(1); // same sourceType+url → same id → deduped
 });
