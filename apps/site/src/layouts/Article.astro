@@ -135,12 +135,16 @@ const dateLabel = publishedAt.toISOString().slice(0, 10);
     margin: var(--s-6) 0;
   }
 
-  /* editorial reading typography */
+  /* editorial reading typography — the SACRED reading column (art-direction §5,
+     §8). Newsreader at 18px / 1.62, warm #D4CBC0 (~9.5:1, never pure white),
+     +0.012em tracking + optical-sizing for dark-mode legibility over 15 min. */
   .prose {
     font-family: var(--font-read);
-    font-size: var(--t-md);
+    font-optical-sizing: auto;
+    font-size: var(--t-read);
     line-height: var(--lh-read);
-    color: var(--ink);
+    letter-spacing: var(--track-read);
+    color: var(--read);
   }
   .prose :global(p) {
     margin: 0 0 var(--s-5);

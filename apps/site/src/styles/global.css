@@ -1,10 +1,15 @@
 @import "./tokens.css";
-/* Self-hosted display serif (Fraunces variable). $0/OFL, bundled by Vite —
-   no Google Fonts CDN. wght axis, normal + italic; latin subset via the
-   package's own unicode-range. The opsz/SOFT axes are still reachable through
-   font-variation-settings on the wght face's [100..900] weight range. */
+/* ── Self-hosted type duet ($0/OFL, bundled by Vite — no Google Fonts CDN) ──
+   ARTIFACT voice — Fraunces variable (display titles + pull-quotes). wght axis,
+   normal + italic; opsz/SOFT/WONK reachable via font-variation-settings. */
 @import "@fontsource-variable/fraunces/wght.css";
 @import "@fontsource-variable/fraunces/wght-italic.css";
+/* READING voice — Newsreader variable (long-form body). The opsz face carries
+   the optical-sizing axis purpose-built for on-screen reading; `font-optical-
+   sizing: auto` drives it. Replaces the old system-serif reading stack so the
+   reading column is identical & dark-tuned on every machine. */
+@import "@fontsource-variable/newsreader/opsz.css";
+@import "@fontsource-variable/newsreader/opsz-italic.css";
 
 *,
 *::before,
@@ -46,20 +51,22 @@ body {
   min-height: 100dvh;
 }
 
-/* Grain overlay — the #1 "human-made" signal (design-patterns §2.2). A tiled
-   SVG feTurbulence noise at ~4%, fixed above the background but below content,
-   pointer-events:none. It is STATIC (no animation) so it stays on under
-   reduced-motion; it only softens in light mode where the dark grain would muddy. */
+/* ── ANODIZED-METAL ground grain (art-direction §9) ─────────────────────
+   The mesh-gradient is GONE — empty space is warm, near-black, grain-textured
+   STILLNESS (confidence, not filler). This is the instrument's machined ground:
+   a tight, cool, fine SVG feTurbulence, fixed above the bg but below content,
+   pointer-events:none. STATIC (stays on under reduced-motion). The test: remove
+   it and the ground looks dead, not merely cleaner. */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 1; /* above the fixed mesh bg (z-index:-1), below all content */
-  opacity: 0.05;
+  z-index: 1; /* above the warm floor (z-index:-1), below all content */
+  opacity: 0.045;
   mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 160px 160px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
 }
 @media (prefers-color-scheme: light) {
   body::after {
@@ -68,29 +75,52 @@ body::after {
   }
 }
 
-/* ── Living mesh-gradient background ────────────────────────────────────
-   The WebGL canvas (MeshBackground island) renders here at z-index:-1, fixed.
-   This is the STATIC fallback gradient painted on <body>: low-contrast warm
-   pools that read as "felt, not loud". The canvas fades in over it once GL is
-   ready; under reduced-motion / no-JS / no-WebGL this gradient is all you get. */
+/* ── Warm ambient floor (art-direction §8) ──────────────────────────────
+   NOT a mesh gradient. A single, near-invisible radial warmth from the bottom
+   edge: the page reads as *lit from below* — candlelight on the instrument
+   floor, not a void. Felt, never seen. Fixed at z-index:-1. */
 body {
   background-color: var(--bg);
-  background-image:
-    radial-gradient(60% 80% at 18% 8%, color-mix(in oklab, var(--accent) 7%, transparent) 0%, transparent 60%),
-    radial-gradient(55% 70% at 92% 18%, color-mix(in oklab, var(--editorial) 6%, transparent) 0%, transparent 58%),
-    radial-gradient(80% 90% at 50% 110%, color-mix(in oklab, var(--accent) 4%, transparent) 0%, transparent 55%);
+  background-image: radial-gradient(
+    ellipse 90% 60% at 50% 116%,
+    rgba(255, 182, 39, 0.06),
+    transparent 60%
+  );
   background-attachment: fixed;
 }
-.mesh-bg {
-  position: fixed;
+
+/* ── Surface materials (art-direction §9): grain is STRUCTURAL, two materials.
+   Apply `.paper` to reading planes / cards (warm, set-type-on-stock), `.metal`
+   to instrument chrome (tighter, cooler, machined). Each is a surface-local
+   grain via a ::before, scoped so the texture belongs to the surface — not a
+   global sticker. Hosts must be position:relative + overflow:hidden. */
+.paper::before,
+.metal::before {
+  content: "";
+  position: absolute;
   inset: 0;
-  z-index: -1;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 900ms var(--ease-out);
+  z-index: 0;
+  border-radius: inherit;
 }
-.mesh-bg.is-live {
-  opacity: 1;
+.paper::before {
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+  background-size: 120px 120px;
+}
+.metal::before {
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
+  background-size: 90px 90px;
+}
+@media (prefers-color-scheme: light) {
+  .paper::before,
+  .metal::before {
+    mix-blend-mode: multiply;
+    opacity: 0.025;
+  }
 }
 
 a {
@@ -139,17 +169,17 @@ img {
   color: var(--ink-faint);
 }
 
-/* ── Display voice (Fraunces) ───────────────────────────────────────────
-   The editorial counterweight. Reserved for hero/feature titles + pull-quotes.
-   opsz pushed toward the display end + a soft optical wonk; tight tracking and
-   leading so the big sizes feel set, not stretched. */
+/* ── ARTIFACT voice (Fraunces) ──────────────────────────────────────────
+   The "made" register. Reserved for hero/feature titles + pull-quotes. opsz
+   pushed toward the display end + a soft optical wonk; tight tracking and leading
+   so the big sizes feel set, not stretched. -0.01em tracking on display (§2.5). */
 .display {
   font-family: var(--font-display);
   font-weight: 460;
   font-optical-sizing: auto;
   font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0;
   line-height: var(--lh-display);
-  letter-spacing: -0.018em;
+  letter-spacing: -0.012em;
   text-wrap: balance;
 }
 .display em,
@@ -157,6 +187,30 @@ img {
   font-style: italic;
   font-variation-settings: "opsz" 144, "SOFT" 4, "WONK" 1;
   color: var(--accent);
+  /* incandescent halation — display-size amber ONLY, never body (§8) */
+  text-shadow: var(--halo-display);
+}
+
+/* ── READING voice (Newsreader) ─────────────────────────────────────────
+   The calm register — the sacred long-form column. 18px, 1.62 line-height, warm
+   #D4CBC0 (~9.5:1, never pure white), +0.012em tracking for dark-mode legibility,
+   optical-sizing:auto so glyph shapes adapt across the reading sizes. Reading
+   comfort is non-negotiable (art-direction §5, §8). */
+.reading {
+  font-family: var(--font-read);
+  font-optical-sizing: auto;
+  font-size: var(--t-read);
+  line-height: var(--lh-read);
+  letter-spacing: var(--track-read);
+  color: var(--read);
+  max-width: var(--measure);
+}
+
+/* mono numbers are always set, never printed: tabular figures everywhere (§2.4) */
+.tnum,
+[data-tnum] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
 }
 
 /* utility: blinking block cursor */

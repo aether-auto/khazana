@@ -1,28 +1,55 @@
 :root {
-  /* palette — warm dark ground (v2). Not pure-black: a touch of olive warmth
-     so the page reads "made", not "default-dark". See design-patterns.md §2.2. */
-  --bg: #0a0a08;
-  --bg-raised: #121210;
-  --bg-inset: #070705;
-  --ink: #ece6d8;
-  --ink-dim: #a6a193;
-  --ink-faint: #6c6a60;
+  /* ── THE OBSERVATORY — semantic warm-dark system ──────────────────────
+     khazana is a warm reading room inside a precision instrument. The color
+     is load-bearing, not decorative: amber = SIGNAL (the instrument's light),
+     clay = ATTENTION (human taste/heat). See art-direction.md §8. */
+
+  /* Tonal dark LADDER — surfaces catch different light (candlelight in a room,
+     not one flat black). This ladder *is* the depth that was missing. */
+  --bg-inset: #070705; /* deepest — recessed wells, the night behind the stars */
+  --bg: #0a0a08; /* ground — warm-near-black, NOT pure #000 */
+  --bg-card: #0d0c0a; /* a card at rest, just lifted off the ground */
+  --bg-raised: #121210; /* a raised instrument surface */
+  --bg-hover: #161410; /* card under the cursor, catching light */
+  --bg-active: #1f1d19; /* pressed / active */
+
+  /* Reading inks — warm-grey, never pure white (21:1 halates over a 15-min read).
+     Body sits at ~#D4CBC0 ≈ 9.5:1 on the ground: the comfort sweet spot. */
+  --ink: #ece6d8; /* headings / high-emphasis chrome */
+  --read: #d4cbc0; /* LONG-FORM BODY — the sacred reading color (~9.5:1) */
+  --ink-dim: #a6a193; /* secondary chrome */
+  --ink-faint: #8a8070; /* captions, lowered hierarchy */
+
   --rule: #272620;
   --rule-bright: #3b3a30;
+
+  /* SIGNAL — amber. Headlines, active states, fresh-signal glow, the star light.
+     Halation belongs on DISPLAY-SIZE amber only (see --halo-display), never body. */
   --accent: #ffb627;
   --accent-dim: #b8851d;
+  /* ATTENTION / taste / heat — clay. Marks taste-matches & "why this matters to
+     you". Large text / accents only (4.6:1 — fine for headers, not body). */
   --editorial: #c1554a;
   --editorial-dim: #8f3c34;
   --good: #7faa6e;
   --focus: #ffb627;
 
-  /* type stacks — system/self-hostable only ($0) */
+  /* incandescent light bleeding into a dark room — display-size amber only */
+  --halo-display: 0 0 60px rgba(255, 182, 39, 0.2), 0 0 120px rgba(255, 182, 39, 0.05);
+  --halo-star: 0 0 24px rgba(255, 182, 39, 0.28);
+
+  /* ── TYPE: a three-voice duet, deliberately mismatched (art-direction §8) ──
+     instrument (mono) ✕ artifact (Fraunces display) ✕ reading (Newsreader). The
+     CONTRAST between voices is the identity; a single sans for everything is the
+     template tell. All $0/OFL/self-hosted — no CDN. */
   --font-mono: "Berkeley Mono", "JetBrains Mono", "SF Mono", ui-monospace, "IBM Plex Mono", Menlo, monospace;
-  --font-read: "Iowan Old Style", "Charter", "Palatino Linotype", "Palatino", "Source Serif 4", Georgia, serif;
+  /* reading voice — self-hosted Newsreader (variable, OFL), purpose-built for
+     on-screen long-form & dark-tuned. Replaces the old system-serif stack so the
+     reading face is identical on every machine. */
+  --font-read: "Newsreader Variable", "Newsreader", "Iowan Old Style", "Charter", "Source Serif 4", Georgia, serif;
   --font-sans: "Söhne", ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif;
-  /* display voice — Fraunces (variable, self-hosted via fontsource). The
-     editorial counterweight to the engineered mono. Used for hero/feature
-     titles + pull-quotes only; opsz axis driven per-use via font-variation. */
+  /* artifact voice — Fraunces (variable, self-hosted). Hero/feature titles +
+     pull-quotes only; opsz/SOFT/WONK driven per-use for warmth. */
   --font-display: "Fraunces Variable", "Fraunces", "Iowan Old Style", "Charter", Georgia, serif;
 
   /* type scale (1.25 chrome) + a dramatic display ramp (≈1.5) for the big
@@ -37,7 +64,10 @@
   --t-3xl: 3.25rem;
   --t-display: clamp(2.75rem, 6.5vw, 5.25rem);
   --t-display-sm: clamp(1.9rem, 3.6vw, 2.9rem);
-  --measure: 68ch;
+  /* reading-comfort hard numbers (non-negotiable, art-direction §8) */
+  --measure: 65ch; /* tightened from 68 → the 64–66ch comfort band */
+  --t-read: 1.125rem; /* 18px long-form on dark */
+  --track-read: 0.012em; /* +letter-spacing for dark-mode legibility */
   --lh-tight: 1.15;
   --lh-display: 0.98;
   --lh-read: 1.62;
@@ -87,10 +117,14 @@
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #f4f2ec;
-    --bg-raised: #fbfaf6;
     --bg-inset: #ece9e0;
+    --bg: #f4f2ec;
+    --bg-card: #faf8f3;
+    --bg-raised: #fbfaf6;
+    --bg-hover: #f2efe6;
+    --bg-active: #e8e4d8;
     --ink: #1a1916;
+    --read: #2a2823;
     --ink-dim: #52504a;
     --ink-faint: #8a877e;
     --rule: #dcd9cf;
@@ -101,6 +135,8 @@
     --editorial-dim: #7d3129;
     --good: #5e8a4e;
     --focus: #b8851d;
+    --halo-display: none;
+    --halo-star: none;
     color-scheme: light;
   }
 }

@@ -4,7 +4,6 @@ import Wordmark from "../components/Wordmark.astro";
 import Ticker from "../components/Ticker.astro";
 import Beacon from "../components/Beacon.astro";
 import CommandPalette from "../components/cmdk/CommandPalette.tsx";
-import MeshBackground from "../components/bg/MeshBackground.tsx";
 import NavRail from "../components/header/NavRail.tsx";
 import { ClientRouter } from "astro:transitions";
 import { CHANNELS } from "@khazana/core";
@@ -75,11 +74,10 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
     </script>
   </head>
   <body>
-    <!-- Living mesh-gradient background. client:only (WebGL is browser-only);
-         reduced-motion / no-WebGL fall back to the static CSS gradient on body.
-         transition:persist keeps the GL context alive across View Transitions
-         so it never re-inits (and never flashes) on navigation. -->
-    <MeshBackground client:only="react" transition:persist="mesh-bg" />
+    <!-- The decorative mesh-gradient background was removed (art-direction §2.1:
+         it is the #1 vibecoded tell). The only WebGL on the site now is the
+         data-carrying constellation. Empty space is warm, near-black, grain-
+         textured stillness (global.css) — confidence, not filler. -->
     <a class="skip-link" href="#main">Skip to content</a>
     <Ticker titles={tickerTitles} />
     <header class="topbar">
