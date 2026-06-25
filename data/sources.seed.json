@@ -5221,6 +5221,295 @@
       "addedBy": "seed",
       "failureCount": 0,
       "notes": "fast.ai Blog \u2014 practical deep learning education"
+    },
+    {
+      "id": "youtube-drachinifel",
+      "type": "youtube",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UC4mftUX7apmV1vsVXZh7RTw",
+      "channels": [
+        "history",
+        "geopolitics"
+      ],
+      "enabled": true,
+      "trustScore": 0.88,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "Drachinifel \u2014 naval history deep dives, Age of Sail to WWII; channel_id verified"
+    },
+    {
+      "id": "youtube-mark-felton",
+      "type": "youtube",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCfCKvREB11-fxyotS1ONgww",
+      "channels": [
+        "history",
+        "geopolitics"
+      ],
+      "enabled": true,
+      "trustScore": 0.85,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "Mark Felton Productions \u2014 WWII and Cold War military history; channel_id verified"
+    },
+    {
+      "id": "youtube-operations-room",
+      "type": "youtube",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCnZJt7yQw5IztVwe-Dscd-Q",
+      "channels": [
+        "history",
+        "geopolitics"
+      ],
+      "enabled": true,
+      "trustScore": 0.85,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "The Operations Room \u2014 animated battle map time-lapses; channel_id verified"
+    },
+    {
+      "id": "youtube-military-history-visualized",
+      "type": "youtube",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCK09g6gYGMvU-0x1VCF1hgA",
+      "channels": [
+        "history",
+        "geopolitics"
+      ],
+      "enabled": true,
+      "trustScore": 0.85,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "Military History Visualized \u2014 analytical military history from Classical to modern; channel_id verified"
+    },
+    {
+      "id": "youtube-real-time-history",
+      "type": "youtube",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCB1eDEd1AYG3YrRIJSZzMOQ",
+      "channels": [
+        "history",
+        "geopolitics"
+      ],
+      "enabled": true,
+      "trustScore": 0.85,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "Real Time History \u2014 documentary history including The Great War series; channel_id verified"
+    },
+    {
+      "id": "youtube-montemayor",
+      "type": "youtube",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCX7katl3DVmch4D7LSvqbVQ",
+      "channels": [
+        "history",
+        "geopolitics"
+      ],
+      "enabled": true,
+      "trustScore": 0.85,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "Montemayor \u2014 detailed naval and military history battles; channel_id verified"
+    },
+    {
+      "id": "podcast-hardcore-history",
+      "type": "podcast",
+      "url": "https://feeds.feedburner.com/dancarlin/history?format=xml",
+      "channels": [
+        "history",
+        "geopolitics"
+      ],
+      "enabled": true,
+      "trustScore": 0.95,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "Dan Carlin's Hardcore History \u2014 landmark long-form history narratives; RSS verified"
+    },
+    {
+      "id": "podcast-rest-is-history",
+      "type": "podcast",
+      "url": "https://feeds.megaphone.fm/GLT4787413333",
+      "channels": [
+        "history",
+        "ideas",
+        "geopolitics"
+      ],
+      "enabled": true,
+      "trustScore": 0.88,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "The Rest Is History (Tom Holland & Dominic Sandbrook) \u2014 accessible academic history; RSS verified"
+    },
+    {
+      "id": "podcast-war-on-the-rocks",
+      "type": "podcast",
+      "url": "https://warontherocks.libsyn.com/rss",
+      "channels": [
+        "geopolitics",
+        "politics",
+        "history"
+      ],
+      "enabled": true,
+      "trustScore": 0.88,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "War on the Rocks Podcast \u2014 national security and strategy analysis; RSS verified"
+    },
+    {
+      "id": "podcast-strategy-bridge",
+      "type": "podcast",
+      "url": "https://thestrategybridge.libsyn.com/rss",
+      "channels": [
+        "geopolitics",
+        "history",
+        "politics"
+      ],
+      "enabled": true,
+      "trustScore": 0.85,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "The Strategy Bridge Podcast \u2014 military strategy and national security; RSS verified"
+    },
+    {
+      "id": "small-wars-journal-blog",
+      "type": "rss",
+      "url": "https://smallwarsjournal.com/rss/blogs",
+      "channels": [
+        "geopolitics",
+        "history",
+        "politics"
+      ],
+      "enabled": true,
+      "trustScore": 0.82,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "Small Wars Journal \u2014 irregular warfare and counterinsurgency analysis; ASU-hosted, free"
+    },
+    {
+      "id": "responsible-statecraft-blog",
+      "type": "rss",
+      "url": "https://responsiblestatecraft.org/feeds/feed.rss",
+      "channels": [
+        "geopolitics",
+        "politics"
+      ],
+      "enabled": true,
+      "trustScore": 0.8,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "Responsible Statecraft (Quincy Institute) \u2014 restraint-focused foreign policy analysis; RSS verified"
+    },
+    {
+      "id": "breaking-defense-blog",
+      "type": "rss",
+      "url": "https://breakingdefense.com/feed",
+      "channels": [
+        "geopolitics",
+        "tech"
+      ],
+      "enabled": true,
+      "trustScore": 0.78,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "Breaking Defense \u2014 defense technology, policy, and national security news; RSS verified"
+    },
+    {
+      "id": "modern-war-institute-blog",
+      "type": "rss",
+      "url": "https://mwi.westpoint.edu/feed/",
+      "channels": [
+        "geopolitics",
+        "history",
+        "politics"
+      ],
+      "enabled": true,
+      "trustScore": 0.88,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "Modern War Institute (West Point) \u2014 military thought and conflict analysis; free"
+    },
+    {
+      "id": "wavell-room-blog",
+      "type": "rss",
+      "url": "https://wavellroom.com/feed/",
+      "channels": [
+        "geopolitics",
+        "history",
+        "politics"
+      ],
+      "enabled": true,
+      "trustScore": 0.82,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "Wavell Room \u2014 British defence and security commentary; free; RSS verified"
+    },
+    {
+      "id": "19fortyfive-blog",
+      "type": "rss",
+      "url": "https://www.19fortyfive.com/feed/",
+      "channels": [
+        "geopolitics",
+        "politics",
+        "tech"
+      ],
+      "enabled": true,
+      "trustScore": 0.72,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "19FortyFive \u2014 national security and defense commentary"
+    },
+    {
+      "id": "ecfr-blog",
+      "type": "rss",
+      "url": "https://ecfr.eu/feeds/",
+      "channels": [
+        "geopolitics",
+        "politics"
+      ],
+      "enabled": true,
+      "trustScore": 0.85,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "ECFR (European Council on Foreign Relations) \u2014 European foreign policy analysis; RSS verified"
+    },
+    {
+      "id": "rusi-blog",
+      "type": "rss",
+      "url": "https://www.rusi.org/feeds/commentary",
+      "channels": [
+        "geopolitics",
+        "politics",
+        "history"
+      ],
+      "enabled": true,
+      "trustScore": 0.88,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "RUSI (Royal United Services Institute) \u2014 UK defence and security analysis; free; RSS page verified"
+    },
+    {
+      "id": "brookings-research-blog",
+      "type": "rss",
+      "url": "https://www.brookings.edu/feeds/rss/research/",
+      "channels": [
+        "geopolitics",
+        "politics",
+        "finance"
+      ],
+      "enabled": true,
+      "trustScore": 0.85,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "Brookings Institution research \u2014 foreign policy and governance analysis; free; RSS verified"
+    },
+    {
+      "id": "public-domain-review-blog",
+      "type": "rss",
+      "url": "https://publicdomainreview.org/rss.xml",
+      "channels": [
+        "history",
+        "ideas"
+      ],
+      "enabled": true,
+      "trustScore": 0.85,
+      "addedBy": "seed",
+      "failureCount": 0,
+      "notes": "The Public Domain Review \u2014 curated essays on public domain art, literature, and history; free"
     }
   ]
 }
