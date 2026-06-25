@@ -1,8 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="khazana">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" role="img" aria-label="khazana">
   <rect width="512" height="512" rx="96" fill="#0a0a0b" />
-  <text x="64" y="332" font-family="ui-monospace, monospace" font-size="220" font-weight="700" fill="#ffb627">›</text>
-  <rect x="248" y="150" width="120" height="200" fill="#e8e6df" />
-  <rect x="392" y="150" width="56" height="200" fill="#ffb627">
-    <animate attributeName="opacity" values="1;1;0;0" dur="1.1s" keyTimes="0;0.5;0.5;1" repeatCount="indefinite" />
-  </rect>
+  <path d="M112 224 L256 96 L400 224 L256 432 Z" stroke="#ffb627" stroke-width="26" stroke-linejoin="round" />
+  <path d="M112 224 H400" stroke="#ffb627" stroke-width="26" stroke-linecap="round" />
+  <path d="M256 96 V224 M184 224 L256 432 M328 224 L256 432" stroke="#ffb627" stroke-width="14" stroke-linecap="round" opacity="0.45" />
 </svg>

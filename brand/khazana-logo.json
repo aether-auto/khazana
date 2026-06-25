@@ -1,0 +1,87 @@
+{
+  "$schema": "https://khazana.brand/logo.schema.json",
+  "name": "khazana",
+  "version": "1.0.0",
+  "tagline": "a personal treasury of signal",
+  "concept": {
+    "meaning": "khazana (खज़ाना) — treasury / vault. A curated vault of the world's best signal.",
+    "idea": "A single minimal gem (the treasure) whose central girdle reads as a terminal text-line / cursor — fusing the two halves of the product: the instrument (terminal, precise) and the artifact (editorial, permanent).",
+    "voice": "terminal × editorial (NYT-graphics restraint). Lines, not boxes. One amber accent used with discipline.",
+    "symbolism": [
+      "gem = treasure / khazana / something rare and kept",
+      "horizontal girdle line = a terminal line of output / a cursor / a horizon",
+      "amber = signal light (the instrument); the only chromatic note",
+      "lowercase wordmark = approachable, modern, editorial calm"
+    ]
+  },
+  "palette": {
+    "ground": "#0a0a0b",
+    "ink": "#e8e6df",
+    "ink-dim": "#a7a29a",
+    "amber": "#ffb627",
+    "clay": "#c1554a",
+    "rule": "#26252b",
+    "usage": "Mark is amber on ground (dark) or amber on warm-white (light). Wordmark is ink. Clay reserved for the editorial accent (e.g. the period in 'khazana.'); never the mark."
+  },
+  "typography": {
+    "wordmark": "khazana (always lowercase)",
+    "lockups": {
+      "terminal": {
+        "font": "monospace — JetBrains Mono / Berkeley Mono / SF Mono, weight 600, letter-spacing -0.01em",
+        "prompt": "a leading amber '›' chevron (the terminal prompt). No blinking cursor.",
+        "use": "app chrome, nav, favicons, dense UI"
+      },
+      "editorial": {
+        "font": "Fraunces (variable, opsz high), weight 500, optical display",
+        "accent": "trailing clay period 'khazana.' (the editorial full-stop)",
+        "use": "covers, hero, print, marketing"
+      }
+    }
+  },
+  "mark": {
+    "name": "the gem",
+    "viewBox": "0 0 32 32",
+    "geometry": {
+      "crownLeft": [6, 13],
+      "apex": [16, 4],
+      "crownRight": [26, 13],
+      "pavilionTip": [16, 28],
+      "girdle": "horizontal line y=13 from x=6 to x=26 (the terminal line)",
+      "innerFacets": ["apex→girdle center", "girdle→pavilion (two diagonals)"]
+    },
+    "strokeWidth": 2,
+    "style": "stroke-only, round joins, no fill (or 6% amber fill at large sizes). Amber stroke.",
+    "svg": "<svg viewBox=\"0 0 32 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M6 13 L16 4 L26 13 L16 28 Z\" stroke=\"#ffb627\" stroke-width=\"2\" stroke-linejoin=\"round\"/><path d=\"M6 13 H26\" stroke=\"#ffb627\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M16 4 V13 M11 13 L16 28 M21 13 L16 28\" stroke=\"#ffb627\" stroke-width=\"1.1\" stroke-linecap=\"round\" opacity=\"0.45\"/></svg>"
+  },
+  "variants": [
+    { "id": "lockup-terminal", "parts": ["mark", "›khazana (mono)"], "primary": true, "file": "brand/khazana-lockup.svg" },
+    { "id": "lockup-editorial", "parts": ["mark", "khazana. (Fraunces, clay period)"] },
+    { "id": "mark-only", "parts": ["mark"], "use": "favicon, avatar, app icon", "file": "brand/khazana-mark.svg" },
+    { "id": "wordmark-only", "parts": ["›khazana"], "use": "inline, tight headers" }
+  ],
+  "favicon": {
+    "shape": "the gem, amber stroke, on transparent or on #0a0a0b rounded-square (radius 6/32)",
+    "file": "apps/site/public/icon.svg"
+  },
+  "spacing": {
+    "clearspace": "minimum padding around the lockup = the height of the gem's girdle-to-apex (≈ x-height of the wordmark)",
+    "markToWordmarkGap": "0.6× mark width",
+    "minSize": { "mark": "16px", "lockup": "96px wide" }
+  },
+  "motion": {
+    "policy": "The mark is STILL by default (founder removed the blinking cursor). Any animation is optional, subtle, and reduced-motion-gated: e.g. a one-time amber girdle-line sweep on first load. Never a persistent blink."
+  },
+  "do": [
+    "keep it lowercase",
+    "amber for the mark only; ink for the wordmark",
+    "give it clearspace; let it breathe",
+    "use the terminal lockup in-app, the editorial lockup for covers"
+  ],
+  "dont": [
+    "no blinking cursor",
+    "don't fill the gem with solid amber at small sizes",
+    "don't add gradients, bevels, or shadows (lines, not boxes)",
+    "don't recolor the mark to clay",
+    "don't stretch or rotate the gem"
+  ]
+}
