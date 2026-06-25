@@ -11,11 +11,25 @@ sources:
     url: "https://netflixtechblog.com/rebuilding-the-edge-tier"
 ---
 
-import { Chart, Scrolly, ScrollyStep, DataTable, Annotation } from "../../components/mdx";
+import { Chart, Scrolly, ScrollyStep, DataTable, Annotation, ControlledChart, DrawChart, Sidenote } from "../../components/mdx";
 
 Three things happened this week that look unrelated until you line them up.
 
-First, a research paper argued that the routing inside <Annotation client:load term="mixture-of-experts" note="A model whose layers route each token to a few specialized sub-networks ('experts'), so only a fraction of the weights run per token." /> models is doing something subtler than load balancing — it's reproducing a *curriculum*.
+First, a research paper argued that the routing inside <Annotation client:load term="mixture-of-experts" note="A model whose layers route each token to a few specialized sub-networks ('experts'), so only a fraction of the weights run per token." /> models is doing something subtler than load balancing — it's reproducing a *curriculum*.<Sidenote n={1} href="https://arxiv.org/abs/2606.01234" source="Sparse MoE paper">The paper measures expert-assignment entropy falling monotonically through training — the network teaches itself an easy-to-hard ordering nobody specified.</Sidenote>
+
+The marginal cost of inference has been falling on both tiers, but at very different rates. Watch the edge curve draw itself in:
+
+<DrawChart
+  client:visible
+  unit="$/M tok"
+  caption="Edge-NPU marginal inference cost — drawn over four quarters"
+  data={[
+    { x: 0, y: 3.1 },
+    { x: 3, y: 1.8 },
+    { x: 6, y: 0.95 },
+    { x: 9, y: 0.6 }
+  ]}
+/>
 
 <Chart
   client:visible
@@ -37,7 +51,23 @@ First, a research paper argued that the routing inside <Annotation client:load t
   ]}
 />
 
-The edge curve crossed the datacenter curve this spring. Walk the three signals:
+The edge curve crossed the datacenter curve this spring. But *when* it crosses
+depends entirely on one number — the decay rate. Take the model's controls and
+find the crossover yourself: drag the rate and watch the half-life and the month
+it drops under a dollar move with you.
+
+<ControlledChart
+  client:visible
+  start={3.1}
+  floor={0.4}
+  rate={0.18}
+  span={24}
+  threshold={1}
+  unit="$/M tok"
+  caption="Edge inference cost under exponential decay — you steer the rate"
+/>
+
+Walk the three signals:
 
 <Scrolly client:visible caption="Three signals, one shift">
   <ScrollyStep

@@ -11,14 +11,14 @@ sources:
     url: "https://example.org/road-of-life"
 ---
 
-import { Map, Timeline, Annotation } from "../../components/mdx";
+import { Map, Timeline, Annotation, Sidenote } from "../../components/mdx";
 
 The metronome never stops. From a single loudspeaker bolted to a lamppost on
 Nevsky Prospekt, it ticks through the dark — sixty beats a minute when the city
-is calm, faster when the bombers are coming. Tonight it is slow.
+is calm, faster when the bombers are coming.<Sidenote n={1} href="https://example.org/leningrad-diaries" source="diaries archive">The radio metronome was Leningrad's heartbeat: a steady tick meant the broadcast network — and the city — was still alive.</Sidenote> Tonight it is slow.
 
 Anna listens past the metronome for the other sound: the groan of truck engines
-far to the east, out on the ice of <Annotation client:load term="Lake Ladoga" note="The largest lake in Europe; its winter ice carried the 'Road of Life' supply route into besieged Leningrad." />, where the road runs that should not exist.
+far to the east, out on the ice of <Annotation client:load term="Lake Ladoga" note="The largest lake in Europe; its winter ice carried the 'Road of Life' supply route into besieged Leningrad." />, where the road runs that should not exist.<Sidenote n={2} href="https://example.org/road-of-life" source="logistics study">The ice had to hold at least 18 cm thick to bear a loaded GAZ-AA truck; drivers kept doors open to leap clear if it gave way.</Sidenote>
 
 <Map
   client:visible

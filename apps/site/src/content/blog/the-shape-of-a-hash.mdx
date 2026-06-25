@@ -9,11 +9,11 @@ sources:
     url: "https://example.org/fnv-reference"
 ---
 
-import { RunnableCode, Chart, Annotation } from "../../components/mdx";
+import { RunnableCode, Chart, Annotation, Model3D, Sidenote } from "../../components/mdx";
 
 A hash function has one job: take any input and scatter it across a fixed range
 so that *similar* inputs land *far apart*. That scattering is called the
-<Annotation client:load term="avalanche effect" note="A one-bit change in the input should flip about half the output bits — the hallmark of good diffusion." />. Let's watch it happen.
+<Annotation client:load term="avalanche effect" note="A one-bit change in the input should flip about half the output bits — the hallmark of good diffusion." />.<Sidenote n={1} href="https://example.org/fnv-reference" source="FNV reference">FNV-1a's whole trick is one multiply by a carefully-chosen prime (0x01000193) followed by an xor — cheap enough to inline, mixing enough to scatter.</Sidenote> Let's watch it happen.
 
 <RunnableCode
   client:visible
@@ -55,3 +55,21 @@ the distribution stays flat — no clustering:
 />
 
 One multiply, one xor, per byte — and the inputs come out evenly spread.
+
+## The same idea, in three dimensions
+
+Even distribution is a goal you can *see* once you leave the number line. A
+slicer faced with "fill this solid evenly, using as little material as possible"
+reaches for a <Annotation client:load term="gyroid" note="A triply-periodic minimal surface — it divides space into two interlocking halves with no flat walls, spreading stress evenly in every direction." />: a surface that scatters load across a volume the
+way FNV-1a scatters keys across a table. Drag it — there is no preferred axis,
+no clustering, no seam. That isotropy is exactly what a good hash buys you in
+one dimension.
+
+<Model3D
+  client:visible
+  detail={16}
+  caption="A gyroid infill cell — even distribution made spatial; drag to rotate"
+/>
+
+A hash spreads keys so no bucket is favoured; a gyroid spreads force so no wall
+is favoured. Different domains, one obsession: *no clusters, anywhere.*
