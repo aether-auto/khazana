@@ -26,6 +26,14 @@ export default function Constellation({ stars }: { stars: Star[] }) {
     if (!canvas || !stars.length) return;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Perf contract (art-direction §6): below ~768px or on low-memory devices,
+    // do NOT spin up live WebGL — the baked static SVG star-field is the hero.
+    // (deviceMemory is non-standard but cheap insurance where present.)
+    const lowMem = (navigator as { deviceMemory?: number }).deviceMemory;
+    const skipLiveGL = window.innerWidth < 768 || (lowMem != null && lowMem < 4);
+    if (skipLiveGL) return; // baked SVG fallback carries it
+
     const handle: ConstellationHandle | null = initConstellation(canvas, stars, {
       reducedMotion: reduce,
     });
