@@ -34,14 +34,23 @@
 }
 
 /* ── WIDE: float the note into the right margin of the study column ──────
-   The Article gives the prose a right gutter (--sidenote-gutter); the note
-   floats there, aligned to its reference. Pure layout, no motion. */
-@media (min-width: 1100px) {
+   Tufte-style marginalia. The note is FLOATED to the right edge of the prose
+   measure and pushed fully into the right gutter with a negative margin, so it
+   anchors to the COLUMN edge (not the inline marker, which used to drop the note
+   mid-paragraph and collide with the text). Width + offset come from the gutter
+   tokens the Article sets (--sidenote-w / --sidenote-gap), so the note never
+   overruns the available margin or clips off-screen. Pure layout, no motion. */
+@media (min-width: 1280px) {
   .sidenote-body {
-    position: absolute;
-    left: calc(100% + var(--s-5));
-    top: -0.4em;
-    width: var(--sidenote-w, 15rem);
+    float: right;
+    clear: right;
+    width: var(--sidenote-w, 13rem);
+    /* push the whole note into the gutter: its own width + the gap beyond the
+       measure's right edge. */
+    margin-right: calc(-1 * (var(--sidenote-w, 13rem) + var(--sidenote-gap, 1.5rem)));
+    margin-top: 0.1em;
+    margin-bottom: var(--s-2);
+    position: relative;
     display: block;
     padding-left: var(--s-3);
     border-left: var(--hair) solid var(--rule);
@@ -50,7 +59,7 @@
 }
 
 /* ── NARROW: inline footnote, quietly indented under the paragraph ──────── */
-@media (max-width: 1099px) {
+@media (max-width: 1279px) {
   .sidenote-body {
     display: block;
     margin: var(--s-2) 0 var(--s-3);

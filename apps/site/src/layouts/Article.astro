@@ -167,9 +167,19 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
   .article {
     max-width: var(--measure);
     margin-inline: auto;
-    /* the right gutter that marginalia float into on wide screens; the column
-       itself stays at the sacred measure. */
-    --sidenote-gutter: 16rem;
+    /* The right gutter that marginalia float into on wide screens; the column
+       itself stays at the sacred measure. The note width is clamped to the space
+       actually available between the measure's right edge and the shell padding,
+       so a sidenote can NEVER overrun the gutter or clip off-screen:
+         available gutter ≈ (min(viewport, --maxw) − measure) / 2 − breathing room
+       We hold a small gap from the column and a min/max so the note stays legible
+       (never a sliver) yet never collides with the prose or the viewport edge. */
+    --sidenote-gap: 1.75rem;
+    --sidenote-w: clamp(
+      11rem,
+      (min(100vw, var(--maxw)) - var(--measure)) / 2 - var(--sidenote-gap) - var(--s-5),
+      15rem
+    );
   }
 
   /* ── the study header / hero ─────────────────────────────────────────── */
