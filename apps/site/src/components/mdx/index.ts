@@ -18,6 +18,8 @@ export { default as Map } from "./Map.js";
 export type { MapProps } from "./Map.js";
 export { default as ControlledChart } from "./ControlledChart.js";
 export type { ControlledChartProps } from "./ControlledChart.js";
+export { default as KellyChart } from "./KellyChart.js";
+export type { KellyChartProps } from "./KellyChart.js";
 export { default as Model3D } from "./Model3D.js";
 export type { Model3DProps } from "./Model3D.js";
 export { default as Sidenote } from "./Sidenote.js";

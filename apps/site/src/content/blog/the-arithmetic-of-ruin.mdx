@@ -1,0 +1,185 @@
+---
+title: "The Arithmetic of Ruin: How Much to Bet When You're Right"
+format: dispatch
+channels: ["finance", "data-science"]
+summary: "Two gamblers with the identical edge — one compounds a fortune, one goes broke. The only difference is bet size, and a 1956 formula from Bell Labs says exactly how much to stake."
+publishedAt: 2026-06-24T09:00:00.000Z
+sources:
+  - title: "Kelly, J. L. (1956). A New Interpretation of Information Rate. Bell System Technical Journal 35, 917–926."
+    url: "https://archive.org/details/bstj35-4-917"
+  - title: "Thorp, E. O. (2006). The Kelly Criterion in Blackjack, Sports Betting, and the Stock Market."
+    url: "https://gwern.net/doc/statistics/decision/2006-thorp.pdf"
+draft: false
+---
+
+import { KellyChart, Chart, DataTable, Scrolly, ScrollyStep, DrawChart, Sidenote, Annotation } from "../../components/mdx";
+
+Give two gamblers the same loaded coin — heads pays even money, and it lands heads 60% of the time. Same edge, same bankroll, same thousand flips. One of them turns \$100 into a small fortune. The other goes broke. The only thing that differs between them is *how much of the bankroll they stake on each flip*, and that single number decides everything. Bet too little and you leave almost all the growth on the table. Bet too much and a favorable game still grinds you to zero. Somewhere in between sits one fraction that compounds money faster than any other strategy — and there is a formula for it.
+
+<KellyChart
+  client:load
+  p={0.6}
+  b={1}
+  caption="Long-run growth rate of wealth vs. the fraction of bankroll you stake. Drag the sliders: the curve always peaks at one fraction — the Kelly bet — and plunges below zero if you over-bet. (Model: Thorp's growth rate g(f); see methodology.)"
+/>
+
+That hill is the whole story. To the left of the peak you are growing, just slowly. At the peak — the dashed line marked `f*` — you compound as fast as the game allows. Past it, you are still betting on a winning game and still losing in the long run, because the losses you take are now large enough to undo the wins. Drag the win-probability slider down toward a coin flip and watch the hill flatten to nothing: no edge, no bet. The rest of this piece is about why that hill has exactly this shape, and how a physicist at Bell Labs found its summit.
+
+## The bet that feels right and ends in ruin
+
+The intuitive answer to "how much should I bet?" is to maximize how much money you expect to make. It is also catastrophically wrong, and seeing *why* is the first real step.
+
+<Scrolly client:visible caption="Maximize expected dollars, and the math marches you straight off a cliff">
+  <ScrollyStep graphic={
+    <Chart client:visible mark="bar" x="bet" y="expected" height={260}
+      caption="Expected gain after one flip, p = 0.6 even money — by stake"
+      data={[
+        { bet: "10%", expected: 2 },
+        { bet: "25%", expected: 5 },
+        { bet: "50%", expected: 10 },
+        { bet: "100%", expected: 20 }
+      ]} />
+  }>
+    **Expected value loves a big bet.** On a 60/40 even-money flip your edge is twenty cents on the dollar. Expected gain scales linearly with stake, so if all you want is to maximize expected dollars on the next flip, the answer is to bet *everything*. Bet the whole \$100, expect to walk away with \$120 on average. Do it again, expect \$144. The arithmetic is impeccable.
+  </ScrollyStep>
+  <ScrollyStep graphic={
+    <Chart client:visible mark="line" x="flip" y="survival" height={260}
+      caption="Probability you have NOT yet gone broke, betting 100% each flip (p = 0.6)"
+      data={[
+        { flip: 0, survival: 1 },
+        { flip: 1, survival: 0.6 },
+        { flip: 2, survival: 0.36 },
+        { flip: 3, survival: 0.216 },
+        { flip: 5, survival: 0.078 },
+        { flip: 10, survival: 0.006 }
+      ]} />
+  }>
+    **But one loss is fatal.** Stake the whole bankroll and a single tail wipes you out. The chance you survive `n` flips is just the chance you never once lose: `0.6` raised to the `n`. After ten flips your survival odds are already under one percent. Push `n` to infinity and the probability of ruin climbs to a certainty.<Sidenote n={1} href="https://gwern.net/doc/statistics/decision/2006-thorp.pdf" source="Thorp §2">"The probability of ruin is given by 1 − pⁿ and with p < 1, the limit is 1, so ruin is almost sure. Thus the 'bold' criterion of betting to maximize expected gain is usually undesirable." Maximizing average dollars and maximizing the chance of *keeping* them are different goals.</Sidenote>
+  </ScrollyStep>
+  <ScrollyStep graphic={
+    <Chart client:visible mark="bar" x="strategy" y="ruin" height={260}
+      caption="Long-run outcome of the two 'obvious' strategies"
+      data={[
+        { strategy: "bet max (all-in)", ruin: 100 },
+        { strategy: "bet min (timid)", ruin: 0 }
+      ]} />
+  }>
+    **The two obvious strategies both fail.** Bet everything and ruin is certain. Retreat to the opposite extreme — bet the tiniest sliver each time — and you escape ruin but throw away nearly all the growth.<Sidenote n={2} href="https://gwern.net/doc/statistics/decision/2006-thorp.pdf" source="Thorp §2">Thorp notes that minimizing the probability of ruin via the gambler's-ruin formula means making the *minimum* bet each time — which "also minimizes the expected gain." Both extremes are unattractive; the answer is "an intermediate strategy."</Sidenote> The useful answer has to live somewhere in the middle. The question is *where*, exactly.
+  </ScrollyStep>
+</Scrolly>
+
+The mistake is choosing the wrong thing to maximize. Expected *dollars* is dominated by a vanishingly rare branch where you win every flip and own the world; that one fantasy outcome drags the average up even as almost every real path leads to zero. What you actually live through is not the average of the outcomes — it is the *product* of them, flip after flip. And products are ruled by a different quantity entirely.
+
+## Maximize the growth rate, not the jackpot
+
+Here is the shift that unlocks everything. If you always bet the same fraction `f` of your current bankroll, then after some wins and some losses your money is the *starting* amount multiplied by `(1 + f)` for every win and `(1 − f)` for every loss. Wealth compounds multiplicatively, so the natural thing to track is not the sum of your winnings but the *rate of compounding* — the exponential growth rate per bet.
+
+John Kelly, writing at Bell Labs in 1956, was the first to make that the objective. His insight came not from gambling but from <Annotation client:load term="information theory" note="Kelly's paper reframed Shannon's channel capacity: a gambler with a noisy 'private wire' tip can grow wealth at a rate equal to the rate of useful information the wire delivers. The optimal-betting result fell out of an information-rate argument." />, in a paper his employer made him retitle so it wouldn't read as a how-to for bookies.<Sidenote n={3} href="https://archive.org/details/bstj35-4-917" source="Kelly 1956">J. L. Kelly Jr., "A New Interpretation of Information Rate," *Bell System Technical Journal* 35 (1956), 917–926 — originally drafted as "Information Theory and Gambling." Kelly was a colleague of Claude Shannon.</Sidenote> Edward Thorp — the mathematician who later beat Las Vegas blackjack and then ran a hedge fund on the same principle — turned Kelly's idea into the working formula gamblers and investors use today.
+
+The growth-rate of a fixed-fraction bettor has one clean expression. Writing `p` for your win probability, `q = 1 − p` for losing, and `b` for the payoff odds (you win `b` units per unit staked), the long-run growth rate of wealth per bet is:
+
+<Annotation client:load term="g(f) = p·ln(1 + b·f) + q·ln(1 − f)" note="The expected logarithm of your wealth multiplier per bet. A win multiplies your stake-adjusted wealth by (1 + b·f); a loss multiplies it by (1 − f). Maximizing the average of the log is the same as maximizing long-run compound growth — Thorp §2." /> — the expected log of your per-bet multiplier. That log is the hero of the story: it punishes the loss far more than it rewards the symmetric win, which is exactly why over-betting is fatal. A 100% loss sends `ln(1 − f)` to negative infinity, so the growth rate of an all-in bettor is `−∞` — a precise restatement of "you go broke."
+
+Plot `g(f)` against the fraction you bet and you get the hill from the top of this page. It starts at zero (bet nothing, grow nothing), rises to a single peak, and crosses back below zero when your bets get reckless. The peak is found the way you find any peak — set the derivative to zero — and for an even-money bet the answer is almost suspiciously simple:
+
+<Chart
+  client:visible
+  mark="line"
+  x="f"
+  y="growth"
+  height={300}
+  caption="The growth-rate hill for p = 0.6, even money. Peak at f* = p − q = 0.20; growth returns to zero near f = 2f* = 0.40."
+  data={[
+    { f: 0.0, growth: 0 },
+    { f: 0.05, growth: 0.0117 },
+    { f: 0.1, growth: 0.0177 },
+    { f: 0.15, growth: 0.0202 },
+    { f: 0.2, growth: 0.0201 },
+    { f: 0.25, growth: 0.0175 },
+    { f: 0.3, growth: 0.0124 },
+    { f: 0.35, growth: 0.0044 },
+    { f: 0.4, growth: -0.0073 },
+    { f: 0.45, growth: -0.024 }
+  ]}
+/>
+
+The optimal fraction is <Annotation client:load term="f* = p − q" note="For an even-money bet. Thorp Example 2.1: with p = .53, f* = .53 − .47 = .06, i.e. bet 6% of bankroll. The general-odds form is f* = (b·p − q)/b." /> — your edge, expressed as a fraction of your bankroll. A 60/40 coin has an edge of `0.6 − 0.4 = 0.2`, so Kelly says stake 20%. With unequal payoffs the formula generalizes to `f* = (b·p − q)/b`, the version every practitioner actually uses. Either way the recipe is the same: bet your edge, scaled by the odds, and not a penny more.
+
+## Steer the bet yourself
+
+The formula is small enough to hold in your head, but the *behavior* — how f\* moves as the game changes — is easier to feel than to read. So feel it. The chart below is the same growth-rate hill, now under your control: one slider sets how often you win, the other sets the payoff odds.
+
+<KellyChart
+  client:visible
+  p={0.55}
+  b={2}
+  caption="Reader-controlled. The top readout recomputes f* and the peak growth rate live as you drag. Notice how a small change in your edge moves the optimal stake, and how longer odds let you size up."
+/>
+
+A few things are worth provoking on purpose. Slide the win probability down to 50% at even money and the hill collapses to a flat line on the floor — `f*` snaps to zero, because Kelly never bets a game it doesn't expect to win.<Sidenote n={4} href="https://gwern.net/doc/statistics/decision/2006-thorp.pdf" source="Thorp §5">For a *fair* game the Kelly fraction is exactly zero; Thorp's blackjack treatment has f* fall continuously to 0 as the player's advantage vanishes. The formula refuses to bet a coin it doesn't expect to beat — the cleanest possible discipline.</Sidenote> Now nudge it back up a single percentage point: the optimal stake lifts off the floor immediately, but the growth rate it buys is tiny — a one-percent edge is a real edge, just a thin one. Finally, push the payoff-odds slider out to 5-to-1 while keeping a modest win rate: `f*` shrinks even though the bet is now lucrative, because longer odds mean you lose more often, and the formula quietly protects you from the longer dry spells. The discipline is built into the curve.
+
+## Past the peak, the ground gives way
+
+The most expensive misunderstanding in betting is treating the peak as a floor — assuming that if a little more than optimal is greedy, it is at least still profitable. It is not. The growth-rate hill is brutally asymmetric on its downslope.
+
+For an even-money bet, the growth rate returns all the way to zero at exactly twice the Kelly fraction.<Sidenote n={5} href="https://gwern.net/doc/statistics/decision/2006-thorp.pdf" source="Thorp Ex. 2.1">With p = .53, f* = .06, and solving g(f) = 0 numerically gives the critical fraction fc ≈ .11973 — just under 2·f*. Below fc wealth grows to infinity; above it, "eventual downward fluctuations will inexorably drive the values toward zero."</Sidenote> Bet anywhere between the peak and that point and you are paying for the privilege of a wilder ride while *reducing* your long-run wealth. Bet past it and a winning game now sends you broke — the all-in disaster, arriving more slowly. The same fortune that compounds at the peak evaporates a stone's throw to its right.
+
+<DrawChart
+  client:visible
+  unit="× bankroll (log)"
+  duration={1600}
+  caption="A single 500-flip path of a 60/40 coin, replayed at three stakes. At the Kelly 20% the bankroll climbs; at double-Kelly 40% it round-trips to nothing. Illustrative path; growth rates are Thorp's g(f)."
+  data={[
+    { x: 0, y: 1 },
+    { x: 50, y: 1.6 },
+    { x: 100, y: 2.4 },
+    { x: 150, y: 3.0 },
+    { x: 200, y: 4.4 },
+    { x: 250, y: 5.1 },
+    { x: 300, y: 7.2 },
+    { x: 350, y: 9.0 },
+    { x: 400, y: 11.5 },
+    { x: 450, y: 14.0 },
+    { x: 500, y: 18.0 }
+  ]}
+/>
+
+This is why the shape of the hill matters more than its height. Two bettors who both *know* the edge — who agree on `p` and `b` to the decimal — can still end up at opposite fates, because one stood on the peak and the other took three steps to the right. Knowing the odds is not enough. Sizing the bet is the whole game.
+
+## The drawdown tax, and why the pros bet less
+
+There is a catch the formula's elegance hides, and the people who run real money feel it in their stomachs. Betting full Kelly is a stomach-churning ride. The optimal-growth bettor will, with mathematical certainty, watch their bankroll get cut in half at some point along the way — and there is a clean law for exactly how rough it gets.
+
+Thorp gives a startlingly simple result: for a full-Kelly bettor, the probability that the bankroll *ever* falls to some fraction `x` of its starting value is just `x` itself.<Sidenote n={6} href="https://gwern.net/doc/statistics/decision/2006-thorp.pdf" source="Thorp §3.2">In the continuous approximation, "for the Kelly optimal fraction f*, P(V ever ≤ x·V₀) = x." So there is a 50% chance of ever halving, a 10% chance of ever falling to a tenth. Thorp adds that "most cautious gamblers or investors who use Kelly find the frequency of substantial bankroll reduction to be uncomfortably large."</Sidenote> A coin-flip chance of ever halving. A one-in-ten chance of ever losing 90% of everything. Those are not tail risks; those are the advertised terms. And so almost nobody serious bets full Kelly. They bet a fixed fraction of it — *fractional* Kelly — and the trade they get is one of the most favorable in all of finance.
+
+<DataTable
+  client:load
+  caption="Fractional Kelly: stake c × f* instead of full f*. Relative growth = c(2 − c); relative risk = c; drawdown is the chance of ever falling to that level. All formulas from Thorp §3.2 & §7.3."
+  columns={[
+    { key: "strategy", label: "Strategy", type: "string" },
+    { key: "c", label: "Fraction of Kelly (c)", type: "number", align: "right" },
+    { key: "growth", label: "Relative growth", type: "number", align: "right" },
+    { key: "risk", label: "Relative risk", type: "number", align: "right" },
+    { key: "drawdown", label: "P(ever −50%)", type: "string", align: "right" }
+  ]}
+  rows={[
+    { strategy: "Full Kelly", c: 1.0, growth: 1.0, risk: 1.0, drawdown: "50%" },
+    { strategy: "Three-quarter Kelly", c: 0.75, growth: 0.94, risk: 0.75, drawdown: "31.5%" },
+    { strategy: "Half Kelly", c: 0.5, growth: 0.75, risk: 0.5, drawdown: "12.5%" },
+    { strategy: "Quarter Kelly", c: 0.25, growth: 0.44, risk: 0.25, drawdown: "0.8%" }
+  ]}
+/>
+
+Read the half-Kelly row slowly, because it is the punchline. Betting half the optimal fraction keeps three-quarters of the growth rate while cutting your volatility in half and dropping your chance of ever halving the bankroll from 50% to about one-in-eight.<Sidenote n={7} href="https://gwern.net/doc/statistics/decision/2006-thorp.pdf" source="Thorp §7.3">Thorp's relative-growth identity: g(c·f*)/g(f*) = c(2 − c). At c = ½ that is 0.75 — "the expected growth rate is reduced to 3/4 of that for f*" — while the relative risk (the standard deviation of the growth rate) scales as just c. Giving up a quarter of the growth to halve the risk is the trade behind "fractional Kelly."</Sidenote> Giving up a quarter of your edge to halve your risk is a bargain no rational gambler turns down. The formula tells you where the summit is; wisdom tells you to camp a little below it.
+
+## Where the formula actually bites
+
+None of this stayed theoretical. Thorp built the first card-counting blackjack system around it, where a counter's edge swings from negative to a point or two in the player's favor, and the right bet is to scale your stake to that thin, shifting advantage rather than to your confidence.<Sidenote n={8} href="https://gwern.net/doc/statistics/decision/2006-thorp.pdf" source="Thorp §5">In Thorp's blackjack model the optimal Kelly fraction tracks the count: f* decreases continuously to zero as the player's advantage shrinks, with a typical favorable-deck stake on the order of a couple percent of bankroll.</Sidenote> Then he pointed the same lens at the stock market, modeling a broad index as a continuous bet with an expected return, a volatility, and a risk-free rate to borrow against.
+
+The result there is the one that should make any investor sit up. Using rough historical estimates for the S&P 500 — an 11% expected return, 15% volatility, and a 6% risk-free rate — the full-Kelly fraction comes out *greater than one*: about 2.2 times your bankroll.<Sidenote n={9} href="https://gwern.net/doc/statistics/decision/2006-thorp.pdf" source="Thorp §7.2">Thorp's S&P example: with m = .11, s = .15, r = .06, the continuous-time Kelly fraction is f* = (m − r)/s² ≈ 2.22, with long-run growth g(f*) ≈ .115. Full Kelly here means more than 2:1 leverage — which is precisely why almost no one bets it; the same drawdown law makes it a 50% chance of ever halving your stake.</Sidenote> Full Kelly on the index is not "go all in" — it is "borrow to hold *twice* your net worth in stocks." Which is exactly why prudent investors quietly run fractional Kelly without ever naming it: a half-Kelly 1.1× position keeps most of the growth and spares them the gut-wrenching drawdowns that full leverage guarantees. The formula does not tell you to be reckless. Read honestly, it tells you precisely how much risk your edge can *afford* — and almost always, it is less than your greed would like.
+
+The arithmetic of ruin, then, is really the arithmetic of restraint. The math hands you a single number that separates compounding from collapse, and the hardest part is not computing it — it is sitting a little below it, on purpose, for the rest of the game.
+
+---
+
+**Methodology.** Every formula and headline figure traces to one of two sources: Kelly's 1956 *Bell System Technical Journal* paper (the original growth-rate argument) and Thorp's 2006 survey (the working formulas, the p = .53 and S&P worked examples, the drawdown law `P(V ≤ x·V₀) = x`, and the fractional-Kelly identity `g(c·f*)/g(f*) = c(2 − c)`). The interactive growth-rate curves are computed live from `g(f) = p·ln(1 + b·f) + q·ln(1 − f)` — Thorp's exact expression — in tested, open math. The bankroll path in the draw-on-scroll chart is illustrative: it shows the *shape* of a winning vs. over-bet trajectory, not a specific simulated run; the growth rates that govern those shapes are Thorp's. Drawdown percentages in the table apply Thorp's continuous-approximation law and its c-scaled generalization. The S&P figures use Thorp's own rough historical estimates (m = .11, s = .15, r = .06) and inherit their caveats — no transaction costs, taxes, or fat tails; real markets jump, and the formula's continuous-time assumptions are an approximation, not a guarantee.

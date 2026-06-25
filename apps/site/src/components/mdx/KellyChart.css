@@ -1,0 +1,41 @@
+/* apps/site/src/components/mdx/KellyChart.css
+   The reader-controlled Kelly chart reuses the instrument register from
+   ControlledChart.css (mono telemetry, amber signal line, paper panel). This
+   file only adds the bits unique to the growth-rate parabola: the dual-slider
+   control row, the f* peak marker, and a green-tinted fill for the growth area
+   above break-even. Tokens from tokens.css. */
+
+/* two sliders side by side on wide screens, stacked on narrow */
+.kc-controls {
+  position: relative;
+  z-index: 1;
+  margin-top: var(--s-3);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-4);
+}
+@media (max-width: 34rem) {
+  .kc-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* the growth area reads as "good" where it sits above break-even — a quiet
+   accent wash, not a second loud colour (drama stays in the line). */
+.kc-area {
+  fill: color-mix(in oklab, var(--accent) 10%, transparent);
+}
+
+/* f* — the peak of the parabola, the number the whole figure is about */
+.kc-peak {
+  fill: var(--accent);
+  stroke: var(--bg);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--accent) 55%, transparent));
+}
+.kc-peak-label {
+  fill: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
