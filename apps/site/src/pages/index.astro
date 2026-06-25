@@ -11,6 +11,9 @@ import { dataDir } from "../lib/data.js";
 const now = new Date().toISOString();
 const all = loadCurated(dataDir());
 const ticker = tickerTitles(all, 8);
+// live instrument readout: total signals + how many arrived in the last 24h
+const nowMs = Date.parse(now);
+const freshCount = all.filter((it) => nowMs - Date.parse(it.publishedAt) < 24 * 60 * 60 * 1000).length;
 // SSR-safe: at static build time there is no request channel; the inline script
 // applies the ?channel= filter on the client. We render ALL cards (tagged with
 // data-channels) and let the script show/hide. Framework-free, static-host OK.
@@ -22,7 +25,13 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const delay = (i: number) => Math.min(i, 8) * 60;
 ---
 
-<Shell title="khazana — feed" active="feed" tickerTitles={ticker}>
+<Shell
+  title="khazana — feed"
+  active="feed"
+  tickerTitles={ticker}
+  signalCount={all.length}
+  freshCount={freshCount}
+>
   <!-- First Light: the constellation of today's signal, settling into the feed -->
   <Hero items={all} now={now} />
 

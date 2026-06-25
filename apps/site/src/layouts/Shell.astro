@@ -18,12 +18,17 @@ interface Props {
   description?: string;
   active?: "feed" | "reads" | "workshop" | "graph" | "taste";
   tickerTitles?: string[];
+  /** Live instrument readout in the bezel (total + fresh signal counts). */
+  signalCount?: number;
+  freshCount?: number;
 }
 const {
   title,
   description = "A personal signal terminal: a self-curating feed of the world's best signal and gorgeous, AI-authored interactive reads.",
   active,
   tickerTitles = [],
+  signalCount,
+  freshCount,
 } = Astro.props;
 
 const base = import.meta.env.BASE_URL;
@@ -80,12 +85,31 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
          textured stillness (global.css) — confidence, not filler. -->
     <a class="skip-link" href="#main">Skip to content</a>
     <Ticker titles={tickerTitles} />
-    <header class="topbar">
+    <header class="topbar metal">
       <div class="topbar-inner">
         <Wordmark />
         <nav class="nav" aria-label="Surfaces">
           <NavRail items={nav} active={active} client:load />
         </nav>
+        {
+          signalCount != null && (
+            <p class="readout" aria-label="signal readout">
+              <span class="readout-n tnum">{signalCount}</span>
+              <span class="readout-l">signals</span>
+              {freshCount != null && freshCount > 0 && (
+                <>
+                  <span class="readout-sep" aria-hidden="true">
+                    ·
+                  </span>
+                  <span class="readout-n readout-fresh tnum">
+                    {String(freshCount).padStart(2, "0")}
+                  </span>
+                  <span class="readout-l">fresh</span>
+                </>
+              )}
+            </p>
+          )
+        }
         <button
           class="cmdk"
           type="button"
@@ -194,6 +218,9 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
     top: var(--s-3);
   }
 
+  /* the instrument bezel — a single hairline-ruled bar, thin & always present.
+     `.metal` (global.css) gives it the machined anodized grain; a faint top
+     edge-light lifts it as a physical surface catching the instrument light. */
   .topbar {
     position: sticky;
     top: 0;
@@ -201,6 +228,7 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
     background: color-mix(in oklab, var(--bg) 70%, transparent);
     backdrop-filter: blur(8px);
     border-bottom: var(--hair) solid transparent;
+    box-shadow: inset 0 var(--hair) 0 color-mix(in oklab, var(--ink) 5%, transparent);
     /* condense on scroll is a transform/opacity-only affair: we animate an
        inner padding token via a custom prop + the inner's transform, never the
        bar's own box. The border/blur deepen as a class flip (cheap). */
@@ -276,6 +304,8 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
     }
   }
   .topbar-inner {
+    position: relative;
+    z-index: 1; /* above the .metal grain (z-index:0) */
     max-width: var(--maxw);
     margin-inline: auto;
     display: flex;
@@ -283,11 +313,51 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
     gap: var(--s-5);
     padding: var(--s-3) var(--s-5);
   }
-  /* .nav is now just the right-aligned flex slot; the NavRail island owns the
-     tab styling + sliding indicator (see header/NavRail.css). */
+  /* nav sits just right of the wordmark; the readout + ⌘K hug the far right
+     (the live readout is the instrument telemetry — "the instrument is on"). */
   .nav {
     display: flex;
-    margin-left: auto;
+    margin-left: var(--s-2);
+  }
+  /* live signal readout — tabular mono telemetry in the bezel (art-direction §3) */
+  .readout {
+    margin: 0 0 0 auto;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.45ch;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+  .readout-n {
+    color: var(--ink-dim);
+  }
+  .readout-fresh {
+    color: var(--accent);
+    text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 35%, transparent);
+  }
+  .readout-l {
+    letter-spacing: 0.04em;
+  }
+  .readout-sep {
+    color: var(--ink-faint);
+    margin: 0 0.1ch;
+  }
+  /* condense on scroll: the readout tucks to just the fresh-count (art-direction
+     §3). The "signals" label + total fade; fresh stays as the live pulse. */
+  :global(html.is-scrolled) .readout :is(.readout-l):first-of-type,
+  :global(html.is-scrolled) .readout > .readout-n:first-of-type,
+  :global(html.is-scrolled) .readout .readout-sep {
+    opacity: 0;
+  }
+  .readout :is(.readout-n, .readout-l, .readout-sep) {
+    transition: opacity var(--dur) var(--ease-out);
+  }
+  @media (max-width: 880px) {
+    .readout {
+      display: none;
+    }
   }
   /* ⌘K — prominent, crafted trigger. Magnetic (data-magnetic, header script).
      A faint amber wash + lit edge so it reads as the primary affordance. */

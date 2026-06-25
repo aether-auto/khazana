@@ -20,6 +20,7 @@ const channelHref = (c: string) => `${base}/?channel=${c}`;
   data-channels={item.topics.join(" ")}
   data-kind={item.kind}
   data-bento="feature"
+  data-item-id={item.id}
   data-reveal
   style={`--reveal-delay:${revealDelay}ms`}
 >
@@ -90,7 +91,10 @@ const channelHref = (c: string) => `${base}/?channel=${c}`;
   .feature:hover {
     transform: translateY(-5px);
     border-color: color-mix(in oklab, var(--accent) 30%, var(--rule));
-    box-shadow: 0 20px 50px -16px rgba(0, 0, 0, 0.55);
+    /* the lead card is the brightest star — a warmer rim-light catches it */
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--accent) 34%, transparent),
+      0 20px 50px -16px rgba(0, 0, 0, 0.55);
   }
   .feature:hover::before {
     opacity: 1;
@@ -110,12 +114,19 @@ const channelHref = (c: string) => `${base}/?channel=${c}`;
     transform: scaleX(1);
   }
 
+  /* feature content sits above the amber pool (::before) */
+  .feature-meta,
+  .feature-title,
+  .feature-summary,
+  .feature-foot {
+    position: relative;
+    z-index: 1;
+  }
   .feature-meta {
     display: flex;
     align-items: baseline;
     gap: var(--s-3);
     flex-wrap: wrap;
-    position: relative;
   }
   .feature-flag {
     font-family: var(--font-mono);
