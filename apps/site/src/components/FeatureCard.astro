@@ -13,6 +13,7 @@ interface Props {
 const { item, now, revealDelay = 0 } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const channelHref = (c: string) => `${base}/?channel=${c}`;
+const readHref = `${base}/item/${item.id}`;
 ---
 
 <article
@@ -34,7 +35,8 @@ const channelHref = (c: string) => `${base}/?channel=${c}`;
   </div>
 
   <h2 class="feature-title display">
-    <a href={item.url} data-track="open" data-item-id={item.id} rel="noopener noreferrer">
+    <!-- Primary target is the in-app reader; ↗ source jumps to the original. -->
+    <a href={readHref}>
       {item.title}
     </a>
   </h2>
@@ -45,7 +47,10 @@ const channelHref = (c: string) => `${base}/?channel=${c}`;
     <span class="chips">
       {item.topics.slice(0, 5).map((c) => <ChannelChip channel={c} href={channelHref(c)} />)}
     </span>
-    <Metric score={item.metrics?.score} comments={item.metrics?.comments} />
+    <span class="foot-end">
+      <a class="src-link" href={item.url} data-track="open" data-item-id={item.id} rel="noopener noreferrer" title="open the original source">↗ source</a>
+      <Metric score={item.metrics?.score} comments={item.metrics?.comments} />
+    </span>
   </div>
 </article>
 
@@ -178,6 +183,22 @@ const channelHref = (c: string) => `${base}/?channel=${c}`;
     display: inline-flex;
     gap: var(--s-2);
     flex-wrap: wrap;
+  }
+  .foot-end {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-3);
+  }
+  .src-link {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    white-space: nowrap;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  .src-link:hover {
+    color: var(--accent);
+    text-decoration: none;
   }
   @media (prefers-reduced-motion: reduce) {
     .feature,

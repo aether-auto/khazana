@@ -1,0 +1,468 @@
+---
+import Shell from "../../layouts/Shell.astro";
+import ChannelChip from "../../components/ChannelChip.astro";
+import SourceBadge from "../../components/SourceBadge.astro";
+import { loadCurated } from "../../lib/feed.js";
+import { dataDir } from "../../lib/data.js";
+import { countWords, estimateReadMinutes } from "../../lib/read-time.js";
+import type { FeedItem } from "@khazana/core";
+
+// One static page per curated FeedItem — the in-app reader. When no curated.json
+// exists (empty-state) there are simply no item pages, and the build still
+// succeeds. Each item's `body` is SANITIZED article HTML produced by the ingest
+// extractor; we only ever render it via set:html (no further user input).
+export async function getStaticPaths() {
+  const items = loadCurated(dataDir());
+  return items.map((item) => ({ params: { id: item.id }, props: { item } }));
+}
+
+interface Props {
+  item: FeedItem;
+}
+const { item } = Astro.props;
+
+// Full text is present when the extractor recovered a substantial body. Below
+// the floor (extraction failed / paywalled) we fall back to the summary + a
+// prominent "read original" link rather than rendering a sliver of markup.
+const FULLTEXT_FLOOR = 600; // chars of HTML
+const hasBody = (item.body?.trim().length ?? 0) >= FULLTEXT_FLOOR;
+
+// Read-time + telemetry from the rendered prose. Strip tags so markup never
+// inflates the count; fall back to the summary's length when there's no body.
+const proseText = (hasBody ? item.body! : item.summary).replace(/<[^>]+>/g, " ");
+const words = countWords(proseText);
+const readMin = estimateReadMinutes(words);
+
+const published = new Date(item.publishedAt);
+const dateLabel = published.toISOString().slice(0, 10);
+
+// A stable two-digit issue number derived from the id — the same "hand-built
+// artifact" detail the reads use (Article.astro). Deterministic, no data dep.
+const issueNo = Array.from(item.id).reduce((a, c) => (a + c.charCodeAt(0)) % 999, 0) + 1;
+const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
+---
+
+<Shell title={`${item.title} — khazana`} description={item.summary} active="feed">
+  <!-- the STUDY reading frame — the same sacred, calm reading column the reads
+       use (Article.astro §5). Drama lives in the frame and header; the prose
+       column holds the 65ch measure, Newsreader 18px/1.62, warm ink. -->
+  <div class="study">
+    <div class="study-rail" aria-hidden="true">
+      <span class="study-rail-track"></span>
+      <span class="study-rail-fill"></span>
+    </div>
+
+    <article class="article" data-study-root>
+      <header class="article-head metal">
+        <div class="article-kicker">
+          <span class="article-issue">{issueLabel}</span>
+          <span class="kicker-sep" aria-hidden="true">·</span>
+          <SourceBadge source={item.source} sourceType={item.sourceType} trustScore={item.trustScore} />
+          {item.author && (
+            <>
+              <span class="kicker-sep" aria-hidden="true">·</span>
+              <span class="article-author">{item.author}</span>
+            </>
+          )}
+          <span class="kicker-sep" aria-hidden="true">·</span>
+          <time datetime={published.toISOString()}>read on {dateLabel}</time>
+        </div>
+
+        <h1 class="article-title display">{item.title}</h1>
+
+        {item.summary && <p class="article-standfirst">{item.summary}</p>}
+
+        <div class="article-foot">
+          <div class="article-channels">
+            {item.topics.slice(0, 6).map((c) => <ChannelChip channel={c} />)}
+          </div>
+          <p class="article-telemetry tnum" aria-label="reading telemetry">
+            {hasBody && (
+              <>
+                <span class="tel">{readMin} min read</span>
+                <span class="tel-sep" aria-hidden="true">·</span>
+              </>
+            )}
+            <a class="tel tel-orig" href={item.url} rel="noopener noreferrer" data-track="open" data-item-id={item.id}>
+              open original ↗
+            </a>
+          </p>
+        </div>
+      </header>
+
+      <div class="article-rule" aria-hidden="true"></div>
+
+      {
+        hasBody ? (
+          /* THE SACRED READING COLUMN. body is sanitized at ingest; rendered
+             via set:html only (no further user input). */
+          <div class="prose" data-prose set:html={item.body} />
+        ) : (
+          /* Graceful fallback — extraction failed / paywalled. Never a blank
+             page: lead with the summary and a prominent jump to the source. */
+          <div class="prose prose-stub" data-prose>
+            <p>{item.summary || "The full text for this item isn't available to re-render here."}</p>
+            <p class="stub-cta">
+              <a href={item.url} rel="noopener noreferrer" data-track="open" data-item-id={item.id}>
+                read the original ↗
+              </a>
+            </p>
+            <p class="stub-note">
+              khazana re-renders full text in its reading style when the source allows it. This
+              one is best read at its origin.
+            </p>
+          </div>
+        )
+      }
+
+      <footer class="colophon">
+        <span class="colophon-mark">✦</span>
+        <span>{issueLabel} · re-set in Newsreader · <a class="colophon-src" href={item.url} rel="noopener noreferrer" data-track="open" data-item-id={item.id}>source ↗</a></span>
+      </footer>
+    </article>
+  </div>
+</Shell>
+
+<style>
+  /* ── the study frame (mirrors Article.astro so the reader feels identical) ── */
+  .study {
+    position: relative;
+  }
+  .study-rail {
+    position: fixed;
+    left: max(var(--s-3), calc((100vw - var(--maxw)) / 2 - var(--s-5)));
+    top: 18vh;
+    bottom: 18vh;
+    width: 2px;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .study-rail-track,
+  .study-rail-fill {
+    position: absolute;
+    inset: 0;
+    border-radius: 2px;
+  }
+  .study-rail-track {
+    background: var(--rule);
+    opacity: 0.6;
+  }
+  .study-rail-fill {
+    background: linear-gradient(var(--accent), var(--editorial));
+    transform: scaleY(var(--read-progress, 0));
+    transform-origin: top;
+    box-shadow: 0 0 10px -1px color-mix(in oklab, var(--accent) 55%, transparent);
+  }
+  @media (max-width: 1180px) {
+    .study-rail {
+      display: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .study-rail-fill {
+      box-shadow: none;
+    }
+  }
+
+  .article {
+    max-width: var(--measure);
+    margin-inline: auto;
+  }
+
+  /* ── the study header / hero ─────────────────────────────────────────── */
+  .article-head {
+    position: relative;
+    margin-bottom: var(--s-6);
+    padding: var(--s-6) var(--s-6) var(--s-5);
+    margin-inline: calc(-1 * var(--s-6));
+    border-radius: var(--r-md);
+    overflow: hidden;
+    background:
+      radial-gradient(140% 120% at 18% 0%, color-mix(in oklab, var(--accent) 7%, transparent), transparent 55%),
+      var(--bg-card);
+    box-shadow:
+      inset 0 var(--hair) 0 color-mix(in oklab, var(--accent) 16%, transparent),
+      inset 0 0 0 var(--hair) var(--rule);
+  }
+  .article-kicker {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    margin-bottom: var(--s-4);
+  }
+  .article-issue {
+    color: var(--accent);
+    letter-spacing: 0.04em;
+  }
+  .article-author {
+    color: var(--ink-dim);
+  }
+  .kicker-sep {
+    color: var(--rule-bright);
+  }
+  .article-title {
+    position: relative;
+    z-index: 1;
+    font-size: var(--t-3xl);
+    line-height: 1.04;
+    margin: 0 0 var(--s-4);
+    color: var(--ink);
+    font-variation-settings: "opsz" 110, "SOFT" 0, "WONK" 0;
+    letter-spacing: -0.018em;
+    text-wrap: balance;
+  }
+  .article-standfirst {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-read);
+    font-optical-sizing: auto;
+    font-size: var(--t-lg);
+    line-height: 1.42;
+    color: var(--read);
+    font-style: italic;
+    margin: 0 0 var(--s-5);
+    max-width: 54ch;
+  }
+  .article-foot {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--s-3);
+  }
+  .article-channels {
+    display: flex;
+    gap: var(--s-2);
+    flex-wrap: wrap;
+  }
+  .article-telemetry {
+    margin: 0;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.6ch;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+  .tel-sep {
+    color: var(--rule-bright);
+  }
+  /* the secondary affordance back to the source — always present, never the
+     primary action on a full-text re-render (art-direction: read here first). */
+  .tel-orig {
+    color: var(--accent);
+    border-bottom: var(--hair) solid color-mix(in oklab, var(--accent) 28%, transparent);
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  .tel-orig:hover {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .article-rule {
+    height: var(--hair);
+    background: linear-gradient(90deg, var(--editorial), transparent);
+    width: 6rem;
+    margin: var(--s-6) 0;
+  }
+
+  /* ── editorial reading typography — the SACRED reading column. Mirrors
+     Article.astro exactly, but every selector is :global because the body is
+     injected via set:html (scoped class hashing can't reach those nodes). ─── */
+  .prose {
+    font-family: var(--font-read);
+    font-optical-sizing: auto;
+    font-size: var(--t-read);
+    line-height: var(--lh-read);
+    letter-spacing: var(--track-read);
+    color: var(--read);
+  }
+  .prose :global(p) {
+    margin: 0 0 var(--s-5);
+    max-width: var(--measure);
+  }
+  .prose :global(> p:first-of-type::first-letter) {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 3.1em;
+    line-height: 0.82;
+    float: left;
+    padding: 0.04em 0.12em 0 0;
+    color: var(--accent);
+    font-variation-settings: "opsz" 144, "SOFT" 0;
+    text-shadow: var(--halo-display);
+  }
+  .prose :global(h1) {
+    /* extracted bodies sometimes carry their own H1 (the title). Demote it so
+       it never competes with the study hero. */
+    font-family: var(--font-read);
+    font-size: var(--t-xl);
+    line-height: 1.2;
+    color: var(--ink);
+    margin: var(--s-8) 0 var(--s-3);
+    letter-spacing: -0.01em;
+  }
+  .prose :global(h2) {
+    font-family: var(--font-read);
+    font-size: var(--t-xl);
+    line-height: 1.2;
+    color: var(--ink);
+    margin: var(--s-8) 0 var(--s-3);
+    letter-spacing: -0.01em;
+  }
+  .prose :global(h2)::before {
+    content: "";
+    display: block;
+    width: 1.6rem;
+    height: 2px;
+    background: var(--editorial);
+    margin-bottom: var(--s-3);
+  }
+  .prose :global(h3),
+  .prose :global(h4) {
+    font-family: var(--font-read);
+    font-size: var(--t-lg);
+    color: var(--ink);
+    margin: var(--s-6) 0 var(--s-2);
+  }
+  .prose :global(blockquote) {
+    margin: var(--s-6) 0;
+    padding-left: var(--s-5);
+    border-left: 2px solid var(--editorial);
+    color: var(--ink-dim);
+    font-style: italic;
+    hanging-punctuation: first;
+  }
+  .prose :global(em) {
+    color: var(--ink);
+  }
+  .prose :global(strong) {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .prose :global(ul),
+  .prose :global(ol) {
+    margin: 0 0 var(--s-5);
+    padding-left: 1.4em;
+    max-width: var(--measure);
+  }
+  .prose :global(li) {
+    margin: 0 0 var(--s-2);
+  }
+  .prose :global(figure) {
+    margin: var(--s-6) 0;
+  }
+  .prose :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--r-md);
+    border: var(--hair) solid var(--rule);
+  }
+  .prose :global(figcaption) {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    margin-top: var(--s-2);
+  }
+  .prose :global(hr) {
+    border: 0;
+    height: var(--hair);
+    background: var(--rule);
+    margin: var(--s-8) 0;
+  }
+  .prose :global(a) {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: var(--hair) solid color-mix(in oklab, var(--accent) 28%, transparent);
+    background-image: linear-gradient(currentColor, currentColor);
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    background-size: 0% var(--hair);
+    transition: background-size var(--dur) var(--ease-out);
+  }
+  .prose :global(a:hover) {
+    background-size: 100% var(--hair);
+    text-decoration: none;
+  }
+  .prose :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--bg-raised);
+    padding: 0.1em 0.35em;
+    border-radius: var(--r-sm);
+  }
+  .prose :global(pre) {
+    font-family: var(--font-mono);
+    background: var(--bg-inset);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-md);
+    padding: var(--s-4);
+    overflow-x: auto;
+    font-size: var(--t-sm);
+    line-height: 1.5;
+  }
+  .prose :global(pre code) {
+    background: none;
+    padding: 0;
+  }
+
+  /* fallback stub — no drop-cap, a calm centered jump to the source */
+  .prose-stub :global(> p:first-of-type::first-letter) {
+    all: unset;
+  }
+  .prose-stub {
+    color: var(--ink-dim);
+  }
+  .stub-cta {
+    margin-top: var(--s-5);
+    font-family: var(--font-mono);
+    font-size: var(--t-md);
+  }
+  .stub-cta a {
+    color: var(--accent);
+    border-bottom: var(--hair) solid color-mix(in oklab, var(--accent) 40%, transparent);
+  }
+  .stub-cta a:hover {
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .stub-note {
+    margin-top: var(--s-4);
+    font-size: var(--t-sm);
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+
+  .colophon {
+    margin-top: var(--s-8);
+    padding-top: var(--s-5);
+    border-top: var(--hair) solid var(--rule);
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    letter-spacing: 0.02em;
+  }
+  .colophon-mark {
+    color: var(--accent);
+    text-shadow: var(--halo-star);
+  }
+  .colophon-src {
+    color: var(--ink-dim);
+  }
+  .colophon-src:hover {
+    color: var(--accent);
+    text-decoration: none;
+  }
+</style>
