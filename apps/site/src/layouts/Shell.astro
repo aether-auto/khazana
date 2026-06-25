@@ -204,7 +204,7 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
               obs.unobserve(entry.target);
             }
           },
-          { rootMargin: "0px 0px -8% 0px", threshold: 0.05 },
+          { rootMargin: "400px 0px 400px 0px", threshold: 0 },
         );
         for (const el of document.querySelectorAll("[data-reveal]:not(.is-in)")) {
           io.observe(el);
@@ -229,12 +229,15 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: strin
           revealAll();
         }
       }
-      function backstop() {
-        if (!observerLive) revealAll();
-      }
+      // Content must NEVER stay hidden. The IO gives an on-scroll entrance for
+      // what is seen first, but anything below the fold that the reader never
+      // scrolls to would otherwise stay at opacity:0 forever (a sparse-looking
+      // feed). So unconditionally reveal everything shortly after load — the
+      // page is always fully populated; the scroll entrance is a bonus, not a
+      // gate on visibility.
       safeInit();
-      window.addEventListener("load", backstop);
-      setTimeout(backstop, 2500);
+      window.addEventListener("load", () => setTimeout(revealAll, 1100));
+      setTimeout(revealAll, 1800);
       // View Transitions swaps the DOM without a full reload — re-init each nav.
       document.addEventListener("astro:page-load", safeInit);
     </script>
