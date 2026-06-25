@@ -2,6 +2,7 @@
 import Shell from "./Shell.astro";
 import FormatBadge from "../components/FormatBadge.astro";
 import ChannelChip from "../components/ChannelChip.astro";
+import { estimateReadMinutes } from "../lib/read-time.js";
 
 interface Source {
   title: string;
@@ -15,129 +16,260 @@ interface Props {
   summary: string;
   publishedAt: Date;
   sources: Source[];
+  /** rendered prose word count, for the read-time telemetry. */
+  words?: number;
 }
-const { slug, title, format, channels, summary, publishedAt, sources } = Astro.props;
+const { slug, title, format, channels, summary, publishedAt, sources, words = 0 } = Astro.props;
 const dateLabel = publishedAt.toISOString().slice(0, 10);
+const readMin = estimateReadMinutes(words);
+// A stable two-digit issue number derived from the slug — the "self-evidently
+// hand-built artifact" detail (art-direction §2.10). Deterministic, no data dep.
+const issueNo = slug
+  ? (Array.from(slug).reduce((a, c) => (a + c.charCodeAt(0)) % 999, 0) + 1)
+  : 1;
+const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
 ---
 
 <Shell title={`${title} — khazana reads`} description={summary} active="reads">
-  <article class="article">
-    <header class="article-head">
-      <div class="article-kicker">
-        <FormatBadge format={format} />
-        <time datetime={publishedAt.toISOString()}>{dateLabel}</time>
-      </div>
-      <h1 class="article-title" transition:name={slug ? `read-title-${slug}` : undefined}>{title}</h1>
-      <p class="article-standfirst">{summary}</p>
-      <div class="article-channels">
-        {channels.map((c) => <ChannelChip channel={c} />)}
-      </div>
-    </header>
-
-    <div class="article-rule" aria-hidden="true"></div>
-
-    <div class="prose">
-      <!-- SEAM (P5B): MDX interactive components (<Chart>/<Scrolly>/<Annotation>/…)
-           are provided here via MDXProvider/components mapping. In P5, MDX renders
-           as semantic prose only. -->
-      <slot />
+  <!-- the STUDY: an immersive frame around a sacred, calm reading column.
+       Drama lives in the frame, the hero, the margins and the figures — never
+       in the prose (art-direction §5). A reading-progress rail tracks the read;
+       the prose column keeps the 65ch measure, Newsreader 18px/1.62, warm ink. -->
+  <div class="study">
+    <!-- reading-progress rail — the star's flight path back to the
+         constellation (art-direction §5). scaleY-driven by --read-progress. -->
+    <div class="study-rail" aria-hidden="true">
+      <span class="study-rail-track"></span>
+      <span class="study-rail-fill"></span>
     </div>
 
-    {
-      sources.length > 0 && (
-        <aside class="sources" aria-label="Sources">
-          <p class="eyebrow">sources</p>
-          <ol>
-            {sources.map((s) => (
-              <li>
-                <a href={s.url} rel="noopener noreferrer">
-                  {s.title}
-                </a>
-              </li>
-            ))}
-          </ol>
-        </aside>
-      )
-    }
-  </article>
+    <article class="article" data-study-root>
+      <header class="article-head metal">
+        <div class="article-kicker">
+          <span class="article-issue">{issueLabel}</span>
+          <span class="kicker-sep" aria-hidden="true">·</span>
+          <FormatBadge format={format} />
+          <span class="kicker-sep" aria-hidden="true">·</span>
+          <time datetime={publishedAt.toISOString()}>set on {dateLabel}</time>
+        </div>
+
+        <!-- Signature Moment B target: the title that SETS itself from light.
+             Shares a transition:name with the ReadCard title so the View
+             Transition morphs it forward; SplitText then sets it letter-by-
+             letter into solid Fraunces (study-set.ts). -->
+        <h1
+          class="article-title display"
+          data-set-type
+          transition:name={slug ? `read-title-${slug}` : undefined}
+        >
+          {title}
+        </h1>
+
+        <p class="article-standfirst">{summary}</p>
+
+        <div class="article-foot">
+          <div class="article-channels">
+            {channels.map((c) => <ChannelChip channel={c} />)}
+          </div>
+          <p class="article-telemetry tnum" aria-label="reading telemetry">
+            <span class="tel">{readMin} min read</span>
+            <span class="tel-sep" aria-hidden="true">·</span>
+            <span class="tel">{sources.length} source{sources.length === 1 ? "" : "s"}</span>
+          </p>
+        </div>
+      </header>
+
+      <div class="article-rule" aria-hidden="true"></div>
+
+      <!-- THE SACRED READING COLUMN. Zero animation inside the prose. The right
+           gutter holds marginalia (<Sidenote>) on wide screens. -->
+      <div class="prose" data-prose>
+        <slot />
+      </div>
+
+      {
+        sources.length > 0 && (
+          <aside class="sources" aria-label="Sources">
+            <p class="eyebrow">sources</p>
+            <ol>
+              {sources.map((s) => (
+                <li>
+                  <a href={s.url} rel="noopener noreferrer">
+                    {s.title}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </aside>
+        )
+      }
+
+      <!-- colophon: the artifact behaves like a publication with a maker -->
+      <footer class="colophon">
+        <span class="colophon-mark">✦</span>
+        <span>{issueLabel} · set in Fraunces &amp; Newsreader · khazana observatory</span>
+      </footer>
+    </article>
+  </div>
 </Shell>
 
+<!-- Signature Moment B — "Setting the Type". On arrival into a read, the title
+     sets letter-by-letter from light into solid Fraunces and the study assembles
+     around it. Reduced-motion / no-VT → plain, instantly-set title. -->
+<script>
+  import "../scripts/study-set";
+</script>
+
 <style>
+  /* ── the study frame ─────────────────────────────────────────────────── */
+  .study {
+    position: relative;
+  }
+  /* reading-progress rail — a thin amber line down the left edge of the study,
+     the star's flight path. scaleY driven by --read-progress (motion-core sets
+     it). Hidden on narrow screens (the header hairline carries progress there). */
+  .study-rail {
+    position: fixed;
+    left: max(var(--s-3), calc((100vw - var(--maxw)) / 2 - var(--s-5)));
+    top: 18vh;
+    bottom: 18vh;
+    width: 2px;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .study-rail-track,
+  .study-rail-fill {
+    position: absolute;
+    inset: 0;
+    border-radius: 2px;
+  }
+  .study-rail-track {
+    background: var(--rule);
+    opacity: 0.6;
+  }
+  .study-rail-fill {
+    background: linear-gradient(var(--accent), var(--editorial));
+    transform: scaleY(var(--read-progress, 0));
+    transform-origin: top;
+    box-shadow: 0 0 10px -1px color-mix(in oklab, var(--accent) 55%, transparent);
+  }
+  @media (max-width: 1180px) {
+    .study-rail {
+      display: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .study-rail-fill {
+      box-shadow: none;
+    }
+  }
+
   .article {
     max-width: var(--measure);
     margin-inline: auto;
+    /* the right gutter that marginalia float into on wide screens; the column
+       itself stays at the sacred measure. */
+    --sidenote-gutter: 16rem;
   }
+
+  /* ── the study header / hero ─────────────────────────────────────────── */
   .article-head {
-    margin-bottom: var(--s-6);
     position: relative;
-    /* glass-gated: translucent editorial header panel with lit top edge */
+    margin-bottom: var(--s-6);
     padding: var(--s-6) var(--s-6) var(--s-5);
     margin-inline: calc(-1 * var(--s-6));
     border-radius: var(--r-md);
-    background: color-mix(in oklab, var(--glass-bg) calc(var(--glass) * 72%), transparent);
+    overflow: hidden;
+    /* a deep instrument-panel surface; the .metal grain reads as machined steel,
+       and a warm top-edge light lifts it as a physical bezel. */
+    background:
+      radial-gradient(140% 120% at 18% 0%, color-mix(in oklab, var(--accent) 7%, transparent), transparent 55%),
+      var(--bg-card);
     box-shadow:
-      inset 0 var(--hair) 0 color-mix(in oklab, var(--ink) calc(var(--glass) * 12%), transparent),
-      inset 0 0 0 var(--hair) color-mix(in oklab, var(--editorial) calc(var(--glass) * 10%), transparent);
-    backdrop-filter: blur(calc(var(--glass) * 12px)) saturate(calc(1 + var(--glass) * 0.12));
-  }
-  /* always-on diagonal glint for the hero glass panel */
-  .article-head::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: var(--r-md);
-    pointer-events: none;
-    background: linear-gradient(
-      135deg,
-      color-mix(in oklab, var(--ink) calc(var(--glass) * 6%), transparent) 0%,
-      transparent 45%
-    );
+      inset 0 var(--hair) 0 color-mix(in oklab, var(--accent) 16%, transparent),
+      inset 0 0 0 var(--hair) var(--rule);
   }
   .article-kicker {
     position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
-    gap: var(--s-3);
+    flex-wrap: wrap;
+    gap: var(--s-2);
     font-family: var(--font-mono);
     font-size: var(--t-xs);
     color: var(--ink-faint);
     margin-bottom: var(--s-4);
   }
+  .article-issue {
+    color: var(--accent);
+    letter-spacing: 0.04em;
+  }
+  .kicker-sep {
+    color: var(--rule-bright);
+  }
   .article-title {
     position: relative;
-    font-family: var(--font-read);
+    z-index: 1;
     font-size: var(--t-3xl);
-    line-height: 1.08;
-    letter-spacing: -0.015em;
+    line-height: 1.04;
     margin: 0 0 var(--s-4);
     color: var(--ink);
+    /* opsz pushed display; tight tracking — the artifact voice, set not stretched */
+    font-variation-settings: "opsz" 110, "SOFT" 0, "WONK" 0;
+    letter-spacing: -0.018em;
+    text-wrap: balance;
   }
   .article-standfirst {
     position: relative;
+    z-index: 1;
     font-family: var(--font-read);
+    font-optical-sizing: auto;
     font-size: var(--t-lg);
-    line-height: 1.4;
-    color: var(--ink-dim);
+    line-height: 1.42;
+    color: var(--read);
     font-style: italic;
-    margin: 0 0 var(--s-4);
-    max-width: 56ch;
+    margin: 0 0 var(--s-5);
+    max-width: 54ch;
+  }
+  .article-foot {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--s-3);
   }
   .article-channels {
-    position: relative;
     display: flex;
     gap: var(--s-2);
     flex-wrap: wrap;
   }
+  .article-telemetry {
+    margin: 0;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.6ch;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+  .tel-sep {
+    color: var(--rule-bright);
+  }
+
   .article-rule {
     height: var(--hair);
-    background: var(--editorial);
-    width: 5rem;
+    background: linear-gradient(90deg, var(--editorial), transparent);
+    width: 6rem;
     margin: var(--s-6) 0;
   }
 
-  /* editorial reading typography — the SACRED reading column (art-direction §5,
-     §8). Newsreader at 18px / 1.62, warm #D4CBC0 (~9.5:1, never pure white),
-     +0.012em tracking + optical-sizing for dark-mode legibility over 15 min. */
+  /* ── editorial reading typography — the SACRED reading column (art-
+     direction §5, §8). Newsreader 18px / 1.62, warm #D4CBC0 (~9.5:1, never pure
+     white), +0.012em tracking + optical-sizing. ZERO animation inside. ─────── */
   .prose {
     font-family: var(--font-read);
     font-optical-sizing: auto;
@@ -150,14 +282,39 @@ const dateLabel = publishedAt.toISOString().slice(0, 10);
     margin: 0 0 var(--s-5);
     max-width: var(--measure);
   }
+  /* first paragraph gets a refined drop-cap — typographic craft, not motion */
+  .prose :global(> p:first-of-type::first-letter) {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 3.1em;
+    line-height: 0.82;
+    float: left;
+    padding: 0.04em 0.12em 0 0;
+    color: var(--accent);
+    font-variation-settings: "opsz" 144, "SOFT" 0;
+    text-shadow: var(--halo-display);
+  }
   .prose :global(h2) {
+    font-family: var(--font-read);
     font-size: var(--t-xl);
     line-height: 1.2;
+    color: var(--ink);
     margin: var(--s-8) 0 var(--s-3);
     letter-spacing: -0.01em;
   }
+  /* a small clay tick before each section head — section rhythm, set not animated */
+  .prose :global(h2)::before {
+    content: "";
+    display: block;
+    width: 1.6rem;
+    height: 2px;
+    background: var(--editorial);
+    margin-bottom: var(--s-3);
+  }
   .prose :global(h3) {
+    font-family: var(--font-read);
     font-size: var(--t-lg);
+    color: var(--ink);
     margin: var(--s-6) 0 var(--s-2);
   }
   .prose :global(blockquote) {
@@ -166,13 +323,14 @@ const dateLabel = publishedAt.toISOString().slice(0, 10);
     border-left: 2px solid var(--editorial);
     color: var(--ink-dim);
     font-style: italic;
+    /* hanging punctuation on pull-quotes — optical detail (§2.5) */
+    hanging-punctuation: first;
   }
   .prose :global(em) {
     color: var(--ink);
   }
-  /* animated underline: a left-anchored gradient that grows to full on hover.
-     A faint persistent baseline keeps the link affordance. background-size only
-     (no width/layout thrash) — surrounding text never reflows. */
+  /* animated underline on prose links — background-size only (no layout thrash);
+     this is on a non-prose target (a link affordance), not the reading flow. */
   .prose :global(a) {
     color: var(--accent);
     text-decoration: none;
@@ -219,5 +377,38 @@ const dateLabel = publishedAt.toISOString().slice(0, 10);
     display: flex;
     flex-direction: column;
     gap: var(--s-2);
+  }
+
+  /* colophon — the maker's mark */
+  .colophon {
+    margin-top: var(--s-8);
+    padding-top: var(--s-5);
+    border-top: var(--hair) solid var(--rule);
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    letter-spacing: 0.02em;
+  }
+  .colophon-mark {
+    color: var(--accent);
+    text-shadow: var(--halo-star);
+  }
+
+  /* ── Setting-the-Type set-state (study-set.ts drives the reveal) ────────
+     While the title is "setting", individual glyphs start as faint light and
+     resolve to solid ink. We expose the start-state behind a gating class so
+     no-JS / reduced-motion never sees half-set glyphs. */
+  :global(html.set-ready) .article-title :global(.set-char) {
+    color: color-mix(in oklab, var(--accent) 70%, transparent);
+    opacity: 0.001;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :global(html.set-ready) .article-title :global(.set-char) {
+      color: inherit;
+      opacity: 1;
+    }
   }
 </style>

@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from "astro:content";
 import Article from "../../layouts/Article.astro";
+import { countWords } from "../../lib/read-time.js";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog", ({ data }) => !data.draft);
@@ -10,6 +11,15 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content } = await render(post);
 const { title, format, channels, summary, publishedAt, sources } = post.data;
+
+// Approximate read-time from the raw MDX body. We strip import lines, JSX tags,
+// and code fences so component markup doesn't inflate the prose word count.
+const prose = (post.body ?? "")
+  .replace(/^import\s.+$/gm, "")
+  .replace(/```[\s\S]*?```/g, "")
+  .replace(/<[^>]+>/g, " ")
+  .replace(/\{[^}]*\}/g, " ");
+const words = countWords(prose);
 ---
 
 <Article
@@ -20,6 +30,7 @@ const { title, format, channels, summary, publishedAt, sources } = post.data;
   summary={summary}
   publishedAt={publishedAt}
   sources={sources}
+  words={words}
 >
   <Content />
 </Article>
