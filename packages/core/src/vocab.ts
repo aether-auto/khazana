@@ -8,11 +8,11 @@ export const CHANNELS = [
 export const ChannelSchema = z.enum(CHANNELS);
 export type Channel = z.infer<typeof ChannelSchema>;
 
-export const SOURCE_TYPES = ["reddit", "hn", "rss", "eng-blog", "arxiv", "x", "news"] as const;
+export const SOURCE_TYPES = ["reddit", "hn", "rss", "eng-blog", "arxiv", "x", "news", "youtube", "podcast"] as const;
 export const SourceTypeSchema = z.enum(SOURCE_TYPES);
 export type SourceType = z.infer<typeof SourceTypeSchema>;
 
-export const ITEM_KINDS = ["link", "discussion", "paper", "idea"] as const;
+export const ITEM_KINDS = ["link", "discussion", "paper", "idea", "video", "audio"] as const;
 export const ItemKindSchema = z.enum(ITEM_KINDS);
 export type ItemKind = z.infer<typeof ItemKindSchema>;
 
