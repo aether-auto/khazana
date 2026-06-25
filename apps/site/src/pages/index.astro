@@ -2,7 +2,7 @@
 import Shell from "../layouts/Shell.astro";
 import FeedCard from "../components/FeedCard.astro";
 import FeatureCard from "../components/FeatureCard.astro";
-import { loadCurated, tickerTitles } from "../lib/feed.js";
+import { loadCurated, tickerTitles, splitFeatured } from "../lib/feed.js";
 import { assignBento } from "../lib/bento.js";
 import { CHANNELS } from "@khazana/core";
 import { dataDir } from "../lib/data.js";
@@ -13,12 +13,41 @@ const ticker = tickerTitles(all, 8);
 // live instrument readout: total signals + how many arrived in the last 24h
 const nowMs = Date.parse(now);
 const freshCount = all.filter((it) => nowMs - Date.parse(it.publishedAt) < 24 * 60 * 60 * 1000).length;
-// SSR-safe: at static build time there is no request channel; the inline script
-// applies the ?channel= filter on the client. We render ALL cards (tagged with
-// data-channels) and let the script show/hide. Framework-free, static-host OK.
-const cells = assignBento(all);
+
+// THE SHOWCASE vs THE TAIL.
+// curated.json is rank-ordered (best first), so the FEATURED set is just the
+// top slice — the freshest, highest-resonance catch. Only THIS small set gets
+// the expensive bento treatment (glass, scroll-reveal, big editorial titles).
+// Everything below is the long tail, rendered cheaply + paginated by the client
+// register script so the live DOM stays small no matter how many signals exist.
+const { featured, rest } = splitFeatured(all, 10);
+const cells = assignBento(featured);
+
+// The tail ships as a single JSON payload (text, not DOM) — the register script
+// builds compact rows/cards from it in small batches. Trim to just the fields
+// the register needs (smaller payload, no body/media blobs).
+const registerData = rest.map((it) => ({
+  id: it.id,
+  title: it.title,
+  summary: it.summary ?? "",
+  url: it.url,
+  source: it.source,
+  sourceType: it.sourceType,
+  trustScore: it.trustScore,
+  publishedAt: it.publishedAt,
+  topics: it.topics,
+  score: it.metrics?.score,
+  comments: it.metrics?.comments,
+}));
+// A small no-JS fallback so the tail isn't blank without the register script.
+const fallback = rest.slice(0, 20);
+
 const channels = CHANNELS;
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+// Default register view — LIST. It's the densest, fastest-scanning register
+// (the instrument's telemetry log); the bento above is where the visual weight
+// lives. The client persists the reader's choice in localStorage.
+const defaultView = "list";
 
 // Stagger: ~60ms per card, capped so the last card isn't held back too long.
 const delay = (i: number) => Math.min(i, 8) * 60;
@@ -64,7 +93,7 @@ const delay = (i: number) => Math.min(i, 8) * 60;
           </div>
         </header>
 
-        <section class="bento" aria-live="polite">
+        <section class="bento" aria-label="Featured signals" aria-live="polite">
           {cells.map((cell) =>
             cell.size === "feature" ? (
               <FeatureCard item={cell.item} now={now} revealDelay={delay(cell.index)} />
@@ -73,9 +102,76 @@ const delay = (i: number) => Math.min(i, 8) * 60;
             ),
           )}
           <p class="empty" hidden>
-            No items in this channel yet.
+            No featured items in this channel.
           </p>
         </section>
+
+        {
+          rest.length > 0 && (
+            <section
+              class="register"
+              data-register
+              data-base={base}
+              data-default-view={defaultView}
+              aria-label="The register"
+            >
+              <div class="reg-head" data-reveal>
+                <div class="reg-head-left">
+                  <p class="reg-eyebrow">
+                    <span class="reg-rule" aria-hidden="true" />
+                    the register
+                  </p>
+                  <p class="reg-sub reading">
+                    the rest of the catch — <span data-register-count>{`0 of ${rest.length}`}</span>
+                  </p>
+                </div>
+                {/* card / list toggle — persisted in localStorage by the register script */}
+                <div class="view-toggle" data-view-toggle role="group" aria-label="View mode">
+                  <button type="button" class="vt-btn" data-view="list" aria-pressed="true" title="List view">
+                    <span class="vt-icon" aria-hidden="true">≣</span>
+                    <span class="vt-label">list</span>
+                  </button>
+                  <button type="button" class="vt-btn" data-view="card" aria-pressed="false" title="Card view">
+                    <span class="vt-icon" aria-hidden="true">▦</span>
+                    <span class="vt-label">cards</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* live list — the register script fills + repaints this on view/filter change */}
+              <div class="reg-list" data-register-list data-view={defaultView} />
+
+              <p class="reg-empty" data-register-empty hidden>
+                No further signals in this channel.
+              </p>
+
+              <div class="reg-more-wrap">
+                <button type="button" class="reg-more" data-register-more>
+                  load more
+                </button>
+              </div>
+
+              {/* no-JS fallback: a small plain list so the tail is never blank */}
+              <noscript>
+                <ul class="reg-noscript">
+                  {fallback.map((it) => (
+                    <li>
+                      <a href={`${base}/item/${it.id}`}>{it.title}</a>{" "}
+                      <span class="reg-ns-src">{it.source}</span>
+                    </li>
+                  ))}
+                </ul>
+              </noscript>
+
+              {/* tail data payload (text, not DOM) — parsed by the register script */}
+              <script
+                type="application/json"
+                id="register-data"
+                set:html={JSON.stringify(registerData)}
+              />
+            </section>
+          )
+        }
       </>
     ) : (
       /* Honest empty state — no fake sample items. The feed populates from the
@@ -358,6 +454,301 @@ const delay = (i: number) => Math.min(i, 8) * 60;
     color: var(--ink-dim);
     max-width: 52ch;
   }
+
+  /* ── THE REGISTER — the long tail, cheap + paginated ──────────────────────
+     Deliberately glassless: NO backdrop-filter, NO per-node scroll-reveal. Just
+     hairline-ruled rows / flat cards. This is the instrument's telemetry log
+     under the showcase, built to stay fast at hundreds of items. */
+  .register {
+    margin-top: var(--s-10);
+  }
+  .reg-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--s-4);
+    flex-wrap: wrap;
+    margin-bottom: var(--s-5);
+    padding-top: var(--s-3);
+    border-top: var(--hair) solid var(--rule);
+  }
+  .reg-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6ch;
+    margin: var(--s-3) 0 var(--s-2);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+    color: var(--ink-faint);
+  }
+  .reg-rule {
+    display: inline-block;
+    width: 1.6em;
+    height: 1px;
+    background: var(--accent);
+    opacity: 0.7;
+  }
+  .reg-sub {
+    margin: 0;
+    font-size: var(--t-sm);
+    color: var(--ink-dim);
+  }
+  .reg-sub [data-register-count] {
+    font-family: var(--font-mono);
+    color: var(--accent);
+  }
+
+  /* card / list toggle — a small machined segmented control */
+  .view-toggle {
+    display: inline-flex;
+    gap: 2px;
+    padding: 2px;
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-md);
+    background: var(--bg-card);
+  }
+  .vt-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5ch;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-dim);
+    background: transparent;
+    border: 0;
+    border-radius: var(--r-sm);
+    padding: 0.3em 0.7em;
+    cursor: pointer;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+  .vt-btn:hover {
+    color: var(--ink);
+  }
+  .vt-btn.is-active {
+    color: var(--bg);
+    background: var(--accent);
+  }
+  .vt-icon {
+    font-size: var(--t-sm);
+    line-height: 1;
+  }
+  @media (max-width: 480px) {
+    .vt-label {
+      display: none;
+    }
+  }
+
+  /* ── LIST view — compact hairline rows ─────────────────────────────────── */
+  .reg-list[data-view="list"] {
+    display: flex;
+    flex-direction: column;
+    border-top: var(--hair) solid var(--rule);
+  }
+  .reg-list[data-view="list"] :global(.reg-row) {
+    display: grid;
+    grid-template-columns: 3.5ch 1fr auto;
+    align-items: baseline;
+    gap: var(--s-4);
+    padding: var(--s-3) var(--s-2);
+    border-bottom: var(--hair) solid var(--rule);
+    /* color-only hover — no transform, no glass, cheap at scale */
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+  .reg-list[data-view="list"] :global(.reg-row:hover) {
+    background: var(--bg-card);
+  }
+  :global(.reg-time) {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+  :global(.reg-body) {
+    min-width: 0;
+  }
+  :global(.reg-title) {
+    display: block;
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: var(--t-md);
+    line-height: var(--lh-tight);
+    font-weight: 520;
+    letter-spacing: -0.01em;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  :global(.reg-title:hover) {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  :global(.reg-meta) {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--s-2) var(--s-3);
+    margin-top: var(--s-2);
+  }
+  :global(.reg-src) {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4em;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+  }
+  :global(.reg-src-type) {
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  :global(.reg-src-name) {
+    color: var(--ink-dim);
+  }
+  :global(.reg-chip) {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-sm);
+    padding: 0.05em 0.4em;
+    white-space: nowrap;
+    transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+  }
+  :global(.reg-chip:hover) {
+    color: var(--accent);
+    border-color: var(--rule-bright);
+    text-decoration: none;
+  }
+  :global(.reg-end) {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-3);
+    white-space: nowrap;
+  }
+  :global(.reg-score) {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+  }
+  :global(.reg-srclink) {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  :global(.reg-srclink:hover) {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  /* ── CARD view — light flat cards, NO glass ────────────────────────────── */
+  .reg-list[data-view="card"] {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--s-4);
+  }
+  .reg-list[data-view="card"] :global(.reg-card) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    padding: var(--s-4);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-md);
+    background: var(--bg-card);
+    transition: border-color var(--dur-fast) var(--ease-out);
+  }
+  .reg-list[data-view="card"] :global(.reg-card:hover) {
+    border-color: color-mix(in oklab, var(--accent) 22%, var(--rule));
+  }
+  :global(.reg-card-top) {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--s-3);
+  }
+  :global(.reg-card-title) {
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: var(--t-md);
+    line-height: var(--lh-tight);
+    font-weight: 540;
+    letter-spacing: -0.01em;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  :global(.reg-card-title:hover) {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  :global(.reg-card-sum) {
+    margin: 0;
+    color: var(--ink-dim);
+    font-family: var(--font-read);
+    font-size: var(--t-base);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  :global(.reg-card-foot) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-3);
+    flex-wrap: wrap;
+    margin-top: auto;
+  }
+  :global(.reg-chips) {
+    display: inline-flex;
+    gap: var(--s-2);
+    flex-wrap: wrap;
+  }
+
+  /* ── load more + empty ─────────────────────────────────────────────────── */
+  .reg-more-wrap {
+    display: flex;
+    justify-content: center;
+    padding: var(--s-6) 0 var(--s-4);
+  }
+  .reg-more {
+    font-family: var(--font-mono);
+    font-size: var(--t-sm);
+    color: var(--ink-dim);
+    background: var(--bg-card);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-md);
+    padding: var(--s-3) var(--s-6);
+    cursor: pointer;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+  .reg-more:hover {
+    color: var(--ink);
+    border-color: color-mix(in oklab, var(--accent) 40%, var(--rule));
+    background: var(--bg-hover);
+  }
+  .reg-empty {
+    padding: var(--s-8) 0;
+    color: var(--ink-faint);
+    font-family: var(--font-mono);
+    text-align: center;
+  }
+  .reg-noscript {
+    margin: var(--s-4) 0 0;
+    padding-left: 1.2em;
+    color: var(--ink-dim);
+    font-family: var(--font-read);
+    line-height: 1.7;
+  }
+  .reg-ns-src {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+  }
 </style>
 
 <script>
@@ -411,4 +802,11 @@ const delay = (i: number) => Math.min(i, 8) * 60;
   window.addEventListener("resize", positionIndicator);
   // Re-run after View Transition navigations (e.g. clicking a channel filter).
   document.addEventListener("astro:page-load", init);
+</script>
+
+<!-- The Register: lightweight, paginated card/list view for the feed tail.
+     Bundled module (no CDN). Reads the JSON payload + the ?channel= param and
+     builds compact rows/cards in small batches — keeps the live DOM small. -->
+<script>
+  import "../scripts/feed-register";
 </script>

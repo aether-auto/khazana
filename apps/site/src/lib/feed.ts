@@ -48,3 +48,22 @@ export function selectIdeas(items: FeedItem[]): FeedItem[] {
 export function tickerTitles(items: FeedItem[], n: number): string[] {
   return items.slice(0, n).map((it) => it.title);
 }
+
+/**
+ * Split a ranked feed into a small FEATURED showcase + the remaining tail.
+ *
+ * `curated.json` is already rank-ordered (best first), so the featured set is
+ * simply the top `count` items — the freshest/highest-resonance catch. We keep
+ * curated order within the featured set (it drives the bento prominence) and the
+ * tail stays in rank order for the paginated register below. Pure + ordered so
+ * SSR and any client re-render agree.
+ *
+ * @param count number of items to promote to the featured bento (default 10)
+ */
+export function splitFeatured(
+  items: FeedItem[],
+  count = 10,
+): { featured: FeedItem[]; rest: FeedItem[] } {
+  const n = Math.max(0, Math.min(count, items.length));
+  return { featured: items.slice(0, n), rest: items.slice(n) };
+}

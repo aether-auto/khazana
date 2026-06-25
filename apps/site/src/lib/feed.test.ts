@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, test } from "vitest";
 import type { FeedItem } from "@khazana/core";
-import { loadCurated, filterByChannel, selectIdeas, tickerTitles } from "./feed.js";
+import { loadCurated, filterByChannel, selectIdeas, tickerTitles, splitFeatured } from "./feed.js";
 
 let dir: string;
 
@@ -70,4 +70,23 @@ test("selectIdeas picks kind=idea or any workshop channel", () => {
 test("tickerTitles returns the first n titles", () => {
   const items = [item({ id: "1", title: "One" }), item({ id: "2", title: "Two" }), item({ id: "3", title: "Three" })];
   expect(tickerTitles(items, 2)).toEqual(["One", "Two"]);
+});
+
+test("splitFeatured promotes the top slice and keeps the rest in rank order", () => {
+  const items = Array.from({ length: 25 }, (_, i) => item({ id: `i${i}` }));
+  const { featured, rest } = splitFeatured(items, 10);
+  expect(featured.map((i) => i.id)).toEqual(items.slice(0, 10).map((i) => i.id));
+  expect(rest.map((i) => i.id)).toEqual(items.slice(10).map((i) => i.id));
+  expect(featured.length + rest.length).toBe(items.length);
+});
+
+test("splitFeatured clamps the count to the available items", () => {
+  const items = [item({ id: "a" }), item({ id: "b" })];
+  const { featured, rest } = splitFeatured(items, 10);
+  expect(featured.map((i) => i.id)).toEqual(["a", "b"]);
+  expect(rest).toEqual([]);
+});
+
+test("splitFeatured handles an empty feed", () => {
+  expect(splitFeatured([], 10)).toEqual({ featured: [], rest: [] });
 });
