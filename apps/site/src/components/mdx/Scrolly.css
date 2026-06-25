@@ -11,6 +11,17 @@
 .scrolly-step--active::before {
   content: ""; display: block; width: 2rem; height: 2px; background: var(--editorial); margin-bottom: var(--s-3);
 }
+/* prose (raw HTML) inside steps — tidy paragraph rhythm + a quiet citation link */
+.scrolly-step > p:first-child,
+.scrolly-prose > p:first-child { margin-top: 0; }
+.scrolly-step > p:last-child,
+.scrolly-prose > p:last-child { margin-bottom: 0; }
+.scrolly-cite {
+  color: var(--editorial);
+  border-bottom: var(--hair) solid color-mix(in oklab, var(--editorial) 30%, transparent);
+}
+.scrolly-cite:hover { color: var(--accent); }
+
 /* stacked fallback */
 .scrolly--stacked .scrolly-stacked-step { margin-bottom: var(--s-8); }
 .scrolly--stacked .scrolly-graphic { margin-bottom: var(--s-4); }

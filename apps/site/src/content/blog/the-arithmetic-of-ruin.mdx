@@ -12,7 +12,7 @@ sources:
 draft: false
 ---
 
-import { KellyChart, Chart, DataTable, Scrolly, ScrollyStep, DrawChart, Sidenote, Annotation } from "../../components/mdx";
+import { KellyChart, Chart, DataTable, Scrolly, DrawChart, Sidenote, Annotation } from "../../components/mdx";
 
 Give two gamblers the same loaded coin — heads pays even money, and it lands heads 60% of the time. Same edge, same bankroll, same thousand flips. One of them turns \$100 into a small fortune. The other goes broke. The only thing that differs between them is *how much of the bankroll they stake on each flip*, and that single number decides everything. Bet too little and you leave almost all the growth on the table. Bet too much and a favorable game still grinds you to zero. Somewhere in between sits one fraction that compounds money faster than any other strategy — and there is a formula for it.
 
@@ -29,44 +29,51 @@ That hill is the whole story. To the left of the peak you are growing, just slow
 
 The intuitive answer to "how much should I bet?" is to maximize how much money you expect to make. It is also catastrophically wrong, and seeing *why* is the first real step.
 
-<Scrolly client:visible caption="Maximize expected dollars, and the math marches you straight off a cliff">
-  <ScrollyStep graphic={
-    <Chart client:visible mark="bar" x="bet" y="expected" height={260}
-      caption="Expected gain after one flip, p = 0.6 even money — by stake"
-      data={[
-        { bet: "10%", expected: 2 },
-        { bet: "25%", expected: 5 },
-        { bet: "50%", expected: 10 },
-        { bet: "100%", expected: 20 }
-      ]} />
-  }>
-    **Expected value loves a big bet.** On a 60/40 even-money flip your edge is twenty cents on the dollar. Expected gain scales linearly with stake, so if all you want is to maximize expected dollars on the next flip, the answer is to bet *everything*. Bet the whole \$100, expect to walk away with \$120 on average. Do it again, expect \$144. The arithmetic is impeccable.
-  </ScrollyStep>
-  <ScrollyStep graphic={
-    <Chart client:visible mark="line" x="flip" y="survival" height={260}
-      caption="Probability you have NOT yet gone broke, betting 100% each flip (p = 0.6)"
-      data={[
-        { flip: 0, survival: 1 },
-        { flip: 1, survival: 0.6 },
-        { flip: 2, survival: 0.36 },
-        { flip: 3, survival: 0.216 },
-        { flip: 5, survival: 0.078 },
-        { flip: 10, survival: 0.006 }
-      ]} />
-  }>
-    **But one loss is fatal.** Stake the whole bankroll and a single tail wipes you out. The chance you survive `n` flips is just the chance you never once lose: `0.6` raised to the `n`. After ten flips your survival odds are already under one percent. Push `n` to infinity and the probability of ruin climbs to a certainty.<Sidenote n={1} href="https://gwern.net/doc/statistics/decision/2006-thorp.pdf" source="Thorp §2">"The probability of ruin is given by 1 − pⁿ and with p < 1, the limit is 1, so ruin is almost sure. Thus the 'bold' criterion of betting to maximize expected gain is usually undesirable." Maximizing average dollars and maximizing the chance of *keeping* them are different goals.</Sidenote>
-  </ScrollyStep>
-  <ScrollyStep graphic={
-    <Chart client:visible mark="bar" x="strategy" y="ruin" height={260}
-      caption="Long-run outcome of the two 'obvious' strategies"
-      data={[
-        { strategy: "bet max (all-in)", ruin: 100 },
-        { strategy: "bet min (timid)", ruin: 0 }
-      ]} />
-  }>
-    **The two obvious strategies both fail.** Bet everything and ruin is certain. Retreat to the opposite extreme — bet the tiniest sliver each time — and you escape ruin but throw away nearly all the growth.<Sidenote n={2} href="https://gwern.net/doc/statistics/decision/2006-thorp.pdf" source="Thorp §2">Thorp notes that minimizing the probability of ruin via the gambler's-ruin formula means making the *minimum* bet each time — which "also minimizes the expected gain." Both extremes are unattractive; the answer is "an intermediate strategy."</Sidenote> The useful answer has to live somewhere in the middle. The question is *where*, exactly.
-  </ScrollyStep>
-</Scrolly>
+<Scrolly
+  client:visible
+  caption="Maximize expected dollars, and the math marches you straight off a cliff"
+  steps={[
+    {
+      chart: {
+        mark: "bar", x: "bet", y: "expected", height: 260,
+        caption: "Expected gain after one flip, p = 0.6 even money — by stake",
+        data: [
+          { bet: "10%", expected: 2 },
+          { bet: "25%", expected: 5 },
+          { bet: "50%", expected: 10 },
+          { bet: "100%", expected: 20 }
+        ]
+      },
+      prose: "<p><strong>Expected value loves a big bet.</strong> On a 60/40 even-money flip your edge is twenty cents on the dollar. Expected gain scales linearly with stake, so if all you want is to maximize expected dollars on the next flip, the answer is to bet <em>everything</em>. Bet the whole $100, expect to walk away with $120 on average. Do it again, expect $144. The arithmetic is impeccable.</p>"
+    },
+    {
+      chart: {
+        mark: "line", x: "flip", y: "survival", height: 260,
+        caption: "Probability you have NOT yet gone broke, betting 100% each flip (p = 0.6)",
+        data: [
+          { flip: 0, survival: 1 },
+          { flip: 1, survival: 0.6 },
+          { flip: 2, survival: 0.36 },
+          { flip: 3, survival: 0.216 },
+          { flip: 5, survival: 0.078 },
+          { flip: 10, survival: 0.006 }
+        ]
+      },
+      prose: "<p><strong>But one loss is fatal.</strong> Stake the whole bankroll and a single tail wipes you out. The chance you survive <code>n</code> flips is just the chance you never once lose: <code>0.6</code> raised to the <code>n</code>. After ten flips your survival odds are already under one percent. Push <code>n</code> to infinity and the probability of ruin climbs to a certainty &mdash; <a class='scrolly-cite' href='https://gwern.net/doc/statistics/decision/2006-thorp.pdf'>ruin is almost sure (Thorp §2)</a>.</p>"
+    },
+    {
+      chart: {
+        mark: "bar", x: "strategy", y: "ruin", height: 260,
+        caption: "Long-run outcome of the two 'obvious' strategies",
+        data: [
+          { strategy: "bet max (all-in)", ruin: 100 },
+          { strategy: "bet min (timid)", ruin: 0 }
+        ]
+      },
+      prose: "<p><strong>The two obvious strategies both fail.</strong> Bet everything and ruin is certain. Retreat to the opposite extreme &mdash; bet the tiniest sliver each time &mdash; and you escape ruin but throw away nearly all the growth. Minimizing the probability of ruin means making the <em>minimum</em> bet, which <a class='scrolly-cite' href='https://gwern.net/doc/statistics/decision/2006-thorp.pdf'>also minimizes the expected gain (Thorp §2)</a>. The useful answer has to live somewhere in the middle. The question is <em>where</em>, exactly.</p>"
+    }
+  ]}
+/>
 
 The mistake is choosing the wrong thing to maximize. Expected *dollars* is dominated by a vanishingly rare branch where you win every flip and own the world; that one fantasy outcome drags the average up even as almost every real path leads to zero. What you actually live through is not the average of the outcomes — it is the *product* of them, flip after flip. And products are ruled by a different quantity entirely.
 

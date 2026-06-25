@@ -11,7 +11,7 @@ sources:
     url: "https://netflixtechblog.com/rebuilding-the-edge-tier"
 ---
 
-import { Chart, Scrolly, ScrollyStep, DataTable, Annotation, ControlledChart, DrawChart, Sidenote } from "../../components/mdx";
+import { Chart, Scrolly, DataTable, Annotation, ControlledChart, DrawChart, Sidenote } from "../../components/mdx";
 
 Three things happened this week that look unrelated until you line them up.
 
@@ -69,62 +69,48 @@ it drops under a dollar move with you.
 
 Walk the three signals:
 
-<Scrolly client:visible caption="Three signals, one shift">
-  <ScrollyStep
-    graphic={
-      <Chart
-        client:visible
-        mark="bar"
-        x="model"
-        y="activeParams"
-        caption="Active params per token (B)"
-        data={[
+<Scrolly
+  client:visible
+  caption="Three signals, one shift"
+  steps={[
+    {
+      chart: {
+        mark: "bar", x: "model", y: "activeParams",
+        caption: "Active params per token (B)",
+        data: [
           { model: "dense-7B", activeParams: 7 },
           { model: "moe-8x7B", activeParams: 1.8 },
           { model: "moe-16x3B", activeParams: 0.9 }
-        ]}
-      />
-    }
-  >
-    **Signal one — the paper.** Sparse routing cuts *active* parameters per token by 4–8×. Cheaper to run well, which matters most where compute is scarce.
-  </ScrollyStep>
-  <ScrollyStep
-    graphic={
-      <Chart
-        client:visible
-        mark="area"
-        x="month"
-        y="costPerMTok"
-        caption="Edge NPU $/M tokens"
-        data={[
+        ]
+      },
+      prose: "<p><strong>Signal one &mdash; the paper.</strong> Sparse routing cuts <em>active</em> parameters per token by 4&ndash;8&times;. Cheaper to run well, which matters most where compute is scarce.</p>"
+    },
+    {
+      chart: {
+        mark: "area", x: "month", y: "costPerMTok",
+        caption: "Edge NPU $/M tokens",
+        data: [
           { month: "2025-09", costPerMTok: 3.1 },
           { month: "2025-12", costPerMTok: 1.8 },
           { month: "2026-03", costPerMTok: 0.95 },
           { month: "2026-06", costPerMTok: 0.6 }
-        ]}
-      />
-    }
-  >
-    **Signal two — the price.** A commodity edge NPU dropped below a threshold that a year ago looked like a 2028 problem.
-  </ScrollyStep>
-  <ScrollyStep
-    graphic={
-      <Chart
-        client:visible
-        mark="bar"
-        x="arch"
-        y="p99ms"
-        caption="Tail latency p99 (ms)"
-        data={[
+        ]
+      },
+      prose: "<p><strong>Signal two &mdash; the price.</strong> A commodity edge NPU dropped below a threshold that a year ago looked like a 2028 problem.</p>"
+    },
+    {
+      chart: {
+        mark: "bar", x: "arch", y: "p99ms",
+        caption: "Tail latency p99 (ms)",
+        data: [
           { arch: "3-hop", p99ms: 210 },
           { arch: "edge-tier", p99ms: 42 }
-        ]}
-      />
+        ]
+      },
+      prose: "<p><strong>Signal three &mdash; the latency.</strong> Collapsing three network hops into one programmable edge tier cut tail latency 5&times;.</p>"
     }
-  >
-    **Signal three — the latency.** Collapsing three network hops into one programmable edge tier cut tail latency 5×.
-  </ScrollyStep>
-</Scrolly>
+  ]}
+/>
 
 The throughline is economics, not novelty:
 
