@@ -28,15 +28,11 @@ beforeEach(() => {
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-test("loadCurated falls back to the sample when curated.json is absent", () => {
-  writeFileSync(join(dir, "curated.sample.json"), JSON.stringify([item({ id: "sample" })]));
-  const items = loadCurated(dir);
-  expect(items).toHaveLength(1);
-  expect(items[0]!.id).toBe("sample");
+test("loadCurated returns an empty feed (no fake samples) when curated.json is absent", () => {
+  expect(loadCurated(dir)).toEqual([]);
 });
 
-test("loadCurated prefers curated.json when present and preserves order", () => {
-  writeFileSync(join(dir, "curated.sample.json"), JSON.stringify([item({ id: "sample" })]));
+test("loadCurated loads curated.json when present and preserves order", () => {
   writeFileSync(
     join(dir, "curated.json"),
     JSON.stringify([item({ id: "first" }), item({ id: "second" })]),
@@ -47,7 +43,7 @@ test("loadCurated prefers curated.json when present and preserves order", () => 
 
 test("loadCurated drops items that fail FeedItemSchema validation", () => {
   writeFileSync(
-    join(dir, "curated.sample.json"),
+    join(dir, "curated.json"),
     JSON.stringify([item({ id: "ok" }), { id: "broken", title: "no required fields" }]),
   );
   const items = loadCurated(dir);

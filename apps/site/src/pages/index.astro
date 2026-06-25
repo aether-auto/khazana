@@ -39,37 +39,60 @@ const delay = (i: number) => Math.min(i, 8) * 60;
     </p>
     <h1 class="mh-title display">first light<span class="mh-stop">.</span></h1>
     <p class="mh-sub reading">
-      {all.length} signals · <span class="mh-fresh">{freshCount} fresh</span> — the day's best catch, ranked by resonance.
+      {all.length > 0 ? (
+        <>{all.length} signals · <span class="mh-fresh">{freshCount} fresh</span> — the day's best catch, ranked by resonance.</>
+      ) : (
+        <>awaiting first light — the observatory is dark until the pipeline runs.</>
+      )}
     </p>
   </div>
 
-  <header class="feed-head" data-reveal>
-    <div class="filterbar" role="group" aria-label="Filter by channel">
-      <div class="filters" id="filters">
-        <span class="filter-indicator" aria-hidden="true"></span>
-        <a class="filter is-active" href={`${base}/`} data-filter="">all</a>
-        {channels.map((c) => <a class="filter" href={`${base}/?channel=${c}`} data-filter={c}>{c}</a>)}
-      </div>
-    </div>
-  </header>
+  {
+    all.length > 0 ? (
+      <>
+        <header class="feed-head" data-reveal>
+          <div class="filterbar" role="group" aria-label="Filter by channel">
+            <div class="filters" id="filters">
+              <span class="filter-indicator" aria-hidden="true" />
+              <a class="filter is-active" href={`${base}/`} data-filter="">all</a>
+              {channels.map((c) => (
+                <a class="filter" href={`${base}/?channel=${c}`} data-filter={c}>
+                  {c}
+                </a>
+              ))}
+            </div>
+          </div>
+        </header>
 
-  <section class="bento" aria-live="polite">
-    {
-      cells.map((cell) =>
-        cell.size === "feature" ? (
-          <FeatureCard item={cell.item} now={now} revealDelay={delay(cell.index)} />
-        ) : (
-          <FeedCard
-            item={cell.item}
-            now={now}
-            size={cell.size}
-            revealDelay={delay(cell.index)}
-          />
-        ),
-      )
-    }
-    <p class="empty" hidden>No items in this channel yet.</p>
-  </section>
+        <section class="bento" aria-live="polite">
+          {cells.map((cell) =>
+            cell.size === "feature" ? (
+              <FeatureCard item={cell.item} now={now} revealDelay={delay(cell.index)} />
+            ) : (
+              <FeedCard item={cell.item} now={now} size={cell.size} revealDelay={delay(cell.index)} />
+            ),
+          )}
+          <p class="empty" hidden>
+            No items in this channel yet.
+          </p>
+        </section>
+      </>
+    ) : (
+      /* Honest empty state — no fake sample items. The feed populates from the
+         pipeline; until then we say so plainly. */
+      <section class="feed-empty" data-reveal>
+        <p class="fe-eyebrow">no signal yet</p>
+        <p class="fe-line">The feed updates from the pipeline.</p>
+        <p class="fe-cmd">
+          <code>khazana ingest &amp;&amp; khazana curate</code>
+        </p>
+        <p class="fe-note">
+          Once a <code>data/feed/curated.json</code> lands, the day's best catch appears here —
+          ranked, re-rendered, and readable in khazana's own study.
+        </p>
+      </section>
+    )
+  }
 </Shell>
 
 <style>
@@ -287,6 +310,53 @@ const delay = (i: number) => Math.min(i, 8) * 60;
     color: var(--ink-faint);
     font-family: var(--font-mono);
     text-align: center;
+  }
+
+  /* ── honest empty state (no curated.json) ────────────────────────────── */
+  .feed-empty {
+    margin-top: var(--s-6);
+    padding: var(--s-8) var(--s-6);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-md);
+    background:
+      radial-gradient(120% 100% at 20% 0%, color-mix(in oklab, var(--accent) 5%, transparent), transparent 60%),
+      var(--bg-card);
+    max-width: var(--measure);
+  }
+  .fe-eyebrow {
+    margin: 0 0 var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .fe-line {
+    margin: 0 0 var(--s-4);
+    font-family: var(--font-read);
+    font-size: var(--t-lg);
+    color: var(--ink);
+  }
+  .fe-cmd {
+    margin: 0 0 var(--s-5);
+  }
+  .fe-cmd code,
+  .fe-note code {
+    font-family: var(--font-mono);
+    font-size: var(--t-sm);
+    background: var(--bg-inset);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-sm);
+    padding: 0.2em 0.5em;
+    color: var(--ink-dim);
+  }
+  .fe-note {
+    margin: 0;
+    font-family: var(--font-read);
+    font-size: var(--t-base);
+    line-height: 1.55;
+    color: var(--ink-dim);
+    max-width: 52ch;
   }
 </style>
 

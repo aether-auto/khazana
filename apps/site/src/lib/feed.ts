@@ -12,15 +12,14 @@ const WORKSHOP_CHANNELS = new Set([
 ]);
 
 /**
- * Load the curated feed. Prefers the pipeline-generated `curated.json`
- * (gitignored), falling back to the committed `curated.sample.json` so the
- * site always builds. Each item is validated with FeedItemSchema; invalid
- * items are dropped (never crash the build). Curated order is preserved.
+ * Load the curated feed from the pipeline-generated `curated.json`
+ * (gitignored, produced by `khazana ingest && khazana curate`). When it is
+ * absent the feed renders an honest empty state — never fake sample items.
+ * Each item is validated with FeedItemSchema; invalid items are dropped
+ * (never crash the build). Curated order is preserved.
  */
 export function loadCurated(dataDir: string): FeedItem[] {
-  const main = join(dataDir, "curated.json");
-  const sample = join(dataDir, "curated.sample.json");
-  const path = existsSync(main) ? main : sample;
+  const path = join(dataDir, "curated.json");
   if (!existsSync(path)) return [];
   const raw: unknown = JSON.parse(readFileSync(path, "utf8"));
   if (!Array.isArray(raw)) return [];
