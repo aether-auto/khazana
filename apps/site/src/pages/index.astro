@@ -2,6 +2,7 @@
 import Shell from "../layouts/Shell.astro";
 import FeedCard from "../components/FeedCard.astro";
 import FeatureCard from "../components/FeatureCard.astro";
+import Hero from "../components/constellation/Hero.astro";
 import { loadCurated, tickerTitles } from "../lib/feed.js";
 import { assignBento } from "../lib/bento.js";
 import { CHANNELS } from "@khazana/core";
@@ -22,13 +23,10 @@ const delay = (i: number) => Math.min(i, 8) * 60;
 ---
 
 <Shell title="khazana — feed" active="feed" tickerTitles={ticker}>
-  <header class="feed-head" data-reveal>
-    <p class="eyebrow">feed</p>
-    <h1 class="feed-h1 display">the signal, <span class="em">ranked</span></h1>
-    <p class="feed-sub">
-      A self-curating treasury — the day's best signal, ordered by what earns your attention.
-    </p>
+  <!-- First Light: the constellation of today's signal, settling into the feed -->
+  <Hero items={all} now={now} />
 
+  <header class="feed-head" data-reveal>
     <div class="filterbar" role="group" aria-label="Filter by channel">
       <div class="filters" id="filters">
         <span class="filter-indicator" aria-hidden="true"></span>
@@ -58,21 +56,12 @@ const delay = (i: number) => Math.min(i, 8) * 60;
 </Shell>
 
 <style>
+  /* the feed's controls sit just under the hero, as the instrument's tuning row.
+     A hairline above ties the filter bar to the constellation it settled from. */
   .feed-head {
     margin-bottom: var(--s-6);
-  }
-  .feed-h1 {
-    font-size: var(--t-display);
-    margin: 0 0 var(--s-3);
-    color: var(--ink);
-  }
-  .feed-sub {
-    margin: 0 0 var(--s-5);
-    max-width: 52ch;
-    color: var(--ink-dim);
-    font-family: var(--font-read);
-    font-size: var(--t-md);
-    line-height: 1.5;
+    padding-top: var(--s-2);
+    border-top: var(--hair) solid var(--rule);
   }
 
   /* ── animated channel filter — sliding active pill ──────────────────── */
