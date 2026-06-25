@@ -9,6 +9,7 @@ dist/
 .DS_Store
 .superpowers/
 data/sources.json
+data/sources.pending.json
 data/feed/
 data/taste.json
 screenshots/

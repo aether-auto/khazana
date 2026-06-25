@@ -5,11 +5,11 @@ const cmds = buildCommands("/khazana");
 
 test("buildCommands includes the section nav and every channel", () => {
   const labels = cmds.map((c) => c.label);
-  for (const section of ["feed", "reads", "workshop", "graph", "taste"]) {
+  for (const section of ["feed", "reads", "workshop", "graph", "sources", "taste"]) {
     expect(labels).toContain(section);
   }
-  // 5 sections + 18 channels
-  expect(cmds).toHaveLength(5 + 18);
+  // 6 sections + 18 channels
+  expect(cmds).toHaveLength(6 + 18);
 });
 
 test("section hrefs respect the base path", () => {

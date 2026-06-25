@@ -1,0 +1,388 @@
+---
+import Shell from "../layouts/Shell.astro";
+import { loadRegistry, loadPending, groupByChannel } from "../lib/sources.js";
+import { repoDataDir } from "../lib/data.js";
+import { CHANNELS } from "@khazana/core";
+
+// The registry is the instrument's intake manifold — every source the feed
+// pulls from. We read it directly (live sources.json, else the committed seed)
+// and group BY CHANNEL so the founder can see the catch per beat. The Scout's
+// candidate queue (sources.pending.json) lists what it proposes to add next.
+const dataDir = repoDataDir();
+const registry = loadRegistry(dataDir);
+const sources = registry.sources;
+const groups = groupByChannel(sources, CHANNELS);
+const pending = loadPending(dataDir);
+
+const total = sources.length;
+const enabled = sources.filter((s) => s.enabled).length;
+const channelCount = groups.length;
+
+const hostOf = (url: string): string => {
+  try {
+    return new URL(url).host.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+};
+const trustPct = (t?: number) => (t != null ? Math.round(t * 100) : null);
+---
+
+<Shell title="khazana — sources" description="The source registry: every feed khazana pulls from, grouped by channel." active="sources">
+  <header class="src-head" data-reveal>
+    <p class="eyebrow">sources</p>
+    <h1 class="src-h1">the intake manifold</h1>
+    <p class="src-sub">
+      Every feed khazana pulls from — grouped by channel, ranked by trust. The
+      Scout proposes new ones after each nightly run.
+    </p>
+    <dl class="src-stats tnum" aria-label="registry totals">
+      <div class="stat">
+        <dt>sources</dt>
+        <dd>{total}</dd>
+      </div>
+      <div class="stat">
+        <dt>enabled</dt>
+        <dd>{enabled}</dd>
+      </div>
+      <div class="stat">
+        <dt>channels</dt>
+        <dd>{channelCount}</dd>
+      </div>
+      {pending.length > 0 && (
+        <div class="stat stat--accent">
+          <dt>candidates</dt>
+          <dd>{pending.length}</dd>
+        </div>
+      )}
+    </dl>
+  </header>
+
+  {
+    total === 0 ? (
+      <p class="src-empty">
+        No sources registered yet — add entries to <code>data/sources.json</code> (or the seed).
+      </p>
+    ) : (
+      <section class="src-channels">
+        {groups.map((group, gi) => (
+          <section class="chan" data-reveal style={`--reveal-delay:${Math.min(gi, 8) * 45}ms`}>
+            <header class="chan-head">
+              <h2 class="chan-name">{group.channel}</h2>
+              <span class="chan-count tnum">{group.sources.length}</span>
+              <span class="chan-rule" aria-hidden="true" />
+            </header>
+            <ul class="src-list">
+              {group.sources.map((s) => {
+                const pct = trustPct(s.trustScore);
+                return (
+                  <li class="src-row" class:list={[{ "is-off": !s.enabled }]}>
+                    <span class={`type-badge type-${s.type}`}>{s.type}</span>
+                    <a class="src-id" href={s.url} rel="noopener noreferrer" title={s.url}>
+                      <span class="src-id-name">{s.id}</span>
+                      <span class="src-id-host">{hostOf(s.url)}</span>
+                    </a>
+                    {pct != null && (
+                      <span class="src-trust tnum" title="trust score">
+                        {pct}
+                      </span>
+                    )}
+                    {!s.enabled && <span class="src-off" title="disabled">off</span>}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ))}
+      </section>
+    )
+  }
+
+  <section class="candidates" data-reveal>
+    <header class="cand-head">
+      <h2 class="cand-title">candidates to add</h2>
+      <span class="cand-rule" aria-hidden="true"></span>
+    </header>
+    {
+      pending.length > 0 ? (
+        <ul class="src-list">
+          {pending.map((s) => {
+            const pct = trustPct(s.trustScore);
+            return (
+              <li class="src-row src-row--cand">
+                <span class={`type-badge type-${s.type}`}>{s.type}</span>
+                <a class="src-id" href={s.url} rel="noopener noreferrer" title={s.url}>
+                  <span class="src-id-name">{s.id}</span>
+                  <span class="src-id-host">{hostOf(s.url)}</span>
+                </a>
+                {s.channels.length > 0 && (
+                  <span class="cand-channels">{s.channels.join(" · ")}</span>
+                )}
+                {pct != null && (
+                  <span class="src-trust tnum" title="proposed trust score">
+                    {pct}
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p class="cand-empty">
+          The Scout proposes new sources here after each nightly run.
+        </p>
+      )
+    }
+  </section>
+</Shell>
+
+<style>
+  .src-head {
+    margin-bottom: var(--s-7);
+    max-width: var(--measure);
+  }
+  .src-h1 {
+    font-family: var(--font-read);
+    font-size: var(--t-2xl);
+    line-height: var(--lh-tight);
+    letter-spacing: -0.02em;
+    margin: 0 0 var(--s-3);
+    color: var(--ink);
+  }
+  .src-sub {
+    font-family: var(--font-read);
+    color: var(--ink-dim);
+    font-size: var(--t-md);
+    line-height: 1.5;
+    margin: 0 0 var(--s-5);
+    max-width: 54ch;
+  }
+  /* the instrument readout — totals in tabular mono */
+  .src-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-5);
+    margin: 0;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1em;
+  }
+  .stat dt {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .stat dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--t-xl);
+    line-height: 1;
+    color: var(--ink);
+  }
+  .stat--accent dd {
+    color: var(--accent);
+    text-shadow: var(--halo-display);
+  }
+
+  .src-empty {
+    padding: var(--s-8) 0;
+    color: var(--ink-faint);
+    font-family: var(--font-mono);
+  }
+  .src-empty code {
+    color: var(--ink-dim);
+  }
+
+  /* ── by-channel sections — a responsive mosaic of beats ──────────────── */
+  .src-channels {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+    gap: var(--s-5) var(--s-6);
+    align-items: start;
+  }
+  .chan {
+    break-inside: avoid;
+  }
+  .chan-head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-3);
+    margin-bottom: var(--s-3);
+  }
+  .chan-name {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--t-sm);
+    letter-spacing: 0.04em;
+    color: var(--ink);
+  }
+  .chan-count {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--accent);
+  }
+  .chan-rule {
+    flex: 1;
+    height: var(--hair);
+    background: linear-gradient(90deg, var(--rule), transparent);
+  }
+
+  .src-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-1);
+  }
+  .src-row {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    padding: var(--s-2) var(--s-3);
+    border: var(--hair) solid transparent;
+    border-radius: var(--r-sm);
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+  .src-row:hover {
+    border-color: var(--rule);
+    background: color-mix(in oklab, var(--ink) 3%, transparent);
+  }
+  .src-row.is-off {
+    opacity: 0.5;
+  }
+
+  /* type badge — mono, uppercase, channel-agnostic. Distinct hues for the
+     richer media types (youtube/podcast) so they read at a glance. */
+  .type-badge {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    background: var(--bg-inset);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-sm);
+    padding: 0.15em 0.4em;
+    min-width: 3.6em;
+    text-align: center;
+  }
+  .type-youtube {
+    color: #ff6b6b;
+    border-color: color-mix(in oklab, #ff6b6b 40%, var(--rule));
+  }
+  .type-podcast {
+    color: #b48cff;
+    border-color: color-mix(in oklab, #b48cff 40%, var(--rule));
+  }
+  .type-arxiv {
+    color: var(--editorial);
+    border-color: color-mix(in oklab, var(--editorial) 40%, var(--rule));
+  }
+  .type-eng-blog,
+  .type-rss {
+    color: var(--accent);
+    border-color: color-mix(in oklab, var(--accent) 30%, var(--rule));
+  }
+
+  .src-id {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05em;
+    min-width: 0;
+    flex: 1;
+    color: var(--ink);
+    border: 0;
+  }
+  .src-id:hover {
+    text-decoration: none;
+  }
+  .src-id-name {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  .src-id:hover .src-id-name {
+    color: var(--accent);
+  }
+  .src-id-host {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--ink-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .src-trust {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--good);
+  }
+  .src-trust::before {
+    content: "◆";
+    margin-right: 0.25em;
+  }
+  .src-off {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+  }
+
+  /* ── candidates ──────────────────────────────────────────────────────── */
+  .candidates {
+    margin-top: var(--s-9);
+    padding-top: var(--s-6);
+    border-top: var(--hair) solid var(--rule);
+  }
+  .cand-head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-3);
+    margin-bottom: var(--s-4);
+  }
+  .cand-title {
+    margin: 0;
+    font-family: var(--font-read);
+    font-size: var(--t-lg);
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .cand-rule {
+    flex: 1;
+    height: var(--hair);
+    background: linear-gradient(90deg, var(--editorial), transparent);
+  }
+  .src-row--cand {
+    border-color: var(--rule);
+    border-style: dashed;
+  }
+  .cand-channels {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+  .cand-empty {
+    margin: 0;
+    padding: var(--s-5) 0;
+    font-family: var(--font-read);
+    font-style: italic;
+    color: var(--ink-faint);
+    max-width: 52ch;
+  }
+</style>

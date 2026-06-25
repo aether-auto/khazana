@@ -16,7 +16,7 @@ const GLASS = true;
 interface Props {
   title: string;
   description?: string;
-  active?: "feed" | "reads" | "workshop" | "graph" | "taste";
+  active?: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste";
   tickerTitles?: string[];
   /** Live instrument readout in the bezel (total + fresh signal counts). */
   signalCount?: number;
@@ -48,11 +48,12 @@ const missing = CHANNELS.filter((c) => !grouped.has(c));
 if (missing.length) throw new Error(`Shell nav missing channels: ${missing.join(", ")}`);
 
 const buildTime = new Date().toISOString();
-const nav: { id: "feed" | "reads" | "workshop" | "graph" | "taste"; label: string; href: string }[] = [
+const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; label: string; href: string }[] = [
   { id: "feed", label: "feed", href: withBase("/") },
   { id: "reads", label: "reads", href: withBase("/reads") },
   { id: "workshop", label: "workshop", href: withBase("/workshop") },
   { id: "graph", label: "graph", href: withBase("/graph") },
+  { id: "sources", label: "sources", href: withBase("/sources") },
   { id: "taste", label: "taste", href: withBase("/taste") },
 ];
 ---

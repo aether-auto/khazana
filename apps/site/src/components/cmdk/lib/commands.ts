@@ -19,6 +19,7 @@ const SECTIONS: { label: string; hint: string; path: string }[] = [
   { label: "reads", hint: "long-form, in your voice", path: "/reads" },
   { label: "workshop", hint: "things to build", path: "/workshop" },
   { label: "graph", hint: "connections", path: "/graph" },
+  { label: "sources", hint: "the intake manifold", path: "/sources" },
   { label: "taste", hint: "what khazana thinks you like", path: "/taste" },
 ];
 
