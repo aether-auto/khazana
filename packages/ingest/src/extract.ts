@@ -1,4 +1,5 @@
 import { Readability } from "@mozilla/readability";
+import { extractFromHtml as articleExtractorFromHtml } from "@extractus/article-extractor";
 import { parseHTML } from "linkedom";
 import sanitizeHtml from "sanitize-html";
 
@@ -44,6 +45,23 @@ export function sanitizeArticleHtml(html: string): string {
   return sanitizeHtml(html, SANITIZE_OPTS).trim();
 }
 
+/** Collapse an HTML fragment to plain text for length / quality checks. */
+export function htmlToText(html: string): string {
+  // sanitize-html with no allowed tags strips markup but keeps text + entities.
+  return sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} })
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Build an ExtractedArticle from raw content HTML, or null if it sanitizes empty. */
+function toExtracted(contentHtml: string | null | undefined, textHint?: string | null): ExtractedArticle | null {
+  if (!contentHtml) return null;
+  const sanitized = sanitizeArticleHtml(contentHtml);
+  if (!sanitized) return null;
+  const text = (textHint ?? "").replace(/\s+/g, " ").trim() || htmlToText(sanitized);
+  return { html: sanitized, text };
+}
+
 /**
  * Extract the main article content from a full HTML page.
  *
@@ -67,11 +85,109 @@ export function extractArticle(html: string, url: string): ExtractedArticle | nu
   } catch {
     return null;
   }
-  if (!content) return null;
+  return toExtracted(content, textContent);
+}
 
-  const sanitized = sanitizeArticleHtml(content);
-  if (!sanitized) return null;
+/**
+ * Second-pass extractor: @extractus/article-extractor over the same HTML.
+ *
+ * Heuristics differ from Readability, so this recovers articles Readability
+ * misses (or truncates). Operates purely on the passed HTML — no network. Always
+ * resolves; returns null on any failure or empty result.
+ */
+export async function extractWithArticleExtractor(
+  html: string,
+  url: string,
+): Promise<ExtractedArticle | null> {
+  if (!html || !html.trim()) return null;
+  try {
+    const article = await articleExtractorFromHtml(html, url);
+    return toExtracted(article?.content);
+  } catch {
+    return null;
+  }
+}
 
-  const text = (textContent ?? "").replace(/\s+/g, " ").trim();
-  return { html: sanitized, text };
+/**
+ * Find an AMP version of the page via <link rel="amphtml">, returned as an
+ * absolute URL. AMP pages are stripped-down and Readability-friendly, so they
+ * often yield clean full text when the canonical page does not.
+ */
+export function findAmpUrl(html: string, baseUrl: string): string | null {
+  if (!html) return null;
+  try {
+    const { document } = parseHTML(html, { location: { href: baseUrl } } as never);
+    const link = document.querySelector('link[rel~="amphtml"]') as { getAttribute(n: string): string | null } | null;
+    const href = link?.getAttribute("href")?.trim();
+    if (!href) return null;
+    return new URL(href, baseUrl).toString();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Last-resort text source: page metadata (og:description / twitter:description /
+ * meta description / JSON-LD articleBody). Wrapped in a single <p> so it renders.
+ * Better than a bare link, though shorter than true full text.
+ */
+export function extractMetaText(html: string, url: string): ExtractedArticle | null {
+  if (!html || !html.trim()) return null;
+  try {
+    const { document } = parseHTML(html, { location: { href: url } } as never);
+    const pick = (sel: string, attr = "content"): string => {
+      const el = document.querySelector(sel) as { getAttribute(n: string): string | null } | null;
+      return (el?.getAttribute(attr) ?? "").trim();
+    };
+
+    // Prefer JSON-LD articleBody (usually the longest), then meta descriptions.
+    let best = "";
+    for (const node of Array.from(document.querySelectorAll('script[type="application/ld+json"]'))) {
+      const raw = (node as { textContent?: string }).textContent;
+      if (!raw) continue;
+      try {
+        const body = findArticleBody(JSON.parse(raw));
+        if (body && body.length > best.length) best = body;
+      } catch {
+        // ignore malformed JSON-LD blocks
+      }
+    }
+    for (const sel of [
+      'meta[property="og:description"]',
+      'meta[name="twitter:description"]',
+      'meta[name="description"]',
+    ]) {
+      const v = pick(sel);
+      if (v.length > best.length) best = v;
+    }
+
+    const text = best.replace(/\s+/g, " ").trim();
+    if (!text) return null;
+    return toExtracted(`<p>${escapeHtml(text)}</p>`, text);
+  } catch {
+    return null;
+  }
+}
+
+/** Recursively search parsed JSON-LD for an `articleBody` string. */
+function findArticleBody(node: unknown): string | null {
+  if (!node || typeof node !== "object") return null;
+  if (Array.isArray(node)) {
+    for (const n of node) {
+      const found = findArticleBody(n);
+      if (found) return found;
+    }
+    return null;
+  }
+  const rec = node as Record<string, unknown>;
+  if (typeof rec.articleBody === "string" && rec.articleBody.trim()) return rec.articleBody;
+  for (const key of ["@graph", "mainEntity", "mainEntityOfPage"]) {
+    const found = findArticleBody(rec[key]);
+    if (found) return found;
+  }
+  return null;
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

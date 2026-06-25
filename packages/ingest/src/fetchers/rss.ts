@@ -5,7 +5,13 @@ import { FeedItemSchema, makeFeedItemId, type FeedItem, type SourceEntry } from 
 // multiple transcript formats survive) for later transcript fetching.
 const parser = new Parser({
   customFields: {
-    item: [["podcast:transcript", "podcastTranscript", { keepArray: true }]],
+    item: [
+      ["podcast:transcript", "podcastTranscript", { keepArray: true }],
+      // Some feeds use <content:encoded> for the full article HTML; rss-parser
+      // already maps it to `content`, but capture it explicitly too in case a
+      // feed only sets the namespaced element.
+      ["content:encoded", "contentEncoded"],
+    ],
   },
 });
 
@@ -43,6 +49,11 @@ export async function parseRssFeed(xml: string, entry: SourceEntry, now: string)
     // RSS snippet is the graceful-fallback summary; body starts as the snippet
     // and is upgraded to full-text sanitized HTML by the enrich step.
     const snippet = it.contentSnippet ?? it.content ?? "";
+    // Full article HTML carried inline by the feed (content:encoded). Stashed for
+    // the enrich step's "RSS full content" extraction method; not part of the
+    // FeedItem schema.
+    const rssContent =
+      (it as { contentEncoded?: string }).contentEncoded ?? it.content ?? undefined;
     const transcriptUrl = pickTranscriptUrl((it as { podcastTranscript?: TranscriptRef[] }).podcastTranscript);
     const parsed = FeedItemSchema.safeParse({
       id: makeFeedItemId(entry.type, url),
@@ -62,9 +73,11 @@ export async function parseRssFeed(xml: string, entry: SourceEntry, now: string)
       kind,
     });
     if (parsed.success) {
-      // Stash the transcript URL on the item for the enrich step (not part of
-      // the FeedItem schema; consumed and dropped before output).
-      if (transcriptUrl) (parsed.data as FeedItem & { transcriptUrl?: string }).transcriptUrl = transcriptUrl;
+      // Stash transient fields on the item for the enrich step (not part of the
+      // FeedItem schema; consumed and dropped before output).
+      const enrichable = parsed.data as FeedItem & { transcriptUrl?: string; rssContent?: string };
+      if (transcriptUrl) enrichable.transcriptUrl = transcriptUrl;
+      if (rssContent) enrichable.rssContent = rssContent;
       out.push(parsed.data);
     }
   }

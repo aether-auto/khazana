@@ -202,6 +202,9 @@ importers:
 
   packages/ingest:
     dependencies:
+      '@extractus/article-extractor':
+        specifier: ^8.1.0
+        version: 8.1.0
       '@khazana/core':
         specifier: workspace:*
         version: link:../core
@@ -1239,6 +1242,10 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@extractus/article-extractor@8.1.0':
+    resolution: {integrity: sha512-FLA07C3YFFyisrob3UW3kyd88M2BW3OKLQpWFMDiH0abzAR9L5CL2B+HuB+rzo3s/gu7sdRW++82qZBmdOowMg==}
+    engines: {node: '>= 20'}
+
   '@fastify/busboy@2.1.1':
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
@@ -1590,6 +1597,10 @@ packages:
     resolution: {integrity: sha512-Fa2Iyw7kaDRzGMfNYNUXNW2zbL5FQVDgSOcbDHdzBrDEdpqOqg8TcZ68F22ol6NJ9IGzvUdmeyZypLW5dyhqsg==}
     cpu: [x64]
     os: [win32]
+
+  '@pwshub/bellajs@13.0.2':
+    resolution: {integrity: sha512-OWOaE7Ieufo7VMv957iahOzv/w5oXyyXO28Jh2x6rLU96ZLqC508kAKTgdMJRXgVjda2s+/0C6Kno+k16OmJsQ==}
+    engines: {bun: '>=1.0.0', node: '>=20.0.0'}
 
   '@react-three/drei@10.7.7':
     resolution: {integrity: sha512-ff+J5iloR0k4tC++QtD/j9u3w5fzfgFAWDtAGQah9pF2B1YgOq/5JxqY0/aVoQG5r3xSZz0cv5tk2YuBob4xEQ==}
@@ -5350,6 +5361,15 @@ snapshots:
   '@esbuild/win32-x64@0.28.1':
     optional: true
 
+  '@extractus/article-extractor@8.1.0':
+    dependencies:
+      '@mozilla/readability': 0.6.0
+      '@pwshub/bellajs': 13.0.2
+      linkedom: 0.18.12
+      sanitize-html: 2.17.5
+    transitivePeerDependencies:
+      - canvas
+
   '@fastify/busboy@2.1.1': {}
 
   '@fontsource-variable/fraunces@5.2.9': {}
@@ -5646,6 +5666,8 @@ snapshots:
 
   '@pagefind/windows-x64@1.5.2':
     optional: true
+
+  '@pwshub/bellajs@13.0.2': {}
 
   '@react-three/drei@10.7.7(@react-three/fiber@9.6.1(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.171.0))(@types/react@19.2.17)(@types/three@0.171.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.171.0)':
     dependencies:

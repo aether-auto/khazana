@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { rankItems } from "./rank.js";
+import { hasFullText, rankItems } from "./rank.js";
 import type { TasteProfile } from "./taste.js";
 import type { FeedItem } from "@khazana/core";
 
@@ -51,6 +51,26 @@ test("when profile is ready, affinity dominates ranking (aggressive)", () => {
   const ready: TasteProfile = { ready: true, topics: { ai: 1, finance: 0 }, entities: { OpenAI: 1 } };
   const ranked = rankItems(items, ready, { now: NOW });
   expect(ranked[0]!.id).toBe("older-ontopic"); // affinity beats recency
+});
+
+const FULL_BODY = `<p>${"Genuine full article text rendered in the body for the reader. ".repeat(40)}</p>`;
+
+test("hasFullText distinguishes full-text bodies from summaries / bare links", () => {
+  expect(hasFullText(makeItem({ id: "full", body: FULL_BODY }))).toBe(true);
+  expect(hasFullText(makeItem({ id: "summary", body: "just a short summary" }))).toBe(false);
+  expect(hasFullText(makeItem({ id: "none" }))).toBe(false);
+});
+
+test("a full-text item outranks an otherwise-equal summary-only item", () => {
+  const items = [
+    makeItem({ id: "summary-only", body: "short rss summary" }),
+    makeItem({ id: "full-text", body: FULL_BODY }),
+  ];
+  const ranked = rankItems(items, notReady, { now: NOW });
+  expect(ranked[0]!.id).toBe("full-text");
+  const full = ranked.find((it) => it.id === "full-text")!;
+  const summary = ranked.find((it) => it.id === "summary-only")!;
+  expect(full.tasteScore!).toBeGreaterThan(summary.tasteScore!);
 });
 
 test("is deterministic for the same now", () => {

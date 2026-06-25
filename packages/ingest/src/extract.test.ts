@@ -1,5 +1,12 @@
 import { expect, test } from "vitest";
-import { extractArticle, sanitizeArticleHtml } from "./extract.js";
+import {
+  extractArticle,
+  extractMetaText,
+  extractWithArticleExtractor,
+  findAmpUrl,
+  htmlToText,
+  sanitizeArticleHtml,
+} from "./extract.js";
 
 const ARTICLE_HTML = `<!doctype html><html><head><title>Edge Scaling</title>
 <style>.ad{display:none}</style><script>track()</script></head>
@@ -49,6 +56,51 @@ test("returns null on empty / unparseable input", () => {
 test("returns null when there is no recoverable article body", () => {
   const out = extractArticle("<html><body><div></div></body></html>", "https://x.com/empty");
   expect(out).toBeNull();
+});
+
+test("htmlToText strips markup and collapses whitespace", () => {
+  expect(htmlToText("<p>hello   <b>world</b></p>\n<p>again</p>")).toBe("hello world again");
+  expect(htmlToText("")).toBe("");
+});
+
+test("extractWithArticleExtractor recovers article text from raw HTML (offline)", async () => {
+  const html = `<html><head><title>T</title></head><body><article><h1>Real Title Here</h1><p>${"This is a genuine article paragraph with enough words to clear the threshold. ".repeat(20)}</p></article></body></html>`;
+  const out = await extractWithArticleExtractor(html, "https://blog.example.com/a");
+  expect(out).not.toBeNull();
+  expect(out!.html).toContain("<p>");
+  expect(out!.text).toContain("genuine article paragraph");
+  expect(out!.text.length).toBeGreaterThan(600);
+  // Sanitized through our allowlist.
+  expect(out!.html).not.toContain("<script");
+});
+
+test("extractWithArticleExtractor returns null on empty input", async () => {
+  expect(await extractWithArticleExtractor("", "https://x.com")).toBeNull();
+  expect(await extractWithArticleExtractor("   ", "https://x.com")).toBeNull();
+});
+
+test("findAmpUrl resolves a relative amphtml link against the base URL", () => {
+  const html = `<html><head><link rel="amphtml" href="/amp/post"></head><body></body></html>`;
+  expect(findAmpUrl(html, "https://news.example.com/post")).toBe("https://news.example.com/amp/post");
+  expect(findAmpUrl("<html><head></head></html>", "https://news.example.com/post")).toBeNull();
+});
+
+test("extractMetaText falls back to JSON-LD articleBody, then og:description", () => {
+  const longBody = "Article body sentence from structured data. ".repeat(10);
+  const withLd = `<html><head>
+    <meta property="og:description" content="short og description">
+    <script type="application/ld+json">${JSON.stringify({ "@type": "Article", articleBody: longBody })}</script>
+  </head><body></body></html>`;
+  const out = extractMetaText(withLd, "https://x.com/a");
+  expect(out).not.toBeNull();
+  expect(out!.html).toContain("<p>");
+  expect(out!.text).toContain("structured data");
+
+  const ogOnly = `<html><head><meta name="description" content="just a meta description"></head><body></body></html>`;
+  const out2 = extractMetaText(ogOnly, "https://x.com/b");
+  expect(out2!.text).toBe("just a meta description");
+
+  expect(extractMetaText("<html><head></head><body></body></html>", "https://x.com/c")).toBeNull();
 });
 
 test("sanitizeArticleHtml strips dangerous schemes and tags", () => {

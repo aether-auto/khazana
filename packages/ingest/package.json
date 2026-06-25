@@ -9,6 +9,7 @@
     "ingest": "tsx src/cli.ts"
   },
   "dependencies": {
+    "@extractus/article-extractor": "^8.1.0",
     "@khazana/core": "workspace:*",
     "@mozilla/readability": "^0.6.0",
     "linkedom": "^0.18.12",
