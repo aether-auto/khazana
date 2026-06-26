@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { FeedItemSchema, type FeedItem } from "@khazana/core";
 import { readTimeFromHtml } from "./read-time.js";
+import { extractYouTubeId, isYouTubeShort } from "./media.js";
 
 const WORKSHOP_CHANNELS = new Set([
   "ideas",
@@ -36,6 +37,104 @@ export function loadCurated(dataDir: string): FeedItem[] {
 export function filterByChannel(items: FeedItem[], channel: string | null): FeedItem[] {
   if (!channel) return items;
   return items.filter((it) => it.topics.includes(channel));
+}
+
+/**
+ * Drop YouTube Shorts from the feed entirely. Shorts (vertical sub-60s clips)
+ * are not "best signal" — they're excluded from the bento, the media rails, AND
+ * the register tail. Applied ONCE on the full curated list at page level so every
+ * downstream selector (featured gate, rails, register) sees a Shorts-free feed.
+ * Rank order is preserved.
+ */
+export function dropShorts(items: FeedItem[]): FeedItem[] {
+  return items.filter((it) => !isYouTubeShort(it.url));
+}
+
+/**
+ * Patterns that mark a "video" item as clearly NON-editorial raw footage rather
+ * than signal — e.g. MIT-OCW lab clips ("Pool Testing Video 1 (No Audio)",
+ * "River Testing Video"). Deliberately CONSERVATIVE: each pattern targets the
+ * specific raw-clip tell ("(no audio)" anywhere; a "<X> testing video" title),
+ * so real content that merely mentions a pool/river/test is never dropped.
+ */
+const JUNK_VIDEO_TITLE = [
+  /\(no audio\)/i, // raw clip with the audio stripped — never a real read
+  /\btesting video\b/i, // "Pool Testing Video", "River Testing Video" — lab footage
+];
+
+/**
+ * Drop clearly non-content "video" items (raw lab clips) from the feed. Only
+ * `kind === "video"` items are inspected; every other kind passes untouched.
+ * Applied ONCE on the full curated list (like `dropShorts`) so junk is gone from
+ * the bento, both rails, AND the register. Rank order is preserved.
+ */
+export function dropJunkVideos(items: FeedItem[]): FeedItem[] {
+  return items.filter(
+    (it) => it.kind !== "video" || !JUNK_VIDEO_TITLE.some((re) => re.test(it.title)),
+  );
+}
+
+/**
+ * Diversity selector shared by both rails: walk the ranked, already-filtered
+ * `pool` and take at most ONE item per `source`, in rank order. This makes a
+ * rail span distinct channels/shows — Tifo, Mark Felton, Steve Mould… — instead
+ * of stacking several clips from one channel.
+ *
+ * `limit` is a CAP, not a quota: if there are only a handful of distinct sources
+ * the rail is simply that many distinct cards (we never pad a big rail with
+ * near-duplicate clips). The one exception is a BACK-FILL when distinct sources
+ * fall *just short* of the limit (within `BACKFILL_SLACK`) — there we top the
+ * rail off with the next-best remaining items so a nearly-fillable rail isn't
+ * left one or two cards short. Rank order is preserved throughout.
+ */
+const BACKFILL_SLACK = 2;
+
+function pickOnePerSource(pool: FeedItem[], limit: number): FeedItem[] {
+  const out: FeedItem[] = [];
+  const seen = new Set<string>();
+  // Pass 1 — one per distinct source, rank order.
+  for (const it of pool) {
+    if (out.length >= limit) break;
+    if (seen.has(it.source)) continue;
+    seen.add(it.source);
+    out.push(it);
+  }
+  // Pass 2 — back-fill only when distinct sources nearly filled the rail (within
+  // BACKFILL_SLACK of the cap) AND there's more in the pool to draw from. This
+  // tops off a near-full rail without padding a sparse one with duplicates.
+  if (out.length < limit && limit - out.length <= BACKFILL_SLACK && out.length < pool.length) {
+    const chosen = new Set(out);
+    for (const it of pool) {
+      if (out.length >= limit) break;
+      if (!chosen.has(it)) out.push(it);
+    }
+  }
+  return out;
+}
+
+/**
+ * Select the top-ranked **video** items for the WATCH rail. Only items that
+ * yield a usable YouTube thumbnail (a resolvable `?v=`/`youtu.be` id) are
+ * included — a `video` kind with no extractable id has no tile to show, so it's
+ * skipped rather than rendered as a broken card. Shorts are assumed already
+ * removed by `dropShorts`, but extractYouTubeId returns null for them anyway, so
+ * this is doubly safe. At most ONE card per source (channel) for diversity; rank
+ * order is preserved; capped at `limit`.
+ */
+export function selectWatchRail(items: FeedItem[], limit = 12): FeedItem[] {
+  const videos = items.filter((it) => it.kind === "video" && extractYouTubeId(it.url) !== null);
+  return pickOnePerSource(videos, limit);
+}
+
+/**
+ * Select the top-ranked **audio** items for the LISTEN rail. At most ONE card
+ * per source (show) for diversity; rank order is preserved; capped at `limit`.
+ * (Audio cards render a typographic tile — the pipeline currently carries no
+ * cover art — so there's no thumbnail gate here.)
+ */
+export function selectListenRail(items: FeedItem[], limit = 10): FeedItem[] {
+  const audio = items.filter((it) => it.kind === "audio");
+  return pickOnePerSource(audio, limit);
 }
 
 /** Workshop selector: kind=idea OR any buildable-channel topic. */

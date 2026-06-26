@@ -1,0 +1,233 @@
+---
+import type { FeedItem } from "@khazana/core";
+import { extractYouTubeId, buildYouTubeThumbnail } from "../lib/media.js";
+
+interface Props {
+  item: FeedItem;
+}
+const { item } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const readHref = `${base}/item/${item.id}`;
+
+// videoId is guaranteed by selectWatchRail (it filters to extractable ids), but
+// we re-derive + guard so the component is safe on its own.
+const videoId = extractYouTubeId(item.url);
+const thumbnailUrl = videoId ? buildYouTubeThumbnail(videoId) : null;
+// The FeedItem schema carries no duration field, so we omit it gracefully.
+---
+
+<a class="wcard" href={readHref} data-channels={item.topics.join(" ")}>
+  <div class="wcard-frame">
+    {thumbnailUrl ? (
+      <img
+        class="wcard-thumb"
+        src={thumbnailUrl}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        width="480"
+        height="270"
+        onerror="this.classList.add('is-broken')"
+      />
+    ) : null}
+    {/* styled fallback tile — shows through when the thumbnail is absent or
+        fails to load (offline / 404). Always present beneath the img. */}
+    <span class="wcard-fallback" aria-hidden="true">
+      <span class="wcard-fallback-mark">▶</span>
+      <span class="wcard-fallback-src">{item.source}</span>
+    </span>
+    <span class="wcard-play" aria-hidden="true">▶</span>
+    <span class="wcard-scrim" aria-hidden="true"></span>
+  </div>
+  <div class="wcard-body">
+    <h3 class="wcard-title">{item.title}</h3>
+    <span class="wcard-src">{item.source}</span>
+  </div>
+</a>
+
+<style>
+  .wcard {
+    /* fixed-width snap card; the rail scrolls horizontally */
+    flex: 0 0 auto;
+    width: clamp(232px, 26vw, 288px);
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    color: inherit;
+    text-decoration: none;
+  }
+  .wcard:hover {
+    text-decoration: none;
+  }
+
+  /* ── thumbnail frame: hairline, 16:9, amber rim on hover ──────────────── */
+  .wcard-frame {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: var(--r-md);
+    border: var(--hair) solid var(--rule);
+    background: var(--bg-inset);
+    transition:
+      border-color var(--dur) var(--ease-out),
+      box-shadow var(--dur) var(--ease-out),
+      transform var(--dur) var(--ease-overshoot);
+    will-change: transform;
+  }
+  .wcard:hover .wcard-frame {
+    transform: translateY(-3px);
+    border-color: color-mix(in oklab, var(--accent) 38%, var(--rule));
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--accent) 26%, transparent),
+      0 16px 34px -16px rgba(0, 0, 0, 0.6);
+  }
+  .wcard-thumb {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform var(--dur-slow) var(--ease-out), filter var(--dur) var(--ease-out);
+  }
+  .wcard:hover .wcard-thumb {
+    transform: scale(1.05);
+    filter: brightness(0.84);
+  }
+  /* hide a broken image so the fallback tile shows through cleanly */
+  .wcard-thumb.is-broken {
+    display: none;
+  }
+
+  /* fallback tile — sits at z0 beneath the img; an intentional amber-marked
+     well, NOT a missing-image void. Visible only when no img covers it. */
+  .wcard-fallback {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s-2);
+    background:
+      radial-gradient(120% 90% at 50% 18%, color-mix(in oklab, var(--accent) 10%, transparent), transparent 70%),
+      var(--bg-raised);
+  }
+  .wcard-fallback-mark {
+    font-family: var(--font-mono);
+    font-size: 1.4rem;
+    color: var(--accent);
+    opacity: 0.7;
+    text-shadow: var(--halo-star);
+  }
+  .wcard-fallback-src {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+    max-width: 80%;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* amber ▶ — quiet ring at rest, lights up on hover */
+  .wcard-play {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 0.12em;
+    font-size: 1.15rem;
+    color: var(--accent);
+    text-shadow: 0 0 12px color-mix(in oklab, var(--accent) 70%, transparent), 0 2px 8px rgba(0, 0, 0, 0.6);
+    transition: transform var(--dur) var(--ease-out);
+  }
+  .wcard-play::before {
+    content: "";
+    position: absolute;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 50%;
+    border: var(--hair) solid color-mix(in oklab, var(--accent) 45%, transparent);
+    box-shadow: 0 0 16px -3px color-mix(in oklab, var(--accent) 50%, transparent);
+    background: rgba(10, 10, 8, 0.34);
+    opacity: 0.7;
+    transition: transform var(--dur) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
+  }
+  .wcard:hover .wcard-play {
+    transform: scale(1.06);
+  }
+  .wcard:hover .wcard-play::before {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  /* a faint bottom scrim so the play glyph + frame edge read on any thumbnail */
+  .wcard-scrim {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse 58% 58% at 50% 50%, rgba(0, 0, 0, 0.28), transparent 72%);
+  }
+
+  /* ── caption ──────────────────────────────────────────────────────────── */
+  .wcard-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-1);
+  }
+  /* tested mono vs Fraunces at card size — sans reads cleanest + densest here,
+     matching the register/card titles; the mono source line below carries the
+     instrument voice. */
+  .wcard-title {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: var(--t-base);
+    line-height: var(--lh-tight);
+    font-weight: 540;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  .wcard:hover .wcard-title {
+    color: var(--accent);
+  }
+  .wcard-src {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    letter-spacing: 0.03em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wcard-frame,
+    .wcard-thumb,
+    .wcard-play,
+    .wcard-play::before {
+      transition: none;
+    }
+    .wcard:hover .wcard-frame {
+      transform: none;
+    }
+    .wcard:hover .wcard-thumb {
+      transform: none;
+      filter: none;
+    }
+    .wcard:hover .wcard-play {
+      transform: none;
+    }
+  }
+</style>

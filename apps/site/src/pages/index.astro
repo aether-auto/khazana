@@ -2,7 +2,18 @@
 import Shell from "../layouts/Shell.astro";
 import FeedCard from "../components/FeedCard.astro";
 import FeatureCard from "../components/FeatureCard.astro";
-import { loadCurated, tickerTitles, splitFeaturedGated } from "../lib/feed.js";
+import MediaRail from "../components/MediaRail.astro";
+import WatchCard from "../components/WatchCard.astro";
+import ListenCard from "../components/ListenCard.astro";
+import {
+  loadCurated,
+  tickerTitles,
+  splitFeaturedGated,
+  dropShorts,
+  dropJunkVideos,
+  selectWatchRail,
+  selectListenRail,
+} from "../lib/feed.js";
 import { assignBento } from "../lib/bento.js";
 import { CHANNELS } from "@khazana/core";
 import { dataDir } from "../lib/data.js";
@@ -10,7 +21,10 @@ import { readTimeFromHtml } from "../lib/read-time.js";
 import { extractYouTubeId, buildYouTubeThumbnail } from "../lib/media.js";
 
 const now = new Date().toISOString();
-const all = loadCurated(dataDir());
+// Content-quality gate applied ONCE on the full list so EVERY downstream surface
+// — bento, rails, register — sees a clean feed: drop YouTube Shorts and obvious
+// non-content raw video clips (MIT-OCW lab footage etc.). Neither is "best signal."
+const all = dropJunkVideos(dropShorts(loadCurated(dataDir())));
 const ticker = tickerTitles(all, 8);
 // live instrument readout: total signals + how many arrived in the last 24h
 const nowMs = Date.parse(now);
@@ -25,6 +39,14 @@ const freshCount = all.filter((it) => nowMs - Date.parse(it.publishedAt) < 24 * 
 // else is the long tail, rendered cheaply + paginated by the client register.
 const { featured, rest } = splitFeaturedGated(all, 10);
 const cells = assignBento(featured);
+
+// Media rails draw from `rest` — the top-ranked video/audio that didn't clear
+// the 7-min featured gate. This is exactly the signal the founder "saw nothing
+// of": media ranks ~position 60 and the default list view buries it as thin
+// text rows. The rails give it a real, image-forward home WITHOUT duplicating
+// anything already shown in the bento above. Shorts are already gone (dropShorts).
+const watchItems = selectWatchRail(rest, 12);
+const listenItems = selectListenRail(rest, 10);
 
 // The tail ships as a single JSON payload (text, not DOM) — the register script
 // builds compact rows/cards from it in small batches. Trim to just the fields
@@ -120,6 +142,34 @@ const delay = (i: number) => Math.min(i, 8) * 60;
             No featured items in this channel.
           </p>
         </section>
+
+        {watchItems.length > 0 && (
+          <MediaRail
+            glyph="▶"
+            label="watch"
+            count={watchItems.length}
+            blurb="long-form video from the channels worth watching — re-read as transcript on khazana, or play in place."
+            accent="signal"
+          >
+            {watchItems.map((it) => (
+              <WatchCard item={it} />
+            ))}
+          </MediaRail>
+        )}
+
+        {listenItems.length > 0 && (
+          <MediaRail
+            glyph="◉"
+            label="listen"
+            count={listenItems.length}
+            blurb="the day's best long-form audio — podcasts and talks, with their transcripts re-set in khazana's study."
+            accent="editorial"
+          >
+            {listenItems.map((it) => (
+              <ListenCard item={it} />
+            ))}
+          </MediaRail>
+        )}
 
         {
           rest.length > 0 && (

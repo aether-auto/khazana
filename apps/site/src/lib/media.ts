@@ -29,6 +29,27 @@ export function extractYouTubeId(url: string): string | null {
 }
 
 /**
+ * True when a URL is a YouTube **Short** (`youtube.com/shorts/{id}`).
+ * Shorts are vertical sub-60s clips — not "best signal" — so the feed excludes
+ * them from the bento, the media rails, AND the register tail. They also lack a
+ * `?v=` param, so `extractYouTubeId` already returns null for them (no thumbnail);
+ * this predicate lets us drop them up front rather than render a broken tile.
+ * Returns false for any non-YouTube URL or a malformed input.
+ */
+export function isYouTubeShort(url: string): boolean {
+  try {
+    const u = new URL(url);
+    const isYt =
+      u.hostname === "www.youtube.com" ||
+      u.hostname === "youtube.com" ||
+      u.hostname === "m.youtube.com";
+    return isYt && u.pathname.startsWith("/shorts/");
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Build the YouTube `hqdefault` thumbnail URL for a given video ID.
  * Uses the img.youtube.com CDN — no API key required, no CORS issues.
  */

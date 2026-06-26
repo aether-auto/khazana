@@ -1,0 +1,136 @@
+---
+// A horizontally-scrolling media rail (WATCH / LISTEN). Section chrome in the
+// mono "instrument" voice, matching the feed's "the observatory / the register"
+// rhythm. Cards are passed as the default slot; the track uses native CSS
+// scroll-snap (no JS) for smooth horizontal scroll. `accent` recolors the
+// eyebrow rule + glyph so WATCH reads amber (signal) and LISTEN reads clay.
+interface Props {
+  /** Section glyph — e.g. "▶" for watch, "◉" for listen. */
+  glyph: string;
+  /** Eyebrow label — e.g. "watch", "listen". */
+  label: string;
+  /** Count for the "— N fresh" readout. */
+  count: number;
+  /** One-line description in the reading voice. */
+  blurb: string;
+  /** Accent token: "signal" (amber) or "editorial" (clay). */
+  accent?: "signal" | "editorial";
+}
+const { glyph, label, count, blurb, accent = "signal" } = Astro.props;
+const accentVar = accent === "editorial" ? "var(--editorial)" : "var(--accent)";
+---
+
+<section class="rail" data-rail aria-label={label} style={`--rail-accent:${accentVar}`}>
+  <div class="rail-head" data-reveal>
+    <p class="rail-eyebrow">
+      <span class="rail-rule" aria-hidden="true"></span>
+      <span class="rail-glyph" aria-hidden="true">{glyph}</span>
+      {label}
+      <span class="rail-count"> — {count} fresh</span>
+    </p>
+    <p class="rail-blurb reading">{blurb}</p>
+  </div>
+
+  <div class="rail-track-wrap">
+    <div class="rail-track" data-rail-track>
+      <slot />
+    </div>
+  </div>
+</section>
+
+<style>
+  .rail {
+    margin-top: var(--s-10);
+  }
+  .rail-head {
+    padding-top: var(--s-3);
+    border-top: var(--hair) solid var(--rule);
+    margin-bottom: var(--s-5);
+  }
+  .rail-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6ch;
+    margin: var(--s-3) 0 var(--s-2);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+    color: var(--ink-faint);
+  }
+  .rail-rule {
+    display: inline-block;
+    width: 1.6em;
+    height: 1px;
+    background: var(--rail-accent);
+    opacity: 0.75;
+  }
+  .rail-glyph {
+    color: var(--rail-accent);
+    text-shadow: 0 0 10px color-mix(in oklab, var(--rail-accent) 45%, transparent);
+  }
+  .rail-count {
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+  }
+  .rail-blurb {
+    margin: 0;
+    font-size: var(--t-sm);
+    color: var(--ink-dim);
+    max-width: 56ch;
+  }
+
+  /* edge fades signal "there's more to scroll" without a scrollbar */
+  .rail-track-wrap {
+    position: relative;
+    /* bleed the track to the viewport edge a touch so cards can scroll under
+       the fade rather than ending in dead space */
+    margin: 0 calc(-1 * var(--s-2));
+  }
+  .rail-track-wrap::before,
+  .rail-track-wrap::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: var(--s-2);
+    width: var(--s-6);
+    z-index: 2;
+    pointer-events: none;
+  }
+  .rail-track-wrap::before {
+    left: 0;
+    background: linear-gradient(90deg, var(--bg), transparent);
+  }
+  .rail-track-wrap::after {
+    right: 0;
+    background: linear-gradient(270deg, var(--bg), transparent);
+  }
+
+  .rail-track {
+    display: flex;
+    gap: var(--s-4);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: var(--s-2);
+    /* room for the hover-lift so cards aren't clipped at the top, + scrollbar */
+    padding: var(--s-2) var(--s-5) var(--s-2);
+    scrollbar-width: thin;
+    scrollbar-color: var(--rule-bright) transparent;
+    /* momentum scroll on touch */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  .rail-track::-webkit-scrollbar {
+    height: 8px;
+  }
+  .rail-track::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .rail-track::-webkit-scrollbar-thumb {
+    background: var(--rule);
+    border-radius: 99px;
+  }
+  .rail-track:hover::-webkit-scrollbar-thumb {
+    background: var(--rule-bright);
+  }
+</style>
