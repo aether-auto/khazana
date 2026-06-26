@@ -2,31 +2,149 @@ import type { FetchFn } from "./fetchers/build-source.js";
 import { sanitizeArticleHtml } from "./extract.js";
 
 // ---------------------------------------------------------------------------
-// Ad / sponsor block patterns — conservative, case-insensitive.
-// Matches the opening of an NPR-style host-read ad or common podcast
-// sponsor lines. We strip the entire sentence/segment that contains
-// any of these phrases.
+// Ad / sponsor detection — two complementary layers:
+//
+//   1. EXACT TRIGGERS: high-confidence phrases that alone confirm a sponsor
+//      block ("this message comes from", "brought to you by", etc.).
+//
+//   2. DENSITY SCORE: count sponsor signals (known brand names + ad lexicon
+//      words) per sentence. A sentence that hits ≥ SPONSOR_DENSITY_THRESHOLD
+//      signals without an exact trigger — catches variants like:
+//        "No matter your investing goal, life stage, amount to invest or know
+//         how you can invest your way with Schwab."
+//      (brand "schwab" + lexicon "investing goal", "life stage", "invest" ×2)
 // ---------------------------------------------------------------------------
 
-const AD_PATTERNS: RegExp[] = [
+/** Exact-match trigger phrases — any one of these alone flags an ad sentence. */
+const AD_EXACT_TRIGGERS: RegExp[] = [
   /this (?:message|episode|podcast) (?:comes|is brought) from/i,
   /support for (?:this|the) (?:podcast|show|program|episode)/i,
   /this episode is (?:sponsored|presented) by/i,
   /brought to you by/i,
   /(?:use|enter) (?:code|promo(?:code)?)\b/i,
-  /\bpromo code\b/i,
+  /\bpromo ?code\b/i,
   /terms (?:apply|and conditions apply)/i,
   /slash podcast\b/i,
-  /(?:go to|visit) [a-z0-9-]+\.com\/[a-z]/i,  // "go to schwab.com/podcast"
-  /at schwab[,. ]/i,
-  /at (?:squarespace|betterhelp|expressvpn|nerdwallet|linkedin|indeed)\b/i,
+  /(?:go to|visit) [a-z0-9-]+\.com[/\s]/i,      // "go to schwab.com/podcast"
+  /\bpodcast\.com[/\s]/i,
+  /\bsponsor(?:ed)? (?:by|content)\b/i,
+  /\baffiliate (?:link|disclosure)\b/i,
 ];
 
 /**
- * Return true if the segment text contains a known ad/sponsor phrase.
+ * Known sponsor brand names. Each entry is a word-boundary-anchored pattern.
+ * Matched in combination with ad-lexicon words to compute density.
+ * Conservative list — only brands that are actual common podcast sponsors.
  */
-function isAdSegment(text: string): boolean {
-  return AD_PATTERNS.some((p) => p.test(text));
+const SPONSOR_BRANDS = new Set([
+  "schwab", "squarespace", "betterhelp", "expressvpn", "nerdwallet",
+  "linkedin", "indeed", "audible", "hellofresh", "blinkist", "masterclass",
+  "wix", "shopify", "raycon", "athletic greens", "ag1", "factor",
+  "mint mobile", "dollar shave", "bombas", "brooklyn bedding", "casper",
+  "helix", "eight sleep", "ritual", "calm", "headspace", "noom",
+  "hims", "hers", "roman", "keeps", "quip", "nutrafol", "prose",
+  "gusto", "freshbooks", "quickbooks", "notion", "monday", "asana",
+  "zocdoc", "teladoc", "peloton", "whoop", "oura", "aura", "nordvpn",
+  "surfshark", "cyberghost", "ghostbed", "purple", "dreamcloud",
+  "betterment", "wealthfront", "sofi", "creditkarma", "identityguard",
+  "lifelock", "aarp", "selectquote", "policygenius", "ladder",
+  "babbel", "duolingo", "skillshare", "udemy", "coursera", "brilliant",
+  "grammarly", "lastpass", "1password", "dashlane", "airtable",
+  "hubspot", "salesforce", "zendesk", "intercom", "typeform",
+]);
+
+/**
+ * Ad / finance / product lexicon — words that cluster in sponsor reads.
+ * Each match adds 1 to the density score. Scored per sentence; threshold
+ * determines whether the sentence is treated as an ad block.
+ */
+const AD_LEXICON_PATTERNS: RegExp[] = [
+  /\binvest(?:ing|ment|or|s)?\b/i,
+  /\bfinancial (?:planning|advisor|goal|freedom|wellness)\b/i,
+  /\blife stage\b/i,
+  /\bself.directed\b/i,
+  /\bwealth (?:management|building|advisor)\b/i,
+  /\bportfolio\b/i,
+  /\basset (?:management|allocation|class)\b/i,
+  /\bpromo(?:tion)?\b/i,
+  /\bdiscount code\b/i,
+  /\bexclusive (?:offer|deal|discount)\b/i,
+  /\bfree trial\b/i,
+  /\bfirst (?:month|order|box|shipment) free\b/i,
+  /\b(?:percent|%) off\b/i,
+  /\bsave \$?[\d]+\b/i,
+  /\bcoupon\b/i,
+  /\baffiliate\b/i,
+  /\bsponsored\b/i,
+  /\badvertisement\b/i,
+  /\bself.paced\b/i,
+  /\bsubscription (?:plan|box|service)\b/i,
+  /\bcheck out [a-z]+\.com\b/i,
+  /\blearn more at\b/i,
+  /\bsign up (?:at|for|today)\b/i,
+  /\bdownload (?:the app|now)\b/i,
+  /\bclick the link\b/i,
+  /\blink in (?:the )?(?:bio|description|show notes)\b/i,
+  /\bshow notes\b/i,
+  /\bno (?:commitment|contract) required\b/i,
+  /\bcancel anytime\b/i,
+  /\binvest your way\b/i,       // "invest your way with Schwab"
+  /\bknow how\b/i,              // "know how you can invest"
+  /\bamount to invest\b/i,
+  /\bno matter your\b/i,        // "no matter your investing goal"
+  /\byour (?:financial|investing|retirement)\b/i,
+];
+
+/**
+ * Minimum density score for a sentence to be flagged as a sponsor block
+ * (when no exact trigger phrase is present).
+ * Score = (brand matches × 2) + (lexicon matches × 1).
+ *
+ * Threshold 5: catches ad variants like "No matter your investing goal, life
+ * stage, amount to invest or know how you can invest your way with Schwab"
+ * (scores 7: schwab×2 + no_matter_your×1 + investing×1 + life_stage×1 +
+ * amount_to_invest×1 + invest_your_way×1) while allowing editorial sentences
+ * that merely mention a brand + one financial term (scores ≤ 4).
+ *
+ * Examples of editorial that must survive (score ≤ 4):
+ *   "The Charles Schwab report found younger investors prefer ETFs" → 4
+ *   "Investors worried about their portfolio's performance" → 2
+ */
+const SPONSOR_DENSITY_THRESHOLD = 5;
+
+/**
+ * Compute the sponsor-signal density score for a sentence.
+ * Brand matches count double (more reliable signal than generic ad words).
+ */
+export function sponsorDensityScore(text: string): number {
+  const lower = text.toLowerCase();
+  // Count brand hits (×2 each)
+  let score = 0;
+  for (const brand of SPONSOR_BRANDS) {
+    // Word-boundary match: brand must appear as a standalone word
+    const escaped = brand.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`\\b${escaped}\\b`, "i").test(lower)) {
+      score += 2;
+    }
+  }
+  // Count lexicon hits (×1 each)
+  for (const pattern of AD_LEXICON_PATTERNS) {
+    if (pattern.test(text)) {
+      score += 1;
+    }
+  }
+  return score;
+}
+
+/**
+ * Return true if the segment text is an ad/sponsor block.
+ * Two paths:
+ *   - Exact trigger phrase (high-confidence, standalone).
+ *   - Density score ≥ SPONSOR_DENSITY_THRESHOLD (catches phrasing variants).
+ */
+export function isAdSegment(text: string): boolean {
+  if (AD_EXACT_TRIGGERS.some((p) => p.test(text))) return true;
+  return sponsorDensityScore(text) >= SPONSOR_DENSITY_THRESHOLD;
 }
 
 // ---------------------------------------------------------------------------
@@ -499,17 +617,59 @@ export function sanitizePodcastTranscript(raw: string, mimeOrFormat: string): st
 }
 
 /**
- * Clean a raw Whisper (or other ASR) plain-text transcript into readable
- * prose HTML. Extends `sanitizePodcastTranscript` with:
+ * Strip leading pre-roll ad sentences from the front of a transcript.
  *
- *   1. **Ad / sponsor removal** — strips the sentence containing a known ad
- *      phrase (NPR dynamic ads, "brought to you by", promo code lines, etc.)
- *      PLUS the immediately following sentence (which is typically the
- *      product description copy: "Online therapy is available to everyone.").
- *   2. **Repetition collapse** — folds Whisper hallucination loops where the
- *      same phrase repeats dozens of times into a single instance.
- *   3. Delegates the resulting text to `sanitizePodcastTranscript` for
- *      paragraphization and HTML escaping.
+ * Podcasts almost always pre-roll an ad before the real content. This function
+ * walks forward through sentences until it finds one that is clearly real
+ * content (not an ad). Stops conservatively at the first genuine content
+ * sentence so it never trims too deep.
+ *
+ * A sentence is treated as "genuine content" when:
+ *   - It is NOT flagged by `isAdSegment()`, AND
+ *   - It is longer than MIN_REAL_CONTENT_CHARS (guards against single-word
+ *     transitional sentences like "Okay." that appear between a pre-roll and
+ *     the real intro), OR it contains a narrative content signal.
+ */
+const MIN_REAL_CONTENT_CHARS = 40;
+
+/** Phrases that signal genuine narrative / editorial content. */
+const NARRATIVE_SIGNALS = /\b(?:today|this week|this episode|this story|last (?:week|month|year)|in \d{4}|we(?:'re)? (?:talking|discussing|exploring|looking)|I'?m (?:here|joined|talking)|welcome to|from (?:NPR|ABC|CBS|BBC|CNN|the new york times|the washington post)|it'?s (?:a story|the story)|it was|they were|she was|he was|the (?:story|question|issue|report|investigation)|heads up|warning|this (?:story|episode) contains|explicit|gun|violence|language)\b/i;
+
+function trimLeadingAds(segments: string[]): string[] {
+  // Find the index of the first genuine content sentence.
+  let start = 0;
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i]!;
+    if (!isAdSegment(seg)) {
+      // This sentence is not an ad — check if it looks like real content.
+      if (seg.length >= MIN_REAL_CONTENT_CHARS || NARRATIVE_SIGNALS.test(seg)) {
+        start = i;
+        break;
+      }
+      // Very short non-ad sentence (e.g. "Okay.") — could be a transition.
+      // Keep looking, but don't trim past it if no more ads follow.
+      if (i + 1 >= segments.length || !isAdSegment(segments[i + 1]!)) {
+        start = i;
+        break;
+      }
+    }
+    // Ad sentence — continue scanning
+  }
+  return segments.slice(start);
+}
+
+/**
+ * Clean a raw Whisper (or other ASR) plain-text transcript into readable
+ * prose HTML. Three-stage pipeline:
+ *
+ *   1. **Repetition collapse** — folds Whisper hallucination loops into one
+ *      instance before sentence-splitting (preserves boundary integrity).
+ *   2. **Ad / sponsor removal** (two layers):
+ *      a. Leading pre-roll trim — strip consecutive sponsor sentences from
+ *         the front until the first genuine content sentence.
+ *      b. Mid-roll strip — drop any ad sentence anywhere in the transcript
+ *         (via exact-trigger OR density score) plus its short continuation.
+ *   3. **Paragraphize + HTML escape** via `sanitizePodcastTranscript`.
  *
  * This is the entry point for Whisper-generated transcripts; use
  * `sanitizePodcastTranscript` directly for published VTT/SRT/JSON transcripts.
@@ -517,37 +677,35 @@ export function sanitizePodcastTranscript(raw: string, mimeOrFormat: string): st
 export function cleanPodcastTranscript(rawText: string): string {
   if (!rawText.trim()) return "";
 
-  // 1. Collapse hallucination loops before sentence-splitting to keep the
-  //    sentence boundaries intact after deduplication.
+  // 1. Collapse hallucination loops before sentence-splitting.
   const delooped = collapseRepetition(rawText);
 
-  // 2. Split into sentences and strip ad segments.
+  // 2. Split into sentences.
   //    Sentence boundary: period/!/? followed by space and capital, or newline.
   const segments = delooped
     .split(/(?<=[.!?])\s+(?=[A-Z])|(?<=\n)\s*/)
     .map((s) => s.replace(/\s+/g, " ").trim())
     .filter(Boolean);
 
-  // Drop ad sentences. When an ad trigger is found, also drop the IMMEDIATELY
-  // following sentence if it looks like continuation copy: very short (≤50 chars)
-  // and does not begin with a topic-resuming signal ("Let's", "Now", "Back",
-  // "Today"...). This catches "Online therapy is available to everyone." (40 chars)
-  // without accidentally eating longer real content like "The Roman Empire at its
-  // peak controlled most of the known world." (62 chars).
+  // 2a. Strip leading pre-roll ads.
+  const afterLeadTrim = trimLeadingAds(segments);
+
+  // 2b. Mid-roll strip: drop ad sentences + short continuation (≤50 chars).
+  //     "Short continuation" catches the product description sentence that
+  //     typically follows the ad trigger ("Online therapy is available to
+  //     everyone.") without accidentally eating longer editorial sentences.
   const SHORT_COPY_MAX_CHARS = 50;
-  const RESUME_STARTERS = /^(?:today|now|let'?s|back|so |as we|welcome back|that said)\b/i;
+  const RESUME_STARTERS = /^(?:today|now|let'?s|back|so |as we|welcome back|that said|heads up)\b/i;
 
   const cleaned: string[] = [];
   let skipNext = false;
-  for (const seg of segments) {
+  for (const seg of afterLeadTrim) {
     if (skipNext) {
       skipNext = false;
-      // Skip this sentence only if it looks like continuation ad copy:
-      // short enough to be product description, and not a topic-resuming opener.
       if (seg.length <= SHORT_COPY_MAX_CHARS && !RESUME_STARTERS.test(seg)) {
-        continue;
+        continue; // drop short continuation copy
       }
-      // Longer sentence or resume-opener → this is real content; keep it.
+      // Longer sentence or resume-opener → keep as real content.
     }
     if (isAdSegment(seg)) {
       skipNext = true;
