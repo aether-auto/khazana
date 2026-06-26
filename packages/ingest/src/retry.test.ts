@@ -123,9 +123,9 @@ test("retries on 500 and succeeds on next attempt", async () => {
   expect(sleep.delays).toEqual([20]);
 });
 
-// ---- ingest: inter-source delay is applied ----------------------------------
+// ---- ingest: parallel processing with pooledMap ----------------------------
 
-test("runIngest applies inter-source delay between sources (not before the first)", async () => {
+test("runIngest processes multiple sources and collects all results", async () => {
   const { runIngest } = await import("./ingest.js");
   const delays: number[] = [];
   const sleepFn = async (ms: number) => { delays.push(ms); };
@@ -141,9 +141,12 @@ test("runIngest applies inter-source delay between sources (not before the first
   const RSS = `<?xml version="1.0"?><rss version="2.0"><channel><item><title>X</title><link>https://x.com/1</link></item></channel></rss>`;
   const fetchFn = vi.fn().mockResolvedValue({ ok: true, status: 200, text: async () => RSS, json: async () => ({}) });
 
-  await runIngest(registry, { now: "2026-06-25T00:00:00.000Z", fetchFn, extract: { enabled: false }, sleepFn });
+  const result = await runIngest(registry, { now: "2026-06-25T00:00:00.000Z", fetchFn, extract: { enabled: false }, sleepFn });
 
-  // Three sources → two inter-source gaps; no delay before the first.
-  const interSourceDelays = delays.filter((d) => d >= 100 && d <= 200);
-  expect(interSourceDelays.length).toBeGreaterThanOrEqual(2);
+  // All three sources processed successfully (parallel pooledMap + PerHostLimiter)
+  expect(result.results).toHaveLength(3);
+  expect(result.results.every((r) => r.ok)).toBe(true);
+  // sleepFn is only used for retry backoff — no inter-source sleep in the parallel path
+  const retrySleeps = delays.filter((d) => d >= 1000); // backoff starts at BACKOFF_BASE_MS=1000
+  expect(retrySleeps).toHaveLength(0); // no retries needed on first-try success
 });

@@ -24,6 +24,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { FetchFn } from "./fetchers/build-source.js";
 import { sanitizePodcastTranscript } from "./podcast.js";
+import { whisperSemaphore } from "./concurrency.js";
 
 // ---------------------------------------------------------------------------
 // Constants — all named, all documented, all env-overridable
@@ -258,39 +259,44 @@ export async function transcribePodcastEpisode(audioUrl: string): Promise<string
   if (!audioUrl) return "";
   if (!isFfmpegAvailable()) return "";
 
-  const tmpMp3 = join(tmpdir(), `khazana-${Date.now()}-${Math.random().toString(36).slice(2)}.mp3`);
-  const tmpPcm = tmpMp3.replace(".mp3", ".pcm");
-
+  const release = await whisperSemaphore.acquire();
   try {
-    // 1. Download audio chunk — binary safe via native fetch
-    const res = await fetch(audioUrl, {
-      headers: { Range: `bytes=0-${MAX_AUDIO_BYTES - 1}` },
-    });
-    if (!res.ok && res.status !== 206) return "";
+    const tmpMp3 = join(tmpdir(), `khazana-${Date.now()}-${Math.random().toString(36).slice(2)}.mp3`);
+    const tmpPcm = tmpMp3.replace(".mp3", ".pcm");
 
-    const arrayBuf = await res.arrayBuffer();
-    writeFileSync(tmpMp3, Buffer.from(arrayBuf));
+    try {
+      // 1. Download audio chunk — binary safe via native fetch
+      const res = await fetch(audioUrl, {
+        headers: { Range: `bytes=0-${MAX_AUDIO_BYTES - 1}` },
+      });
+      if (!res.ok && res.status !== 206) return "";
 
-    // 2. Decode MP3 → f32 PCM via ffmpeg
-    decodeToPcm(tmpMp3, tmpPcm);
+      const arrayBuf = await res.arrayBuffer();
+      writeFileSync(tmpMp3, Buffer.from(arrayBuf));
 
-    const pcmBuf = readFileSync(tmpPcm);
-    const float32 = new Float32Array(
-      pcmBuf.buffer,
-      pcmBuf.byteOffset,
-      pcmBuf.byteLength / 4,
-    );
+      // 2. Decode MP3 → f32 PCM via ffmpeg
+      decodeToPcm(tmpMp3, tmpPcm);
 
-    // 3. Whisper transcription
-    const rawText = await runWhisper(float32);
-    if (!rawText.trim()) return "";
+      const pcmBuf = readFileSync(tmpPcm);
+      const float32 = new Float32Array(
+        pcmBuf.buffer,
+        pcmBuf.byteOffset,
+        pcmBuf.byteLength / 4,
+      );
 
-    // 4. Sanitize to readable HTML prose
-    return sanitizePodcastTranscript(rawText.trim(), "text/plain");
-  } catch {
-    return "";
+      // 3. Whisper transcription
+      const rawText = await runWhisper(float32);
+      if (!rawText.trim()) return "";
+
+      // 4. Sanitize to readable HTML prose
+      return sanitizePodcastTranscript(rawText.trim(), "text/plain");
+    } catch {
+      return "";
+    } finally {
+      if (existsSync(tmpMp3)) try { unlinkSync(tmpMp3); } catch {}
+      if (existsSync(tmpPcm)) try { unlinkSync(tmpPcm); } catch {}
+    }
   } finally {
-    if (existsSync(tmpMp3)) try { unlinkSync(tmpMp3); } catch {}
-    if (existsSync(tmpPcm)) try { unlinkSync(tmpPcm); } catch {}
+    release();
   }
 }

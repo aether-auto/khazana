@@ -1,9 +1,11 @@
-import { expect, test } from "vitest";
+import { expect, test, describe, it, afterEach } from "vitest";
 import {
   extractInnertubeApiKey,
   extractPlayerResponse,
   fetchYouTubeTranscript,
   fetchYouTubeTranscriptResult,
+  isDirectYouTubeEnabled,
+  fetchDirectYouTubeTranscript,
   parseTranscriptJson3,
   parseTranscriptXml,
   pickCaptionTrack,
@@ -625,4 +627,132 @@ test("transcriptToHtml keeps short transcripts as a single paragraph", () => {
   const shortText = "Short transcript text.";
   const html = transcriptToHtml(shortText);
   expect(html).toBe("<p>Short transcript text.</p>");
+});
+
+// ---------------------------------------------------------------------------
+// isDirectYouTubeEnabled
+// ---------------------------------------------------------------------------
+
+describe("isDirectYouTubeEnabled", () => {
+  afterEach(() => { delete process.env["ALLOW_DIRECT_YOUTUBE"]; });
+
+  it("returns false by default", () => {
+    delete process.env["ALLOW_DIRECT_YOUTUBE"];
+    expect(isDirectYouTubeEnabled()).toBe(false);
+  });
+
+  it("returns true when ALLOW_DIRECT_YOUTUBE=1", () => {
+    process.env["ALLOW_DIRECT_YOUTUBE"] = "1";
+    expect(isDirectYouTubeEnabled()).toBe(true);
+  });
+
+  it("returns false when ALLOW_DIRECT_YOUTUBE=0", () => {
+    process.env["ALLOW_DIRECT_YOUTUBE"] = "0";
+    expect(isDirectYouTubeEnabled()).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// fetchYouTubeTranscriptResult - direct fallback
+// ---------------------------------------------------------------------------
+
+describe("fetchYouTubeTranscriptResult - direct fallback", () => {
+  afterEach(() => { delete process.env["ALLOW_DIRECT_YOUTUBE"]; });
+
+  it("only tries proxy when ALLOW_DIRECT_YOUTUBE not set", async () => {
+    delete process.env["ALLOW_DIRECT_YOUTUBE"];
+    const urls: string[] = [];
+    const fetchFn = async (url: string) => {
+      urls.push(url);
+      return new Response("", { status: 404 }) as unknown as Awaited<ReturnType<FetchFn>>;
+    };
+    await withProxyEnv(TEST_INV_INSTANCE, TEST_PIPED_INSTANCE, async () => {
+      await fetchYouTubeTranscriptResult("test123", fetchFn as FetchFn);
+    });
+    const watchUrls = urls.filter(u => u.includes("youtube.com/watch"));
+    expect(watchUrls).toHaveLength(0);
+  });
+
+  it("tries direct watch-page when proxy fails and ALLOW_DIRECT_YOUTUBE=1", async () => {
+    process.env["ALLOW_DIRECT_YOUTUBE"] = "1";
+    // Mock watch page HTML with captionTracks
+    const mockWatchHtml = `
+      var ytInitialPlayerResponse = {"captions":{"playerCaptionsTracklistRenderer":{"captionTracks":[{"baseUrl":"https://www.youtube.com/api/timedtext?v=test123&lang=en","name":{"simpleText":"English"},"languageCode":"en","kind":"","isTranslatable":true}]}}};
+    `;
+    const mockJson3 = JSON.stringify({
+      events: [
+        { segs: [{ utf8: "Hello " }], tStartMs: 0, dDurationMs: 1000 },
+        { segs: [{ utf8: "world" }], tStartMs: 1000, dDurationMs: 1000 }
+      ]
+    });
+    const fetchFn: FetchFn = async (url: string, _opts?: RequestInit) => {
+      if (url.includes("youtube.com/watch")) {
+        return { ok: true, status: 200, text: async () => mockWatchHtml, json: async () => ({}) };
+      }
+      if (url.includes("timedtext") && url.includes("fmt=json3")) {
+        return { ok: true, status: 200, text: async () => mockJson3, json: async () => ({}) };
+      }
+      // proxy returns 404
+      return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
+    };
+    await withProxyEnv(TEST_INV_INSTANCE, TEST_PIPED_INSTANCE, async () => {
+      const result = await fetchYouTubeTranscriptResult("test123", fetchFn);
+      expect(result.kind).toBe("transcript");
+    });
+  });
+
+  it("does not try yt-dlp when ALLOW_DIRECT_YOUTUBE not set", async () => {
+    delete process.env["ALLOW_DIRECT_YOUTUBE"];
+    const fetchFn: FetchFn = async () => ({ ok: false, status: 404, text: async () => "", json: async () => ({}) });
+    await withProxyEnv(TEST_INV_INSTANCE, TEST_PIPED_INSTANCE, async () => {
+      const result = await fetchYouTubeTranscriptResult("test456", fetchFn);
+      expect(result.kind).toBe("none");
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// fetchDirectYouTubeTranscript
+// ---------------------------------------------------------------------------
+
+describe("fetchDirectYouTubeTranscript", () => {
+  it("sends consent cookie headers", async () => {
+    let capturedHeaders: Record<string, string> = {};
+    const fetchFn: FetchFn = async (url: string, opts?: RequestInit) => {
+      if (url.includes("youtube.com/watch")) {
+        capturedHeaders = (opts?.headers as Record<string, string>) ?? {};
+        return { ok: true, status: 200, text: async () => "var ytInitialPlayerResponse = {}", json: async () => ({}) };
+      }
+      return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
+    };
+    await fetchDirectYouTubeTranscript("test789", fetchFn);
+    expect(capturedHeaders["Cookie"] ?? capturedHeaders["cookie"] ?? "").toContain("CONSENT=YES");
+  });
+
+  it("falls back from json3 to xml when json3 returns empty", async () => {
+    const TIMEDTEXT_XML_FALLBACK = `<?xml version="1.0" encoding="utf-8" ?>
+<transcript>
+  <text start="0" dur="1">Hello world</text>
+</transcript>`;
+
+    const mockWatchHtml = `
+      var ytInitialPlayerResponse = {"captions":{"playerCaptionsTracklistRenderer":{"captionTracks":[{"baseUrl":"https://www.youtube.com/api/timedtext?v=fallback&lang=en","name":{"simpleText":"English"},"languageCode":"en","kind":"","isTranslatable":true}]}}};
+    `;
+    const fetchFn: FetchFn = async (url: string) => {
+      if (url.includes("youtube.com/watch")) {
+        return { ok: true, status: 200, text: async () => mockWatchHtml, json: async () => ({}) };
+      }
+      if (url.includes("fmt=json3")) {
+        // Return empty JSON3 (no events)
+        return { ok: true, status: 200, text: async () => JSON.stringify({}), json: async () => ({}) };
+      }
+      if (url.includes("fmt=srv3")) {
+        return { ok: true, status: 200, text: async () => JSON.stringify({}), json: async () => ({}) };
+      }
+      // raw XML fallback
+      return { ok: true, status: 200, text: async () => TIMEDTEXT_XML_FALLBACK, json: async () => ({}) };
+    };
+    const result = await fetchDirectYouTubeTranscript("fallback", fetchFn);
+    expect(result).toContain("Hello world");
+  });
 });

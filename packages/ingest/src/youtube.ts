@@ -1,5 +1,10 @@
+import { execFileSync, spawnSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import type { FetchFn } from "./fetchers/build-source.js";
 import { fetchProxyTranscript } from "./youtube-proxy.js";
+import { sanitizePodcastTranscript } from "./podcast.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -238,19 +243,182 @@ export type TranscriptResult =
   | { kind: "transcript"; text: string }
   | { kind: "none" };
 
+// ---------------------------------------------------------------------------
+// Direct YouTube methods (gated on ALLOW_DIRECT_YOUTUBE=1)
+// ---------------------------------------------------------------------------
+
 /**
- * Fetch a YouTube transcript via proxy (Invidious → Piped).
- * Never contacts youtube.com, googlevideo.com, or api/timedtext directly.
+ * Returns true if the direct YouTube path is enabled.
+ * Set ALLOW_DIRECT_YOUTUBE=1 in GitHub Actions or other environments that
+ * allow direct youtube.com requests.
+ */
+export function isDirectYouTubeEnabled(): boolean {
+  return process.env["ALLOW_DIRECT_YOUTUBE"] === "1";
+}
+
+/**
+ * Returns true if a yt-dlp binary is available on PATH.
+ * Used to decide whether to attempt yt-dlp transcript extraction.
+ */
+export function isYtDlpAvailable(): boolean {
+  try {
+    execFileSync("yt-dlp", ["--version"], { stdio: "pipe" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fetch transcript via the direct watch-page method (no proxy).
+ * ONLY call when ALLOW_DIRECT_YOUTUBE=1.
+ * Returns "" on any failure.
+ */
+export async function fetchDirectYouTubeTranscript(
+  videoId: string,
+  fetchFn: FetchFn,
+): Promise<string> {
+  try {
+    const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    const res = await fetchFn(watchUrl, {
+      headers: {
+        Cookie: "CONSENT=YES+cb; SOCS=CAISNQ",
+        "Accept-Language": "en-US,en;q=0.9",
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      },
+    });
+    if (!res.ok) return "";
+
+    const html = await res.text();
+    const playerResponse = extractPlayerResponse(html);
+    if (!playerResponse) return "";
+
+    const tracks =
+      playerResponse.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? [];
+    const track = pickCaptionTrack(tracks);
+    if (!track) return "";
+
+    // Try json3 format first
+    const json3Res = await fetchFn(`${track.baseUrl}&fmt=json3&hl=en&gl=US`);
+    if (json3Res.ok) {
+      const json3Text = await json3Res.text();
+      const json3Result = parseTranscriptJson3(json3Text);
+      if (json3Result) return json3Result;
+    }
+
+    // Try srv3 format
+    const srv3Res = await fetchFn(`${track.baseUrl}&fmt=srv3&hl=en&gl=US`);
+    if (srv3Res.ok) {
+      const srv3Text = await srv3Res.text();
+      const srv3Result = parseTranscriptJson3(srv3Text);
+      if (srv3Result) return srv3Result;
+    }
+
+    // Fall back to raw XML
+    const xmlRes = await fetchFn(`${track.baseUrl}&hl=en&gl=US`);
+    if (xmlRes.ok) {
+      const xmlText = await xmlRes.text();
+      return parseTranscriptXml(xmlText);
+    }
+
+    return "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Fetch transcript via yt-dlp subprocess.
+ * ONLY call when ALLOW_DIRECT_YOUTUBE=1 AND isYtDlpAvailable().
+ * Returns "" on any failure.
+ */
+export async function fetchYtDlpTranscript(videoId: string): Promise<string> {
+  const tmpBase = path.join(os.tmpdir(), `khzytdlp-${videoId}`);
+  try {
+    spawnSync(
+      "yt-dlp",
+      [
+        "--write-auto-sub",
+        "--write-sub",
+        "--sub-lang", "en",
+        "--sub-format", "vtt",
+        "--skip-download",
+        "--no-warnings",
+        "-o", tmpBase,
+        "--",
+        videoId,
+      ],
+      { timeout: 60000 },
+    );
+
+    // Check primary VTT path, then fallback
+    const candidates = [
+      `${tmpBase}.en.vtt`,
+      `${tmpBase}.en-orig.vtt`,
+    ];
+
+    let content = "";
+    for (const candidate of candidates) {
+      if (fs.existsSync(candidate)) {
+        content = fs.readFileSync(candidate, "utf8");
+        break;
+      }
+    }
+
+    return content ? sanitizePodcastTranscript(content, "text/vtt") : "";
+  } catch {
+    return "";
+  } finally {
+    // Clean up all temp files matching the base pattern
+    try {
+      const dir = path.dirname(tmpBase);
+      const base = path.basename(tmpBase);
+      const files = fs.readdirSync(dir).filter((f) => f.startsWith(base));
+      for (const f of files) {
+        try { fs.unlinkSync(path.join(dir, f)); } catch {}
+      }
+    } catch {}
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Public surface
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetch a YouTube transcript via proxy (Invidious → Piped), with optional
+ * direct fallback methods gated on ALLOW_DIRECT_YOUTUBE=1.
  *
- * Returns a `TranscriptResult`. If all proxy instances fail → `{ kind: "none" }`.
- * Never throws.
+ * Layer order:
+ *   1. Proxy (Invidious → Piped) — always attempted first.
+ *   2. Direct watch-page — only when ALLOW_DIRECT_YOUTUBE=1.
+ *   3. yt-dlp subprocess — only when ALLOW_DIRECT_YOUTUBE=1 AND yt-dlp is on PATH.
+ *
+ * Returns a `TranscriptResult`. Never throws.
  */
 export async function fetchYouTubeTranscriptResult(
   videoId: string,
   fetchFn: FetchFn,
 ): Promise<TranscriptResult> {
   if (!videoId) return { kind: "none" };
-  return fetchProxyTranscript(videoId, fetchFn);
+
+  // 1. Always try proxy first
+  const proxyResult = await fetchProxyTranscript(videoId, fetchFn);
+  if (proxyResult.kind === "transcript") return proxyResult;
+
+  // 2-3. Direct methods — only if explicitly enabled (e.g. GitHub Actions)
+  if (isDirectYouTubeEnabled()) {
+    const direct = await fetchDirectYouTubeTranscript(videoId, fetchFn);
+    if (direct) return { kind: "transcript", text: direct };
+
+    if (isYtDlpAvailable()) {
+      const ytdlp = await fetchYtDlpTranscript(videoId);
+      if (ytdlp) return { kind: "transcript", text: ytdlp };
+    }
+  }
+
+  return { kind: "none" };
 }
 
 /**
