@@ -7,10 +7,21 @@ import { readRawFeed, readEvents, runCurate, writeCuratedFeed, makeLlmClientFrom
 const dataDir = new URL("../data/", import.meta.url).pathname;
 const now = new Date().toISOString();
 const LIMIT = Number(process.env.LIMIT ?? 4);
+// Optional sourceType filter: SOURCE_TYPES=youtube,podcast
+const SOURCE_TYPES = process.env.SOURCE_TYPES
+  ? new Set(process.env.SOURCE_TYPES.split(",").map((s) => s.trim()))
+  : null;
 
 console.log(`[real-ingest] start ${now} — dataDir=${dataDir} limitPerSource=${LIMIT}`);
+if (SOURCE_TYPES) console.log(`[real-ingest] filtering to sourceTypes: ${[...SOURCE_TYPES].join(", ")}`);
 
 const registry = loadRegistry(dataDir);
+// Apply sourceType filter when requested (e.g. targeted YouTube+podcast re-ingest).
+if (SOURCE_TYPES) {
+  for (const s of registry.sources) {
+    if (!SOURCE_TYPES.has(s.type)) s.enabled = false;
+  }
+}
 console.log(`[real-ingest] ${registry.sources.filter((s) => s.enabled).length} enabled sources`);
 
 const { items, results } = await runIngest(registry, { now, limitPerSource: LIMIT });

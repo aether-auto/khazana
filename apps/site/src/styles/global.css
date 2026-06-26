@@ -181,6 +181,11 @@ img {
   line-height: var(--lh-display);
   letter-spacing: -0.012em;
   text-wrap: balance;
+  /* display headings must NEVER break mid-word. Wrap only on word boundaries.
+     Hyphens off — our titles are editorial, not long technical identifiers. */
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
 }
 .display em,
 .display .em {

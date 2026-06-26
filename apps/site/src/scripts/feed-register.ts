@@ -22,11 +22,18 @@ interface RegisterItem {
   url: string;
   source: string;
   sourceType: string;
+  kind?: string;
   trustScore?: number;
   publishedAt: string;
   topics: string[];
   score?: number;
   comments?: number;
+  /** Pre-computed read time in minutes; null means link-only (no full body). */
+  readMinutes?: number | null;
+  /** YouTube video ID — pre-derived at build time; null for non-video items. */
+  videoId?: string | null;
+  /** YouTube hqdefault thumbnail URL; null for non-video items. */
+  thumbnailUrl?: string | null;
 }
 
 type View = "list" | "card";
@@ -107,6 +114,7 @@ function initRegister(): void {
   function buildRow(it: RegisterItem): HTMLElement {
     const row = el("article", "reg-row");
     row.dataset.itemId = it.id;
+    if (it.kind) row.dataset.kind = it.kind;
 
     const time = el("time", "reg-time", timeAgo(it.publishedAt, now));
     time.dateTime = it.publishedAt;
@@ -118,6 +126,14 @@ function initRegister(): void {
 
     const meta = el("div", "reg-meta");
     const src = el("span", "reg-src");
+    // For video/audio show kind glyph inline before source type
+    if (it.kind === "video") {
+      const glyph = el("span", "reg-kind-glyph reg-kind-video", "▶");
+      meta.appendChild(glyph);
+    } else if (it.kind === "audio") {
+      const glyph = el("span", "reg-kind-glyph reg-kind-audio", "◉");
+      meta.appendChild(glyph);
+    }
     src.appendChild(el("span", "reg-src-type", it.sourceType));
     src.appendChild(el("span", "reg-src-name", it.source));
     meta.appendChild(src);
@@ -129,6 +145,7 @@ function initRegister(): void {
     body.appendChild(meta);
 
     const end = el("div", "reg-end");
+    if (it.readMinutes != null) end.appendChild(el("span", "reg-readmin", `${it.readMinutes} min`));
     if (it.score != null) end.appendChild(el("span", "reg-score", `^ ${fmtCount(it.score)}`));
     const srcLink = el("a", "reg-srclink", "↗");
     srcLink.href = it.url;
@@ -147,9 +164,39 @@ function initRegister(): void {
   function buildCard(it: RegisterItem): HTMLElement {
     const card = el("article", "reg-card");
     card.dataset.itemId = it.id;
+    if (it.kind) card.dataset.kind = it.kind;
+
+    // Video thumbnail sits above the card content — hairline framed, lazy-loaded
+    if (it.kind === "video" && it.thumbnailUrl) {
+      const thumbWrap = el("a", "reg-card-thumb-wrap");
+      (thumbWrap as HTMLAnchorElement).href = `${base}/item/${it.id}`;
+      (thumbWrap as HTMLAnchorElement).tabIndex = -1;
+      thumbWrap.setAttribute("aria-hidden", "true");
+
+      const img = document.createElement("img");
+      img.className = "reg-card-thumb";
+      img.src = it.thumbnailUrl;
+      img.alt = "";
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.width = 480;
+      img.height = 270;
+      img.onerror = function () {
+        (this as HTMLImageElement).closest(".reg-card-thumb-wrap")?.remove();
+      };
+      const play = el("span", "reg-card-play", "▶");
+      play.setAttribute("aria-hidden", "true");
+      thumbWrap.appendChild(img);
+      thumbWrap.appendChild(play);
+      card.appendChild(thumbWrap);
+    }
 
     const top = el("div", "reg-card-top");
     const src = el("span", "reg-src");
+    // Audio glyph before source type
+    if (it.kind === "audio") {
+      top.appendChild(el("span", "reg-kind-glyph reg-kind-audio", "◉"));
+    }
     src.appendChild(el("span", "reg-src-type", it.sourceType));
     src.appendChild(el("span", "reg-src-name", it.source));
     top.appendChild(src);
@@ -170,6 +217,7 @@ function initRegister(): void {
     foot.appendChild(chips);
 
     const end = el("span", "reg-end");
+    if (it.readMinutes != null) end.appendChild(el("span", "reg-readmin", `${it.readMinutes} min`));
     const srcLink = el("a", "reg-srclink", "↗ source");
     srcLink.href = it.url;
     srcLink.rel = "noopener noreferrer";

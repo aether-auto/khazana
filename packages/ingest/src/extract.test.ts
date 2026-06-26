@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test, describe } from "vitest";
 import {
   extractArticle,
   extractMetaText,
@@ -6,6 +6,7 @@ import {
   findAmpUrl,
   htmlToText,
   sanitizeArticleHtml,
+  stripBoilerplate,
 } from "./extract.js";
 
 const ARTICLE_HTML = `<!doctype html><html><head><title>Edge Scaling</title>
@@ -110,4 +111,175 @@ test("sanitizeArticleHtml strips dangerous schemes and tags", () => {
   expect(clean).not.toContain("javascript:");
   expect(clean).not.toContain("<script");
   expect(clean).not.toContain("data:image");
+});
+
+// ---------------------------------------------------------------------------
+// Boilerplate-stripping tests (TDD — these drive the stripBoilerplate feature)
+// ---------------------------------------------------------------------------
+
+// Fixture: nav-list leaked to the top (Quantum Computing Report pattern)
+const NAV_LEAK_FIXTURE = `
+<a href="https://site.com/#content" rel="noopener noreferrer" target="_blank">Skip to content</a>
+<ul>
+  <li><a href="https://site.com/about/" rel="noopener noreferrer" target="_blank"><span>About</span></a></li>
+  <li><a href="https://site.com/news/" rel="noopener noreferrer" target="_blank"><span>News</span></a>
+    <ul>
+      <li><a href="https://site.com/news/2025/" rel="noopener noreferrer" target="_blank"><span>Archive 2025</span></a></li>
+      <li><a href="https://site.com/news/2024/" rel="noopener noreferrer" target="_blank"><span>Archive 2024</span></a></li>
+    </ul>
+  </li>
+  <li><a href="https://site.com/contact/" rel="noopener noreferrer" target="_blank"><span>Contact</span></a></li>
+</ul>
+<h1>NSF Selects Five Teams in National Quantum Initiative</h1>
+<p>The National Science Foundation has selected five additional research teams to participate in the National Quantum Virtual Laboratory design competition, expanding the program significantly. These teams will work on developing next-generation quantum computing infrastructure that could benefit the broader scientific community.</p>
+<p>Each selected team brings unique expertise in quantum error correction, quantum networking, and hybrid classical-quantum algorithms. The competition aims to establish a shared virtual laboratory environment accessible to researchers nationwide.</p>
+`.trim();
+
+// Fixture: social-share row + cookie notice
+const SOCIAL_SHARE_FIXTURE = `
+<p class="share">Share: <a href="https://twitter.com/share">Twitter</a> <a href="https://facebook.com/share">Facebook</a> <a href="https://linkedin.com/share">LinkedIn</a></p>
+<div class="cookie-notice"><a href="#accept">Accept cookies</a> <a href="#decline">Decline</a></div>
+<h2>How Netflix Simplified Batch Compute with Kueue</h2>
+<p>As a part of the infrastructure modernization effort at Netflix, the compute platform team has been working to simplify how batch workloads are scheduled and managed across our fleet of machines. This post describes the journey from our legacy batch system to Kueue, a Kubernetes-native job queuing solution.</p>
+<p>The migration involved careful planning across multiple teams and required us to maintain backward compatibility throughout the transition period while achieving significant improvements in resource utilization and operational simplicity.</p>
+`.trim();
+
+// Fixture: leading R-bloggers style site nav wrapped in anchor + list
+const RBLOGGERS_FIXTURE = `
+<a href="https://www.r-bloggers.com/" title="R-bloggers" rel="noopener noreferrer" target="_blank">
+<img src="https://www.r-bloggers.com/logo.webp" alt="R-bloggers" />
+<h2>R news and tutorials contributed by hundreds of R bloggers</h2>
+</a>
+<ul>
+  <li><a href="https://www.r-bloggers.com/" rel="noopener noreferrer" target="_blank">Home</a></li>
+  <li><a href="https://www.r-bloggers.com/about/" rel="noopener noreferrer" target="_blank">About</a></li>
+  <li><a href="https://feeds.feedburner.com/RBloggers" rel="noopener noreferrer" target="_blank">RSS</a></li>
+  <li><a href="https://www.r-bloggers.com/add-your-blog/" rel="noopener noreferrer" target="_blank">add your blog!</a></li>
+  <li><a href="https://www.r-bloggers.com/jobs/" rel="noopener noreferrer" target="_blank">R jobs</a></li>
+</ul>
+<h2>Set Working Directory in R: setwd() &amp; RStudio GUI Guide</h2>
+<p>The setwd() function in R allows you to change your current working directory to any path you specify. This is particularly useful when working with files that are not in your default directory. Understanding how to manage working directories is a fundamental skill for any R programmer.</p>
+<p>In RStudio, you can also change the working directory through the graphical interface via Session menu, which provides a more visual way to navigate your file system without needing to know the exact path.</p>
+`.trim();
+
+// Fixture: related-posts link list at the bottom
+const RELATED_POSTS_FIXTURE = `
+<h1>Understanding Convolutions on Graphs</h1>
+<p>Graph neural networks have emerged as a powerful tool for learning representations of graph-structured data. Unlike standard neural networks that operate on grid-like structures, GNNs must handle the irregular connectivity patterns inherent in graph data.</p>
+<p>The key challenge in applying convolutions to graphs is defining a consistent neighborhood aggregation operation that respects the graph topology while remaining computationally tractable for large-scale graphs with millions of nodes.</p>
+<ul>
+  <li><a href="https://site.com/related/post-1">Introduction to Graph Theory</a></li>
+  <li><a href="https://site.com/related/post-2">Spectral Graph Convolutions</a></li>
+  <li><a href="https://site.com/related/post-3">Message Passing Neural Networks</a></li>
+  <li><a href="https://site.com/related/post-4">Graph Attention Networks</a></li>
+</ul>
+`.trim();
+
+// Fixture: subscribe/sign-in standalone anchors
+const SUBSCRIBE_FIXTURE = `
+<a href="https://newsletter.example.com/subscribe">Subscribe</a>
+<a href="https://example.com/signin">Sign in</a>
+<a href="https://example.com/menu">Menu</a>
+<h1>The new inner game: Your unfair advantage in the age of AI</h1>
+<p>In the age of AI, the most important competitive advantage is not raw technical skill or access to the best tools. It is the ability to direct intelligence — to know what to build, why it matters, and how to maintain quality while moving fast.</p>
+<p>The founders who will win in this environment are those who understand that AI amplifies existing taste and judgment rather than replacing it. Mediocre direction produces mediocre output at scale; excellent direction produces compounding excellence.</p>
+`.trim();
+
+// Fixture: legitimate content that must NOT be stripped (list-heavy content article)
+const LEGITIMATE_LIST_FIXTURE = `
+<h1>The Best Programming Languages for Data Science in 2026</h1>
+<p>Choosing the right programming language for data science depends heavily on your use case, team, and the specific problems you are trying to solve. Here is a comprehensive overview of the most important options available today.</p>
+<ul>
+  <li>Python remains the dominant language for data science due to its extensive ecosystem and readability.</li>
+  <li>R excels at statistical computing and has outstanding visualization libraries like ggplot2.</li>
+  <li>Julia offers near-C performance for numerical computing with Python-like syntax.</li>
+  <li>SQL is irreplaceable for data querying and manipulation at the database layer.</li>
+</ul>
+<p>The right choice ultimately depends on your team composition and the specific demands of your analytical pipeline. Most mature data science teams use a combination of Python and SQL as their core stack.</p>
+`.trim();
+
+describe("stripBoilerplate", () => {
+  test("removes leading skip-to-content link and nav link-list before first real paragraph", () => {
+    const result = stripBoilerplate(NAV_LEAK_FIXTURE);
+    // Nav link-list should be gone
+    expect(result).not.toContain("Skip to content");
+    expect(result).not.toContain("Archive 2025");
+    expect(result).not.toContain("Archive 2024");
+    // Real article content must survive
+    expect(result).toContain("NSF Selects Five Teams");
+    expect(result).toContain("National Science Foundation");
+    expect(result).toContain("quantum error correction");
+  });
+
+  test("removes social-share row and cookie notice before article prose", () => {
+    const result = stripBoilerplate(SOCIAL_SHARE_FIXTURE);
+    expect(result).not.toContain("Accept cookies");
+    expect(result).not.toContain("Twitter");
+    // Real content must survive
+    expect(result).toContain("How Netflix Simplified");
+    expect(result).toContain("Kueue");
+    expect(result).toContain("resource utilization");
+  });
+
+  test("removes R-bloggers site nav (dense link-list block) before real article heading and prose", () => {
+    const result = stripBoilerplate(RBLOGGERS_FIXTURE);
+    expect(result).not.toContain("add your blog!");
+    expect(result).not.toContain("R jobs");
+    // The R-bloggers site nav list items should be gone
+    const text = result.replace(/<[^>]+>/g, " ");
+    expect(text).not.toMatch(/\bHome\b.*\bAbout\b.*\bRSS\b/s);
+    // Real content must survive
+    expect(result).toContain("Set Working Directory");
+    expect(result).toContain("setwd()");
+    expect(result).toContain("fundamental skill");
+  });
+
+  test("removes standalone subscribe/sign-in/menu anchors before real prose", () => {
+    const result = stripBoilerplate(SUBSCRIBE_FIXTURE);
+    const text = result.replace(/<[^>]+>/g, " ").trim();
+    // Standalone nav anchors stripped
+    expect(text).not.toMatch(/^\s*Subscribe/);
+    expect(text).not.toMatch(/^\s*Sign in/);
+    expect(text).not.toMatch(/^\s*Menu/);
+    // Article heading and prose survives
+    expect(result).toContain("The new inner game");
+    expect(result).toContain("competitive advantage");
+    expect(result).toContain("Mediocre direction");
+  });
+
+  test("does NOT strip legitimate content lists that are actual article substance", () => {
+    const result = stripBoilerplate(LEGITIMATE_LIST_FIXTURE);
+    // Article list items must survive — they are real content
+    expect(result).toContain("Python remains the dominant");
+    expect(result).toContain("R excels at statistical");
+    expect(result).toContain("Julia offers near-C");
+    expect(result).toContain("SQL is irreplaceable");
+    // Headings and prose survive
+    expect(result).toContain("Best Programming Languages");
+    expect(result).toContain("use case, team");
+  });
+
+  test("removes trailing related-posts pure-link list after article prose", () => {
+    const result = stripBoilerplate(RELATED_POSTS_FIXTURE);
+    // The trailing related-posts link list (all hrefs, no prose) should be gone
+    expect(result).not.toContain("Introduction to Graph Theory");
+    expect(result).not.toContain("Spectral Graph Convolutions");
+    // Core article prose must survive
+    expect(result).toContain("Graph neural networks");
+    expect(result).toContain("irregular connectivity");
+    expect(result).toContain("computationally tractable");
+  });
+
+  test("returns empty string unchanged, does not crash", () => {
+    expect(stripBoilerplate("")).toBe("");
+    expect(stripBoilerplate("   ")).toBe("");
+  });
+
+  test("passes through clean prose-only HTML with no boilerplate", () => {
+    const clean = `<h1>Clean Article</h1><p>This is a legitimate article with real prose content that is worth reading and should pass through unchanged. There are no nav links or boilerplate elements here at all.</p><p>Second paragraph with more substance.</p>`;
+    const result = stripBoilerplate(clean);
+    expect(result).toContain("Clean Article");
+    expect(result).toContain("legitimate article");
+    expect(result).toContain("Second paragraph");
+  });
 });

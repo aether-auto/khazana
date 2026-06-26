@@ -60,11 +60,17 @@ function setTheType() {
 
   let chars: Element[];
   try {
-    // Split into chars tagged with .set-char (Article.astro styles the faint
-    // light start-state on that class).
+    // Split into words + chars. GSAP wraps each word's chars inside a word
+    // span (.set-word), which we set to display:inline-block so the browser
+    // cannot break between individual character spans mid-word. Without the
+    // word wrapper the browser treats adjacent char-spans as splittable inline
+    // boxes and happily breaks "Ruin" as "R|uin". The word wrapper is the only
+    // correct fix — overflow-wrap/word-break on the h1 have no effect once the
+    // text is decomposed into inline spans.
     split = SplitText.create(title, {
-      type: "chars",
+      type: "words,chars",
       charsClass: "set-char",
+      wordsClass: "set-word",
     });
     chars = split.chars;
   } catch {

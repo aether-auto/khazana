@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { countWords, estimateReadMinutes } from "./read-time.js";
+import { countWords, estimateReadMinutes, readTimeFromHtml } from "./read-time.js";
 
 describe("countWords", () => {
   it("counts whitespace-delimited words", () => {
@@ -25,5 +25,29 @@ describe("estimateReadMinutes", () => {
   });
   it("respects a custom wpm", () => {
     expect(estimateReadMinutes(600, 300)).toBe(2);
+  });
+});
+
+describe("readTimeFromHtml", () => {
+  it("strips HTML tags and computes read time at 225 wpm", () => {
+    // 225 words at 225 wpm = exactly 1 min
+    const words = Array.from({ length: 225 }, (_, i) => `word${i}`).join(" ");
+    const html = `<p>${words}</p>`;
+    expect(readTimeFromHtml(html)).toBe(1);
+  });
+  it("floors at 1 minute for very short bodies", () => {
+    expect(readTimeFromHtml("<p>hello world</p>")).toBe(1);
+    expect(readTimeFromHtml("")).toBe(1);
+  });
+  it("returns 1 for undefined / falsy body", () => {
+    expect(readTimeFromHtml(undefined)).toBe(1);
+  });
+  it("ignores HTML tags when counting words", () => {
+    // "hello world" = 2 words, but the tags themselves must not count
+    expect(readTimeFromHtml("<div><p>hello</p><span>world</span></div>")).toBe(1);
+  });
+  it("correctly rounds up for 450 words at 225 wpm", () => {
+    const words = Array.from({ length: 450 }, (_, i) => `word${i}`).join(" ");
+    expect(readTimeFromHtml(`<article>${words}</article>`)).toBe(2);
   });
 });

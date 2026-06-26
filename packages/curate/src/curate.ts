@@ -2,7 +2,7 @@ import type { FeedItem } from "@khazana/core";
 import { enrichItems, type LlmClient } from "./enrich.js";
 import { clusterItems, type ClusterOpts } from "./cluster.js";
 import { computeTasteProfile, type TasteOpts } from "./taste.js";
-import { rankItems, type RankOpts } from "./rank.js";
+import { rankItems, applyDiversityFloor, type RankOpts } from "./rank.js";
 import type { EngagementEvent } from "./io.js";
 
 export interface CurateOpts {
@@ -31,7 +31,7 @@ export async function runCurate(
   const itemsById = new Map(clustered.map((it) => [it.id, it]));
   const profile = computeTasteProfile(events, itemsById, { now: opts.now, ...opts.taste });
 
-  const ranked = rankItems(clustered, profile, { now: opts.now, ...opts.rank });
+  const ranked = applyDiversityFloor(rankItems(clustered, profile, { now: opts.now, ...opts.rank }));
 
   const clusterCount = new Set(clustered.map((it) => it.clusterId)).size;
   return { items: ranked, clusterCount, profileReady: profile.ready };

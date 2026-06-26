@@ -229,6 +229,11 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
     font-variation-settings: "opsz" 110, "SOFT" 0, "WONK" 0;
     letter-spacing: -0.018em;
     text-wrap: balance;
+    /* never break mid-word — words only. The SplitText fix (.set-word below) is
+       the primary guard; these are the CSS-layer backup for normal (un-split) state. */
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: none;
   }
   .article-standfirst {
     position: relative;
@@ -420,5 +425,16 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
       color: inherit;
       opacity: 1;
     }
+  }
+
+  /* ── Word-break guard for SplitText char spans ───────────────────────
+     SplitText wraps each character in an inline span. Without a word-level
+     container the browser can break the line between any two spans — including
+     mid-word ("R|uin"). The .set-word spans (GSAP wordsClass) must be
+     display:inline-block + white-space:nowrap so the browser only breaks
+     between whole words, never between character spans within a word. */
+  .article-title :global(.set-word) {
+    display: inline-block;
+    white-space: nowrap;
   }
 </style>

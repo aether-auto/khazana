@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { FeedItemSchema, type FeedItem } from "@khazana/core";
+import { readTimeFromHtml } from "./read-time.js";
 
 const WORKSHOP_CHANNELS = new Set([
   "ideas",
@@ -66,4 +67,44 @@ export function splitFeatured(
 ): { featured: FeedItem[]; rest: FeedItem[] } {
   const n = Math.max(0, Math.min(count, items.length));
   return { featured: items.slice(0, n), rest: items.slice(n) };
+}
+
+/**
+ * Minimum rendered-on-khazana read time (minutes) to qualify for the featured
+ * bento. Applies to ALL content types identically — a YouTube video whose
+ * transcript renders to ≥7 min is just as eligible as an article of the same
+ * length; a short article is not eligible, exactly like a short clip. Items
+ * with no full-text body (link-only / no transcript) have read time ~1 min and
+ * inherently fail the gate.
+ */
+export const FEATURE_MIN_MINUTES = 7;
+
+/**
+ * Like `splitFeatured`, but with a content-agnostic HARD GATE: only items
+ * whose rendered body produces a reading time of ≥ FEATURE_MIN_MINUTES appear
+ * in the featured bento. The check is purely on `readTimeFromHtml(body)` with
+ * no branch on `kind` or `sourceType` — a video with a long transcript is
+ * featurable; a link-only stub is not.
+ *
+ * Items failing the gate fall through to the `rest` tail (register) where
+ * their media affordances (thumbnail, play glyph, etc.) are still shown.
+ * The bento may be smaller than `count` when too few qualifying items exist —
+ * we never pad with short items. Rank order is preserved in both arrays.
+ */
+export function splitFeaturedGated(
+  items: FeedItem[],
+  count = 10,
+): { featured: FeedItem[]; rest: FeedItem[] } {
+  const featured: FeedItem[] = [];
+  const rest: FeedItem[] = [];
+
+  for (const it of items) {
+    if (featured.length < count && it.body && readTimeFromHtml(it.body) >= FEATURE_MIN_MINUTES) {
+      featured.push(it);
+    } else {
+      rest.push(it);
+    }
+  }
+
+  return { featured, rest };
 }

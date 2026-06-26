@@ -9,7 +9,7 @@ import {
   sanitizeArticleHtml,
   type ExtractedArticle,
 } from "./extract.js";
-import { fetchYouTubeTranscript, transcriptToHtml, youTubeVideoId } from "./youtube.js";
+import { fetchYouTubeTranscriptResult, transcriptToHtml, youTubeVideoId } from "./youtube.js";
 import { fetchPodcastTranscript } from "./podcast.js";
 
 /**
@@ -106,9 +106,16 @@ async function enrichItem(
     if (item.sourceType === "youtube") {
       const id = youTubeVideoId(item.url);
       if (id) {
-        const transcript = await fetchYouTubeTranscript(id, fetchFn);
-        const html = transcriptToHtml(transcript);
-        if (html) item.body = html;
+        const result = await fetchYouTubeTranscriptResult(id, fetchFn);
+        if (result.kind === "transcript") {
+          item.body = transcriptToHtml(result.text);
+        } else if (result.kind === "description-fallback") {
+          // Short description blurb — keep it but mark the item so it can be
+          // excluded from "featured" slots downstream (curate layer reads this).
+          item.body = transcriptToHtml(result.text);
+          (item as EnrichableItem & { summaryOnly?: boolean }).summaryOnly = true;
+        }
+        // kind === "none": no transcript and no fallback — leave body untouched.
       }
       return item;
     }

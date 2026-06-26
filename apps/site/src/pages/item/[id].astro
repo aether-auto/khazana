@@ -5,6 +5,7 @@ import SourceBadge from "../../components/SourceBadge.astro";
 import { loadCurated } from "../../lib/feed.js";
 import { dataDir } from "../../lib/data.js";
 import { countWords, estimateReadMinutes } from "../../lib/read-time.js";
+import { extractYouTubeId, buildYouTubeThumbnail } from "../../lib/media.js";
 import type { FeedItem } from "@khazana/core";
 
 // One static page per curated FeedItem — the in-app reader. When no curated.json
@@ -32,6 +33,17 @@ const hasBody = (item.body?.trim().length ?? 0) >= FULLTEXT_FLOOR;
 const proseText = (hasBody ? item.body! : item.summary).replace(/<[^>]+>/g, " ");
 const words = countWords(proseText);
 const readMin = estimateReadMinutes(words);
+
+// Media kind detection — drives the embed facade / audio affordance below.
+const isVideo = item.kind === "video";
+const isAudio = item.kind === "audio";
+const videoId = isVideo ? extractYouTubeId(item.url) : null;
+const thumbnailUrl = videoId ? buildYouTubeThumbnail(videoId) : null;
+// Embed URL: youtube-nocookie.com for privacy — no API key, loads only on click.
+const embedUrl = videoId ? `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1` : null;
+
+// Check for a direct audio enclosure URL in the media array (type === "audio")
+const audioEnclosure = item.media.find((m) => m.type === "audio")?.url ?? null;
 
 const published = new Date(item.publishedAt);
 const dateLabel = published.toISOString().slice(0, 10);
@@ -92,11 +104,92 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
 
       <div class="article-rule" aria-hidden="true"></div>
 
+      {/* ── Video embed facade (YouTube-nocookie, click-to-load) ──────────
+           Show the thumbnail + amber ▶; on click swap in an <iframe>.
+           No iframe renders on page load — only on interaction — for performance. */}
+      {isVideo && videoId && thumbnailUrl && (
+        <div class="media-player" data-video-id={videoId} data-embed-url={embedUrl}>
+          <button
+            class="video-facade"
+            type="button"
+            aria-label={`Play: ${item.title}`}
+            data-video-facade
+          >
+            <img
+              class="video-thumb"
+              src={thumbnailUrl}
+              alt={`Thumbnail for ${item.title}`}
+              loading="eager"
+              decoding="async"
+              width="1280"
+              height="720"
+            />
+            <span class="video-play-ring" aria-hidden="true"></span>
+            <span class="video-play-glyph" aria-hidden="true">▶</span>
+            <span class="video-play-label">Watch on khazana</span>
+          </button>
+        </div>
+      )}
+
+      {/* ── Audio player ──────────────────────────────────────────────────
+           If the feed item carries a direct audio enclosure URL, render a
+           styled <audio controls>. Otherwise a clean "Listen at source" CTA. */}
+      {isAudio && (
+        <div class="media-player media-audio">
+          {audioEnclosure ? (
+            <figure class="audio-player-wrap">
+              <audio class="audio-ctrl" controls preload="none" src={audioEnclosure}>
+                Your browser does not support the audio element.
+              </audio>
+              <figcaption class="audio-caption">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" width="14" height="14" class="audio-icon">
+                  <path d="M10 2a7 7 0 0 0-7 7v3a2 2 0 0 0 2 2h1a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1H4.07A6.002 6.002 0 0 1 16 9v4a1 1 0 0 0 1 1h1a2 2 0 0 0 2-2V9a7 7 0 0 0-7-7z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                audio · {item.source}
+              </figcaption>
+            </figure>
+          ) : (
+            <div class="audio-stub">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" width="20" height="20" class="audio-stub-icon">
+                <path d="M10 2a7 7 0 0 0-7 7v3a2 2 0 0 0 2 2h1a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1H4.07A6.002 6.002 0 0 1 16 9v4a1 1 0 0 0 1 1h1a2 2 0 0 0 2-2V9a7 7 0 0 0-7-7z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <div class="audio-stub-text">
+                <p class="audio-stub-label">listen at source</p>
+                <a class="audio-stub-link" href={item.url} rel="noopener noreferrer" data-track="open" data-item-id={item.id}>
+                  {item.source} ↗
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {
         hasBody ? (
           /* THE SACRED READING COLUMN. body is sanitized at ingest; rendered
              via set:html only (no further user input). */
           <div class="prose" data-prose set:html={item.body} />
+        ) : isVideo ? (
+          /* Video items with no transcript: keep the page useful — a note that
+             transcript extraction is pending, plus the embed already above. */
+          <div class="prose prose-stub" data-prose>
+            <p class="stub-note">Transcript not available for this video. Watch above or at the source.</p>
+            <p class="stub-cta">
+              <a href={item.url} rel="noopener noreferrer" data-track="open" data-item-id={item.id}>
+                open on YouTube ↗
+              </a>
+            </p>
+          </div>
+        ) : isAudio && !hasBody ? (
+          /* Audio items with no transcript: a clean listen stub. */
+          <div class="prose prose-stub" data-prose>
+            <p>{item.summary || "Transcript not available for this episode."}</p>
+            <p class="stub-cta">
+              <a href={item.url} rel="noopener noreferrer" data-track="open" data-item-id={item.id}>
+                listen at source ↗
+              </a>
+            </p>
+          </div>
         ) : (
           /* Graceful fallback — extraction failed / paywalled. Never a blank
              page: lead with the summary and a prominent jump to the source. */
@@ -415,6 +508,190 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
     padding: 0;
   }
 
+  /* ── video embed facade ──────────────────────────────────────────────── */
+  .media-player {
+    margin: var(--s-5) 0 var(--s-7);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    border: var(--hair) solid var(--rule);
+    background: var(--bg-inset);
+    /* constrain to reading measure but full-width within that */
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    position: relative;
+  }
+  /* Video facade: the clickable thumbnail that swaps to <iframe> on click. */
+  .video-facade {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    cursor: pointer;
+    background: none;
+    border: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  .video-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform var(--dur-slow) var(--ease-out), filter var(--dur) var(--ease-out);
+  }
+  .video-facade:hover .video-thumb {
+    transform: scale(1.025);
+    filter: brightness(0.75);
+  }
+  /* centered amber ▶ ring */
+  .video-play-ring {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    /* radial vignette dims the corners */
+    background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(0,0,0,0.18), rgba(0,0,0,0.55));
+  }
+  .video-play-ring::before {
+    content: "";
+    display: block;
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 50%;
+    border: 1.5px solid color-mix(in oklab, var(--accent) 65%, transparent);
+    box-shadow:
+      0 0 0 5px rgba(0,0,0,0.2),
+      0 0 24px -4px color-mix(in oklab, var(--accent) 60%, transparent);
+    transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+  }
+  .video-facade:hover .video-play-ring::before {
+    transform: scale(1.12);
+    box-shadow:
+      0 0 0 5px rgba(0,0,0,0.15),
+      0 0 36px -4px color-mix(in oklab, var(--accent) 80%, transparent);
+  }
+  .video-play-glyph {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    color: var(--accent);
+    text-shadow: 0 0 16px color-mix(in oklab, var(--accent) 80%, transparent), 0 2px 10px rgba(0,0,0,0.5);
+    pointer-events: none;
+    /* offset ▶ slightly right so it reads as visually centred inside the ring */
+    padding-left: 0.2em;
+  }
+  .video-play-label {
+    position: absolute;
+    bottom: var(--s-4);
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    white-space: nowrap;
+    pointer-events: none;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+  .video-facade:hover .video-play-label {
+    opacity: 1;
+  }
+  /* The live <iframe> that replaces the facade on click */
+  .video-iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .video-thumb,
+    .video-play-ring::before,
+    .video-play-label {
+      transition: none;
+    }
+    .video-facade:hover .video-thumb { transform: none; filter: brightness(0.75); }
+    .video-facade:hover .video-play-label { opacity: 1; }
+  }
+
+  /* ── audio player ─────────────────────────────────────────────────────── */
+  .media-audio {
+    aspect-ratio: unset;
+    padding: var(--s-5) var(--s-5);
+    display: flex;
+    align-items: center;
+    background:
+      radial-gradient(120% 100% at 0% 50%, color-mix(in oklab, var(--editorial) 6%, transparent), transparent 60%),
+      var(--bg-card);
+  }
+  .audio-player-wrap {
+    margin: 0;
+    width: 100%;
+  }
+  .audio-ctrl {
+    display: block;
+    width: 100%;
+    accent-color: var(--editorial);
+    color-scheme: dark;
+    background: transparent;
+    border-radius: var(--r-sm);
+    margin-bottom: var(--s-3);
+  }
+  .audio-caption {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5ch;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+  }
+  .audio-icon {
+    color: var(--editorial);
+    flex-shrink: 0;
+  }
+  /* Audio stub — no enclosure URL; link to source instead */
+  .audio-stub {
+    display: flex;
+    align-items: center;
+    gap: var(--s-4);
+  }
+  .audio-stub-icon {
+    color: var(--editorial);
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+  .audio-stub-text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+  }
+  .audio-stub-label {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    text-transform: lowercase;
+  }
+  .audio-stub-link {
+    font-family: var(--font-mono);
+    font-size: var(--t-sm);
+    color: var(--editorial);
+    border-bottom: var(--hair) solid color-mix(in oklab, var(--editorial) 35%, transparent);
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  .audio-stub-link:hover {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
   /* fallback stub — no drop-cap, a calm centered jump to the source */
   .prose-stub :global(> p:first-of-type::first-letter) {
     all: unset;
@@ -466,3 +743,38 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
     text-decoration: none;
   }
 </style>
+
+<script>
+  // Video facade: on click, swap the thumbnail + play UI for the live iframe.
+  // The iframe URL uses youtube-nocookie.com (privacy domain) with autoplay=1
+  // so it starts playing immediately after user intent. No iframe is ever created
+  // without a click, keeping page load fast.
+  function initVideoFacade(): void {
+    const facades = document.querySelectorAll<HTMLButtonElement>("[data-video-facade]");
+    facades.forEach((btn) => {
+      const player = btn.closest<HTMLElement>("[data-embed-url]");
+      if (!player) return;
+      const embedUrl = player.dataset.embedUrl;
+      if (!embedUrl) return;
+
+      btn.addEventListener(
+        "click",
+        () => {
+          const iframe = document.createElement("iframe");
+          iframe.className = "video-iframe";
+          iframe.src = embedUrl;
+          iframe.allow = "autoplay; fullscreen; picture-in-picture";
+          iframe.allowFullscreen = true;
+          iframe.title = btn.getAttribute("aria-label") ?? "Video";
+          // Replace the entire facade button with the live iframe (smooth swap).
+          btn.replaceWith(iframe);
+        },
+        { once: true },
+      );
+    });
+  }
+
+  initVideoFacade();
+  // Re-wire after View Transitions (the DOM is swapped fresh each navigation).
+  document.addEventListener("astro:page-load", initVideoFacade);
+</script>

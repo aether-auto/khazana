@@ -2,10 +2,12 @@
 import Shell from "../layouts/Shell.astro";
 import FeedCard from "../components/FeedCard.astro";
 import FeatureCard from "../components/FeatureCard.astro";
-import { loadCurated, tickerTitles, splitFeatured } from "../lib/feed.js";
+import { loadCurated, tickerTitles, splitFeaturedGated } from "../lib/feed.js";
 import { assignBento } from "../lib/bento.js";
 import { CHANNELS } from "@khazana/core";
 import { dataDir } from "../lib/data.js";
+import { readTimeFromHtml } from "../lib/read-time.js";
+import { extractYouTubeId, buildYouTubeThumbnail } from "../lib/media.js";
 
 const now = new Date().toISOString();
 const all = loadCurated(dataDir());
@@ -16,29 +18,42 @@ const freshCount = all.filter((it) => nowMs - Date.parse(it.publishedAt) < 24 * 
 
 // THE SHOWCASE vs THE TAIL.
 // curated.json is rank-ordered (best first), so the FEATURED set is just the
-// top slice — the freshest, highest-resonance catch. Only THIS small set gets
-// the expensive bento treatment (glass, scroll-reveal, big editorial titles).
-// Everything below is the long tail, rendered cheaply + paginated by the client
-// register script so the live DOM stays small no matter how many signals exist.
-const { featured, rest } = splitFeatured(all, 10);
+// top qualifying slice — the freshest, highest-resonance SUBSTANTIVE catch.
+// Gate is content-agnostic: any item (article, video transcript, podcast
+// transcript) whose RENDERED body clocks ≥ FEATURE_MIN_MINUTES qualifies.
+// Link-only stubs and short-form items fail regardless of kind. Everything
+// else is the long tail, rendered cheaply + paginated by the client register.
+const { featured, rest } = splitFeaturedGated(all, 10);
 const cells = assignBento(featured);
 
 // The tail ships as a single JSON payload (text, not DOM) — the register script
 // builds compact rows/cards from it in small batches. Trim to just the fields
-// the register needs (smaller payload, no body/media blobs).
-const registerData = rest.map((it) => ({
-  id: it.id,
-  title: it.title,
-  summary: it.summary ?? "",
-  url: it.url,
-  source: it.source,
-  sourceType: it.sourceType,
-  trustScore: it.trustScore,
-  publishedAt: it.publishedAt,
-  topics: it.topics,
-  score: it.metrics?.score,
-  comments: it.metrics?.comments,
-}));
+// the register needs (smaller payload, no body/media blobs). readMinutes is
+// pre-computed here at build time so the client never sees raw body HTML.
+const registerData = rest.map((it) => {
+  // Derive YouTube videoId at build time from the canonical URL so the client
+  // never needs to parse URLs or make API calls. Only set for video kind.
+  const videoId = it.kind === "video" ? extractYouTubeId(it.url) : null;
+  return {
+    id: it.id,
+    title: it.title,
+    summary: it.summary ?? "",
+    url: it.url,
+    source: it.source,
+    sourceType: it.sourceType,
+    kind: it.kind,
+    trustScore: it.trustScore,
+    publishedAt: it.publishedAt,
+    topics: it.topics,
+    score: it.metrics?.score,
+    comments: it.metrics?.comments,
+    // Only include readMinutes for full-text items (body present); null means link-only.
+    readMinutes: it.body ? readTimeFromHtml(it.body) : null,
+    // Video affordance: pre-computed at build time, null for non-video items.
+    videoId: videoId ?? null,
+    thumbnailUrl: videoId ? buildYouTubeThumbnail(videoId) : null,
+  };
+});
 // A small no-JS fallback so the tail isn't blank without the register script.
 const fallback = rest.slice(0, 20);
 
@@ -238,6 +253,9 @@ const delay = (i: number) => Math.min(i, 8) * 60;
     font-size: clamp(var(--t-xl), 5vw, var(--t-display));
     color: var(--ink);
     line-height: 0.95;
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: none;
   }
   .mh-stop {
     color: var(--accent);
@@ -632,6 +650,15 @@ const delay = (i: number) => Math.min(i, 8) * 60;
     font-size: var(--t-xs);
     color: var(--ink-faint);
   }
+  /* reading-time telemetry — same mono-faint register as score + src, no badge */
+  :global(.reg-readmin) {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    white-space: nowrap;
+  }
   :global(.reg-srclink) {
     font-family: var(--font-mono);
     font-size: var(--t-xs);
@@ -748,6 +775,78 @@ const delay = (i: number) => Math.min(i, 8) * 60;
     font-family: var(--font-mono);
     font-size: var(--t-xs);
     color: var(--ink-faint);
+  }
+
+  /* ── Register media affordances (video + audio kind glyphs) ──────────── */
+  /* Inline kind glyph — appears before the source tag in the meta row */
+  :global(.reg-kind-glyph) {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  :global(.reg-kind-video) {
+    color: var(--accent);
+    letter-spacing: 0;
+  }
+  :global(.reg-kind-audio) {
+    color: var(--editorial);
+    letter-spacing: 0;
+  }
+
+  /* Card-view video thumbnail — hairline framed, lazy-loaded, graceful fallback */
+  :global(.reg-card-thumb-wrap) {
+    display: block;
+    position: relative;
+    overflow: hidden;
+    border-radius: calc(var(--r-md) - 3px);
+    border: var(--hair) solid var(--rule);
+    aspect-ratio: 16 / 9;
+    background: var(--bg-inset);
+    flex-shrink: 0;
+    /* full-bleed: break out of the card padding slightly */
+    margin: calc(-1 * var(--s-4)) calc(-1 * var(--s-4)) 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom: none;
+  }
+  :global(.reg-card-thumb) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform var(--dur-slow) var(--ease-out), filter var(--dur) var(--ease-out);
+  }
+  :global(.reg-card:hover .reg-card-thumb) {
+    transform: scale(1.03);
+    filter: brightness(0.82);
+  }
+  :global(.reg-card-play) {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: var(--accent);
+    text-shadow: 0 0 12px color-mix(in oklab, var(--accent) 70%, transparent), 0 2px 8px rgba(0,0,0,0.6);
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-out);
+    pointer-events: none;
+    background: radial-gradient(ellipse 50% 55% at 50% 50%, rgba(0,0,0,0.3), transparent);
+  }
+  :global(.reg-card:hover .reg-card-play) {
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :global(.reg-card-thumb),
+    :global(.reg-card-play) {
+      transition: none;
+    }
+    :global(.reg-card:hover .reg-card-thumb) {
+      transform: none;
+      filter: none;
+    }
   }
 </style>
 

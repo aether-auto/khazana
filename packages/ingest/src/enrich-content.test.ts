@@ -64,15 +64,35 @@ test("youtube items get transcript body; podcast items use transcriptUrl", async
     transcriptUrl?: string;
   };
   pod.transcriptUrl = "https://cdn.example.com/ep.txt";
+
+  // The new YouTube path: fetch watch page → parse ytInitialPlayerResponse →
+  // fetch json3 transcript from the captionTrack baseUrl.
+  const captionBaseUrl = "https://cdn.youtube.com/timedtext?v=dQw4w9WgXcQ&lang=en";
+  const spokenJson3 = JSON.stringify({
+    events: Array.from({ length: 15 }, () => ({
+      segs: [{ utf8: "spoken transcript words " }],
+    })),
+  });
+  const watchPageHtml = `<html><body><script>var ytInitialPlayerResponse = ${JSON.stringify({
+    captions: {
+      playerCaptionsTracklistRenderer: {
+        captionTracks: [{ baseUrl: captionBaseUrl, languageCode: "en" }],
+      },
+    },
+  })};</script></body></html>`;
+
   const fetchFn: FetchFn = async (url) => {
-    if (url.includes("timedtext")) {
-      return { ok: true, status: 200, text: async () => `<transcript><text start="0">spoken transcript words</text></transcript>`, json: async () => ({}) };
+    if (url.includes("youtube.com/watch")) {
+      return { ok: true, status: 200, text: async () => watchPageHtml, json: async () => ({}) };
+    }
+    if (url.includes("cdn.youtube.com") && url.includes("fmt=json3")) {
+      return { ok: true, status: 200, text: async () => spokenJson3, json: async () => ({}) };
     }
     if (url.endsWith(".txt")) return { ok: true, status: 200, text: async () => "podcast transcript text", json: async () => ({}) };
     return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
   };
   await enrichContent([yt, pod], fetchFn);
-  expect(yt.body).toBe("<p>spoken transcript words</p>");
+  expect(yt.body).toContain("spoken transcript words");
   expect(pod.body).toBe("<p>podcast transcript text</p>");
   // transient field scrubbed
   expect((pod as { transcriptUrl?: string }).transcriptUrl).toBeUndefined();
