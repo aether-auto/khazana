@@ -1,5 +1,13 @@
 import { expect, test } from "vitest";
-import { fetchPodcastTranscript, findTranscriptUrl, sanitizePodcastTranscript, transcriptContentToHtml } from "./podcast.js";
+import {
+  fetchPodcastTranscript,
+  findTranscriptUrl,
+  sanitizePodcastTranscript,
+  transcriptContentToHtml,
+  cleanPodcastTranscript,
+  collapseRepetition,
+  maxNgramRepeatCount,
+} from "./podcast.js";
 import type { FetchFn } from "./fetchers/build-source.js";
 
 const ITEM_XML = `<item>
@@ -163,4 +171,144 @@ test("sanitizePodcastTranscript renders detected speakers as bold prefixes", () 
   // Should have <strong>Name</strong>: text pattern
   expect(out).toMatch(/<strong>[^<]+<\/strong>/);
   expect(out).toContain("Hello and welcome");
+});
+
+// ---------------------------------------------------------------------------
+// collapseRepetition — Whisper hallucination loop collapse
+// ---------------------------------------------------------------------------
+
+test("collapseRepetition collapses a 3-gram hallucination loop to one instance", () => {
+  // Simulates whisper-tiny output: "get the opportunity" repeated 30 times
+  const loop = "get the opportunity to get the opportunity to get the opportunity to get the opportunity to get the opportunity to";
+  const collapsed = collapseRepetition(loop);
+  // Should contain the phrase once but not repeat 5+ times
+  const repeatCount = maxNgramRepeatCount(collapsed, 3);
+  expect(repeatCount).toBeLessThan(5);
+});
+
+test("collapseRepetition leaves normal prose unchanged", () => {
+  const prose =
+    "Today we are discussing distributed systems and their tradeoffs. " +
+    "Alice argued that consistency is more important than availability. " +
+    "Bob disagreed and pointed to the CAP theorem.";
+  const result = collapseRepetition(prose);
+  // Normal prose should be unchanged or minimally modified
+  expect(result).toContain("distributed systems");
+  expect(result).toContain("CAP theorem");
+});
+
+test("collapseRepetition handles single-word text gracefully", () => {
+  expect(() => collapseRepetition("hello")).not.toThrow();
+  expect(collapseRepetition("hello")).toBe("hello");
+});
+
+test("collapseRepetition handles empty string gracefully", () => {
+  expect(collapseRepetition("")).toBe("");
+});
+
+// ---------------------------------------------------------------------------
+// maxNgramRepeatCount — metrics for BEFORE/AFTER comparison
+// ---------------------------------------------------------------------------
+
+test("maxNgramRepeatCount returns high count for a repetition loop", () => {
+  const loop = "get the opportunity to ".repeat(30).trim();
+  const count = maxNgramRepeatCount(loop, 3);
+  expect(count).toBeGreaterThan(20);
+});
+
+test("maxNgramRepeatCount returns ~1 for normal prose", () => {
+  const prose = "Hello and welcome to the show today. We have a great guest joining us.";
+  const count = maxNgramRepeatCount(prose, 3);
+  expect(count).toBeLessThan(3);
+});
+
+test("maxNgramRepeatCount returns 0 for empty text", () => {
+  expect(maxNgramRepeatCount("", 3)).toBe(0);
+});
+
+// ---------------------------------------------------------------------------
+// cleanPodcastTranscript — ad-stripping + repetition-collapse + paragraphize
+// ---------------------------------------------------------------------------
+
+test("cleanPodcastTranscript strips NPR-style dynamic ad block", () => {
+  const withAd =
+    "So today we are exploring the history of chess. " +
+    "This message comes from Schwab. At Schwab, you can get everything from self-directed investing to financial planning. " +
+    "Back to our story. Chess was invented in India around 600 AD.";
+  const out = cleanPodcastTranscript(withAd);
+  expect(out).not.toContain("Schwab");
+  expect(out).not.toContain("self-directed investing");
+  expect(out).toContain("history of chess");
+  expect(out).toContain("Chess was invented");
+});
+
+test("cleanPodcastTranscript strips 'support for this podcast comes from' lines", () => {
+  const withAd =
+    "Today's episode is about machine learning. " +
+    "Support for this podcast comes from BetterHelp. Online therapy is available to everyone. " +
+    "Let's get back to talking about gradient descent.";
+  const out = cleanPodcastTranscript(withAd);
+  expect(out).not.toContain("BetterHelp");
+  expect(out).not.toContain("Online therapy");
+  expect(out).toContain("machine learning");
+  expect(out).toContain("gradient descent");
+});
+
+test("cleanPodcastTranscript strips 'brought to you by' sponsor lines", () => {
+  const withSponsor =
+    "Welcome to this week's episode. " +
+    "This podcast is brought to you by Squarespace. Build your website today. " +
+    "Now let's get into the topic of quantum computing.";
+  const out = cleanPodcastTranscript(withSponsor);
+  expect(out).not.toContain("Squarespace");
+  expect(out).toContain("quantum computing");
+});
+
+test("cleanPodcastTranscript strips promo code lines", () => {
+  const withPromo =
+    "In this episode we discuss ancient Rome. " +
+    "Use code PODCAST for 20% off your first order at HelloFresh.com. " +
+    "The Roman Empire at its peak controlled most of the known world.";
+  const out = cleanPodcastTranscript(withPromo);
+  expect(out).not.toContain("HelloFresh");
+  expect(out).not.toContain("promo");
+  expect(out).not.toContain("Use code");
+  expect(out).toContain("Roman Empire");
+});
+
+test("cleanPodcastTranscript collapses Whisper hallucination loops", () => {
+  // Simulates the NPR Embedded bug: "get the opportunity" repeated 108 times
+  const loopedTranscript =
+    "get the opportunity to get the opportunity to get the opportunity to get the opportunity to get the opportunity to get the opportunity to get the opportunity to get the opportunity to get the opportunity to get the opportunity to";
+  const out = cleanPodcastTranscript(loopedTranscript);
+  // The 3-gram repeat count should be dramatically reduced
+  const afterRepeat = maxNgramRepeatCount(out, 3);
+  expect(afterRepeat).toBeLessThan(5);
+});
+
+test("cleanPodcastTranscript returns readable HTML paragraphs", () => {
+  const clean =
+    "So today we are talking about distributed systems and their fascinating tradeoffs. " +
+    "Alice argued that consistency is always more important than availability. " +
+    "Bob disagreed and pointed to the CAP theorem as evidence.";
+  const out = cleanPodcastTranscript(clean);
+  expect(out).toContain("<p>");
+  expect(out).toContain("distributed systems");
+});
+
+test("cleanPodcastTranscript returns empty string for empty input", () => {
+  expect(cleanPodcastTranscript("")).toBe("");
+  expect(cleanPodcastTranscript("   ")).toBe("");
+});
+
+test("cleanPodcastTranscript does not strip real content that mentions a brand naturally", () => {
+  // "Schwab" appearing in editorial context (not an ad) should survive
+  const editorial =
+    "The Charles Schwab report found that younger investors prefer ETFs over mutual funds. " +
+    "This has significant implications for the asset management industry.";
+  const out = cleanPodcastTranscript(editorial);
+  // The ad pattern is "at schwab," (with comma or space + verb) — editorial mention should survive
+  // because our pattern is /at schwab[,. ]/i which requires "at" before "schwab"
+  // "Charles Schwab report" does not match /at schwab[,. ]/i
+  expect(out).toContain("Charles Schwab");
 });

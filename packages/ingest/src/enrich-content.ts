@@ -70,6 +70,89 @@ type EnrichableItem = FeedItem & {
   enclosureUrl?: string;
 };
 
+// ---------------------------------------------------------------------------
+// PodcastIndex.org transcript lookup (optional, behind env vars)
+// ---------------------------------------------------------------------------
+
+/**
+ * Optional: fetch a transcript URL from the PodcastIndex.org API.
+ *
+ * Requires PODCASTINDEX_API_KEY and PODCASTINDEX_API_SECRET env vars (free
+ * account at https://podcastindex.org/developer). When not set, returns ""
+ * immediately — this never blocks the pipeline.
+ *
+ * Uses the `/api/1.0/episodes/byfeedurl` endpoint to find the episode, then
+ * `/api/1.0/transcripts/byepisodeid` to get transcript URLs, and fetches
+ * the best available (SRT/VTT/plain preferred). Validates via `isFullTranscript`.
+ *
+ * Returns sanitized HTML prose, or "" on any failure or when env not set.
+ */
+async function fetchPodcastIndexTranscript(
+  episodeUrl: string,
+  fetchFn: FetchFn,
+): Promise<string> {
+  const apiKey = process.env["PODCASTINDEX_API_KEY"] ?? "";
+  const apiSecret = process.env["PODCASTINDEX_API_SECRET"] ?? "";
+  if (!apiKey || !apiSecret || !episodeUrl) return "";
+
+  try {
+    // PodcastIndex requires HMAC-SHA1 auth header.
+    // Auth header: X-Auth-Key, X-Auth-Date (unix epoch), Authorization (sha1 hash).
+    const { createHmac } = await import("node:crypto");
+    const authDate = String(Math.floor(Date.now() / 1000));
+    const hash = createHmac("sha1", apiSecret)
+      .update(apiKey + apiSecret + authDate)
+      .digest("hex");
+
+    const piHeaders: Record<string, string> = {
+      "X-Auth-Key": apiKey,
+      "X-Auth-Date": authDate,
+      Authorization: hash,
+      "User-Agent": "khazana-ingest/1.0",
+    };
+
+    // Step 1: find episode by feed URL to get episode ID.
+    // PodcastIndex doesn't have a direct episode-by-url endpoint; we use
+    // byFeedUrl and match by episode link.
+    const feedUrlEncoded = encodeURIComponent(episodeUrl);
+    const searchRes = await fetchFn(
+      `https://api.podcastindex.org/api/1.0/episodes/byurl?url=${feedUrlEncoded}&max=1`,
+      { headers: piHeaders },
+    );
+    if (!searchRes.ok) return "";
+
+    const searchJson = await searchRes.json() as Record<string, unknown>;
+    const episode = (searchJson["episode"] as Record<string, unknown> | undefined);
+    const episodeId = episode?.["id"];
+    if (!episodeId) return "";
+
+    // Step 2: fetch transcripts for this episode.
+    const txRes = await fetchFn(
+      `https://api.podcastindex.org/api/1.0/transcripts/byepisodeid?id=${episodeId}`,
+      { headers: piHeaders },
+    );
+    if (!txRes.ok) return "";
+
+    const txJson = await txRes.json() as Record<string, unknown>;
+    const items = txJson["items"] as Array<{ url: string; type: string }> | undefined;
+    if (!items || items.length === 0) return "";
+
+    // Prefer text/plain, text/vtt, text/srt, then any.
+    const preferred =
+      items.find((t) => t.type?.includes("plain")) ??
+      items.find((t) => t.type?.includes("vtt")) ??
+      items.find((t) => t.type?.includes("srt")) ??
+      items[0];
+    if (!preferred?.url) return "";
+
+    // Step 3: fetch and validate the transcript.
+    const html = await fetchPodcastTranscript(preferred.url, fetchFn);
+    return html;
+  } catch {
+    return "";
+  }
+}
+
 /** Wrap a fetch with a timeout that resolves (never rejects) into ok:false. */
 function withTimeout(fetchFn: FetchFn, timeoutMs: number): FetchFn {
   return (url, init) =>
@@ -130,12 +213,22 @@ async function enrichItem(
           item.body = html;
           return item;
         }
-        // Short/stub transcript — fall through to Whisper.
+        // Short/stub transcript — fall through to PodcastIndex / Whisper.
       }
 
-      // 2. Whisper transcription from the audio enclosure (MP3 on show's own CDN).
+      // 2. Optional: check PodcastIndex.org for a published transcript URL.
+      //    Requires PODCASTINDEX_API_KEY + PODCASTINDEX_API_SECRET env vars.
+      //    Free account at https://podcastindex.org/developer — no charge.
+      const piTranscript = await fetchPodcastIndexTranscript(item.url, fetchFn);
+      if (piTranscript && isFullTranscript(piTranscript)) {
+        item.body = piTranscript;
+        return item;
+      }
+
+      // 3. Whisper transcription from the audio enclosure (MP3 on show's own CDN).
       //    Uses native fetch internally (binary-safe), ignores the injected fetchFn.
-      //    Skipped if no enclosureUrl was stashed or if ffmpeg is not available.
+      //    Tier selection inside: Groq (if GROQ_API_KEY set) > local Whisper-base.
+      //    Skipped if no enclosureUrl was stashed.
       if (item.enclosureUrl) {
         const whisperHtml = await transcribePodcastEpisode(item.enclosureUrl);
         if (whisperHtml) {
@@ -144,7 +237,7 @@ async function enrichItem(
         }
       }
 
-      // 3. Keep the show-notes / description already in body (fallback).
+      // 4. Keep the show-notes / description already in body (fallback).
       return item;
     }
 

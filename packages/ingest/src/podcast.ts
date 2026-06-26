@@ -1,6 +1,127 @@
 import type { FetchFn } from "./fetchers/build-source.js";
 import { sanitizeArticleHtml } from "./extract.js";
 
+// ---------------------------------------------------------------------------
+// Ad / sponsor block patterns — conservative, case-insensitive.
+// Matches the opening of an NPR-style host-read ad or common podcast
+// sponsor lines. We strip the entire sentence/segment that contains
+// any of these phrases.
+// ---------------------------------------------------------------------------
+
+const AD_PATTERNS: RegExp[] = [
+  /this (?:message|episode|podcast) (?:comes|is brought) from/i,
+  /support for (?:this|the) (?:podcast|show|program|episode)/i,
+  /this episode is (?:sponsored|presented) by/i,
+  /brought to you by/i,
+  /(?:use|enter) (?:code|promo(?:code)?)\b/i,
+  /\bpromo code\b/i,
+  /terms (?:apply|and conditions apply)/i,
+  /slash podcast\b/i,
+  /(?:go to|visit) [a-z0-9-]+\.com\/[a-z]/i,  // "go to schwab.com/podcast"
+  /at schwab[,. ]/i,
+  /at (?:squarespace|betterhelp|expressvpn|nerdwallet|linkedin|indeed)\b/i,
+];
+
+/**
+ * Return true if the segment text contains a known ad/sponsor phrase.
+ */
+function isAdSegment(text: string): boolean {
+  return AD_PATTERNS.some((p) => p.test(text));
+}
+
+// ---------------------------------------------------------------------------
+// Repetition collapse — detects Whisper hallucination loops.
+// A loop is defined as the same n-gram (3–7 words) appearing 5+ times
+// consecutively in a segment. We keep the first occurrence.
+// ---------------------------------------------------------------------------
+
+/**
+ * Collapse consecutive n-gram repetition loops in a block of text.
+ * Whisper-tiny/base can degenerate on ad/music/silence transitions, emitting
+ * the same phrase dozens of times. This collapses those loops to one instance.
+ *
+ * Algorithm: slide over the text; if a phrase of 3–7 words repeats ≥5 times
+ * back-to-back, replace the whole run with a single instance.
+ */
+export function collapseRepetition(text: string): string {
+  // Work token by token to detect runs.
+  const words = text.split(/(\s+)/);  // preserves spaces as tokens
+  const wordTokens: string[] = [];
+  const spaceTokens: string[] = [];
+  for (let i = 0; i < words.length; i++) {
+    if (i % 2 === 0) wordTokens.push(words[i] ?? "");
+    else spaceTokens.push(words[i] ?? " ");
+  }
+
+  // For each ngram size from 3 to 7, collapse runs.
+  let result = wordTokens;
+  for (let n = 3; n <= 7; n++) {
+    result = collapseNgramRuns(result, n, 5);
+  }
+
+  // Reassemble with spaces.
+  return result.map((w, i) => (i < result.length - 1 ? w + (spaceTokens[i] ?? " ") : w)).join("");
+}
+
+function collapseNgramRuns(words: string[], n: number, minRuns: number): string[] {
+  if (words.length < n * minRuns) return words;
+  const out: string[] = [];
+  let i = 0;
+  while (i < words.length) {
+    if (i + n > words.length) {
+      out.push(...words.slice(i));
+      break;
+    }
+    // Candidate n-gram at position i
+    const ngram = words.slice(i, i + n);
+    // Count how many times it repeats consecutively
+    let count = 1;
+    let j = i + n;
+    while (j + n <= words.length) {
+      const next = words.slice(j, j + n);
+      if (ngramEq(ngram, next)) {
+        count++;
+        j += n;
+      } else {
+        break;
+      }
+    }
+    if (count >= minRuns) {
+      // Collapsed to one occurrence
+      out.push(...ngram);
+      i = j; // skip the rest of the run
+    } else {
+      out.push(words[i]!);
+      i++;
+    }
+  }
+  return out;
+}
+
+function ngramEq(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i]?.toLowerCase() !== b[i]?.toLowerCase()) return false;
+  }
+  return true;
+}
+
+/**
+ * Count how many times an n-gram (sequence of words) repeats in the text.
+ * Used for metrics and validation. Returns the maximum repeat count for any
+ * n-gram of size `n` in the text.
+ */
+export function maxNgramRepeatCount(text: string, n: number = 3): number {
+  const words = text.toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length < n) return 0;
+  const counts = new Map<string, number>();
+  for (let i = 0; i <= words.length - n; i++) {
+    const key = words.slice(i, i + n).join(" ");
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return Math.max(0, ...counts.values());
+}
+
 /**
  * Find a `<podcast:transcript url="..." />` URL in a raw RSS `<item>` XML
  * fragment (the Podcasting 2.0 namespace). Prefers text/plain or text/html
@@ -375,6 +496,71 @@ export function sanitizePodcastTranscript(raw: string, mimeOrFormat: string): st
   // Plain text fallback
   const cues = parsePlainText(t);
   return cuesToHtml(cues);
+}
+
+/**
+ * Clean a raw Whisper (or other ASR) plain-text transcript into readable
+ * prose HTML. Extends `sanitizePodcastTranscript` with:
+ *
+ *   1. **Ad / sponsor removal** — strips the sentence containing a known ad
+ *      phrase (NPR dynamic ads, "brought to you by", promo code lines, etc.)
+ *      PLUS the immediately following sentence (which is typically the
+ *      product description copy: "Online therapy is available to everyone.").
+ *   2. **Repetition collapse** — folds Whisper hallucination loops where the
+ *      same phrase repeats dozens of times into a single instance.
+ *   3. Delegates the resulting text to `sanitizePodcastTranscript` for
+ *      paragraphization and HTML escaping.
+ *
+ * This is the entry point for Whisper-generated transcripts; use
+ * `sanitizePodcastTranscript` directly for published VTT/SRT/JSON transcripts.
+ */
+export function cleanPodcastTranscript(rawText: string): string {
+  if (!rawText.trim()) return "";
+
+  // 1. Collapse hallucination loops before sentence-splitting to keep the
+  //    sentence boundaries intact after deduplication.
+  const delooped = collapseRepetition(rawText);
+
+  // 2. Split into sentences and strip ad segments.
+  //    Sentence boundary: period/!/? followed by space and capital, or newline.
+  const segments = delooped
+    .split(/(?<=[.!?])\s+(?=[A-Z])|(?<=\n)\s*/)
+    .map((s) => s.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+
+  // Drop ad sentences. When an ad trigger is found, also drop the IMMEDIATELY
+  // following sentence if it looks like continuation copy: very short (≤50 chars)
+  // and does not begin with a topic-resuming signal ("Let's", "Now", "Back",
+  // "Today"...). This catches "Online therapy is available to everyone." (40 chars)
+  // without accidentally eating longer real content like "The Roman Empire at its
+  // peak controlled most of the known world." (62 chars).
+  const SHORT_COPY_MAX_CHARS = 50;
+  const RESUME_STARTERS = /^(?:today|now|let'?s|back|so |as we|welcome back|that said)\b/i;
+
+  const cleaned: string[] = [];
+  let skipNext = false;
+  for (const seg of segments) {
+    if (skipNext) {
+      skipNext = false;
+      // Skip this sentence only if it looks like continuation ad copy:
+      // short enough to be product description, and not a topic-resuming opener.
+      if (seg.length <= SHORT_COPY_MAX_CHARS && !RESUME_STARTERS.test(seg)) {
+        continue;
+      }
+      // Longer sentence or resume-opener → this is real content; keep it.
+    }
+    if (isAdSegment(seg)) {
+      skipNext = true;
+      continue;
+    }
+    cleaned.push(seg);
+  }
+
+  if (cleaned.length === 0) return "";
+
+  // 3. Re-join and pass through the standard sanitizer (plain text path).
+  const rejoined = cleaned.join(" ");
+  return sanitizePodcastTranscript(rejoined, "text/plain");
 }
 
 function escapeText(s: string): string {
