@@ -65,37 +65,62 @@ test("youtube items get transcript body; podcast items use transcriptUrl", async
   };
   pod.transcriptUrl = "https://cdn.example.com/ep.txt";
 
-  // The new YouTube path: fetch watch page → parse ytInitialPlayerResponse →
-  // fetch json3 transcript from the captionTrack baseUrl.
-  const captionBaseUrl = "https://cdn.youtube.com/timedtext?v=dQw4w9WgXcQ&lang=en";
-  const spokenJson3 = JSON.stringify({
-    events: Array.from({ length: 15 }, () => ({
-      segs: [{ utf8: "spoken transcript words " }],
-    })),
+  // The new YouTube path: proxy via Invidious (no direct youtube.com calls).
+  const INV_TEST = "https://inv.enrich-test.example.com";
+  const captionsListJson = JSON.stringify({
+    captions: [
+      { label: "English", languageCode: "en", url: "/api/v1/captions/dQw4w9WgXcQ?label=English" },
+    ],
   });
-  const watchPageHtml = `<html><body><script>var ytInitialPlayerResponse = ${JSON.stringify({
-    captions: {
-      playerCaptionsTracklistRenderer: {
-        captionTracks: [{ baseUrl: captionBaseUrl, languageCode: "en" }],
-      },
-    },
-  })};</script></body></html>`;
+  // Long enough VTT to clear MIN_PROXY_CHARS
+  const spokenVtt = `WEBVTT
+
+00:00:01.000 --> 00:00:04.000
+spoken transcript words spoken transcript words spoken.
+
+00:00:04.500 --> 00:00:08.000
+spoken transcript words spoken transcript words spoken.
+
+00:00:08.500 --> 00:00:12.000
+spoken transcript words spoken transcript words spoken.
+
+00:00:12.500 --> 00:00:16.000
+spoken transcript words spoken transcript words spoken.
+
+00:00:16.500 --> 00:00:20.000
+spoken transcript words spoken transcript words spoken.
+`;
+
+  const savedInv = process.env["INVIDIOUS_INSTANCES"];
+  const savedPiped = process.env["PIPED_INSTANCES"];
+  process.env["INVIDIOUS_INSTANCES"] = INV_TEST;
+  process.env["PIPED_INSTANCES"] = "";
 
   const fetchFn: FetchFn = async (url) => {
-    if (url.includes("youtube.com/watch")) {
-      return { ok: true, status: 200, text: async () => watchPageHtml, json: async () => ({}) };
+    if (url.startsWith(INV_TEST) && url.includes("/api/v1/captions/") && !url.includes("label=")) {
+      return { ok: true, status: 200, text: async () => captionsListJson, json: async () => ({}) };
     }
-    if (url.includes("cdn.youtube.com") && url.includes("fmt=json3")) {
-      return { ok: true, status: 200, text: async () => spokenJson3, json: async () => ({}) };
+    if (url.startsWith(INV_TEST) && url.includes("label=")) {
+      return { ok: true, status: 200, text: async () => spokenVtt, json: async () => ({}) };
     }
-    if (url.endsWith(".txt")) return { ok: true, status: 200, text: async () => "podcast transcript text", json: async () => ({}) };
+    // Return a full transcript long enough to pass isFullTranscript (>= 1500 text chars)
+    const longTranscript = "This is a real word from a dialogue transcript. ".repeat(40);
+    if (url.endsWith(".txt")) return { ok: true, status: 200, text: async () => longTranscript, json: async () => ({}) };
     return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
   };
-  await enrichContent([yt, pod], fetchFn);
-  expect(yt.body).toContain("spoken transcript words");
-  expect(pod.body).toBe("<p>podcast transcript text</p>");
-  // transient field scrubbed
-  expect((pod as { transcriptUrl?: string }).transcriptUrl).toBeUndefined();
+
+  try {
+    await enrichContent([yt, pod], fetchFn);
+    expect(yt.body).toContain("spoken transcript words");
+    // The podcast transcript body should contain the long transcript text
+    expect(pod.body).toContain("real word from a dialogue transcript");
+    expect(pod.body).not.toBe("show notes"); // must have been upgraded
+    // transient field scrubbed
+    expect((pod as { transcriptUrl?: string }).transcriptUrl).toBeUndefined();
+  } finally {
+    if (savedInv === undefined) delete process.env["INVIDIOUS_INSTANCES"]; else process.env["INVIDIOUS_INSTANCES"] = savedInv;
+    if (savedPiped === undefined) delete process.env["PIPED_INSTANCES"]; else process.env["PIPED_INSTANCES"] = savedPiped;
+  }
 });
 
 test("youtube with no transcript keeps the description", async () => {
@@ -104,8 +129,18 @@ test("youtube with no transcript keeps the description", async () => {
     url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", body: "video description",
   });
   const fetchFn: FetchFn = async () => ({ ok: false, status: 404, text: async () => "", json: async () => ({}) });
-  await enrichContent([yt], fetchFn);
-  expect(yt.body).toBe("video description");
+  // Scope to a single non-existent instance so we don't iterate 18 real defaults with delays.
+  const savedInv = process.env["INVIDIOUS_INSTANCES"];
+  const savedPiped = process.env["PIPED_INSTANCES"];
+  process.env["INVIDIOUS_INSTANCES"] = "https://inv.test.invalid";
+  process.env["PIPED_INSTANCES"] = "https://piped.test.invalid";
+  try {
+    await enrichContent([yt], fetchFn);
+    expect(yt.body).toBe("video description");
+  } finally {
+    if (savedInv === undefined) delete process.env["INVIDIOUS_INSTANCES"]; else process.env["INVIDIOUS_INSTANCES"] = savedInv;
+    if (savedPiped === undefined) delete process.env["PIPED_INSTANCES"]; else process.env["PIPED_INSTANCES"] = savedPiped;
+  }
 });
 
 // ---- Multi-method fallback chain -------------------------------------------

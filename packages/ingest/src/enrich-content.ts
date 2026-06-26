@@ -11,6 +11,7 @@ import {
 } from "./extract.js";
 import { fetchYouTubeTranscriptResult, transcriptToHtml, youTubeVideoId } from "./youtube.js";
 import { fetchPodcastTranscript } from "./podcast.js";
+import { isFullTranscript, transcribePodcastEpisode } from "./whisper.js";
 
 /**
  * Min plain-text length for an extraction result to be considered "good enough"
@@ -63,7 +64,11 @@ export interface EnrichContentOptions {
 }
 
 // Item carries optional transient fields stashed by the RSS parser.
-type EnrichableItem = FeedItem & { transcriptUrl?: string; rssContent?: string };
+type EnrichableItem = FeedItem & {
+  transcriptUrl?: string;
+  rssContent?: string;
+  enclosureUrl?: string;
+};
 
 /** Wrap a fetch with a timeout that resolves (never rejects) into ok:false. */
 function withTimeout(fetchFn: FetchFn, timeoutMs: number): FetchFn {
@@ -109,23 +114,37 @@ async function enrichItem(
         const result = await fetchYouTubeTranscriptResult(id, fetchFn);
         if (result.kind === "transcript") {
           item.body = transcriptToHtml(result.text);
-        } else if (result.kind === "description-fallback") {
-          // Short description blurb — keep it but mark the item so it can be
-          // excluded from "featured" slots downstream (curate layer reads this).
-          item.body = transcriptToHtml(result.text);
-          (item as EnrichableItem & { summaryOnly?: boolean }).summaryOnly = true;
         }
-        // kind === "none": no transcript and no fallback — leave body untouched.
+        // kind === "none": all methods failed — leave body untouched.
       }
       return item;
     }
 
     if (item.sourceType === "podcast") {
+      // 1. Try a published <podcast:transcript> URL — but only accept it when
+      //    the fetched content is a FULL transcript (long, dialogue), not a
+      //    chapter list or episode summary stub.
       if (item.transcriptUrl) {
         const html = await fetchPodcastTranscript(item.transcriptUrl, fetchFn);
-        if (html) item.body = html;
+        if (html && isFullTranscript(html)) {
+          item.body = html;
+          return item;
+        }
+        // Short/stub transcript — fall through to Whisper.
       }
-      // else: keep the show-notes / description already in body.
+
+      // 2. Whisper transcription from the audio enclosure (MP3 on show's own CDN).
+      //    Uses native fetch internally (binary-safe), ignores the injected fetchFn.
+      //    Skipped if no enclosureUrl was stashed or if ffmpeg is not available.
+      if (item.enclosureUrl) {
+        const whisperHtml = await transcribePodcastEpisode(item.enclosureUrl);
+        if (whisperHtml) {
+          item.body = whisperHtml;
+          return item;
+        }
+      }
+
+      // 3. Keep the show-notes / description already in body (fallback).
       return item;
     }
 
@@ -324,6 +343,7 @@ export async function enrichContent(
   for (const it of items as EnrichableItem[]) {
     delete it.transcriptUrl;
     delete it.rssContent;
+    delete it.enclosureUrl;
   }
   return items;
 }

@@ -1,0 +1,90 @@
+---
+/**
+ * MarkLogo — the khazana gem mark, inline SVG.
+ * Concept A (book-gem): the original gem silhouette with inner arcs that read
+ * as an open book's page spread. The girdle doubles as the terminal text-line.
+ *
+ * Size defaults to 28px — a comfortable header weight for the 20px wordmark.
+ * Use `size` prop for alternate contexts (favicon reference, covers, etc.).
+ */
+interface Props {
+  size?: number;
+  /** Extra CSS classes to apply to the <svg> root */
+  class?: string;
+  ariaHidden?: boolean;
+}
+
+const { size = 28, class: cls, ariaHidden = false } = Astro.props;
+---
+
+<svg
+  viewBox="0 0 32 32"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+  width={size}
+  height={size}
+  class:list={["mark-logo", cls]}
+  role={ariaHidden ? undefined : "img"}
+  aria-label={ariaHidden ? undefined : "khazana"}
+  aria-hidden={ariaHidden ? "true" : undefined}
+>
+  <!-- outer gem: crown (top half) + pavilion (bottom half) -->
+  <path
+    d="M6 13 L16 4 L26 13 L16 28 Z"
+    stroke="var(--accent)"
+    stroke-width="2"
+    stroke-linejoin="round"
+  />
+  <!-- girdle: the terminal text-line + open-book spine -->
+  <path
+    d="M6 13 H26"
+    stroke="var(--accent)"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
+  <!-- left page arcs: two curves fanning from the book spine to the crown-left face -->
+  <path
+    d="M16 13 Q11 11 8.5 13.5"
+    stroke="var(--accent)"
+    stroke-width="0.9"
+    stroke-linecap="round"
+    opacity="0.55"
+  />
+  <path
+    d="M16 13 Q11.5 9.5 10 7"
+    stroke="var(--accent)"
+    stroke-width="0.9"
+    stroke-linecap="round"
+    opacity="0.38"
+  />
+  <!-- right page arcs: mirror of the left -->
+  <path
+    d="M16 13 Q21 11 23.5 13.5"
+    stroke="var(--accent)"
+    stroke-width="0.9"
+    stroke-linecap="round"
+    opacity="0.55"
+  />
+  <path
+    d="M16 13 Q20.5 9.5 22 7"
+    stroke="var(--accent)"
+    stroke-width="0.9"
+    stroke-linecap="round"
+    opacity="0.38"
+  />
+  <!-- central spine / pavilion axis: book spine falling to the tip -->
+  <path
+    d="M16 13 V28"
+    stroke="var(--accent)"
+    stroke-width="1.1"
+    stroke-linecap="round"
+    opacity="0.48"
+  />
+</svg>
+
+<style>
+  .mark-logo {
+    flex-shrink: 0;
+    display: block;
+  }
+</style>

@@ -5,6 +5,7 @@ import FeatureCard from "../components/FeatureCard.astro";
 import MediaRail from "../components/MediaRail.astro";
 import WatchCard from "../components/WatchCard.astro";
 import ListenCard from "../components/ListenCard.astro";
+import CategoryRail from "../components/CategoryRail.astro";
 import {
   loadCurated,
   tickerTitles,
@@ -13,6 +14,8 @@ import {
   dropJunkVideos,
   selectWatchRail,
   selectListenRail,
+  bucketByChannel,
+  CATEGORY_MIN_MINUTES,
 } from "../lib/feed.js";
 import { assignBento } from "../lib/bento.js";
 import { CHANNELS } from "@khazana/core";
@@ -26,7 +29,7 @@ const now = new Date().toISOString();
 // non-content raw video clips (MIT-OCW lab footage etc.). Neither is "best signal."
 const all = dropJunkVideos(dropShorts(loadCurated(dataDir())));
 const ticker = tickerTitles(all, 8);
-// live instrument readout: total signals + how many arrived in the last 24h
+// Live instrument readout: total signals + how many arrived in the last 24h
 const nowMs = Date.parse(now);
 const freshCount = all.filter((it) => nowMs - Date.parse(it.publishedAt) < 24 * 60 * 60 * 1000).length;
 
@@ -34,17 +37,28 @@ const freshCount = all.filter((it) => nowMs - Date.parse(it.publishedAt) < 24 * 
 // curated.json is rank-ordered (best first), so the FEATURED set is just the
 // top qualifying slice — the freshest, highest-resonance SUBSTANTIVE catch.
 // Gate is content-agnostic: any item (article, video transcript, podcast
-// transcript) whose RENDERED body clocks ≥ FEATURE_MIN_MINUTES qualifies.
-// Link-only stubs and short-form items fail regardless of kind. Everything
-// else is the long tail, rendered cheaply + paginated by the client register.
-const { featured, rest } = splitFeaturedGated(all, 10);
+// transcript) whose RENDERED body clocks ≥ 7 min qualifies.
+// Expanded from 10 → 30 for the redesigned bento (richer browsable area).
+// Structure preserved for future personalization: ordering is pure score-rank
+// today; a personalization layer can slot into the ordering without API changes.
+const { featured, rest } = splitFeaturedGated(all, 30);
 const cells = assignBento(featured);
 
+// Category browse: bucket the rest by primary topic, filter to channels with
+// enough substantial (≥5-min) items to warrant a rail.
+const CATEGORY_MIN_ITEMS = 3;
+const allBuckets = bucketByChannel(rest);
+// Category channels in display order — match CHANNELS canonical order.
+const categoryRails = CHANNELS.flatMap((ch) => {
+  const bucket = allBuckets.get(ch);
+  if (!bucket) return [];
+  const substantial = bucket.filter((it) => it.body && readTimeFromHtml(it.body) >= CATEGORY_MIN_MINUTES);
+  if (substantial.length < CATEGORY_MIN_ITEMS) return [];
+  return [{ channel: ch, items: substantial }];
+});
+
 // Media rails draw from `rest` — the top-ranked video/audio that didn't clear
-// the 7-min featured gate. This is exactly the signal the founder "saw nothing
-// of": media ranks ~position 60 and the default list view buries it as thin
-// text rows. The rails give it a real, image-forward home WITHOUT duplicating
-// anything already shown in the bento above. Shorts are already gone (dropShorts).
+// the 7-min featured gate. Shorts are already gone (dropShorts).
 const watchItems = selectWatchRail(rest, 12);
 const listenItems = selectListenRail(rest, 10);
 
@@ -79,11 +93,12 @@ const registerData = rest.map((it) => {
 // A small no-JS fallback so the tail isn't blank without the register script.
 const fallback = rest.slice(0, 20);
 
-const channels = CHANNELS;
+// Channel filter — initial state read from URL at SSR time
+const urlParams = new URLSearchParams(Astro.url.search);
+const activeChannel = urlParams.get("channel") ?? "";
+
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-// Default register view — LIST. It's the densest, fastest-scanning register
-// (the instrument's telemetry log); the bento above is where the visual weight
-// lives. The client persists the reader's choice in localStorage.
+// Default register view — LIST. Densest, fastest-scanning.
 const defaultView = "list";
 
 // Stagger: ~60ms per card, capped so the last card isn't held back too long.
@@ -96,6 +111,8 @@ const delay = (i: number) => Math.min(i, 8) * 60;
   tickerTitles={ticker}
   signalCount={all.length}
   freshCount={freshCount}
+  feedPage={true}
+  activeChannel={activeChannel}
 >
   <!-- compact editorial masthead — no canvas, no WebGL -->
   <div class="masthead" data-reveal>
@@ -116,21 +133,10 @@ const delay = (i: number) => Math.min(i, 8) * 60;
   {
     all.length > 0 ? (
       <>
-        <header class="feed-head" data-reveal>
-          <div class="filterbar" role="group" aria-label="Filter by channel">
-            <div class="filters" id="filters">
-              <span class="filter-indicator" aria-hidden="true" />
-              <a class="filter is-active" href={`${base}/`} data-filter="">all</a>
-              {channels.map((c) => (
-                <a class="filter" href={`${base}/?channel=${c}`} data-filter={c}>
-                  {c}
-                </a>
-              ))}
-            </div>
-          </div>
-        </header>
-
-        <section class="bento" aria-label="Featured signals" aria-live="polite">
+        <!-- Bento: top 30 featured reads — rich, browsable, intentional structure.
+             Hero lead (1 full-width feature) + varied mosaic grid beneath.
+             Filtering is driven by the header chips via khz:channelchange. -->
+        <section class="bento" aria-label="Featured signals" aria-live="polite" data-section="bento">
           {cells.map((cell) =>
             cell.size === "feature" ? (
               <FeatureCard item={cell.item} now={now} revealDelay={delay(cell.index)} />
@@ -138,37 +144,59 @@ const delay = (i: number) => Math.min(i, 8) * 60;
               <FeedCard item={cell.item} now={now} size={cell.size} revealDelay={delay(cell.index)} />
             ),
           )}
-          <p class="empty" hidden>
+          <p class="bento-empty" hidden>
             No featured items in this channel.
           </p>
         </section>
 
         {watchItems.length > 0 && (
-          <MediaRail
-            glyph="▶"
-            label="watch"
-            count={watchItems.length}
-            blurb="long-form video from the channels worth watching — re-read as transcript on khazana, or play in place."
-            accent="signal"
-          >
-            {watchItems.map((it) => (
-              <WatchCard item={it} />
-            ))}
-          </MediaRail>
+          <div data-section="watch" data-section-all-channels="video">
+            <MediaRail
+              glyph="▶"
+              label="watch"
+              count={watchItems.length}
+              blurb="long-form video from the channels worth watching — re-read as transcript on khazana, or play in place."
+              accent="signal"
+            >
+              {watchItems.map((it) => (
+                <WatchCard item={it} />
+              ))}
+            </MediaRail>
+          </div>
         )}
 
         {listenItems.length > 0 && (
-          <MediaRail
-            glyph="◉"
-            label="listen"
-            count={listenItems.length}
-            blurb="the day's best long-form audio — podcasts and talks, with their transcripts re-set in khazana's study."
-            accent="editorial"
-          >
-            {listenItems.map((it) => (
-              <ListenCard item={it} />
+          <div data-section="listen" data-section-all-channels="audio">
+            <MediaRail
+              glyph="◉"
+              label="listen"
+              count={listenItems.length}
+              blurb="the day's best long-form audio — podcasts and talks, with their transcripts re-set in khazana's study."
+              accent="editorial"
+            >
+              {listenItems.map((it) => (
+                <ListenCard item={it} />
+              ))}
+            </MediaRail>
+          </div>
+        )}
+
+        <!-- Browse by category: per-channel horizontal rails.
+             Only channels with ≥3 substantial (≥5-min) reads get a row.
+             Filtering collapses rows whose channel doesn't match. -->
+        {categoryRails.length > 0 && (
+          <div class="browse" data-reveal data-section="browse">
+            <div class="browse-head">
+              <span class="browse-rule" aria-hidden="true"></span>
+              <p class="browse-eyebrow">browse by topic</p>
+            </div>
+            {categoryRails.map(({ channel, items }) => (
+              <CategoryRail channel={channel} items={items} now={now} />
             ))}
-          </MediaRail>
+            <p class="browse-empty" hidden>
+              No category rows for this channel.
+            </p>
+          </div>
         )}
 
         {
@@ -329,104 +357,30 @@ const delay = (i: number) => Math.min(i, 8) * 60;
     }
   }
 
-  /* the feed's controls sit just under the hero, as the instrument's tuning row.
-     A hairline above ties the filter bar to the constellation it settled from. */
-  .feed-head {
-    margin-bottom: var(--s-6);
-    padding-top: var(--s-2);
-    border-top: var(--hair) solid var(--rule);
+  /* Hidden bento cards must collapse out of the grid (they have display:flex
+     which overrides the browser default for [hidden]). grid-auto-flow: dense
+     then re-packs the remaining visible cards cleanly. */
+  .bento :global([data-bento][hidden]) {
+    display: none !important;
   }
-
-  /* ── animated channel filter — sliding active pill ──────────────────── */
-  .filterbar {
-    position: relative;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(90deg, #000 96%, transparent);
-    mask-image: linear-gradient(90deg, #000 96%, transparent);
-  }
-  .filterbar::-webkit-scrollbar {
-    display: none;
-  }
-  .filters {
-    position: relative;
-    display: flex;
-    flex-wrap: nowrap;
-    gap: var(--s-2);
-    width: max-content;
-  }
-  /* the gliding pill behind the active filter (transform+width on a small
-     element; positioned by the feed script). */
-  .filter-indicator {
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 0;
-    border-radius: var(--r-sm);
-    background: var(--accent);
-    box-shadow: 0 0 14px -2px color-mix(in oklab, var(--accent) 55%, transparent);
-    transform: translateX(0);
-    opacity: 0;
-    pointer-events: none;
-    transition:
-      transform var(--dur) var(--ease-spring),
-      width var(--dur) var(--ease-spring),
-      opacity var(--dur-fast) var(--ease-out);
-    z-index: 0;
-  }
-  .filter {
-    position: relative;
-    z-index: 1;
-    font-family: var(--font-mono);
-    font-size: var(--t-xs);
-    color: var(--ink-dim);
-    border: var(--hair) solid var(--rule);
-    border-radius: var(--r-sm);
-    padding: 0.2em 0.6em;
-    white-space: nowrap;
-    transition:
-      color var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out),
-      transform var(--dur-fast) var(--ease-out);
-  }
-  .filter:hover {
-    color: var(--accent);
-    text-decoration: none;
-    border-color: var(--rule-bright);
-    transform: translateY(-1px);
-  }
-  .filter:active {
-    transform: translateY(0);
-  }
-  .filter.is-active {
-    color: var(--bg);
-    border-color: var(--accent);
-  }
-  /* When the JS indicator is live, the active pill's own bg is redundant; keep
-     the text contrast but let the gliding pill provide the fill. */
-  .filters.has-indicator .filter.is-active {
-    background: transparent;
-  }
-  .filters:not(.has-indicator) .filter.is-active {
-    background: var(--accent);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .filter-indicator {
-      transition: none;
-    }
+  /* Hidden category rows similarly collapse */
+  :global([data-catrow][hidden]) {
+    display: none !important;
   }
 
   /* ── bento mosaic ────────────────────────────────────────────────────
      Asymmetric grid: a 4-col base on desktop with dense auto-flow so hidden
      (filtered-out) cards re-pack cleanly. Feature spans the full lead row;
-     wide spans 2 cols; tall spans 2 rows. Collapses to 1 col on phones. */
+     wide spans 2 cols; tall spans 2 rows. Collapses to 1 col on phones.
+     With 30 items, the grid becomes a rich browsable featured area — a
+     curated library section, not just a wall. */
   .bento {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     grid-auto-rows: minmax(168px, auto);
     grid-auto-flow: row dense;
     gap: var(--s-4);
+    margin-top: var(--s-2);
   }
   .bento :global([data-bento="feature"]) {
     grid-column: span 4;
@@ -468,11 +422,47 @@ const delay = (i: number) => Math.min(i, 8) * 60;
     }
   }
 
-  .empty {
+  .bento-empty {
     grid-column: 1 / -1;
     padding: var(--s-8) 0;
     color: var(--ink-faint);
     font-family: var(--font-mono);
+    text-align: center;
+  }
+
+  /* ── Browse by topic section ───────────────────────────────────────── */
+  .browse {
+    margin-top: var(--s-10);
+  }
+  .browse-head {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    padding-top: var(--s-3);
+    border-top: var(--hair) solid var(--rule);
+    margin-bottom: var(--s-2);
+  }
+  .browse-rule {
+    display: inline-block;
+    width: 1.6em;
+    height: 1px;
+    background: var(--editorial);
+    opacity: 0.65;
+    flex-shrink: 0;
+  }
+  .browse-eyebrow {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+    color: var(--ink-faint);
+  }
+  .browse-empty {
+    margin-top: var(--s-6);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
     text-align: center;
   }
 
@@ -901,56 +891,104 @@ const delay = (i: number) => Math.min(i, 8) * 60;
 </style>
 
 <script>
-  // Framework-free channel filter + sliding active pill. Progressive
-  // enhancement: with JS off, all cards show and each filter is a real href.
-  // The mosaic's `grid-auto-flow: dense` re-packs around hidden cards.
-  const params = new URLSearchParams(location.search);
-  const active = params.get("channel") ?? "";
+  // ── Bento + browse channel filtering ────────────────────────────────────
+  // Listens to the khz:channelchange event dispatched by Shell's header filter
+  // script. Filters bento cards and category rows live without a page reload.
+  // The register's own initRegister() also listens to this event.
 
-  function applyFilter() {
+  // Resolve the effective channel set from a khz:channelchange detail.
+  // Single channel → [ch]; group → channels[]; "all" → [] (no filter).
+  function resolveChannelSet(detail: { channel: string; channels?: string[] }): string[] {
+    if (detail.channels && detail.channels.length > 0) return detail.channels;
+    if (detail.channel) return [detail.channel];
+    return [];
+  }
+
+  function applyBentoFilter(activeChannels: string[]): void {
     const cards = document.querySelectorAll<HTMLElement>(".bento [data-channels]");
-    const empty = document.querySelector<HTMLElement>(".bento .empty");
+    const empty = document.querySelector<HTMLElement>(".bento-empty");
     let shown = 0;
     cards.forEach((card) => {
-      const channels = (card.dataset.channels ?? "").split(" ");
-      const match = active === "" || channels.includes(active);
+      const cardChannels = (card.dataset.channels ?? "").split(" ").filter(Boolean);
+      const match = activeChannels.length === 0 || cardChannels.some((c) => activeChannels.includes(c));
       card.hidden = !match;
       if (match) shown++;
     });
     if (empty) empty.hidden = shown !== 0;
+  }
 
-    document.querySelectorAll<HTMLElement>(".filter").forEach((el) => {
-      el.classList.toggle("is-active", (el.dataset.filter ?? "") === active);
+  function applyBrowseFilter(activeChannels: string[]): void {
+    const browse = document.querySelector<HTMLElement>("[data-section='browse']");
+    if (!browse) return;
+    const rows = browse.querySelectorAll<HTMLElement>("[data-catrow]");
+    const empty = browse.querySelector<HTMLElement>(".browse-empty");
+    let shown = 0;
+    rows.forEach((row) => {
+      const rowChannel = row.dataset.catrowChannel ?? "";
+      const match = activeChannels.length === 0 || activeChannels.includes(rowChannel);
+      row.hidden = !match;
+      if (match) shown++;
+    });
+    if (empty) empty.hidden = shown !== 0 || activeChannels.length === 0;
+  }
+
+  function applyWatchFilter(activeChannels: string[]): void {
+    const section = document.querySelector<HTMLElement>("[data-section='watch']");
+    if (!section) return;
+    const cards = section.querySelectorAll<HTMLElement>("[data-channels]");
+    if (cards.length === 0) return;
+    let shown = 0;
+    cards.forEach((card) => {
+      const cardChannels = (card.dataset.channels ?? "").split(" ").filter(Boolean);
+      const match = activeChannels.length === 0 || cardChannels.some((c) => activeChannels.includes(c));
+      card.hidden = !match;
+      if (match) shown++;
+    });
+    section.hidden = shown === 0 && activeChannels.length > 0;
+  }
+
+  function applyListenFilter(activeChannels: string[]): void {
+    const section = document.querySelector<HTMLElement>("[data-section='listen']");
+    if (!section) return;
+    const cards = section.querySelectorAll<HTMLElement>("[data-channels]");
+    if (cards.length === 0) return;
+    let shown = 0;
+    cards.forEach((card) => {
+      const cardChannels = (card.dataset.channels ?? "").split(" ").filter(Boolean);
+      const match = activeChannels.length === 0 || cardChannels.some((c) => activeChannels.includes(c));
+      card.hidden = !match;
+      if (match) shown++;
+    });
+    section.hidden = shown === 0 && activeChannels.length > 0;
+  }
+
+  function initFeedFilter(): void {
+    // Apply filter from URL on load (SSR renders correct active state, but
+    // client needs to hide mismatched items too)
+    const params = new URLSearchParams(location.search);
+    const initial = params.get("channel") ?? "";
+    if (initial) {
+      const initialSet = [initial];
+      applyBentoFilter(initialSet);
+      applyBrowseFilter(initialSet);
+      applyWatchFilter(initialSet);
+      applyListenFilter(initialSet);
+    }
+
+    // Listen for filter changes from the header — extended event now includes
+    // `channels` array for group-level filtering (union of group's sub-channels).
+    document.addEventListener("khz:channelchange", (ev) => {
+      const detail = (ev as CustomEvent<{ channel: string; channels?: string[] }>).detail;
+      const activeChannels = resolveChannelSet(detail);
+      applyBentoFilter(activeChannels);
+      applyBrowseFilter(activeChannels);
+      applyWatchFilter(activeChannels);
+      applyListenFilter(activeChannels);
     });
   }
 
-  // Slide the indicator pill under the active filter (transform + width only).
-  function positionIndicator() {
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const filters = document.querySelector<HTMLElement>("#filters");
-    const indicator = document.querySelector<HTMLElement>(".filter-indicator");
-    const activeEl = document.querySelector<HTMLElement>(".filter.is-active");
-    if (!filters || !indicator || !activeEl) return;
-    filters.classList.add("has-indicator");
-    const frect = filters.getBoundingClientRect();
-    const arect = activeEl.getBoundingClientRect();
-    indicator.style.opacity = "1";
-    indicator.style.width = `${arect.width}px`;
-    indicator.style.transform = `translateX(${arect.left - frect.left}px)`;
-    if (reduce) indicator.style.transitionDuration = "0ms";
-  }
-
-  function init() {
-    applyFilter();
-    positionIndicator();
-  }
-
-  init();
-  // Re-measure after fonts settle (pill widths shift) and on resize.
-  if ("fonts" in document) document.fonts.ready.then(positionIndicator).catch(() => {});
-  window.addEventListener("resize", positionIndicator);
-  // Re-run after View Transition navigations (e.g. clicking a channel filter).
-  document.addEventListener("astro:page-load", init);
+  initFeedFilter();
+  document.addEventListener("astro:page-load", initFeedFilter);
 </script>
 
 <!-- The Register: lightweight, paginated card/list view for the feed tail.

@@ -8,10 +8,10 @@ export interface FetchResult {
   text(): Promise<string>;
   json(): Promise<unknown>;
 }
-export type FetchFn = (url: string, init?: { headers?: Record<string, string> }) => Promise<FetchResult>;
+export type FetchFn = (url: string, init?: { headers?: Record<string, string>; method?: string; body?: string }) => Promise<FetchResult>;
 
 export const defaultFetch: FetchFn = async (url, init) => {
-  const res = await fetch(url, { headers: init?.headers });
+  const res = await fetch(url, { headers: init?.headers, method: init?.method, body: init?.body });
   return { ok: res.ok, status: res.status, text: () => res.text(), json: () => res.json() };
 };
 

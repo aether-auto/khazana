@@ -1,6 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" role="img" aria-label="khazana">
   <rect width="512" height="512" rx="96" fill="#0a0a0b" />
+  <!-- outer gem -->
   <path d="M112 224 L256 96 L400 224 L256 432 Z" stroke="#ffb627" stroke-width="26" stroke-linejoin="round" />
+  <!-- girdle: book spine + terminal line -->
   <path d="M112 224 H400" stroke="#ffb627" stroke-width="26" stroke-linecap="round" />
-  <path d="M256 96 V224 M184 224 L256 432 M328 224 L256 432" stroke="#ffb627" stroke-width="14" stroke-linecap="round" opacity="0.45" />
+  <!-- left page arcs (scaled from 32→512 viewBox: factor ×16) -->
+  <path d="M256 224 Q176 176 136 216" stroke="#ffb627" stroke-width="14" stroke-linecap="round" opacity="0.55"/>
+  <path d="M256 224 Q184 152 160 112" stroke="#ffb627" stroke-width="14" stroke-linecap="round" opacity="0.38"/>
+  <!-- right page arcs -->
+  <path d="M256 224 Q336 176 376 216" stroke="#ffb627" stroke-width="14" stroke-linecap="round" opacity="0.55"/>
+  <path d="M256 224 Q328 152 352 112" stroke="#ffb627" stroke-width="14" stroke-linecap="round" opacity="0.38"/>
+  <!-- book spine / pavilion axis -->
+  <path d="M256 224 V432" stroke="#ffb627" stroke-width="18" stroke-linecap="round" opacity="0.48"/>
 </svg>

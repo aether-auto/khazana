@@ -28,6 +28,39 @@ export const W_FULLTEXT = 1.5;
  */
 export const W_MEDIA = 0.9;
 
+/**
+ * Heavy weight for the read-time quality term. Tuned so that read time is the
+ * dominant ordering signal: a 15-min item clearly beats an otherwise-equal
+ * 3-min or 45-min item even at max trust/recency. Total read-time contribution
+ * ranges 0–W_READTIME; other base terms each contribute ~0–1.5.
+ */
+export const W_READTIME = 3;
+
+/**
+ * Peak of the read-time Gaussian curve (minutes). The curve rewards items
+ * closest to this target length the most and falls off symmetrically on both
+ * sides. Named constant so tests and downstream code reference the same value.
+ */
+export const READ_TIME_PEAK_MIN = 15;
+
+/**
+ * Hard reject: items whose rendered read time is below this threshold are
+ * dropped from curated output entirely, BEFORE ranking. This removes bare-link
+ * items (0 min), short summaries, and transcript-less videos (0 min) in one
+ * single filter — no separate video flag needed.
+ */
+export const MIN_READ_MINUTES = 5;
+
+/** Words-per-minute used for FeedItem.body read-time estimation. Matches apps/site's FEED_WPM. */
+const FEED_WPM = 225;
+
+/**
+ * Standard deviation of the Gaussian read-time curve (minutes). σ=10 gives a
+ * natural hump: items 10 min away from the 15-min peak score ≈0.61 of max,
+ * while items 30+ min away approach 0. This rewards the 8–22 min band heavily.
+ */
+const READ_TIME_SIGMA = 10;
+
 /** Min plain-text length of `body` for an item to count as having full text. */
 const MIN_FULLTEXT_CHARS = 800;
 
@@ -60,6 +93,36 @@ function bodyTextLength(body: string | undefined): number {
     .replace(/<[^>]*>/g, " ")
     .replace(/\s+/g, " ")
     .trim().length;
+}
+
+/**
+ * Estimate rendered read time (whole minutes, can be 0) from a FeedItem's body.
+ * Strips HTML, counts whitespace-delimited words, divides by FEED_WPM (225).
+ * Returns 0 for items with no body — this is intentional: 0-min items are
+ * caught by the MIN_READ_MINUTES filter before they reach the ranker.
+ */
+export function readTimeMinutes(item: FeedItem): number {
+  if (!item.body) return 0;
+  const text = item.body.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  if (text === "") return 0;
+  const words = text.split(/\s+/).length;
+  return Math.round(words / FEED_WPM);
+}
+
+/**
+ * Gaussian read-time quality score in [0, 1] peaked at READ_TIME_PEAK_MIN (15).
+ * Formula: exp(-((minutes - PEAK)^2) / (2 * σ^2))
+ *
+ * Shape with σ=10:
+ *   2 min → 0.02   5 min → 0.61   8 min → 0.82
+ *  15 min → 1.00  25 min → 0.61  45 min → 0.01
+ *
+ * This rewards the 8–22 min band heavily and gently discounts both very short
+ * reads (≤5 min) and very long ones (≥40 min).
+ */
+export function readTimeScore(minutes: number): number {
+  const diff = minutes - READ_TIME_PEAK_MIN;
+  return Math.exp(-(diff * diff) / (2 * READ_TIME_SIGMA * READ_TIME_SIGMA));
 }
 
 /** Whether an item carries real full text rather than a summary / bare link. */
@@ -101,12 +164,19 @@ export function rankItems(items: FeedItem[], profile: TasteProfile, opts: RankOp
     // Full-text or partial media credit — mutually exclusive, no double-counting.
     const contentCredit = hasFullText(it) ? W_FULLTEXT : isTranscriptlessMedia(it) ? W_MEDIA : 0;
 
+    // Read-time quality term: Gaussian peaked at READ_TIME_PEAK_MIN (15 min).
+    // Items that survived the MIN_READ_MINUTES filter have ≥5 min read time,
+    // so this term always contributes positively; 0-min items are filtered
+    // upstream and never reach the ranker.
+    const rtScore = readTimeScore(readTimeMinutes(it));
+
     let score =
       W_RECENCY * recency +
       W_TRUST * trust +
       W_METRICS * metrics +
       W_CLUSTER * clusterBoost +
-      contentCredit;
+      contentCredit +
+      W_READTIME * rtScore;
 
     if (profile.ready) {
       const topicAffinity = mean(it.topics.map((t) => profile.topics[t] ?? 0));

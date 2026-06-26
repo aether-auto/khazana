@@ -55,6 +55,12 @@ export async function parseRssFeed(xml: string, entry: SourceEntry, now: string)
     const rssContent =
       (it as { contentEncoded?: string }).contentEncoded ?? it.content ?? undefined;
     const transcriptUrl = pickTranscriptUrl((it as { podcastTranscript?: TranscriptRef[] }).podcastTranscript);
+    // Capture audio enclosure URL (the MP3 on the show's CDN) for Whisper transcription.
+    // rss-parser exposes this as `item.enclosure.url`.
+    const enclosureUrl =
+      typeof (it as { enclosure?: { url?: string; type?: string } }).enclosure?.url === "string"
+        ? (it as { enclosure: { url: string } }).enclosure.url
+        : undefined;
     const parsed = FeedItemSchema.safeParse({
       id: makeFeedItemId(entry.type, url),
       source: entry.id,
@@ -75,9 +81,14 @@ export async function parseRssFeed(xml: string, entry: SourceEntry, now: string)
     if (parsed.success) {
       // Stash transient fields on the item for the enrich step (not part of the
       // FeedItem schema; consumed and dropped before output).
-      const enrichable = parsed.data as FeedItem & { transcriptUrl?: string; rssContent?: string };
+      const enrichable = parsed.data as FeedItem & {
+        transcriptUrl?: string;
+        rssContent?: string;
+        enclosureUrl?: string;
+      };
       if (transcriptUrl) enrichable.transcriptUrl = transcriptUrl;
       if (rssContent) enrichable.rssContent = rssContent;
+      if (enclosureUrl) enrichable.enclosureUrl = enclosureUrl;
       out.push(parsed.data);
     }
   }

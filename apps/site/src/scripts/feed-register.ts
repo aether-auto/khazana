@@ -100,7 +100,9 @@ function initRegister(): void {
   const now = Date.now();
 
   const params = new URLSearchParams(location.search);
-  const channel = params.get("channel") ?? "";
+  let channel = params.get("channel") ?? "";
+  // activeChannels is the resolved set — a single channel, a group union, or []
+  let activeChannels: string[] = channel ? [channel] : [];
 
   // current view: URL/localStorage > server default (data attr) > list
   let view: View =
@@ -108,7 +110,12 @@ function initRegister(): void {
     ((root.dataset.defaultView as View | undefined) || "list");
   if (view !== "list" && view !== "card") view = "list";
 
-  const filtered = channel ? all.filter((it) => it.topics.includes(channel)) : all;
+  function filterByChannels(set: string[]): RegisterItem[] {
+    if (set.length === 0) return all;
+    return all.filter((it) => it.topics.some((t) => set.includes(t)));
+  }
+
+  let filtered = filterByChannels(activeChannels);
   let shown = 0;
 
   function buildRow(it: RegisterItem): HTMLElement {
@@ -270,6 +277,18 @@ function initRegister(): void {
     reset();
   }
 
+  function setChannels(next: string[], singleChannel: string): void {
+    // Guard: skip re-render if nothing changed
+    if (
+      next.length === activeChannels.length &&
+      next.every((c, i) => c === activeChannels[i])
+    ) return;
+    activeChannels = next;
+    channel = singleChannel;
+    filtered = filterByChannels(activeChannels);
+    reset();
+  }
+
   function syncToggle(): void {
     if (!toggle) return;
     toggle.querySelectorAll<HTMLElement>("[data-view]").forEach((btn) => {
@@ -283,6 +302,20 @@ function initRegister(): void {
   toggle?.addEventListener("click", (ev) => {
     const btn = (ev.target as HTMLElement | null)?.closest<HTMLElement>("[data-view]");
     if (btn?.dataset.view) setView(btn.dataset.view as View);
+  });
+
+  // Listen for channel filter changes from the header hierarchical filter.
+  // Extended event detail: { channel, channels?, group? }
+  //   channels = group union (array) for group-level; [channel] or [] otherwise.
+  document.addEventListener("khz:channelchange", (ev) => {
+    const detail = (ev as CustomEvent<{ channel: string; channels?: string[] }>).detail;
+    const nextChannels: string[] =
+      detail.channels && detail.channels.length > 0
+        ? detail.channels
+        : detail.channel
+          ? [detail.channel]
+          : [];
+    setChannels(nextChannels, detail.channel ?? "");
   });
 
   syncToggle();

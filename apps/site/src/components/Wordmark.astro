@@ -1,20 +1,25 @@
 ---
+import MarkLogo from "./MarkLogo.astro";
+
 interface Props {
   href?: string;
+  /** Show the gem mark beside the wordmark. Defaults true. */
+  showMark?: boolean;
 }
-const { href = Astro.url.pathname } = Astro.props;
+const { href = Astro.url.pathname, showMark = true } = Astro.props;
 const base = import.meta.env.BASE_URL;
 ---
 
 <a class="wordmark" href={href === Astro.url.pathname ? base : href} aria-label="khazana — home">
+  {showMark && <MarkLogo size={22} ariaHidden={true} />}
   <span class="prompt" aria-hidden="true">›</span><span class="name">khazana</span>
 </a>
 
 <style>
   .wordmark {
     display: inline-flex;
-    align-items: baseline;
-    gap: 0.35em;
+    align-items: center;
+    gap: 0.45em;
     font-family: var(--font-mono);
     font-size: var(--t-lg);
     font-weight: 600;
@@ -25,6 +30,11 @@ const base = import.meta.env.BASE_URL;
   .wordmark:hover {
     text-decoration: none;
     text-shadow: none;
+  }
+  /* Subtle hover shimmer on the mark: amplitude scaleX pulse — GPU only */
+  .wordmark:hover :global(.mark-logo) {
+    filter: drop-shadow(0 0 6px color-mix(in oklab, var(--accent) 45%, transparent));
+    transition: filter var(--dur-fast) var(--ease-out);
   }
   .prompt {
     color: var(--accent);

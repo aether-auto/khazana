@@ -212,3 +212,40 @@ test("selectListenRail caps the rail at the requested limit", () => {
   );
   expect(selectListenRail(items, 6)).toHaveLength(6);
 });
+
+// ── NEW: bucketByChannel (TDD — tests written BEFORE implementation) ─────────
+import { bucketByChannel } from "./feed.js";
+
+test("bucketByChannel groups items by their primary topic", () => {
+  const items = [
+    item({ id: "t1", topics: ["tech", "ai"] }),
+    item({ id: "t2", topics: ["tech"] }),
+    item({ id: "f1", topics: ["finance"] }),
+    item({ id: "h1", topics: ["history"] }),
+  ];
+  const buckets = bucketByChannel(items);
+  expect(buckets.get("tech")?.map((i) => i.id)).toEqual(["t1", "t2"]);
+  expect(buckets.get("finance")?.map((i) => i.id)).toEqual(["f1"]);
+  expect(buckets.get("history")?.map((i) => i.id)).toEqual(["h1"]);
+});
+
+test("bucketByChannel skips items with no topics", () => {
+  const items = [item({ id: "notopic", topics: [] }), item({ id: "t1", topics: ["tech"] })];
+  const buckets = bucketByChannel(items);
+  expect(buckets.has("tech")).toBe(true);
+  // no entry for empty-topic items
+  expect([...buckets.values()].flat().map((i) => i.id)).not.toContain("notopic");
+});
+
+test("bucketByChannel preserves rank order within each bucket", () => {
+  const items = [
+    item({ id: "a", topics: ["ai"] }),
+    item({ id: "b", topics: ["ai"] }),
+    item({ id: "c", topics: ["ai"] }),
+  ];
+  expect(bucketByChannel(items).get("ai")?.map((i) => i.id)).toEqual(["a", "b", "c"]);
+});
+
+test("bucketByChannel returns an empty map for an empty list", () => {
+  expect(bucketByChannel([])).toEqual(new Map());
+});

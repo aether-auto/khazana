@@ -7,6 +7,15 @@ import type { LlmClient } from "./enrich.js";
 
 let dir: string;
 
+/** Build a body string that produces ~N minutes of read time at 225 wpm. */
+function makeBody(minutes: number): string {
+  const words = Math.round(minutes * 225);
+  return Array.from({ length: words }, (_, i) => `word${i}`).join(" ");
+}
+
+// Default body gives ~10 minutes of read time so items survive the MIN_READ_MINUTES filter.
+const DEFAULT_BODY = makeBody(10);
+
 function rawItem(id: string, title: string, topics: string[]): unknown {
   return {
     id,
@@ -19,6 +28,7 @@ function rawItem(id: string, title: string, topics: string[]): unknown {
     topics,
     entities: [],
     summary: "",
+    body: DEFAULT_BODY,
     media: [],
     kind: "link",
   };

@@ -1,0 +1,30 @@
+<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="khazana — vault-aperture mark">
+  <!-- Concept B: A vault-door aperture made of stacked hairline text-baseline
+       rules arranged in a diamond/gem shape. The outer contour is the gem outline;
+       inside, 5 horizontal rules at graduated widths (like text columns) create
+       the "stacked knowledge / pages" texture. A tiny central dot (the wax seal /
+       lock-point of the vault) anchors the composition.
+       Reads as: vault door + library shelves + gem facets, all at once. -->
+
+  <!-- outer gem silhouette — amber, same as mark.svg -->
+  <path d="M6 13 L16 4 L26 13 L16 28 Z" stroke="#ffb627" stroke-width="2" stroke-linejoin="round"/>
+
+  <!-- STACKED TEXT-BASELINE RULES inside the gem — the "library stacks in a vault".
+       Each rule is clipped (via path endpoints) to lie within the gem boundaries.
+       5 rules: above girdle (2 rules in crown), below girdle (2 rules in pavilion),
+       + the girdle itself (already drawn separately). -->
+
+  <!-- crown rule 1 — narrow, near apex -->
+  <path d="M13.2 8.2 H18.8" stroke="#ffb627" stroke-width="0.85" stroke-linecap="round" opacity="0.40"/>
+  <!-- crown rule 2 — wider, between apex and girdle -->
+  <path d="M10.5 10.8 H21.5" stroke="#ffb627" stroke-width="0.85" stroke-linecap="round" opacity="0.55"/>
+  <!-- girdle: the primary vault horizon + terminal text-line -->
+  <path d="M6 13 H26" stroke="#ffb627" stroke-width="2" stroke-linecap="round"/>
+  <!-- pavilion rule 1 — widest below girdle, still within pavilion -->
+  <path d="M9.5 17.5 H22.5" stroke="#ffb627" stroke-width="0.85" stroke-linecap="round" opacity="0.55"/>
+  <!-- pavilion rule 2 — narrowing toward tip -->
+  <path d="M12.2 22.2 H19.8" stroke="#ffb627" stroke-width="0.85" stroke-linecap="round" opacity="0.40"/>
+
+  <!-- central wax-seal dot: the vault's lock-point, the gem's table -->
+  <circle cx="16" cy="13" r="1.2" fill="#ffb627" opacity="0.65"/>
+</svg>

@@ -137,6 +137,29 @@ export function selectListenRail(items: FeedItem[], limit = 10): FeedItem[] {
   return pickOnePerSource(audio, limit);
 }
 
+/**
+ * Bucket a ranked feed into per-channel Maps. Each item is assigned to its
+ * PRIMARY topic (first entry in `topics`). Items with no topics are skipped.
+ * Rank order within each bucket is preserved.
+ *
+ * This feeds the category-browse rows on the feed page — callers can filter
+ * to channels with enough items (e.g. ≥ 3) before rendering rails.
+ */
+export function bucketByChannel(items: FeedItem[]): Map<string, FeedItem[]> {
+  const map = new Map<string, FeedItem[]>();
+  for (const it of items) {
+    const primary = it.topics[0];
+    if (!primary) continue;
+    const bucket = map.get(primary);
+    if (bucket) {
+      bucket.push(it);
+    } else {
+      map.set(primary, [it]);
+    }
+  }
+  return map;
+}
+
 /** Workshop selector: kind=idea OR any buildable-channel topic. */
 export function selectIdeas(items: FeedItem[]): FeedItem[] {
   return items.filter(
@@ -177,6 +200,9 @@ export function splitFeatured(
  * inherently fail the gate.
  */
 export const FEATURE_MIN_MINUTES = 7;
+
+/** Minimum read time (minutes) for an item to appear in a category browse row. */
+export const CATEGORY_MIN_MINUTES = 5;
 
 /**
  * Like `splitFeatured`, but with a content-agnostic HARD GATE: only items

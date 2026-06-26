@@ -1,22 +1,15 @@
 import type { FetchFn } from "./fetchers/build-source.js";
-import { withRetry } from "./retry.js";
+import { fetchProxyTranscript } from "./youtube-proxy.js";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Realistic browser UA so YouTube serves the full watch page. */
-const YOUTUBE_UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-
-/** Added to the transcript base URL to request clean JSON output. */
-const JSON3_SUFFIX = "&fmt=json3";
-
 /**
- * Minimum character count that separates a "real transcript" from a
- * description blurb. Below this we fall back to description-only mode.
+ * Approximate characters per paragraph when splitting a long transcript
+ * into readable prose paragraphs.
  */
-const MIN_TRANSCRIPT_CHARS = 300;
+const PARAGRAPH_CHARS = 500;
 
 // ---------------------------------------------------------------------------
 // Low-level XML helpers (kept for XML timedtext fallback path)
@@ -160,6 +153,15 @@ export function extractPlayerResponse(html: string): PlayerResponse | null {
 }
 
 /**
+ * Extract the INNERTUBE_API_KEY embedded in a YouTube watch-page HTML string.
+ * Returns null if not found.
+ */
+export function extractInnertubeApiKey(html: string): string | null {
+  const m = html.match(/"INNERTUBE_API_KEY"\s*:\s*"([^"]+)"/);
+  return m?.[1] ?? null;
+}
+
+/**
  * Pick the best caption track from a tracklist, preferring English manual
  * captions, then any English-tagged track, then the first track.
  */
@@ -196,104 +198,64 @@ export function youTubeVideoId(url: string): string | null {
   return null;
 }
 
-/** Wrap transcript plain text into simple paragraph HTML for `body`. */
+/**
+ * Wrap transcript plain text into readable prose HTML for `body`.
+ * Splits long text at sentence boundaries into ~PARAGRAPH_CHARS-character paragraphs.
+ */
 export function transcriptToHtml(text: string): string {
   const t = text.trim();
   if (!t) return "";
-  return `<p>${t}</p>`;
+
+  if (t.length <= PARAGRAPH_CHARS) {
+    return `<p>${t}</p>`;
+  }
+
+  // Split into sentences, then group into ~500-char paragraphs.
+  // Sentence boundary: period/exclamation/question followed by space or end.
+  const sentences = t.split(/(?<=[.!?])\s+/).filter(Boolean);
+  const paragraphs: string[] = [];
+  let current = "";
+
+  for (const sentence of sentences) {
+    if (current.length > 0 && current.length + sentence.length + 1 > PARAGRAPH_CHARS) {
+      paragraphs.push(current.trim());
+      current = sentence;
+    } else {
+      current = current.length > 0 ? `${current} ${sentence}` : sentence;
+    }
+  }
+  if (current.trim()) paragraphs.push(current.trim());
+
+  return paragraphs.map((p) => `<p>${p}</p>`).join("");
 }
 
 /**
- * Result from `fetchYouTubeTranscript` — tells the caller whether the body is
- * a real transcript or a short description-only fallback.
+ * Result from `fetchYouTubeTranscriptResult` — tells the caller whether the body is
+ * a real transcript or nothing was found. The `description-fallback` kind has been
+ * removed: if ALL methods fail, return `{ kind: "none" }`.
  */
 export type TranscriptResult =
   | { kind: "transcript"; text: string }
-  | { kind: "description-fallback"; text: string }
   | { kind: "none" };
 
 /**
- * Fetch a real YouTube transcript for `videoId` using the watch-page method:
+ * Fetch a YouTube transcript via proxy (Invidious → Piped).
+ * Never contacts youtube.com, googlevideo.com, or api/timedtext directly.
  *
- * 1. Fetch `https://www.youtube.com/watch?v={id}` with a browser UA.
- * 2. Extract `ytInitialPlayerResponse` from the page JS.
- * 3. Read `captions.playerCaptionsTracklistRenderer.captionTracks[]` and pick
- *    an English track (or the first available).
- * 4. Fetch the track's `baseUrl` with `&fmt=json3` for clean JSON; fall back
- *    to parsing the XML timedtext if JSON fails.
- *
- * Returns a `TranscriptResult` so the caller can flag description-only items.
- * Never throws — any error yields `{ kind: "none" }`.
+ * Returns a `TranscriptResult`. If all proxy instances fail → `{ kind: "none" }`.
+ * Never throws.
  */
 export async function fetchYouTubeTranscriptResult(
   videoId: string,
   fetchFn: FetchFn,
 ): Promise<TranscriptResult> {
   if (!videoId) return { kind: "none" };
-
-  try {
-    // Step 1: fetch the watch page with a realistic browser UA.
-    const pageUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    const pageRes = await withRetry((attempt) =>
-      fetchFn(pageUrl, {
-        headers: {
-          "User-Agent": YOUTUBE_UA,
-          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          "Accept-Language": "en-US,en;q=0.9",
-          // Signal we accept gzip so the response isn't a stub.
-          "Accept-Encoding": attempt === 1 ? "gzip, deflate, br" : "identity",
-        },
-      })
-    );
-    if (!pageRes.ok) return { kind: "none" };
-    const html = await pageRes.text();
-
-    // Detect hard consent / login walls where the ENTIRE page is a redirect.
-    // Note: accounts.google.com appears as a sign-in link in every normal watch
-    // page — only bail when the page is actually redirecting (consent wall).
-    if (
-      html.includes("consent.youtube.com") ||
-      html.startsWith("<!DOCTYPE html><html lang=\"en\"><head><meta http-equiv=\"refresh\"")
-    ) {
-      return { kind: "none" };
-    }
-
-    // Step 2: parse ytInitialPlayerResponse from the page.
-    const playerResponse = extractPlayerResponse(html);
-    if (!playerResponse) return { kind: "none" };
-
-    // Step 3: pick the best caption track.
-    const tracks =
-      playerResponse.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? [];
-    const track = pickCaptionTrack(tracks);
-    if (!track?.baseUrl) return { kind: "none" };
-
-    // Step 4a: try json3 format (cleaner than XML).
-    const json3Url = `${track.baseUrl}${JSON3_SUFFIX}`;
-    const json3Res = await withRetry(() => fetchFn(json3Url, { headers: { "User-Agent": YOUTUBE_UA } }));
-    if (json3Res.ok) {
-      const json3Text = await json3Res.text();
-      const parsed = parseTranscriptJson3(json3Text);
-      if (parsed.length >= MIN_TRANSCRIPT_CHARS) return { kind: "transcript", text: parsed };
-    }
-
-    // Step 4b: fall back to XML timedtext parsing.
-    const xmlRes = await withRetry(() => fetchFn(track.baseUrl, { headers: { "User-Agent": YOUTUBE_UA } }));
-    if (xmlRes.ok) {
-      const xmlText = await xmlRes.text();
-      const parsed = parseTranscriptXml(xmlText);
-      if (parsed.length >= MIN_TRANSCRIPT_CHARS) return { kind: "transcript", text: parsed };
-    }
-
-    return { kind: "none" };
-  } catch {
-    return { kind: "none" };
-  }
+  return fetchProxyTranscript(videoId, fetchFn);
 }
 
 /**
  * Legacy shim — returns plain transcript text or "" for the enrichContent layer.
- * Callers that need to distinguish real-transcript vs description-fallback should
+ * Callers that need to distinguish real-transcript vs none should
  * use `fetchYouTubeTranscriptResult` directly.
  *
  * @deprecated Use fetchYouTubeTranscriptResult + enrichContent integration below.

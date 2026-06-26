@@ -1,0 +1,378 @@
+---
+// CategoryRail.astro — a horizontally-scrolling browse row for one channel.
+// Semantics: a scannable "library shelf" for the reader to find what they want.
+// Reuses the rail track + snap pattern from MediaRail but with article cards
+// that show the full stat bar (read-time, kind, source, freshness, score).
+import type { FeedItem } from "@khazana/core";
+import { readTimeFromHtml } from "../lib/read-time.js";
+import { extractYouTubeId, buildYouTubeThumbnail } from "../lib/media.js";
+import TimeAgo from "./TimeAgo.astro";
+
+interface Props {
+  channel: string;
+  items: FeedItem[];
+  now: string;
+}
+const { channel, items, now } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+// Kind → glyph map — precomputed in frontmatter (not in JSX template where TS
+// annotations like Record<string, string> can't be used inline).
+const KIND_GLYPH: Record<string, string> = {
+  video: "▶",
+  audio: "◉",
+  paper: "※",
+  discussion: "⟆",
+  idea: "◈",
+  link: "↗",
+};
+---
+
+<section
+  class="catrow"
+  data-catrow
+  data-catrow-channel={channel}
+  aria-label={`Browse: ${channel}`}
+>
+  <div class="catrow-head">
+    <div class="catrow-eyebrow">
+      <span class="catrow-rule" aria-hidden="true"></span>
+      <a class="catrow-ch" href={`${base}/?channel=${channel}`}>{channel}</a>
+      <span class="catrow-count">{items.length}</span>
+    </div>
+  </div>
+
+  <div class="catrow-track-wrap">
+    <div class="catrow-track" role="list">
+      {items.slice(0, 12).map((item) => {
+        const readMin = item.body ? readTimeFromHtml(item.body) : null;
+        const videoId = item.kind === "video" ? extractYouTubeId(item.url) : null;
+        const thumbUrl = videoId ? buildYouTubeThumbnail(videoId) : null;
+        const readHref = `${base}/item/${item.id}`;
+        const glyph = KIND_GLYPH[item.kind] ?? "↗";
+        return (
+          <article
+            class="catcard"
+            data-channels={item.topics.join(" ")}
+            data-kind={item.kind}
+            role="listitem"
+          >
+            {thumbUrl && (
+              <a href={readHref} class="catcard-thumb-wrap" tabindex="-1" aria-hidden="true">
+                <img
+                  class="catcard-thumb"
+                  src={thumbUrl}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  width="480"
+                  height="270"
+                  onerror="this.closest('.catcard-thumb-wrap').style.display='none'"
+                />
+                <span class="catcard-play" aria-hidden="true">▶</span>
+              </a>
+            )}
+            <div class="catcard-body">
+              <div class="catcard-meta">
+                <span class="catcard-kind" aria-label={item.kind}>{glyph}</span>
+                <span class="catcard-src">{item.source}</span>
+                <TimeAgo iso={item.publishedAt} now={now} />
+              </div>
+              <a href={readHref} class="catcard-title">{item.title}</a>
+              <div class="catcard-stats">
+                {readMin !== null && (
+                  <span class="catcard-stat" title="read time">
+                    <span class="catcard-stat-label">rt</span>
+                    <span class="catcard-stat-val">{readMin}m</span>
+                  </span>
+                )}
+                {item.metrics?.score != null && (
+                  <span class="catcard-stat" title="score">
+                    <span class="catcard-stat-label">^</span>
+                    <span class="catcard-stat-val">{item.metrics.score >= 1000 ? `${(item.metrics.score / 1000).toFixed(1)}k` : item.metrics.score}</span>
+                  </span>
+                )}
+                {item.trustScore != null && (
+                  <span class="catcard-stat catcard-trust" title="trust score">
+                    <span class="catcard-stat-label">t</span>
+                    <span class="catcard-stat-val">{Math.round(item.trustScore * 10)}</span>
+                  </span>
+                )}
+                <a
+                  class="catcard-src-link"
+                  href={item.url}
+                  data-track="open"
+                  data-item-id={item.id}
+                  rel="noopener noreferrer"
+                  title="open original source"
+                  tabindex="-1"
+                >↗</a>
+              </div>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  </div>
+</section>
+
+<style>
+  .catrow {
+    margin-top: var(--s-8);
+  }
+  .catrow-head {
+    margin-bottom: var(--s-4);
+  }
+  .catrow-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7ch;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.06em;
+    text-transform: lowercase;
+    color: var(--ink-faint);
+  }
+  .catrow-rule {
+    display: inline-block;
+    width: 1.4em;
+    height: 1px;
+    background: var(--accent);
+    opacity: 0.6;
+  }
+  .catrow-ch {
+    color: var(--ink-dim);
+    text-transform: lowercase;
+    letter-spacing: 0.04em;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  .catrow-ch:hover {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .catrow-count {
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* track: horizontally scrollable, snap, fade edges */
+  .catrow-track-wrap {
+    position: relative;
+    margin: 0 calc(-1 * var(--s-2));
+  }
+  .catrow-track-wrap::before,
+  .catrow-track-wrap::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: var(--s-2);
+    width: var(--s-6);
+    z-index: 2;
+    pointer-events: none;
+  }
+  .catrow-track-wrap::before {
+    left: 0;
+    background: linear-gradient(90deg, var(--bg), transparent);
+  }
+  .catrow-track-wrap::after {
+    right: 0;
+    background: linear-gradient(270deg, var(--bg), transparent);
+  }
+  .catrow-track {
+    display: flex;
+    gap: var(--s-4);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: var(--s-2);
+    padding: var(--s-2) var(--s-5) var(--s-2);
+    scrollbar-width: thin;
+    scrollbar-color: var(--rule-bright) transparent;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  .catrow-track::-webkit-scrollbar { height: 6px; }
+  .catrow-track::-webkit-scrollbar-track { background: transparent; }
+  .catrow-track::-webkit-scrollbar-thumb {
+    background: var(--rule);
+    border-radius: 99px;
+  }
+  .catrow-track:hover::-webkit-scrollbar-thumb { background: var(--rule-bright); }
+
+  /* ── catcard: the individual article tile in a category row ────────────── */
+  .catcard {
+    flex: 0 0 auto;
+    width: clamp(220px, 22vw, 272px);
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-md);
+    background: var(--bg-card);
+    overflow: hidden;
+    transition:
+      transform var(--dur) var(--ease-overshoot),
+      border-color var(--dur) var(--ease-out),
+      box-shadow var(--dur) var(--ease-out);
+    will-change: transform;
+  }
+  .catcard:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in oklab, var(--accent) 28%, var(--rule));
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--accent) 22%, transparent),
+      0 14px 32px -14px rgba(0, 0, 0, 0.5);
+  }
+
+  /* thumbnail: 16:9 top panel */
+  .catcard-thumb-wrap {
+    display: block;
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: var(--bg-inset);
+    border-bottom: var(--hair) solid var(--rule);
+    flex-shrink: 0;
+  }
+  .catcard-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform var(--dur-slow) var(--ease-out), filter var(--dur) var(--ease-out);
+  }
+  .catcard:hover .catcard-thumb {
+    transform: scale(1.04);
+    filter: brightness(0.82);
+  }
+  .catcard-play {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    font-size: 1rem;
+    text-shadow: 0 0 10px color-mix(in oklab, var(--accent) 65%, transparent), 0 2px 6px rgba(0,0,0,0.6);
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-out);
+    background: radial-gradient(ellipse 55% 55% at 50% 50%, rgba(0,0,0,0.3), transparent);
+    pointer-events: none;
+  }
+  .catcard:hover .catcard-play { opacity: 1; }
+
+  /* body: padding + stack of meta, title, stats */
+  .catcard-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+    padding: var(--s-3) var(--s-3) var(--s-3);
+    flex: 1;
+  }
+  .catcard-meta {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-2);
+    flex-wrap: wrap;
+  }
+  /* kind glyph — amber signal */
+  .catcard-kind {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--accent);
+    flex-shrink: 0;
+    letter-spacing: 0;
+  }
+  .catcard-src {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    flex: 1;
+  }
+  /* TimeAgo styles inherited from its component */
+
+  .catcard-title {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: var(--t-base);
+    line-height: var(--lh-tight);
+    font-weight: 530;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color var(--dur-fast) var(--ease-out);
+    text-decoration: none;
+  }
+  .catcard-title:hover {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .catcard:hover .catcard-title {
+    color: var(--accent);
+  }
+
+  /* stats row — the instrument readout at the foot */
+  .catcard-stats {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    flex-wrap: wrap;
+    margin-top: auto;
+    padding-top: var(--s-2);
+    border-top: var(--hair) solid var(--rule);
+  }
+  .catcard-stat {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25ch;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+  .catcard-stat-label {
+    color: var(--ink-faint);
+    opacity: 0.6;
+    letter-spacing: 0.04em;
+  }
+  .catcard-stat-val {
+    color: var(--ink-dim);
+  }
+  .catcard-trust .catcard-stat-val {
+    color: color-mix(in oklab, var(--accent) 60%, var(--ink-dim));
+  }
+  .catcard-src-link {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    margin-left: auto;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  .catcard-src-link:hover {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .catcard,
+    .catcard-thumb,
+    .catcard-play {
+      transition: none;
+    }
+    .catcard:hover {
+      transform: none;
+    }
+    .catcard:hover .catcard-thumb {
+      transform: none;
+      filter: none;
+    }
+  }
+</style>

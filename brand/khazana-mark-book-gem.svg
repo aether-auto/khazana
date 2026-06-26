@@ -1,0 +1,26 @@
+<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="khazana — book-gem mark">
+  <!-- Concept A: Gem whose inner facets read as an open book spread.
+       The classic gem silhouette stays intact; the internal lines are redrawn
+       as a book spine + page arcs rather than the original cut-facet diagonals.
+       Clean, legible at 20px, deeply on-concept (treasury of literature). -->
+
+  <!-- outer gem: crown + pavilion, amber hairline -->
+  <path d="M6 13 L16 4 L26 13 L16 28 Z" stroke="#ffb627" stroke-width="2" stroke-linejoin="round"/>
+  <!-- girdle: the terminal horizon-line that doubles as the book's spine -->
+  <path d="M6 13 H26" stroke="#ffb627" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- LEFT PAGE: arc from girdle-left edge up toward crown-left facet face,
+       suggesting a turned page fanning toward the apex. -->
+  <path d="M16 13 Q11 11 8.5 13.5" stroke="#ffb627" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+  <!-- LEFT PAGE second arc (deeper page, slightly inset) -->
+  <path d="M16 13 Q11.5 9.5 10 7" stroke="#ffb627" stroke-width="0.9" stroke-linecap="round" opacity="0.38"/>
+
+  <!-- RIGHT PAGE mirror -->
+  <path d="M16 13 Q21 11 23.5 13.5" stroke="#ffb627" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+  <path d="M16 13 Q20.5 9.5 22 7" stroke="#ffb627" stroke-width="0.9" stroke-linecap="round" opacity="0.38"/>
+
+  <!-- Book spine: the vertical drop from girdle-center to pavilion tip.
+       A strong central axis that reads as the spine of the open book AND
+       the traditional crown-to-pavilion axis of the gem cut. -->
+  <path d="M16 13 V28" stroke="#ffb627" stroke-width="1.1" stroke-linecap="round" opacity="0.48"/>
+</svg>

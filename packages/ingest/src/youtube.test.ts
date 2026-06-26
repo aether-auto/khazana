@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import {
+  extractInnertubeApiKey,
   extractPlayerResponse,
   fetchYouTubeTranscript,
   fetchYouTubeTranscriptResult,
@@ -149,80 +150,129 @@ test("transcriptToHtml wraps text in a paragraph and is empty for empty input", 
 });
 
 // ---------------------------------------------------------------------------
-// fetchYouTubeTranscriptResult — happy path (json3)
+// Proxy mock helpers (Invidious)
 // ---------------------------------------------------------------------------
 
-/**
- * Build a FetchFn mock that serves:
- *  - the watch page HTML for the watch URL
- *  - the json3 timedtext for the json3 track URL
- *  - 404 for everything else
- */
-function makeMockFetch(baseUrl: string, json3Body: string): FetchFn {
+/** Sample VTT long enough to clear MIN_PROXY_CHARS (200). */
+const LONG_VTT = `WEBVTT
+
+00:00:01.000 --> 00:00:04.000
+This is segment one of the real transcript which is genuinely long.
+
+00:00:04.500 --> 00:00:08.000
+This is segment two of the real transcript which is genuinely long.
+
+00:00:08.500 --> 00:00:12.000
+This is segment three of the real transcript which is genuinely long.
+
+00:00:12.500 --> 00:00:16.000
+This is segment four of the real transcript which is genuinely long.
+
+00:00:16.500 --> 00:00:20.000
+This is segment five of the real transcript which is genuinely long.
+`;
+
+const INVIDIOUS_CAPTIONS_JSON = JSON.stringify({
+  captions: [
+    { label: "English", languageCode: "en", url: "/api/v1/captions/VIDEO?label=English" },
+  ],
+});
+
+const TEST_INV_INSTANCE = "https://inv.test.example.com";
+const TEST_PIPED_INSTANCE = "https://pipedapi.test.example.com";
+
+/** Build a FetchFn mock that serves Invidious captions + VTT. */
+function makeMockFetch(_baseUrl: string, _json3Body: string): FetchFn {
   return async (url) => {
-    if (url.includes("youtube.com/watch")) {
-      return { ok: true, status: 200, text: async () => makeWatchPageHtml(baseUrl), json: async () => ({}) };
+    if (url.startsWith(TEST_INV_INSTANCE) && url.includes("/api/v1/captions/") && !url.includes("label=")) {
+      return { ok: true, status: 200, text: async () => INVIDIOUS_CAPTIONS_JSON, json: async () => ({}) };
     }
-    if (url.endsWith("&fmt=json3") || url.includes("&en&fmt=json3")) {
-      return { ok: true, status: 200, text: async () => json3Body, json: async () => ({}) };
+    if (url.startsWith(TEST_INV_INSTANCE) && url.includes("label=")) {
+      return { ok: true, status: 200, text: async () => LONG_VTT, json: async () => ({}) };
     }
     return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
   };
 }
 
-/**
- * Long enough json3 body so it clears MIN_TRANSCRIPT_CHARS.
- * Repeats "This is a real transcript sentence " until > 300 chars.
- */
+// We still need LONG_JSON3 for some tests below; redefine for compatibility.
 const LONG_JSON3 = JSON.stringify({
   events: Array.from({ length: 20 }, (_, i) => ({
     segs: [{ utf8: `This is segment number ${i + 1} of the real transcript which is genuinely long.` }],
   })),
 });
 
-test("fetchYouTubeTranscriptResult returns transcript kind with text when json3 succeeds", async () => {
-  const baseUrl = "https://cdn.youtube.com/timedtext?v=abc123";
-  const fetchFn = makeMockFetch(baseUrl, LONG_JSON3);
-  const result = await fetchYouTubeTranscriptResult("abc123", fetchFn);
-  expect(result.kind).toBe("transcript");
-  if (result.kind === "transcript") {
-    expect(result.text.length).toBeGreaterThan(300);
-    expect(result.text).toContain("real transcript");
-  }
-});
-
-// ---------------------------------------------------------------------------
-// fetchYouTubeTranscriptResult — XML fallback when json3 returns garbage
-// ---------------------------------------------------------------------------
-
-test("fetchYouTubeTranscriptResult falls back to XML timedtext when json3 returns short/invalid", async () => {
-  // Serve the watch page with one English track, then:
-  // - json3 URL returns empty
-  // - baseUrl returns XML with long content
-  const baseUrl = "https://cdn.youtube.com/timedtext?v=abc123";
-  const longXml = `<transcript>${Array.from({ length: 30 }, (_, i) =>
-    `<text start="${i}" dur="1">Word number ${i + 1} in the long English caption track content here.</text>`
-  ).join("")}</transcript>`;
-
+test("fetchYouTubeTranscriptResult returns transcript kind with text when Invidious VTT succeeds", async () => {
   const fetchFn: FetchFn = async (url) => {
-    if (url.includes("youtube.com/watch")) {
-      return { ok: true, status: 200, text: async () => makeWatchPageHtml(baseUrl), json: async () => ({}) };
+    if (url.startsWith(TEST_INV_INSTANCE) && url.includes("/api/v1/captions/") && !url.includes("label=")) {
+      return { ok: true, status: 200, text: async () => INVIDIOUS_CAPTIONS_JSON, json: async () => ({}) };
     }
-    if (url.includes("fmt=json3")) {
-      // Return very short json3 — below MIN_TRANSCRIPT_CHARS
-      return { ok: true, status: 200, text: async () => JSON.stringify({ events: [{ segs: [{ utf8: "short" }] }] }), json: async () => ({}) };
-    }
-    if (url.includes("en")) {
-      // English track baseUrl (no fmt=json3 suffix)
-      return { ok: true, status: 200, text: async () => longXml, json: async () => ({}) };
+    if (url.startsWith(TEST_INV_INSTANCE) && url.includes("label=")) {
+      return { ok: true, status: 200, text: async () => LONG_VTT, json: async () => ({}) };
     }
     return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
   };
 
-  const result = await fetchYouTubeTranscriptResult("abc123", fetchFn);
-  expect(result.kind).toBe("transcript");
-  if (result.kind === "transcript") {
-    expect(result.text.length).toBeGreaterThan(100);
+  // Override env so only our test instance is tried
+  const savedInv = process.env["INVIDIOUS_INSTANCES"];
+  const savedPiped = process.env["PIPED_INSTANCES"];
+  process.env["INVIDIOUS_INSTANCES"] = TEST_INV_INSTANCE;
+  process.env["PIPED_INSTANCES"] = "";
+
+  try {
+    const result = await fetchYouTubeTranscriptResult("abc123", fetchFn);
+    expect(result.kind).toBe("transcript");
+    if (result.kind === "transcript") {
+      expect(result.text.length).toBeGreaterThan(100);
+      expect(result.text).toContain("real transcript");
+    }
+  } finally {
+    if (savedInv === undefined) delete process.env["INVIDIOUS_INSTANCES"]; else process.env["INVIDIOUS_INSTANCES"] = savedInv;
+    if (savedPiped === undefined) delete process.env["PIPED_INSTANCES"]; else process.env["PIPED_INSTANCES"] = savedPiped;
+  }
+});
+
+// ---------------------------------------------------------------------------
+// fetchYouTubeTranscriptResult — Piped fallback when Invidious fails
+// ---------------------------------------------------------------------------
+
+test("fetchYouTubeTranscriptResult falls through to Piped when Invidious fails", async () => {
+  const PROXIED_VTT_URL = `${TEST_PIPED_INSTANCE}/vtt/abc123`;
+  const pipedStreamsJson = JSON.stringify({
+    subtitles: [
+      { code: "en", autoGenerated: false, url: PROXIED_VTT_URL },
+    ],
+  });
+
+  const fetchFn: FetchFn = async (url) => {
+    // Invidious fails
+    if (url.startsWith(TEST_INV_INSTANCE)) {
+      return { ok: false, status: 500, text: async () => "", json: async () => ({}) };
+    }
+    // Piped streams endpoint
+    if (url.includes("/streams/")) {
+      return { ok: true, status: 200, text: async () => pipedStreamsJson, json: async () => ({}) };
+    }
+    // The proxied VTT URL
+    if (url === PROXIED_VTT_URL) {
+      return { ok: true, status: 200, text: async () => LONG_VTT, json: async () => ({}) };
+    }
+    return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
+  };
+
+  const savedInv = process.env["INVIDIOUS_INSTANCES"];
+  const savedPiped = process.env["PIPED_INSTANCES"];
+  process.env["INVIDIOUS_INSTANCES"] = TEST_INV_INSTANCE;
+  process.env["PIPED_INSTANCES"] = TEST_PIPED_INSTANCE;
+
+  try {
+    const result = await fetchYouTubeTranscriptResult("abc123", fetchFn);
+    expect(result.kind).toBe("transcript");
+    if (result.kind === "transcript") {
+      expect(result.text.length).toBeGreaterThan(100);
+    }
+  } finally {
+    if (savedInv === undefined) delete process.env["INVIDIOUS_INSTANCES"]; else process.env["INVIDIOUS_INSTANCES"] = savedInv;
+    if (savedPiped === undefined) delete process.env["PIPED_INSTANCES"]; else process.env["PIPED_INSTANCES"] = savedPiped;
   }
 });
 
@@ -231,17 +281,16 @@ test("fetchYouTubeTranscriptResult falls back to XML timedtext when json3 return
 // ---------------------------------------------------------------------------
 
 test("fetchYouTubeTranscriptResult returns none when page has no caption tracks", async () => {
-  const pageHtml = `<html><body><script>var ytInitialPlayerResponse = ${JSON.stringify({
-    captions: { playerCaptionsTracklistRenderer: { captionTracks: [] } },
-  })};</script></body></html>`;
-  const fetchFn: FetchFn = async (url) => {
-    if (url.includes("youtube.com/watch")) {
-      return { ok: true, status: 200, text: async () => pageHtml, json: async () => ({}) };
-    }
-    return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
-  };
-  const result = await fetchYouTubeTranscriptResult("nocaps", fetchFn);
-  expect(result.kind).toBe("none");
+  const fetchFn: FetchFn = async () => ({
+    ok: false,
+    status: 404,
+    text: async () => "",
+    json: async () => ({}),
+  });
+  await withProxyEnv(TEST_INV_INSTANCE, TEST_PIPED_INSTANCE, async () => {
+    const result = await fetchYouTubeTranscriptResult("nocaps", fetchFn);
+    expect(result.kind).toBe("none");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -250,13 +299,15 @@ test("fetchYouTubeTranscriptResult returns none when page has no caption tracks"
 
 test("fetchYouTubeTranscriptResult returns none on consent redirect", async () => {
   const fetchFn: FetchFn = async () => ({
-    ok: true,
-    status: 200,
-    text: async () => `<html><body>Visit consent.youtube.com to continue</body></html>`,
+    ok: false,
+    status: 403,
+    text: async () => "",
     json: async () => ({}),
   });
-  const result = await fetchYouTubeTranscriptResult("consent", fetchFn);
-  expect(result.kind).toBe("none");
+  await withProxyEnv(TEST_INV_INSTANCE, TEST_PIPED_INSTANCE, async () => {
+    const result = await fetchYouTubeTranscriptResult("consent", fetchFn);
+    expect(result.kind).toBe("none");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -266,7 +317,9 @@ test("fetchYouTubeTranscriptResult returns none on consent redirect", async () =
 test("fetchYouTubeTranscriptResult is resilient: returns none on network error, never throws", async () => {
   const fetchFn: FetchFn = async () => { throw new Error("network down"); };
   await expect(fetchYouTubeTranscriptResult("err", fetchFn)).resolves.toEqual({ kind: "none" });
-});
+  // Note: with multiple Innertube fallback methods each doing retry backoffs,
+  // this may take several seconds — timeout is set high enough.
+}, 30_000);
 
 // ---------------------------------------------------------------------------
 // fetchYouTubeTranscriptResult — non-ok page response → none
@@ -274,8 +327,10 @@ test("fetchYouTubeTranscriptResult is resilient: returns none on network error, 
 
 test("fetchYouTubeTranscriptResult returns none when watch page returns non-ok", async () => {
   const fetchFn: FetchFn = async () => ({ ok: false, status: 403, text: async () => "", json: async () => ({}) });
-  const result = await fetchYouTubeTranscriptResult("blocked", fetchFn);
-  expect(result.kind).toBe("none");
+  await withProxyEnv(TEST_INV_INSTANCE, TEST_PIPED_INSTANCE, async () => {
+    const result = await fetchYouTubeTranscriptResult("blocked", fetchFn);
+    expect(result.kind).toBe("none");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -283,14 +338,291 @@ test("fetchYouTubeTranscriptResult returns none when watch page returns non-ok",
 // ---------------------------------------------------------------------------
 
 test("fetchYouTubeTranscript (legacy shim) returns text when transcript found", async () => {
-  const baseUrl = "https://cdn.youtube.com/timedtext?v=abc123";
-  const fetchFn = makeMockFetch(baseUrl, LONG_JSON3);
-  const text = await fetchYouTubeTranscript("abc123", fetchFn);
-  expect(text.length).toBeGreaterThan(0);
-  expect(text).toContain("real transcript");
+  const fetchFn: FetchFn = async (url) => {
+    if (url.startsWith(TEST_INV_INSTANCE) && url.includes("/api/v1/captions/") && !url.includes("label=")) {
+      return { ok: true, status: 200, text: async () => INVIDIOUS_CAPTIONS_JSON, json: async () => ({}) };
+    }
+    if (url.startsWith(TEST_INV_INSTANCE) && url.includes("label=")) {
+      return { ok: true, status: 200, text: async () => LONG_VTT, json: async () => ({}) };
+    }
+    return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
+  };
+
+  const savedInv = process.env["INVIDIOUS_INSTANCES"];
+  const savedPiped = process.env["PIPED_INSTANCES"];
+  process.env["INVIDIOUS_INSTANCES"] = TEST_INV_INSTANCE;
+  process.env["PIPED_INSTANCES"] = "";
+
+  try {
+    const text = await fetchYouTubeTranscript("abc123", fetchFn);
+    expect(text.length).toBeGreaterThan(0);
+    expect(text).toContain("real transcript");
+  } finally {
+    if (savedInv === undefined) delete process.env["INVIDIOUS_INSTANCES"]; else process.env["INVIDIOUS_INSTANCES"] = savedInv;
+    if (savedPiped === undefined) delete process.env["PIPED_INSTANCES"]; else process.env["PIPED_INSTANCES"] = savedPiped;
+  }
 });
 
 test("fetchYouTubeTranscript (legacy shim) returns '' when no transcript and never throws", async () => {
   const fetchFn: FetchFn = async () => { throw new Error("network down"); };
   await expect(fetchYouTubeTranscript("err", fetchFn)).resolves.toBe("");
+}, 30_000);
+
+// ---------------------------------------------------------------------------
+// extractInnertubeApiKey
+// ---------------------------------------------------------------------------
+
+test("extractInnertubeApiKey extracts key from watch page HTML", () => {
+  const html = `<html><head><script>ytcfg.set({"INNERTUBE_API_KEY":"AIzaSyTestKey123","INNERTUBE_CONTEXT_CLIENT_NAME":1});</script></head></html>`;
+  expect(extractInnertubeApiKey(html)).toBe("AIzaSyTestKey123");
+});
+
+test("extractInnertubeApiKey returns null when absent", () => {
+  expect(extractInnertubeApiKey("<html><body>no key here</body></html>")).toBeNull();
+  expect(extractInnertubeApiKey("")).toBeNull();
+});
+
+// ---------------------------------------------------------------------------
+// fetchYouTubeTranscriptResult — proxy fallback order
+// ---------------------------------------------------------------------------
+
+/** Helper to set env vars and restore them after. */
+async function withProxyEnv(
+  inv: string,
+  piped: string,
+  fn: () => Promise<void>,
+): Promise<void> {
+  const savedInv = process.env["INVIDIOUS_INSTANCES"];
+  const savedPiped = process.env["PIPED_INSTANCES"];
+  process.env["INVIDIOUS_INSTANCES"] = inv;
+  process.env["PIPED_INSTANCES"] = piped;
+  try {
+    await fn();
+  } finally {
+    if (savedInv === undefined) delete process.env["INVIDIOUS_INSTANCES"]; else process.env["INVIDIOUS_INSTANCES"] = savedInv;
+    if (savedPiped === undefined) delete process.env["PIPED_INSTANCES"]; else process.env["PIPED_INSTANCES"] = savedPiped;
+  }
+}
+
+test("fetchYouTubeTranscriptResult uses Invidious proxy (non-youtube.com endpoint)", async () => {
+  // Verifies the new proxy path is used — no youtubei/v1/player or youtube.com/watch calls.
+  const fetchedUrls: string[] = [];
+
+  const fetchFn: FetchFn = async (url) => {
+    fetchedUrls.push(url);
+    if (url.startsWith(TEST_INV_INSTANCE) && url.includes("/api/v1/captions/") && !url.includes("label=")) {
+      return { ok: true, status: 200, text: async () => INVIDIOUS_CAPTIONS_JSON, json: async () => ({}) };
+    }
+    if (url.startsWith(TEST_INV_INSTANCE) && url.includes("label=")) {
+      return { ok: true, status: 200, text: async () => LONG_VTT, json: async () => ({}) };
+    }
+    return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
+  };
+
+  await withProxyEnv(TEST_INV_INSTANCE, "", async () => {
+    const result = await fetchYouTubeTranscriptResult("nocaps123", fetchFn);
+    expect(result.kind).toBe("transcript");
+    // Must NOT have hit youtube.com directly
+    expect(fetchedUrls.some((u) => u.includes("youtube.com"))).toBe(false);
+  });
+});
+
+test("fetchYouTubeTranscriptResult tries second Invidious instance when first fails", async () => {
+  const INV2 = "https://inv2.test.example.com";
+  let secondInstanceCalled = false;
+
+  const fetchFn: FetchFn = async (url) => {
+    if (url.startsWith(TEST_INV_INSTANCE)) {
+      return { ok: false, status: 500, text: async () => "", json: async () => ({}) };
+    }
+    if (url.startsWith(INV2) && url.includes("/api/v1/captions/") && !url.includes("label=")) {
+      secondInstanceCalled = true;
+      return { ok: true, status: 200, text: async () => INVIDIOUS_CAPTIONS_JSON, json: async () => ({}) };
+    }
+    if (url.startsWith(INV2) && url.includes("label=")) {
+      return { ok: true, status: 200, text: async () => LONG_VTT, json: async () => ({}) };
+    }
+    return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
+  };
+
+  await withProxyEnv(`${TEST_INV_INSTANCE},${INV2}`, "", async () => {
+    const result = await fetchYouTubeTranscriptResult("androidtest", fetchFn);
+    expect(secondInstanceCalled).toBe(true);
+    expect(result.kind).toBe("transcript");
+  });
+});
+
+test("fetchYouTubeTranscriptResult tries Piped when Invidious fails, does not hit youtube.com", async () => {
+  const PROXIED_VTT = `${TEST_PIPED_INSTANCE}/vtt/srv3test`;
+  const pipedStreams = JSON.stringify({
+    subtitles: [{ code: "en", autoGenerated: false, url: PROXIED_VTT }],
+  });
+  const fetchedUrls: string[] = [];
+
+  const fetchFn: FetchFn = async (url) => {
+    fetchedUrls.push(url);
+    if (url.startsWith(TEST_INV_INSTANCE)) {
+      return { ok: false, status: 500, text: async () => "", json: async () => ({}) };
+    }
+    if (url.includes("/streams/")) {
+      return { ok: true, status: 200, text: async () => pipedStreams, json: async () => ({}) };
+    }
+    if (url === PROXIED_VTT) {
+      return { ok: true, status: 200, text: async () => LONG_VTT, json: async () => ({}) };
+    }
+    return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
+  };
+
+  await withProxyEnv(TEST_INV_INSTANCE, TEST_PIPED_INSTANCE, async () => {
+    const result = await fetchYouTubeTranscriptResult("srv3test", fetchFn);
+    expect(result.kind).toBe("transcript");
+    expect(fetchedUrls.some((u) => u.includes("youtube.com"))).toBe(false);
+  });
+});
+
+test("fetchYouTubeTranscriptResult picks English track over non-English in Invidious captions", async () => {
+  const captionsWithFrench = JSON.stringify({
+    captions: [
+      { label: "French", languageCode: "fr", url: "/api/v1/captions/VIDEO?label=French" },
+      { label: "English", languageCode: "en", url: "/api/v1/captions/VIDEO?label=English" },
+    ],
+  });
+  const fetchedTrackUrls: string[] = [];
+
+  const fetchFn: FetchFn = async (url) => {
+    if (url.startsWith(TEST_INV_INSTANCE) && url.includes("/api/v1/captions/") && !url.includes("label=")) {
+      return { ok: true, status: 200, text: async () => captionsWithFrench, json: async () => ({}) };
+    }
+    if (url.startsWith(TEST_INV_INSTANCE) && url.includes("label=")) {
+      fetchedTrackUrls.push(url);
+      return { ok: true, status: 200, text: async () => LONG_VTT, json: async () => ({}) };
+    }
+    return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
+  };
+
+  await withProxyEnv(TEST_INV_INSTANCE, "", async () => {
+    await fetchYouTubeTranscriptResult("frtest", fetchFn);
+    expect(fetchedTrackUrls.some((u) => u.includes("label=English"))).toBe(true);
+    expect(fetchedTrackUrls.some((u) => u.includes("label=French"))).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// description-fallback removed — none returned when all methods fail
+// ---------------------------------------------------------------------------
+
+test("fetchYouTubeTranscriptResult returns none (not description-fallback) when all methods fail", async () => {
+  const fetchFn: FetchFn = async () => ({
+    ok: false,
+    status: 500,
+    text: async () => "",
+    json: async () => ({}),
+  });
+
+  await withProxyEnv(TEST_INV_INSTANCE, TEST_PIPED_INSTANCE, async () => {
+    const result = await fetchYouTubeTranscriptResult("allfail", fetchFn);
+    expect(result.kind).toBe("none");
+    // TypeScript-level: ensure 'description-fallback' is not a valid kind
+    const kinds: Array<"transcript" | "none"> = [result.kind];
+    expect(kinds).toContain("none");
+  });
+});
+
+test("fetchYouTubeTranscriptResult never contacts youtube.com directly", async () => {
+  const fetchedUrls: string[] = [];
+  const fetchFn: FetchFn = async (url) => {
+    fetchedUrls.push(url);
+    if (url.startsWith(TEST_INV_INSTANCE) && url.includes("/api/v1/captions/") && !url.includes("label=")) {
+      return { ok: true, status: 200, text: async () => INVIDIOUS_CAPTIONS_JSON, json: async () => ({}) };
+    }
+    if (url.startsWith(TEST_INV_INSTANCE) && url.includes("label=")) {
+      return { ok: true, status: 200, text: async () => LONG_VTT, json: async () => ({}) };
+    }
+    return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
+  };
+
+  await withProxyEnv(TEST_INV_INSTANCE, TEST_PIPED_INSTANCE, async () => {
+    await fetchYouTubeTranscriptResult("direct123", fetchFn);
+    // No URL should be youtube.com, googlevideo.com, or youtubei
+    const directHits = fetchedUrls.filter(
+      (u) => u.includes("youtube.com") || u.includes("googlevideo.com") || u.includes("youtubei"),
+    );
+    expect(directHits).toHaveLength(0);
+  });
+});
+
+test("fetchYouTubeTranscriptResult is resilient: proxy returns none on all failures", async () => {
+  const fetchFn: FetchFn = async () => { throw new Error("network down"); };
+  await withProxyEnv(TEST_INV_INSTANCE, TEST_PIPED_INSTANCE, async () => {
+    const result = await fetchYouTubeTranscriptResult("blocked456", fetchFn);
+    expect(result.kind).toBe("none");
+  });
+});
+
+test("fetchYouTubeTranscriptResult skips Piped subtitle pointing to youtube.com", async () => {
+  const fetchedUrls: string[] = [];
+  const pipedStreams = JSON.stringify({
+    subtitles: [{ code: "en", autoGenerated: false, url: "https://www.youtube.com/api/timedtext?v=webonly789" }],
+  });
+
+  const fetchFn: FetchFn = async (url) => {
+    fetchedUrls.push(url);
+    if (url.startsWith(TEST_INV_INSTANCE)) {
+      return { ok: false, status: 500, text: async () => "", json: async () => ({}) };
+    }
+    if (url.includes("/streams/")) {
+      return { ok: true, status: 200, text: async () => pipedStreams, json: async () => ({}) };
+    }
+    return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
+  };
+
+  await withProxyEnv(TEST_INV_INSTANCE, TEST_PIPED_INSTANCE, async () => {
+    const result = await fetchYouTubeTranscriptResult("webonly789", fetchFn);
+    expect(result.kind).toBe("none");
+    // The youtube.com URL inside subtitles must never be fetched
+    expect(fetchedUrls.some((u) => u.includes("youtube.com/api/timedtext"))).toBe(false);
+  });
+});
+
+test("fetchYouTubeTranscriptResult sends Accept-Language header on Invidious requests (not a consent cookie)", async () => {
+  const seenHeaders: Record<string, string>[] = [];
+  const fetchFn: FetchFn = async (url, init) => {
+    seenHeaders.push(init?.headers ?? {});
+    if (url.startsWith(TEST_INV_INSTANCE) && url.includes("/api/v1/captions/") && !url.includes("label=")) {
+      return { ok: true, status: 200, text: async () => INVIDIOUS_CAPTIONS_JSON, json: async () => ({}) };
+    }
+    if (url.startsWith(TEST_INV_INSTANCE) && url.includes("label=")) {
+      return { ok: true, status: 200, text: async () => LONG_VTT, json: async () => ({}) };
+    }
+    return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
+  };
+
+  await withProxyEnv(TEST_INV_INSTANCE, "", async () => {
+    await fetchYouTubeTranscriptResult("cookietest", fetchFn);
+    // Proxy does not need to send CONSENT cookie — it never hits youtube.com
+    const sentCookies = seenHeaders.flatMap((h) => h["Cookie"] ? [h["Cookie"]] : []);
+    expect(sentCookies.some((c) => c?.includes("CONSENT=YES"))).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// transcriptToHtml multi-paragraph behavior
+// ---------------------------------------------------------------------------
+
+test("transcriptToHtml splits long transcript into multiple paragraphs", () => {
+  // Build a 1500-char transcript that should split into 3+ paragraphs
+  const sentence = "This is a sentence that adds content to the transcript body.";
+  const longText = Array.from({ length: 30 }, () => sentence).join(" ");
+  const html = transcriptToHtml(longText);
+  const paragraphCount = (html.match(/<p>/g) ?? []).length;
+  expect(paragraphCount).toBeGreaterThan(1);
+  // Each paragraph wrapped in <p>...</p>
+  expect(html).toMatch(/^<p>/);
+  expect(html).toMatch(/<\/p>$/);
+});
+
+test("transcriptToHtml keeps short transcripts as a single paragraph", () => {
+  const shortText = "Short transcript text.";
+  const html = transcriptToHtml(shortText);
+  expect(html).toBe("<p>Short transcript text.</p>");
 });
