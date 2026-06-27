@@ -2,7 +2,8 @@
 
 > You are taking over as **cofounder** of khazana. Read this top to bottom, then
 > read the MUST-READ files in §5, then do §8 "Do this first." This doc is the
-> single source of truth for picking up cold. **Your next focus is the WORKSHOP page.**
+> single source of truth for picking up cold. **Your next focus is the GRAPH page.**
+> (The Feed and the Workshop are both DONE — see §4.)
 
 ---
 
@@ -92,8 +93,9 @@ docs/superpowers/{specs,plans}/     — spec + per-phase plans
 .superpowers/sdd/*-report.md        — each subagent's report (gitignored, on disk)
 ```
 
-Surfaces: `/` Feed · `/reads` + `/reads/[slug]` · `/item/[id]` (in-app reader) ·
-**`/workshop`** (maker idea-board — YOUR NEXT TASK) · `/graph` · `/taste` · `/sources`.
+Surfaces: `/` Feed ✅ · `/reads` + `/reads/[slug]` · `/item/[id]` (in-app reader) ·
+`/workshop` ✅ (directed maker board) · **`/graph`** (signal map — YOUR NEXT TASK) ·
+`/taste` · `/sources`.
 
 ### Canonical vocab (single source of truth in `@khazana/core`)
 **Channels:** history, geopolitics, politics, geography, science, tech, ai, quantum,
@@ -105,12 +107,29 @@ youtube, podcast · **FeedItem.kind:** link, discussion, paper, idea, video, aud
 
 ## 4. Current state (branch `p1-foundation`, never deployed, no git remote)
 
-**P0 fixes + P1 Feed deep pass are DONE, committed, browser-verified (0 console
-errors both motion modes, 540 tests, typecheck clean).** Recent commits:
+**P0 fixes + P1 Feed deep pass + the WORKSHOP page are DONE, committed,
+browser-verified (0 console errors both motion modes, 616 tests, typecheck
+clean).** Recent commits (newest first):
+- `745760d` Workshop: lower the read-time bar for maker signal (3-min two-tier floor; maker contract moved to @khazana/core)
+- `d5eed3f` sources: repair 8 dead maker feeds + add 23 verified maker sources (682 → 705)
+- `c9f45dc` Workshop: directed maker selector — buildable projects only, reject op-eds
 - `66c2e40` P0 fixes (flagship title break, nav-leak sanitizer, reading-time, 7-min featured gate)
 - `92ccea7` Feed: Watch/Listen media rails + shorts/junk filter + one-per-source
 - `710fba7` Feed: hierarchical filter, treasury logo, read-time scoring, podcast Whisper transcripts, +232 sources
 - `553e6a1` ingest: YouTube-for-Actions layered fetcher + bounded-parallel rate-limited ingest
+
+**Workshop (`/workshop`) is now a directed maker board** ("the bench"): a
+deterministic, $0, **source-anchored** maker scorer (`packages/core/src/maker.ts` —
+`PURE_MAKER_ALLOWLIST` = `HANDS_ON_MAKER_SOURCES` ∪ `MAKER_INDUSTRY_SOURCES`,
+`MAKER_EXCLUDE`, `makerScore`, `titleBuildSignal`, `isMakerCandidate`,
+`MAKER_THRESHOLD=3`, `MAKER_MIN_READ_MINUTES=3`) replaced the old loose
+"any maker-channel tag" filter that pulled 156 items (~116 op-eds). The bar is
+lowered for maker items only (curate keeps `readTime>=5 OR (isMakerCandidate AND
+readTime>=3)`); the Feed's ≥5-min bar is preserved by an explicit register floor
+(`dropBelowFeedFloor`), Feed membership byte-identical 328→328. `BuildCard.astro` +
+channel-filter chips + an intentional "stocking the bench" sparse state. On local
+data the board is **10 genuine builds** (thin by design — see §7). The maker logic
+is shared in `@khazana/core` so curate and the site enforce ONE definition.
 
 **What the Feed now is (the model for quality/feel — match it on Workshop):**
 - Bento (top 30 by score, ≥7-min gate) → **▶ WATCH** + **◉ LISTEN** rails → "browse
@@ -123,9 +142,17 @@ errors both motion modes, 540 tests, typecheck clean).** Recent commits:
   auto-REJECTED**; **featured (bento) requires ≥7-min** rendered read; transcripts
   must be REAL (not summaries).
 
-**Real data (local):** careful re-ingest → **328 curated items, all full-text, ZERO
-under 5 min, avg read 14.8 min**. Types: rss 194, eng-blog 42, podcast 62, news 30.
-arXiv/Reddit/HN dropped out (abstracts/snippets < 5 min — correct per the rule).
+**Real data (local):** careful re-ingest → 328 ≥5-min curated items, all full-text,
+avg read 14.8 min (rss 194, eng-blog 42, podcast 62, news 30). A later curate-only
+re-run (`scripts/recurate.mts`, no network/key) added **12 short (3–5 min) maker
+items** under the new two-tier floor → **340 curated total**; the 12 shorts are
+Workshop-only (the Feed register floor keeps them out). arXiv/Reddit/HN still drop
+out of the Feed (abstracts/snippets < 5 min — correct per the rule).
+**Re-curate vs re-ingest:** `scripts/recurate.mts` re-runs ONLY curate over the
+existing `data/feed/raw.json` (which already carries enrichment topics) — fast, no
+network, no LLM key, and the Feed stays intact. Use it after a curate-logic change.
+Do NOT do a full local re-ingest without an enrichment key (GEMINI/NVIDIA/NIM): it
+would strip `topics` from the whole feed and degrade the verified Feed.
 
 **Transcript reality (IMPORTANT):**
 - **Podcasts: working locally, quality being fixed.** Whisper via
@@ -145,8 +172,10 @@ arXiv/Reddit/HN dropped out (abstracts/snippets < 5 min — correct per the rule
   `ALLOW_DIRECT_YOUTUBE=1` (OFF locally so we never hit YouTube directly; the P9
   Actions workflow sets it + `pip install yt-dlp`). **Locally the WATCH rail is empty
   — by design.**
-- **Sources: 682** (rss 283, youtube 208, news 46, podcast 45, arxiv 43, eng-blog 36,
-  reddit 17, hn 4), all zod-valid.
+- **Sources: 705** (was 682; +23 verified maker RSS sources, 8 dead maker feeds
+  repaired/disabled in `d5eed3f`), all zod-valid. The new maker sources fill the
+  Workshop on the next ENRICHED ingest (P9 Actions has the key + YouTube + higher
+  per-source LIMIT); locally they're thin/capped (see §7).
 
 **History worth knowing:** a WebGL "constellation" hero was built and **REJECTED**
 ("looks shit") and removed — don't bring it back. Effect-stacking gets rejected; a
@@ -163,8 +192,10 @@ strong concept + real interactivity wins. Keep the "Observatory/first light" ide
    (`MEMORY.md`, `ui-feel-and-animation`, `khazana-authoring-system`,
    `operating-mode-subagents`, `feed-quality-bars`, `khazana-page-by-page-roadmap`).
 4. `docs/superpowers/specs/2026-06-23-khazana-design.md` (vision), `CLAUDE.md`, `STYLE.md`.
-5. Recent reports in `.superpowers/sdd/phase1-*.md` (feed-layout, scoring, transcripts,
-   podcast-transcripts, podcast-quality, header, ingest-actions-concurrency).
+5. Recent reports in `.superpowers/sdd/` — Workshop:
+   `workshop-directed-selector-report.md`, `workshop-maker-floor-report.md`,
+   `maker-sources-research-report.md`; plus `phase1-*.md` (feed-layout, scoring,
+   transcripts, podcast-transcripts, podcast-quality, header, ingest-actions-concurrency).
 
 ---
 
@@ -200,59 +231,78 @@ replaces everything, it does NOT merge. Do ONE good full run, not incremental.
 ---
 
 ## 7. Known issues / carry-forwards (none blocking)
-- **Workshop is EMPTY on local data** (see §8) — its content (maker channels + ideas)
-  is YouTube/Reddit-heavy → Actions-only or short → dropped. This is the core
-  challenge of the Workshop task.
+- **Graph nodes open external `item.url`, not the in-app `/item/[id]` reader** — the
+  active task; see §8. (`build-graph.ts` sets item `href: it.url`.)
+- **Workshop is sparse on local data (10 builds), by design** — most maker sources
+  are YouTube/Reddit (Actions-only) or were LIMIT-capped/dead; the directed selector +
+  3-min floor + intentional sparse state handle it. The 23 new sources fill it on the
+  enriched P9 ingest. NOT a bug. One marginal item ("3D Print Gallery Exhibition", an
+  art show) slips via the `3D print` regex in `titleBuildSignal` — narrowing deferred.
 - **Podcast transcript QUALITY** — whisper-tiny hallucination + ads; being fixed (see
   §4). Re-ingest after the fix lands.
 - **WATCH rail empty locally** (YouTube → Actions only). By design.
 - **arXiv/Reddit/HN excluded from the feed** by the <5-min reject. Want papers? →
   "full-text the arXiv PDF" task later.
-- **122 feeds failed** in the last ingest (dead feeds from the aggressive 682-source
+- **~122 feeds failed** in the last ingest (dead feeds from the aggressive source
   expansion) — Scout (P8) should prune these.
-- Graph nodes still open external `item.url`, not the in-app `/item/[id]`.
 - P9 (orchestration/deploy) not started — everything is local, never deployed.
 
 ---
 
-## 8. Do this FIRST — the WORKSHOP page (`/workshop`)
+## 8. Do this FIRST — the GRAPH page (`/graph`)
 
 1. **Boot:** read §5, `pnpm install`, build + preview, and **look at the live site** —
-   especially `/workshop`, plus `/` (the Feed, your quality bar).
-2. **Workshop's purpose** (spec + founder): a **maker's idea-board** — "things worth
-   building" mined from the feed: **DIY, 3D-printing, IoT, embedded, AI-projects**,
-   sourced from Reddit + YouTube + maker blogs. A distinctive, *alive*, browsable
-   pinboard of buildable ideas — not a generic card grid.
-3. **Current state:** `apps/site/src/pages/workshop.astro` is a minimal masonry of
-   `IdeaCard`s via `selectIdeas(all)` (`feed.ts`: items with `kind==="idea"` OR a maker
-   channel). **On local data it renders EMPTY** — 0 idea/maker items survive (maker
-   sources are YouTube/Reddit = Actions-only, or their text is < 5 min).
-4. **The real challenge is data + design together:**
-   - **Populate it.** Add more maker **TEXT/RSS** sources that produce real ≥5-min reads
-     locally (Hackaday, Adafruit/SparkFun blogs, Make:, Hackster, EEVblog/3D-printing
-     blogs, arXiv cs.RO/eess, "Show HN") via a source-research subagent → temp file →
-     you merge into the seed → re-ingest yourself. And/or design how YouTube/Reddit
-     maker content (Actions) slots in. A `kind:"idea"` concept may need a curate/
-     generate step to synthesize buildable ideas from clusters — think it through.
-   - **Design a distinctive maker board** (feel paramount): buildable-idea cards with
-     the right stats (difficulty? parts? source? est. build time?), browsable by maker
-     channel, and a *beautiful, intentional* empty/sparse state for when local data is
-     thin (don't ship a sad "no ideas yet").
-   - Apply the same quality bars + aesthetic as the Feed.
-5. **Process:** subagents for the build (apps/site UI; source-research → seed merge);
-   `frontend-design` + `brainstorming` skills; re-ingest YOURSELF in a background shell;
-   verify in a real browser; commit at a clean milestone; update the ledger.
+   `/graph` first, plus `/` (the Feed, your quality bar) and `/workshop` (the model for
+   a directed, distinctive surface). Restart the preview after any change (§1/§6).
+2. **Graph's purpose** (spec + founder): show **how the curated signal connects** — a
+   knowledge-graph of curated items ● and Reads ● linked where they share topics/
+   entities. The founder loves charts/visuals/"impressive design"; this page should be
+   a genuinely **compelling, alive, explorable** map (Distill/Pudding/Observable-grade),
+   not a generic node blob. Reading comfort + 0 console errors in BOTH motion modes
+   stays sacred.
+3. **Current state (it EXISTS and works — this is a deep pass, not a from-scratch build):**
+   - `apps/site/src/pages/graph.astro` (81 lines) loads curated items + blog Reads,
+     builds a model via `apps/site/src/components/graph/lib/build-graph.ts`
+     (`buildGraph(items, posts, {minShared:2, maxNodes:60, base})` — links nodes that
+     share ≥2 topics/entities; pure, deterministic, tested in `build-graph.test.ts`),
+     and renders `ConnectionsGraph.tsx` (172 lines, **React + d3-force** SVG sim:
+     `forceManyBody/forceLink/forceCenter/forceCollide`, hover-to-trace-neighbors).
+   - It's functional but plain, and capped at 60 nodes over 340 items.
+4. **The real work (design + correctness together):**
+   - **FIX: nodes must open the in-app reader.** Item nodes currently link to the
+     external `it.url` (`build-graph.ts` → `href: it.url`); wire them to `/item/[id]`
+     instead (Reads already go to `/reads/<slug>`). This is the one known correctness
+     bug (§7) and a natural first commit.
+   - **Make it compelling** (feel paramount, the founder's bar): the d3-force SVG is the
+     baseline — elevate it. Consider: richer node encoding (size = degree, colour =
+     channel, item ● vs Read ● clearly distinct), labels that don't overlap, smooth
+     hover/focus that dims non-neighbors, click-to-focus a subgraph, a channel/entity
+     filter (reuse the Feed's `khz:channelchange` pattern), and a legend. Scale past 60
+     nodes gracefully (cluster/level-of-detail, or filter-driven) so 340 items are
+     explorable without a hairball. Canvas/WebGL is OK if it genuinely helps perf/feel —
+     but **a WebGL "constellation" hero was already built and REJECTED ("looks shit");
+     effect-stacking gets rejected — a strong concept + real interactivity wins**, so
+     lead with usefulness and restraint, measure perf, don't assume.
+   - Match the Feed/Workshop aesthetic (terminal × editorial, amber/clay, lines-not-
+     boxes) and design an intentional sparse/empty state.
+5. **Process:** subagents for the build (`frontend-design` + `brainstorming` skills);
+   keep `build-graph.ts` pure + TDD'd; verify in a REAL browser (0 console errors BOTH
+   motion modes, LOOK at screenshots); commit at clean milestones (the `/item/[id]`
+   wiring is a good first one); update the ledger (`.superpowers/sdd/progress.md`). No
+   re-ingest needed for this page — it reads the existing curated.json.
 
-**Roadmap order (memory `khazana-page-by-page-roadmap`):** Feed ✅ → **Workshop** →
-Graph → Sources → Taste → Feed (final/personalization pass) → **Publish + full ingest (P9)**.
+**Roadmap order (memory `khazana-page-by-page-roadmap`):** Feed ✅ → Workshop ✅ →
+**Graph** → Sources → Taste → Feed (final/personalization pass) → **Publish + full ingest (P9)**.
 
 ---
 
 ## 9. Idea backlog (cofounder — propose + build)
-- Workshop: the build above; plus "build difficulty"/"parts list" extraction, saved/
-  queued builds, a "weekend build" highlight.
-- Wire YouTube/Reddit maker content once Actions runs (P9 sets `ALLOW_DIRECT_YOUTUBE`).
-- Graph → wire nodes to in-app `/item/[id]`; make it visually compelling.
+- **Graph (current task, §8): wire item nodes to in-app `/item/[id]`; make it visually
+  compelling; scale past the 60-node cap; channel/entity filter + focus-a-subgraph.**
+- Workshop (DONE) — follow-ups: "build difficulty"/"parts list" extraction, saved/
+  queued builds, a "weekend build" highlight; narrow the `3D print` regex so art-show
+  news ("3D Print Gallery") stops slipping in; wire YouTube/Reddit maker content once
+  Actions runs (P9 sets `ALLOW_DIRECT_YOUTUBE`).
 - Taste: the personalization/affinity layer + "why am I seeing this" transparency (the
   Feed's "for you" bento ordering was deliberately left a stub pending this — quality
   scoring lives in the Feed, personal/taste scoring belongs to the Taste page).
