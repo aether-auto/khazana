@@ -1,64 +1,372 @@
 ---
 import Shell from "../layouts/Shell.astro";
-import IdeaCard from "../components/IdeaCard.astro";
-import { loadCurated, selectIdeas, tickerTitles } from "../lib/feed.js";
-import { dataDir } from "../lib/data.js";
+import BuildCard from "../components/BuildCard.astro";
+import {
+  loadCurated,
+  loadMakerSets,
+  selectIdeas,
+  tickerTitles,
+  WORKSHOP_BROWSE_CHANNELS,
+  PURE_MAKER_ALLOWLIST,
+} from "../lib/feed.js";
+import { dataDir, repoDataDir } from "../lib/data.js";
 
-const now = new Date().toISOString();
 const all = loadCurated(dataDir());
-const ideas = selectIdeas(all);
-const ticker = tickerTitles(ideas, 8);
+const sets = loadMakerSets(repoDataDir());
+// Directed maker selector — buildable projects only, op-eds rejected.
+const builds = selectIdeas(all, sets);
+const ticker = builds.length > 0 ? tickerTitles(builds, 8) : ["the bench is being stocked"];
+
+// Maker browse channels for the local filter chips (display order from core).
+const channels = WORKSHOP_BROWSE_CHANNELS;
+
+// For the sparse-state "sources being mined" list — a sampling of the real
+// pure-maker registry ids (the benches we pull builds from). Pure data, no fakes.
+const minedSources = [...PURE_MAKER_ALLOWLIST].slice(0, 12);
 ---
 
 <Shell title="khazana — workshop" active="workshop" tickerTitles={ticker}>
   <header class="ws-head" data-reveal>
-    <p class="eyebrow">workshop</p>
-    <h1 class="ws-h1">things worth building</h1>
-    <p class="ws-sub">
-      Buildable ideas mined from the feed — DIY, 3D printing, IoT, embedded, AI
-      projects. A maker's pinboard.
+    <p class="ws-eyebrow">
+      <span class="ws-rule" aria-hidden="true"></span>
+      the workshop
+    </p>
+    <h1 class="ws-h1 display">the bench<span class="ws-stop">.</span></h1>
+    <p class="ws-sub reading">
+      A maker's pinboard of things worth building — mined from the feed and kept to
+      what you can actually make: DIY, 3D&#8209;printing, IoT, embedded, hands&#8209;on AI.
+      <span class="ws-count">{builds.length} {builds.length === 1 ? "build" : "builds"} pinned</span>.
     </p>
   </header>
 
+  {/* maker-channel browse filter — real buttons, accessible, client-side board filter */}
+  <nav class="ws-filter" data-ws-filter aria-label="Filter builds by maker channel">
+    <button type="button" class="ws-chip is-active" data-ws-channel="" aria-pressed="true">
+      all
+    </button>
+    {channels.map((c) => (
+      <button type="button" class="ws-chip" data-ws-channel={c} aria-pressed="false">
+        {c}
+      </button>
+    ))}
+  </nav>
+
   {
-    ideas.length > 0 ? (
-      <section class="ws-board">
-        {ideas.map((item, i) => (
-          <IdeaCard item={item} now={now} revealDelay={Math.min(i, 6) * 45} />
-        ))}
-      </section>
+    builds.length > 0 ? (
+      <>
+        <section class="ws-board" data-ws-board>
+          {builds.map((item, i) => (
+            <BuildCard
+              item={item}
+              makerChannels={channels}
+              revealDelay={Math.min(i, 6) * 45}
+            />
+          ))}
+        </section>
+        {/* shown by JS only when a filter empties the board */}
+        <p class="ws-board-empty" data-ws-board-empty hidden>
+          nothing pinned under this channel yet — the bench is still being stocked.
+        </p>
+      </>
     ) : (
-      <p class="ws-empty">No ideas in the workshop yet — check back after the next ingest.</p>
+      /* INTENTIONAL sparse state — not a sad "no ideas". A workbench being
+         stocked: ghost pin-slots + the real benches we're mining. */
+      <section class="ws-bench" data-reveal aria-label="The bench is being stocked">
+        <div class="bench-note">
+          <p class="bench-kicker">stocking the bench</p>
+          <p class="bench-line">
+            The Workshop pins <em>buildable</em> projects — not essays. Many of the best
+            maker benches (Reddit build logs, YouTube teardowns) are mined in the cloud
+            and land here on the next run; the text benches below are already being read.
+          </p>
+        </div>
+
+        {/* ghost pin-slots — the board awaiting its next builds */}
+        <div class="bench-slots" aria-hidden="true">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div class="slot" style={`--slot-delay:${i * 70}ms`}>
+              <span class="slot-pin"></span>
+              <span class="slot-line slot-line-1"></span>
+              <span class="slot-line slot-line-2"></span>
+              <span class="slot-line slot-line-3"></span>
+            </div>
+          ))}
+        </div>
+
+        <div class="bench-sources">
+          <p class="bench-src-head">benches being mined</p>
+          <ul class="bench-src-list">
+            {minedSources.map((s) => (
+              <li>{s}</li>
+            ))}
+          </ul>
+        </div>
+      </section>
     )
   }
 </Shell>
 
 <style>
+  /* ── masthead — matches the Feed's "first light" rhythm, own voice ─────── */
   .ws-head {
-    margin-bottom: var(--s-8);
+    padding: var(--s-8) 0 var(--s-5);
+    position: relative;
     max-width: var(--measure);
   }
-  .ws-h1 {
-    font-family: var(--font-sans);
-    font-size: var(--t-2xl);
-    line-height: var(--lh-tight);
-    letter-spacing: -0.02em;
+  .ws-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6ch;
     margin: 0 0 var(--s-3);
-    font-weight: 600;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+    color: var(--ink-faint);
+  }
+  .ws-rule {
+    display: inline-block;
+    width: 1.6em;
+    height: 1px;
+    background: var(--accent);
+    opacity: 0.75;
+  }
+  .ws-h1 {
+    margin: 0 0 var(--s-3);
+    font-size: clamp(var(--t-xl), 5vw, var(--t-display));
+    color: var(--ink);
+    line-height: 0.95;
+  }
+  .ws-stop {
+    color: var(--accent);
+    text-shadow: var(--halo-display);
   }
   .ws-sub {
-    font-family: var(--font-read);
-    color: var(--ink-dim);
-    font-size: var(--t-md);
     margin: 0;
+    color: var(--ink-dim);
+    font-size: var(--t-sm);
+    max-width: 56ch;
   }
+  .ws-count {
+    font-family: var(--font-mono);
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  /* ── maker-channel filter — machined chips, mono ──────────────────────── */
+  .ws-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+    margin: var(--s-2) 0 var(--s-6);
+    padding-top: var(--s-3);
+    border-top: var(--hair) solid var(--rule);
+  }
+  .ws-chip {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.02em;
+    color: var(--ink-dim);
+    background: transparent;
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-sm);
+    padding: 0.32em 0.7em;
+    cursor: pointer;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+  .ws-chip:hover {
+    color: var(--ink);
+    border-color: var(--rule-bright);
+  }
+  .ws-chip.is-active {
+    color: var(--bg);
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .ws-chip:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ── the board — a true masonry pinboard, distinct from the bento ─────── */
   .ws-board {
     columns: 3 18rem;
     column-gap: var(--s-5);
   }
-  .ws-empty {
-    color: var(--ink-faint);
+  /* a build that the filter hid collapses out of the column flow cleanly */
+  .ws-board :global(.build[hidden]) {
+    display: none !important;
+  }
+  .ws-board-empty {
+    margin-top: var(--s-6);
     font-family: var(--font-mono);
-    padding: var(--s-8) 0;
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    text-align: center;
+  }
+
+  /* ── INTENTIONAL sparse state — a workbench being stocked ─────────────── */
+  .ws-bench {
+    margin-top: var(--s-4);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-md);
+    background:
+      radial-gradient(130% 90% at 18% 0%, color-mix(in oklab, var(--accent) 6%, transparent), transparent 60%),
+      var(--bg-card);
+    padding: var(--s-8) var(--s-6);
+    display: grid;
+    gap: var(--s-6);
+  }
+  .bench-note {
+    max-width: 60ch;
+  }
+  .bench-kicker {
+    margin: 0 0 var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .bench-line {
+    margin: 0;
+    font-family: var(--font-read);
+    font-size: var(--t-base);
+    line-height: 1.55;
+    color: var(--ink-dim);
+  }
+  .bench-line em {
+    color: var(--ink);
+    font-style: italic;
+  }
+
+  /* ghost pin-slots — the board's empty pegs, faintly breathing */
+  .bench-slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--s-4);
+  }
+  .slot {
+    border: var(--hair) dashed var(--rule);
+    border-radius: var(--r-sm);
+    padding: var(--s-4);
+    position: relative;
+    min-height: 92px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+    opacity: 0;
+    animation: slot-in var(--dur-slow) var(--ease-out) forwards;
+    animation-delay: var(--slot-delay);
+  }
+  .slot-pin {
+    position: absolute;
+    top: var(--s-3);
+    right: var(--s-3);
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: var(--hair) solid var(--rule-bright);
+    background: transparent;
+  }
+  .slot-line {
+    height: 7px;
+    border-radius: 2px;
+    background: color-mix(in oklab, var(--ink) 6%, transparent);
+  }
+  .slot-line-1 { width: 70%; }
+  .slot-line-2 { width: 90%; }
+  .slot-line-3 { width: 45%; }
+
+  @keyframes slot-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 0.7; transform: translateY(0); }
+  }
+
+  .bench-sources {
+    border-top: var(--hair) solid var(--rule);
+    padding-top: var(--s-5);
+  }
+  .bench-src-head {
+    margin: 0 0 var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.06em;
+    text-transform: lowercase;
+    color: var(--ink-faint);
+  }
+  .bench-src-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2) var(--s-3);
+  }
+  .bench-src-list li {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-dim);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-sm);
+    padding: 0.2em 0.55em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .slot {
+      opacity: 0.7;
+      animation: none;
+      transform: none;
+    }
   }
 </style>
+
+<script>
+  // ── Workshop maker-channel filter ───────────────────────────────────────
+  // Self-contained, page-scoped client filter. Reuses the Feed's data-channels
+  // contract: each BuildCard carries data-channels="<topic> <topic> …"; clicking
+  // a chip shows only cards whose channels include it. Real <button aria-pressed>
+  // controls; "all" clears the filter. Also dispatches khz:channelchange so the
+  // pattern is consistent across the app, but the board listens locally (no nav).
+  function initWorkshopFilter(): void {
+    const nav = document.querySelector<HTMLElement>("[data-ws-filter]");
+    const board = document.querySelector<HTMLElement>("[data-ws-board]");
+    if (!nav || !board) return;
+
+    const chips = Array.from(nav.querySelectorAll<HTMLButtonElement>(".ws-chip"));
+    const cards = Array.from(board.querySelectorAll<HTMLElement>(".build"));
+    const empty = document.querySelector<HTMLElement>("[data-ws-board-empty]");
+
+    function apply(channel: string): void {
+      let shown = 0;
+      for (const card of cards) {
+        const cardChannels = (card.dataset.channels ?? "").split(" ").filter(Boolean);
+        const match = channel === "" || cardChannels.includes(channel);
+        card.hidden = !match;
+        if (match) shown++;
+      }
+      if (empty) empty.hidden = shown !== 0;
+    }
+
+    for (const chip of chips) {
+      chip.addEventListener("click", () => {
+        const channel = chip.dataset.wsChannel ?? "";
+        for (const c of chips) {
+          const active = c === chip;
+          c.classList.toggle("is-active", active);
+          c.setAttribute("aria-pressed", active ? "true" : "false");
+        }
+        apply(channel);
+        document.dispatchEvent(
+          new CustomEvent("khz:channelchange", { detail: { channel } }),
+        );
+      });
+    }
+  }
+
+  initWorkshopFilter();
+  document.addEventListener("astro:page-load", initWorkshopFilter);
+</script>

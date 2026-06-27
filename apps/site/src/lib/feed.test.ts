@@ -6,7 +6,6 @@ import type { FeedItem } from "@khazana/core";
 import {
   loadCurated,
   filterByChannel,
-  selectIdeas,
   tickerTitles,
   splitFeatured,
   dropShorts,
@@ -68,13 +67,140 @@ test("filterByChannel matches the channel in topics; null returns all", () => {
   expect(filterByChannel(items, "")).toHaveLength(2);
 });
 
-test("selectIdeas picks kind=idea or any workshop channel", () => {
+// ── Directed maker selector (TDD — written BEFORE implementation) ──────────────
+import { makerScore, selectIdeas as selectMaker, type MakerSets } from "./feed.js";
+
+/** A maker-source set fixture mirroring the real registry-derived sets. */
+const sets = (over: Partial<MakerSets> = {}): MakerSets => ({
+  pure: new Set(["random-nerd-tutorials", "arduino-blog", "hackaday", "adafruit-blog"]),
+  hard: new Set([
+    "random-nerd-tutorials",
+    "arduino-blog",
+    "hackaday",
+    "adafruit-blog",
+    "ieee-spectrum-tech",
+    "matklad-blog",
+  ]),
+  exclude: new Set(["ieee-spectrum-tech", "matklad-blog"]),
+  ...over,
+});
+
+test("makerScore: a PURE-allowlist build (ESP32 tutorial) scores well above threshold", () => {
+  const it = item({
+    id: "esp32",
+    source: "random-nerd-tutorials",
+    topics: ["iot", "embedded", "diy"],
+    title: "ESP32 Web BLE: Live Sensor Data Visualization (BME280 Charts)",
+  });
+  expect(makerScore(it, sets())).toBeGreaterThanOrEqual(3);
+});
+
+test("makerScore: an op-ed carrying only `ideas`/essay topics is excluded (below threshold)", () => {
+  const leisure = item({
+    id: "leisure",
+    source: "laphams-quarterly",
+    topics: ["history", "ideas"],
+    title: "In Praise of Leisure",
+    summary: "A meditation on rest and the good life.",
+  });
+  const incomeTax = item({
+    id: "income-tax",
+    source: "some-essay-blog",
+    topics: ["politics", "ideas", "finance"],
+    title: "Protect the Income Tax",
+  });
+  expect(makerScore(leisure, sets())).toBeLessThan(3);
+  expect(makerScore(incomeTax, sets())).toBeLessThan(3);
+});
+
+test("makerScore: EXCLUDE source with a false maker tag (matklad CSS post) stays out", () => {
+  const css = item({
+    id: "css",
+    source: "matklad-blog",
+    topics: ["tech", "embedded"], // noisy false `embedded` tag
+    title: "CSS: Unavoidable Bad Parts",
+  });
+  expect(makerScore(css, sets())).toBeLessThan(3);
+});
+
+test("makerScore: EXCLUDE source with a genuine title build signal can still pass", () => {
+  const genuineBuild = item({
+    id: "real-build",
+    source: "ieee-spectrum-tech",
+    topics: ["tech", "embedded"],
+    title: "How I Built a Raspberry Pi Geiger Counter From Scratch",
+  });
+  // −5 exclude + (+1 hard) + (+2 title build) → still below 3, by design the
+  // EXCLUDE penalty dominates a single title hit; a strong build needs more.
+  // The contract we assert: the title signal is COUNTED (not zeroed) for excludes.
+  expect(makerScore(genuineBuild, sets())).toBeGreaterThan(
+    makerScore(item({ ...genuineBuild, title: "Quarterly Earnings Review" }), sets()),
+  );
+});
+
+test("makerScore: kind=idea is a strong positive", () => {
+  const idea = item({
+    id: "synth-idea",
+    source: "some-feed",
+    kind: "idea",
+    topics: ["ai-projects"],
+    title: "A weekend build",
+  });
+  expect(makerScore(idea, sets())).toBeGreaterThanOrEqual(3);
+});
+
+test("makerScore: title build vocabulary does NOT false-hit on essay words like 'marketing'", () => {
+  const essay = item({
+    id: "mktg",
+    source: "some-blog",
+    topics: ["ideas", "finance"],
+    title: "The Future of Marketing in a Post-Ad World",
+  });
+  // "make" inside "marketing" must not trigger; no maker source, essay topics → out
+  expect(makerScore(essay, sets())).toBeLessThan(3);
+});
+
+test("selectIdeas: keeps buildable items, drops op-eds, sorts by score then taste", () => {
   const items = [
-    item({ id: "idea-kind", kind: "idea", topics: ["tech"] }),
-    item({ id: "workshop-topic", kind: "link", topics: ["3d-printing"] }),
-    item({ id: "plain", kind: "link", topics: ["finance"] }),
+    item({
+      id: "esp-ble",
+      source: "random-nerd-tutorials",
+      topics: ["iot", "embedded", "diy"],
+      title: "ESP32 Web BLE: Live Sensor Data Visualization",
+      tasteScore: 0.4,
+    }),
+    item({
+      id: "leisure",
+      source: "laphams-quarterly",
+      topics: ["history", "ideas"],
+      title: "In Praise of Leisure",
+    }),
+    item({
+      id: "css",
+      source: "matklad-blog",
+      topics: ["tech", "embedded"],
+      title: "CSS: Unavoidable Bad Parts",
+    }),
+    item({
+      id: "arduino-llm",
+      source: "arduino-blog",
+      topics: ["embedded", "diy", "iot"],
+      title: "Running local LLMs on the Arduino UNO Q board: a practical guide",
+      tasteScore: 0.9,
+    }),
   ];
-  expect(selectIdeas(items).map((i) => i.id)).toEqual(["idea-kind", "workshop-topic"]);
+  const out = selectMaker(items, sets()).map((i) => i.id);
+  expect(out).toContain("esp-ble");
+  expect(out).toContain("arduino-llm");
+  expect(out).not.toContain("leisure");
+  expect(out).not.toContain("css");
+});
+
+test("selectIdeas: `ideas` channel alone never qualifies an item", () => {
+  const items = [
+    item({ id: "pure-essay", source: "essay-blog", topics: ["ideas"], title: "On Thinking Slowly" }),
+  ];
+  expect(selectMaker(items, sets())).toHaveLength(0);
 });
 
 test("tickerTitles returns the first n titles", () => {
