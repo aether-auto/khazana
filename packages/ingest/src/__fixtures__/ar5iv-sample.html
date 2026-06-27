@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Scaling Sparse Mixture-of-Experts Transformers for Long-Context Reasoning</title>
+  <link rel="canonical" href="https://arxiv.org/abs/2501.01234">
+  <style>.ltx_page_logo{display:none}</style>
+  <script>window.ar5iv = true;</script>
+</head>
+<body class="ltx_document">
+  <nav class="ltx_page_navbar">
+    <a href="https://ar5iv.org/">ar5iv</a>
+    <a href="https://arxiv.org/abs/2501.01234">arXiv</a>
+    <a href="#bib">References</a>
+  </nav>
+  <header class="ltx_page_header">
+    <div class="ltx_align_center">Powered by LaTeXML. Report an issue.</div>
+  </header>
+  <article class="ltx_document">
+    <h1 class="ltx_title ltx_title_document">Scaling Sparse Mixture-of-Experts Transformers for Long-Context Reasoning</h1>
+    <div class="ltx_authors">
+      <span class="ltx_personname">A. Researcher, B. Coauthor, C. Advisor</span>
+    </div>
+    <section class="ltx_abstract">
+      <h6 class="ltx_title">Abstract</h6>
+      <p class="ltx_p">We study how sparse mixture-of-experts (MoE) routing interacts with extremely long context windows in decoder-only transformers. We introduce a routing regularizer that stabilizes expert load under sequence lengths beyond one million tokens, and show that it recovers most of the dense-model quality at a fraction of the active parameter count.</p>
+    </section>
+    <section class="ltx_section" id="S1">
+      <h2 class="ltx_title ltx_title_section">1 Introduction</h2>
+      <p class="ltx_p">Large language models have grown along two largely independent axes: the number of parameters and the length of the context window they can attend over. Sparse mixture-of-experts architectures address the first axis by activating only a small subset of the model's parameters for any given token, decoupling total capacity from per-token compute. Long-context attention mechanisms address the second axis by reducing the quadratic cost of self-attention so that sequences of hundreds of thousands or even millions of tokens become tractable. In this work we study what happens when these two axes are pushed simultaneously, a regime that has received surprisingly little attention despite its obvious practical importance for retrieval-augmented reasoning, whole-repository code understanding, and book-length summarization.</p>
+      <p class="ltx_p">The central difficulty we identify is that the router, which assigns tokens to experts, becomes badly miscalibrated as the context window grows. With short contexts the distribution of tokens routed to each expert is roughly uniform, and standard auxiliary load-balancing losses are sufficient to keep utilization even. As the context grows, however, long-range positional structure causes tokens at similar depths to be routed to the same handful of experts, producing severe load imbalance, idle accelerators, and a collapse in effective capacity. We quantify this collapse and trace its root cause to the interaction between rotary positional embeddings and the linear router projection.</p>
+      <p class="ltx_p">Our contribution is threefold. First, we present a careful empirical characterization of expert-load collapse as a function of sequence length, across three model scales and two routing strategies. Second, we propose a lightweight routing regularizer, which we call depth-decorrelated load balancing, that penalizes correlation between a token's positional depth and its expert assignment. Third, we show that models trained with this regularizer retain ninety-four percent of dense-model accuracy on a suite of long-context reasoning benchmarks while activating only one eighth of their parameters per token.</p>
+    </section>
+    <section class="ltx_section" id="S2">
+      <h2 class="ltx_title ltx_title_section">2 Background and Related Work</h2>
+      <p class="ltx_p">Mixture-of-experts models date back several decades but have seen a resurgence in the context of transformer language models. The key idea is to replace a dense feed-forward block with a collection of expert sub-networks and a gating function that selects, for each token, a small number of experts to apply. Because only the selected experts perform computation, the total parameter count can be scaled up dramatically without a proportional increase in floating-point operations. A persistent engineering challenge is keeping the experts evenly utilized: if the gating function sends most tokens to a few favored experts, the remaining experts contribute little and the hardware sits idle.</p>
+      <p class="ltx_p">Long-context modeling has progressed along a parallel track. Sparse attention patterns, low-rank approximations, recurrence, and state-space models have each been proposed to escape the quadratic cost of dense attention. More recently, hardware-aware exact attention kernels have made it feasible to attend over very long sequences without approximation, shifting the bottleneck from attention itself to the surrounding machinery. Our work assumes such a kernel is available and focuses instead on the feed-forward routing layer, which to our knowledge has not previously been studied at these sequence lengths.</p>
+      <p class="ltx_p">The auxiliary load-balancing loss commonly used to train mixture-of-experts models encourages the average routing probability across a batch to be uniform over experts. This objective is essentially position-agnostic: it treats every token in the sequence identically regardless of where it falls. We argue that this position-agnosticism is precisely what fails at long context, because the pathological imbalance we observe is structured along the positional axis rather than distributed uniformly across the batch.</p>
+    </section>
+    <section class="ltx_section" id="S3">
+      <h2 class="ltx_title ltx_title_section">3 Method</h2>
+      <p class="ltx_p">We begin by formalizing the notion of depth-correlated routing. For each token we record both its positional index within the sequence and the index of the expert to which it was routed. Over a batch we estimate the mutual information between these two quantities. A well-behaved router should exhibit near-zero mutual information: knowing a token's position should tell us nothing about which expert handles it. Empirically we find that as sequence length increases this mutual information rises sharply, confirming that position is leaking into the routing decision.</p>
+      <p class="ltx_p">Our depth-decorrelated load-balancing regularizer adds a penalty proportional to this estimated mutual information. Crucially, the penalty is cheap to compute: it requires only the routing logits already produced during the forward pass and a running estimate of the per-position expert distribution. We accumulate these statistics in a streaming fashion so that the memory cost is independent of sequence length, which is essential at the million-token scale where storing per-token routing histories would be prohibitive.</p>
+      <p class="ltx_p">We combine the new regularizer with the standard load-balancing loss rather than replacing it, since the two address complementary failure modes. The standard loss prevents global expert starvation, while our regularizer prevents the positional clumping that the global loss is blind to. A single scalar coefficient controls the strength of the new term, and we find that performance is robust across an order of magnitude of coefficient values, which suggests the method does not require delicate tuning.</p>
+    </section>
+    <section class="ltx_section" id="S4">
+      <h2 class="ltx_title ltx_title_section">4 Experiments</h2>
+      <p class="ltx_p">We train three model scales, holding the number of experts fixed at thirty-two and varying the hidden dimension and number of layers. For each scale we compare a dense baseline, a standard mixture-of-experts model, and our regularized mixture-of-experts model. All models are trained on the same token budget so that comparisons reflect architectural differences rather than data differences. We evaluate on a battery of long-context tasks including multi-document question answering, repository-level code completion, and synthetic needle-in-a-haystack retrieval at lengths up to one million tokens.</p>
+      <p class="ltx_p">The headline result is that expert-load collapse, which reduces the standard mixture-of-experts model to near-dense compute at long context because so many experts go unused, is almost entirely eliminated by our regularizer. The coefficient of variation of expert utilization, which climbs steeply with sequence length for the baseline, stays nearly flat for the regularized model. This translates directly into wall-clock throughput: at the longest sequence lengths the regularized model processes tokens substantially faster because its experts remain evenly loaded across accelerators.</p>
+      <p class="ltx_p">On downstream accuracy the regularized model retains ninety-four percent of the dense model's performance while activating only one eighth of its parameters per token. The unregularized mixture-of-experts model, by contrast, degrades sharply at long context, losing far more accuracy than the active-parameter savings would justify. We include extensive ablations isolating the contribution of each component and confirming that the gains come from the positional decorrelation rather than from any change in optimizer or learning-rate schedule.</p>
+      <p class="ltx_p">We also examine robustness to distribution shift by evaluating on context lengths longer than any seen during training. The regularized model extrapolates gracefully, with utilization remaining balanced well beyond the training horizon, whereas the baseline collapses immediately once it leaves the training distribution. This extrapolation behavior is practically valuable because real deployments routinely encounter inputs longer than the curated training corpus.</p>
+    </section>
+    <section class="ltx_section" id="S5">
+      <h2 class="ltx_title ltx_title_section">5 Discussion and Limitations</h2>
+      <p class="ltx_p">Our method addresses a specific and, we believe, underappreciated failure mode of sparse models at long context. It does not claim to solve mixture-of-experts training in general, and several limitations remain. The mutual-information estimator introduces a small amount of bias at very small batch sizes, which could matter for memory-constrained training regimes. Our experiments are also limited to decoder-only architectures with rotary positional embeddings; whether the same positional leakage appears with other positional schemes is an open question we leave to future work.</p>
+      <p class="ltx_p">More broadly, our results suggest that the interaction between architectural axes deserves more study than it has received. The community has largely treated parameter scaling and context scaling as separable, optimizing each in isolation. Our finding that a regularizer is needed precisely at their intersection is a reminder that emergent failure modes can hide in the gaps between well-understood components.</p>
+    </section>
+    <section class="ltx_section" id="S6">
+      <h2 class="ltx_title ltx_title_section">6 Conclusion</h2>
+      <p class="ltx_p">We have shown that sparse mixture-of-experts transformers suffer a previously uncharacterized expert-load collapse at extreme context lengths, driven by positional information leaking into the router. A simple, cheap regularizer that decorrelates expert assignment from positional depth restores balanced utilization and recovers most of the dense-model quality at a fraction of the active compute. We hope these results encourage further study of the joint scaling of capacity and context.</p>
+    </section>
+  </article>
+  <footer class="ltx_page_footer">
+    <div class="ltx_page_logo">Generated on by LaTeXML</div>
+  </footer>
+</body>
+</html>

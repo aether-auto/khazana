@@ -12,6 +12,7 @@ import {
 import { fetchYouTubeTranscriptResult, transcriptToHtml, youTubeVideoId } from "./youtube.js";
 import { fetchPodcastTranscript } from "./podcast.js";
 import { isFullTranscript, transcribePodcastEpisode } from "./whisper.js";
+import { fetchArxivFullText } from "./arxiv-fulltext.js";
 
 /**
  * Min plain-text length for an extraction result to be considered "good enough"
@@ -42,7 +43,8 @@ export type ExtractMethod =
   | "article-extractor"
   | "amp"
   | "meta"
-  | "headless";
+  | "headless"
+  | "arxiv-mirror";
 
 export interface EnrichContentOptions {
   /** Master switch; when false, items are returned untouched (default true). */
@@ -287,6 +289,16 @@ async function extractFullText(
     }
     return article.text.length >= MIN_GOOD_TEXT; // good enough → stop early
   };
+
+  // 0) arXiv full-text via public HTML mirrors (ar5iv / arXiv native HTML).
+  //    The RSS feed only carries the abstract, so for arXiv items we try the
+  //    mirrors FIRST — the full paper is what clears the 5-min read floor. If a
+  //    mirror yields full text we stop early; otherwise we fall through to the
+  //    normal abstract-page chain below. Never throws.
+  if (item.sourceType === "arxiv") {
+    const arxiv = await fetchArxivFullText(item, fetchFn);
+    if (arxiv && consider("arxiv-mirror", arxiv.article)) return best;
+  }
 
   // 1) RSS full content already inline in the feed — no fetch needed.
   if (item.rssContent && htmlToText(item.rssContent).length >= MIN_RSS_CONTENT_TEXT) {

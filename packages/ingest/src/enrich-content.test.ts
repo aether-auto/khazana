@@ -1,7 +1,17 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
+// Zero the arXiv mirror per-host min-gap so the suite is fast/deterministic.
+process.env["ARXIV_HOST_MIN_GAP_MS"] = "0";
 import { enrichContent, type ExtractMethod } from "./enrich-content.js";
 import type { FetchFn } from "./fetchers/build-source.js";
 import type { FeedItem } from "@khazana/core";
+import { htmlToText } from "./extract.js";
+
+const AR5IV_HTML = readFileSync(
+  fileURLToPath(new URL("./__fixtures__/ar5iv-sample.html", import.meta.url)),
+  "utf8",
+);
 
 function makeItem(over: Partial<FeedItem>): FeedItem {
   return {
@@ -141,6 +151,50 @@ test("youtube with no transcript keeps the description", async () => {
     if (savedInv === undefined) delete process.env["INVIDIOUS_INSTANCES"]; else process.env["INVIDIOUS_INSTANCES"] = savedInv;
     if (savedPiped === undefined) delete process.env["PIPED_INSTANCES"]; else process.env["PIPED_INSTANCES"] = savedPiped;
   }
+});
+
+// ---- arXiv full-text via mirrors -------------------------------------------
+
+test("arxiv items get full paper text from a mirror, clearing the 5-min floor", async () => {
+  const abstract =
+    "We study how sparse mixture-of-experts routing interacts with long context windows. " +
+    "We introduce a routing regularizer that stabilizes expert load.";
+  const item = makeItem({
+    id: "arx", sourceType: "arxiv", kind: "paper",
+    url: "https://arxiv.org/abs/2501.01234v2",
+    body: abstract, summary: abstract,
+  });
+  const seen: string[] = [];
+  const fetchFn: FetchFn = async (url) => {
+    seen.push(url);
+    if (url.includes("ar5iv")) {
+      return { ok: true, status: 200, text: async () => AR5IV_HTML, json: async () => ({}) };
+    }
+    // Abstract page or any other url yields nothing useful here.
+    return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
+  };
+  await enrichContent([item], fetchFn);
+
+  // Mirror was consulted, body upgraded to full paper text.
+  expect(seen.some((u) => u.includes("ar5iv"))).toBe(true);
+  expect(item.body).not.toBe(abstract);
+  expect(item.body).toContain("depth-decorrelated");
+  // Clears a 5-minute read (~1100+ words).
+  const words = htmlToText(item.body ?? "").split(/\s+/).filter(Boolean).length;
+  expect(words).toBeGreaterThan(1100);
+});
+
+test("arxiv mirror failure falls back to the abstract page without throwing", async () => {
+  const abstract = "Short abstract that is under five minutes to read on its own.";
+  const item = makeItem({
+    id: "arx2", sourceType: "arxiv", kind: "paper",
+    url: "https://arxiv.org/abs/2501.09999",
+    body: abstract, summary: abstract,
+  });
+  const fetchFn: FetchFn = async () => ({ ok: false, status: 503, text: async () => "", json: async () => ({}) });
+  await enrichContent([item], fetchFn);
+  // No upgrade available → original abstract is preserved, no crash.
+  expect(item.body).toBe(abstract);
 });
 
 // ---- Multi-method fallback chain -------------------------------------------
