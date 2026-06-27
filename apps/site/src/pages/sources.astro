@@ -1,23 +1,95 @@
 ---
+// SOURCES — the faceted, searchable source explorer. The registry is the
+// instrument's intake manifold: every feed khazana pulls from. We read it
+// directly (live sources.json, else the committed seed), JOIN it to the curated
+// feed (item.source === entry.id) via `buildSources`, and hand the enriched
+// SourcesData to an interactive island (search · facet · sort · per-source
+// dossier drawer). SSR renders an honest health overview + a no-JS grouped
+// fallback so the page is readable before — or without — hydration. The Scout's
+// candidate queue (sources.pending.json) lists what it proposes to add next.
 import Shell from "../layouts/Shell.astro";
 import { loadRegistry, loadPending, groupByChannel } from "../lib/sources.js";
-import { repoDataDir } from "../lib/data.js";
+import { loadCurated } from "../lib/feed.js";
+import { repoDataDir, dataDir } from "../lib/data.js";
 import { CHANNELS } from "@khazana/core";
+import {
+  buildSources,
+  type SourcesItem,
+  type SourcesEntry,
+} from "../components/sources/lib/build-sources.js";
+import SourcesExplorer from "../components/sources/SourcesExplorer.tsx";
+import "../components/sources/sources.css";
 
-// The registry is the instrument's intake manifold — every source the feed
-// pulls from. We read it directly (live sources.json, else the committed seed)
-// and group BY CHANNEL so the founder can see the catch per beat. The Scout's
-// candidate queue (sources.pending.json) lists what it proposes to add next.
-const dataDir = repoDataDir();
-const registry = loadRegistry(dataDir);
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+const registry = loadRegistry(repoDataDir());
 const sources = registry.sources;
+const pending = loadPending(repoDataDir());
+const curated = loadCurated(dataDir());
+
+// Project the registry + feed onto the lib's minimal structural inputs.
+const srcInput: SourcesEntry[] = sources.map((s) => ({
+  id: s.id,
+  type: s.type,
+  url: s.url,
+  channels: s.channels,
+  enabled: s.enabled,
+  trustScore: s.trustScore,
+  addedBy: s.addedBy,
+  failureCount: s.failureCount,
+  notes: s.notes,
+}));
+const pendingInput: SourcesEntry[] = pending.map((s) => ({
+  id: s.id,
+  type: s.type,
+  url: s.url,
+  channels: s.channels,
+  enabled: s.enabled,
+  trustScore: s.trustScore,
+  addedBy: s.addedBy,
+  failureCount: s.failureCount,
+  notes: s.notes,
+}));
+const itemInput: SourcesItem[] = curated.map((it) => ({
+  id: it.id,
+  source: it.source,
+  sourceType: it.sourceType,
+  url: it.url,
+  title: it.title,
+  publishedAt: it.publishedAt,
+  topics: it.topics,
+  trustScore: it.trustScore,
+  tasteScore: it.tasteScore,
+  body: it.body,
+  kind: it.kind,
+}));
+
+const data = buildSources(srcInput, itemInput, pendingInput, { base });
+const { health } = data;
+const empty = health.total === 0;
+
+// ── by-type breakdown — a horizontal stacked bar. Type → color: the richer
+// media types get their distinct hues (matching the badges); the rest fall to
+// restrained instrument tones so the bar reads as "signal vs. the long tail".
+const TYPE_COLORS: Record<string, string> = {
+  youtube: "#ff6b6b",
+  podcast: "#b48cff",
+  arxiv: "var(--editorial)",
+  "eng-blog": "var(--accent)",
+  rss: "var(--accent-dim)",
+  news: "var(--good)",
+  reddit: "var(--ink-dim)",
+  hn: "var(--ink-faint)",
+  x: "var(--rule-bright)",
+};
+const typeColor = (t: string) => TYPE_COLORS[t] ?? "var(--ink-faint)";
+const barTotal = health.byType.reduce((s, t) => s + t.count, 0);
+const segPct = (n: number) => (barTotal > 0 ? `${(n / barTotal) * 100}%` : "0%");
+const avgTrustPct = Math.round(health.avgTrust * 100);
+
+// No-JS fallback — the old grouped-by-channel view, so something readable shows
+// before/without hydration. Trust shown as a 0–100 ◆ score.
 const groups = groupByChannel(sources, CHANNELS);
-const pending = loadPending(dataDir);
-
-const total = sources.length;
-const enabled = sources.filter((s) => s.enabled).length;
-const channelCount = groups.length;
-
 const hostOf = (url: string): string => {
   try {
     return new URL(url).host.replace(/^www\./, "");
@@ -28,76 +100,156 @@ const hostOf = (url: string): string => {
 const trustPct = (t?: number) => (t != null ? Math.round(t * 100) : null);
 ---
 
-<Shell title="khazana — sources" description="The source registry: every feed khazana pulls from, grouped by channel." active="sources">
+<Shell
+  title="khazana — sources"
+  description="The source registry: every feed khazana pulls from — searchable, faceted, with a per-source dossier."
+  active="sources"
+>
   <header class="src-head" data-reveal>
     <p class="eyebrow">sources</p>
     <h1 class="src-h1">the intake manifold</h1>
     <p class="src-sub">
-      Every feed khazana pulls from — grouped by channel, ranked by trust. The
-      Scout proposes new ones after each nightly run.
+      Every feed khazana pulls from — searchable, faceted, each with its own
+      dossier of what it's actually produced. The Scout proposes new ones after
+      each nightly run; the ones gone quiet or failing are where it looks first.
     </p>
-    <dl class="src-stats tnum" aria-label="registry totals">
-      <div class="stat">
-        <dt>sources</dt>
-        <dd>{total}</dd>
-      </div>
-      <div class="stat">
-        <dt>enabled</dt>
-        <dd>{enabled}</dd>
-      </div>
-      <div class="stat">
-        <dt>channels</dt>
-        <dd>{channelCount}</dd>
-      </div>
-      {pending.length > 0 && (
-        <div class="stat stat--accent">
-          <dt>candidates</dt>
-          <dd>{pending.length}</dd>
-        </div>
-      )}
-    </dl>
   </header>
 
   {
-    total === 0 ? (
-      <p class="src-empty">
-        No sources registered yet — add entries to <code>data/sources.json</code> (or the seed).
-      </p>
+    empty ? (
+      <div class="src-empty" data-reveal>
+        <p class="src-empty-glyph" aria-hidden="true">∅</p>
+        <p class="src-empty-text">
+          No sources registered yet — add entries to <code>data/sources.json</code>{" "}
+          (or the committed <code>sources.seed.json</code>) matching the registry
+          schema, and they'll appear here.
+        </p>
+      </div>
     ) : (
-      <section class="src-channels">
-        {groups.map((group, gi) => (
-          <section class="chan" data-reveal style={`--reveal-delay:${Math.min(gi, 8) * 45}ms`}>
-            <header class="chan-head">
-              <h2 class="chan-name">{group.channel}</h2>
-              <span class="chan-count tnum">{group.sources.length}</span>
-              <span class="chan-rule" aria-hidden="true" />
-            </header>
-            <ul class="src-list">
-              {group.sources.map((s) => {
-                const pct = trustPct(s.trustScore);
-                return (
-                  <li class="src-row" class:list={[{ "is-off": !s.enabled }]}>
-                    <span class={`type-badge type-${s.type}`}>{s.type}</span>
-                    <a class="src-id" href={s.url} rel="noopener noreferrer" title={s.url}>
-                      <span class="src-id-name">{s.id}</span>
-                      <span class="src-id-host">{hostOf(s.url)}</span>
-                    </a>
-                    {pct != null && (
-                      <span class="src-trust tnum" title="trust score">
-                        {pct}
-                      </span>
-                    )}
-                    {!s.enabled && <span class="src-off" title="disabled">off</span>}
-                  </li>
-                );
-              })}
+      <>
+        {/* ── Health overview band ───────────────────────────────────── */}
+        <section class="src-health" data-reveal aria-label="registry health">
+          <dl class="src-health-stats tnum">
+            <div class="src-stat">
+              <dt>sources</dt>
+              <dd>{health.total}</dd>
+            </div>
+            <div class="src-stat">
+              <dt>enabled</dt>
+              <dd>{health.enabled}</dd>
+            </div>
+            <div class="src-stat src-stat--signal">
+              <dt>producing</dt>
+              <dd>{health.producing}</dd>
+            </div>
+            <div class="src-stat src-stat--muted">
+              <dt>dormant</dt>
+              <dd>{health.dormant}</dd>
+            </div>
+            <div class="src-stat src-stat--attention">
+              <dt>failing</dt>
+              <dd>{health.failing}</dd>
+            </div>
+            <div class="src-stat src-stat--muted">
+              <dt>disabled</dt>
+              <dd>{health.disabled}</dd>
+            </div>
+            <div class="src-stat">
+              <dt>candidates</dt>
+              <dd>{health.candidates}</dd>
+            </div>
+            <div class="src-stat">
+              <dt>avg trust</dt>
+              <dd>{avgTrustPct}</dd>
+            </div>
+          </dl>
+
+          <div class="src-bytype">
+            <p class="src-bytype-label">by type</p>
+            <div class="src-bar" role="img" aria-label="source count by type">
+              {health.byType.map((t) => (
+                <span
+                  class="src-bar-seg"
+                  style={`width:${segPct(t.count)};background:${typeColor(t.value)}`}
+                  title={`${t.value} · ${t.count}`}
+                />
+              ))}
+            </div>
+            <ul class="src-bytype-legend">
+              {health.byType.map((t) => (
+                <li class="src-legend-item">
+                  <span class="src-legend-dot" style={`background:${typeColor(t.value)}`} />
+                  {t.value}
+                  <span class="src-legend-count tnum">{t.count}</span>
+                </li>
+              ))}
             </ul>
-          </section>
-        ))}
-      </section>
+          </div>
+        </section>
+
+        {/* ── The explorer ──────────────────────────────────────────────
+            The control bar is markup-only scaffolding; the island wires every
+            behavior (search/facet/sort/drawer). SourcesData is passed as a prop
+            (cleanest with Astro hydration) AND embedded as inline JSON so any
+            consumer can read it without a second fetch. */}
+        <section class="src-explorer" data-reveal aria-label="source explorer">
+          <div class="src-controls" aria-hidden="true">
+            <input
+              class="src-search"
+              type="search"
+              placeholder="search sources…"
+              disabled
+            />
+            <div class="src-chips" />
+            <select class="src-sort" disabled>
+              <option>trust ↓</option>
+            </select>
+          </div>
+
+          <script type="application/json" id="sources-data" is:inline set:html={JSON.stringify(data).replace(/</g, "\\u003c")} />
+
+          <SourcesExplorer client:load data={data} base={base} />
+
+          {/* No-JS / pre-hydration fallback — the grouped-by-channel list. */}
+          <noscript>
+            <p class="src-fallback-head">grouped by channel</p>
+            <div class="src-channels">
+              {groups.map((group) => (
+                <section class="chan">
+                  <header class="chan-head">
+                    <h2 class="chan-name">{group.channel}</h2>
+                    <span class="chan-count tnum">{group.sources.length}</span>
+                    <span class="chan-rule" aria-hidden="true" />
+                  </header>
+                  <ul class="src-list">
+                    {group.sources.map((s) => {
+                      const pct = trustPct(s.trustScore);
+                      return (
+                        <li class="src-row" class:list={[{ "is-off": !s.enabled }]}>
+                          <span class={`type-badge type-${s.type}`}>{s.type}</span>
+                          <a class="src-id" href={s.url} rel="noopener noreferrer" title={s.url}>
+                            <span class="src-id-name">{s.id}</span>
+                            <span class="src-id-host">{hostOf(s.url)}</span>
+                          </a>
+                          {pct != null && (
+                            <span class="src-trust tnum" title="trust score">
+                              {pct}
+                            </span>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          </noscript>
+        </section>
+      </>
     )
   }
 
+  {/* ── Candidates — the Scout's proposed additions ─────────────────────── */}
   <section class="candidates" data-reveal>
     <header class="cand-head">
       <h2 class="cand-title">candidates to add</h2>
@@ -129,260 +281,9 @@ const trustPct = (t?: number) => (t != null ? Math.round(t * 100) : null);
         </ul>
       ) : (
         <p class="cand-empty">
-          The Scout proposes new sources here after each nightly run.
+          The Scout proposes new sources here after each nightly run — quiet, for now.
         </p>
       )
     }
   </section>
 </Shell>
-
-<style>
-  .src-head {
-    margin-bottom: var(--s-7);
-    max-width: var(--measure);
-  }
-  .src-h1 {
-    font-family: var(--font-read);
-    font-size: var(--t-2xl);
-    line-height: var(--lh-tight);
-    letter-spacing: -0.02em;
-    margin: 0 0 var(--s-3);
-    color: var(--ink);
-  }
-  .src-sub {
-    font-family: var(--font-read);
-    color: var(--ink-dim);
-    font-size: var(--t-md);
-    line-height: 1.5;
-    margin: 0 0 var(--s-5);
-    max-width: 54ch;
-  }
-  /* the instrument readout — totals in tabular mono */
-  .src-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--s-5);
-    margin: 0;
-  }
-  .stat {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1em;
-  }
-  .stat dt {
-    font-family: var(--font-mono);
-    font-size: var(--t-xs);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-  }
-  .stat dd {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: var(--t-xl);
-    line-height: 1;
-    color: var(--ink);
-  }
-  .stat--accent dd {
-    color: var(--accent);
-    text-shadow: var(--halo-display);
-  }
-
-  .src-empty {
-    padding: var(--s-8) 0;
-    color: var(--ink-faint);
-    font-family: var(--font-mono);
-  }
-  .src-empty code {
-    color: var(--ink-dim);
-  }
-
-  /* ── by-channel sections — a responsive mosaic of beats ──────────────── */
-  .src-channels {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
-    gap: var(--s-5) var(--s-6);
-    align-items: start;
-  }
-  .chan {
-    break-inside: avoid;
-  }
-  .chan-head {
-    display: flex;
-    align-items: baseline;
-    gap: var(--s-3);
-    margin-bottom: var(--s-3);
-  }
-  .chan-name {
-    margin: 0;
-    font-family: var(--font-mono);
-    font-size: var(--t-sm);
-    letter-spacing: 0.04em;
-    color: var(--ink);
-  }
-  .chan-count {
-    font-family: var(--font-mono);
-    font-size: var(--t-xs);
-    color: var(--accent);
-  }
-  .chan-rule {
-    flex: 1;
-    height: var(--hair);
-    background: linear-gradient(90deg, var(--rule), transparent);
-  }
-
-  .src-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--s-1);
-  }
-  .src-row {
-    display: flex;
-    align-items: center;
-    gap: var(--s-3);
-    padding: var(--s-2) var(--s-3);
-    border: var(--hair) solid transparent;
-    border-radius: var(--r-sm);
-    transition:
-      border-color var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
-  }
-  .src-row:hover {
-    border-color: var(--rule);
-    background: color-mix(in oklab, var(--ink) 3%, transparent);
-  }
-  .src-row.is-off {
-    opacity: 0.5;
-  }
-
-  /* type badge — mono, uppercase, channel-agnostic. Distinct hues for the
-     richer media types (youtube/podcast) so they read at a glance. */
-  .type-badge {
-    flex: none;
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--ink-dim);
-    background: var(--bg-inset);
-    border: var(--hair) solid var(--rule);
-    border-radius: var(--r-sm);
-    padding: 0.15em 0.4em;
-    min-width: 3.6em;
-    text-align: center;
-  }
-  .type-youtube {
-    color: #ff6b6b;
-    border-color: color-mix(in oklab, #ff6b6b 40%, var(--rule));
-  }
-  .type-podcast {
-    color: #b48cff;
-    border-color: color-mix(in oklab, #b48cff 40%, var(--rule));
-  }
-  .type-arxiv {
-    color: var(--editorial);
-    border-color: color-mix(in oklab, var(--editorial) 40%, var(--rule));
-  }
-  .type-eng-blog,
-  .type-rss {
-    color: var(--accent);
-    border-color: color-mix(in oklab, var(--accent) 30%, var(--rule));
-  }
-
-  .src-id {
-    display: flex;
-    flex-direction: column;
-    gap: 0.05em;
-    min-width: 0;
-    flex: 1;
-    color: var(--ink);
-    border: 0;
-  }
-  .src-id:hover {
-    text-decoration: none;
-  }
-  .src-id-name {
-    font-family: var(--font-mono);
-    font-size: var(--t-xs);
-    color: var(--ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-  .src-id:hover .src-id-name {
-    color: var(--accent);
-  }
-  .src-id-host {
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    color: var(--ink-faint);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .src-trust {
-    flex: none;
-    font-family: var(--font-mono);
-    font-size: var(--t-xs);
-    color: var(--good);
-  }
-  .src-trust::before {
-    content: "◆";
-    margin-right: 0.25em;
-  }
-  .src-off {
-    flex: none;
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--ink-faint);
-  }
-
-  /* ── candidates ──────────────────────────────────────────────────────── */
-  .candidates {
-    margin-top: var(--s-9);
-    padding-top: var(--s-6);
-    border-top: var(--hair) solid var(--rule);
-  }
-  .cand-head {
-    display: flex;
-    align-items: baseline;
-    gap: var(--s-3);
-    margin-bottom: var(--s-4);
-  }
-  .cand-title {
-    margin: 0;
-    font-family: var(--font-read);
-    font-size: var(--t-lg);
-    color: var(--ink);
-    letter-spacing: -0.01em;
-  }
-  .cand-rule {
-    flex: 1;
-    height: var(--hair);
-    background: linear-gradient(90deg, var(--editorial), transparent);
-  }
-  .src-row--cand {
-    border-color: var(--rule);
-    border-style: dashed;
-  }
-  .cand-channels {
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    color: var(--ink-faint);
-    white-space: nowrap;
-  }
-  .cand-empty {
-    margin: 0;
-    padding: var(--s-5) 0;
-    font-family: var(--font-read);
-    font-style: italic;
-    color: var(--ink-faint);
-    max-width: 52ch;
-  }
-</style>

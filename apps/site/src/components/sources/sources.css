@@ -1,0 +1,417 @@
+/* The Sources explorer — shared chrome for the faceted source surface.
+   "Lines not boxes": hairline rules, mono labels, dense-but-readable rows,
+   negative space. Tokens only (tokens.css). The island (SourcesExplorer.tsx)
+   adds its own behavior + result/drawer styles; this file owns the page frame,
+   the health overview band, the control-bar scaffold, the type-color map, and
+   the stub placeholder so the page renders meaningfully before hydration. */
+
+/* ── Masthead ──────────────────────────────────────────────────────────── */
+.src-head {
+  margin-bottom: var(--s-8);
+  max-width: var(--measure);
+}
+.src-h1 {
+  font-family: var(--font-display);
+  font-weight: 480;
+  font-size: var(--t-2xl);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--s-3);
+  color: var(--ink);
+}
+.src-sub {
+  font-family: var(--font-read);
+  color: var(--ink-dim);
+  font-size: var(--t-md);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 56ch;
+}
+
+/* ── Health overview band ──────────────────────────────────────────────── */
+.src-health {
+  margin-bottom: var(--s-8);
+  padding: var(--s-5) 0;
+  border-top: var(--hair) solid var(--rule);
+  border-bottom: var(--hair) solid var(--rule);
+}
+.src-health-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-5) var(--s-6);
+  margin: 0 0 var(--s-5);
+}
+.src-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+}
+.src-stat dt {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.src-stat dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--t-xl);
+  line-height: 1;
+  color: var(--ink);
+}
+.src-stat--signal dd {
+  color: var(--accent);
+  text-shadow: var(--halo-display);
+}
+/* the "needs attention" tie to the Scout — failing/dormant read as clay */
+.src-stat--attention dd {
+  color: var(--editorial);
+}
+.src-stat--muted dd {
+  color: var(--ink-dim);
+}
+
+/* by-type breakdown — a compact horizontal stacked bar */
+.src-bytype {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.src-bytype-label {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.src-bar {
+  display: flex;
+  width: 100%;
+  height: 0.6rem;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--bg-inset);
+  border: var(--hair) solid var(--rule);
+}
+.src-bar-seg {
+  height: 100%;
+  min-width: 2px;
+  transition: filter var(--dur-fast) var(--ease-out);
+}
+.src-bar-seg:hover {
+  filter: brightness(1.25);
+}
+.src-bytype-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3) var(--s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.src-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--ink-dim);
+}
+.src-legend-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 1px;
+  flex: none;
+}
+.src-legend-count {
+  color: var(--ink-faint);
+}
+
+/* ── Control bar (markup only — island wires behavior) ─────────────────── */
+.src-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3) var(--s-4);
+  margin-bottom: var(--s-5);
+}
+.src-search {
+  flex: 1 1 16rem;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--ink);
+  background: var(--bg-inset);
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-sm);
+  padding: var(--s-2) var(--s-3);
+}
+.src-search::placeholder {
+  color: var(--ink-faint);
+}
+.src-search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.src-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+.src-chip {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  background: transparent;
+  border: var(--hair) solid var(--rule);
+  border-radius: 999px;
+  padding: 0.2em 0.7em;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.src-chip:hover {
+  border-color: var(--rule-bright);
+  color: var(--ink);
+}
+.src-chip[aria-pressed="true"] {
+  color: var(--accent);
+  border-color: color-mix(in oklab, var(--accent) 50%, var(--rule));
+}
+.src-sort {
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--ink-dim);
+  background: var(--bg-inset);
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-sm);
+  padding: var(--s-2) var(--s-3);
+}
+
+/* ── Type badge — mono, uppercase. Distinct hues for the richer media types
+   so they read at a glance (reused from the previous page). ───────────────── */
+.type-badge {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  background: var(--bg-inset);
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-sm);
+  padding: 0.15em 0.4em;
+  min-width: 3.6em;
+  text-align: center;
+}
+.type-youtube {
+  color: #ff6b6b;
+  border-color: color-mix(in oklab, #ff6b6b 40%, var(--rule));
+}
+.type-podcast {
+  color: #b48cff;
+  border-color: color-mix(in oklab, #b48cff 40%, var(--rule));
+}
+.type-arxiv {
+  color: var(--editorial);
+  border-color: color-mix(in oklab, var(--editorial) 40%, var(--rule));
+}
+.type-eng-blog,
+.type-rss {
+  color: var(--accent);
+  border-color: color-mix(in oklab, var(--accent) 30%, var(--rule));
+}
+
+/* ── Stub placeholder (overwritten by the island; here so the page renders
+   meaningfully before it hydrates) ───────────────────────────────────────── */
+.src-explorer-stub {
+  padding: var(--s-6);
+  border: var(--hair) dashed var(--rule);
+  border-radius: var(--r-md);
+  background: var(--bg-card);
+}
+.src-explorer-stub-note {
+  margin: 0 0 var(--s-4);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+}
+.src-explorer-stub-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--ink-dim);
+}
+
+/* ── No-JS SSR fallback — grouped-by-channel list (trimmed from the old page).
+   Hidden once the island hydrates (the island sets a flag on the wrapper). ─── */
+.src-fallback-head {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 var(--s-4);
+}
+.src-channels {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: var(--s-5) var(--s-6);
+  align-items: start;
+}
+.chan {
+  break-inside: avoid;
+}
+.chan-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+.chan-name {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+.chan-count {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--accent);
+}
+.chan-rule {
+  flex: 1;
+  height: var(--hair);
+  background: linear-gradient(90deg, var(--rule), transparent);
+}
+.src-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+.src-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border: var(--hair) solid transparent;
+  border-radius: var(--r-sm);
+}
+.src-row.is-off {
+  opacity: 0.5;
+}
+.src-id {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05em;
+  min-width: 0;
+  flex: 1;
+  color: var(--ink);
+  border: 0;
+}
+.src-id-name {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.src-id-host {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.src-trust {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--good);
+}
+.src-trust::before {
+  content: "◆";
+  margin-right: 0.25em;
+}
+
+/* ── Candidates (the Scout queue) ──────────────────────────────────────── */
+.candidates {
+  margin-top: var(--s-10);
+  padding-top: var(--s-6);
+  border-top: var(--hair) solid var(--rule);
+}
+.cand-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  margin-bottom: var(--s-4);
+}
+.cand-title {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: var(--t-lg);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.cand-rule {
+  flex: 1;
+  height: var(--hair);
+  background: linear-gradient(90deg, var(--editorial), transparent);
+}
+.src-row--cand {
+  border-color: var(--rule);
+  border-style: dashed;
+}
+.cand-channels {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+.cand-empty {
+  margin: 0;
+  padding: var(--s-5) 0;
+  font-family: var(--font-read);
+  font-style: italic;
+  color: var(--ink-faint);
+  max-width: 52ch;
+}
+
+/* ── Empty state (0 sources) ───────────────────────────────────────────── */
+.src-empty {
+  padding: var(--s-10) 0;
+  text-align: center;
+}
+.src-empty-glyph {
+  font-family: var(--font-mono);
+  font-size: var(--t-2xl);
+  color: var(--ink-faint);
+  margin: 0 0 var(--s-3);
+}
+.src-empty-text {
+  font-family: var(--font-read);
+  color: var(--ink-dim);
+  max-width: 48ch;
+  margin: 0 auto;
+}
+.src-empty-text code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--ink);
+}
