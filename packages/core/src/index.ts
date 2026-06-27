@@ -5,3 +5,4 @@ export * from "./source.js";
 export * from "./registry.js";
 export * from "./format.js";
 export * from "./events.js";
+export * from "./maker.js";

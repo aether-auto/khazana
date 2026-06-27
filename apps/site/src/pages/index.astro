@@ -15,6 +15,7 @@ import {
   selectWatchRail,
   selectListenRail,
   bucketByChannel,
+  dropBelowFeedFloor,
   CATEGORY_MIN_MINUTES,
 } from "../lib/feed.js";
 import { assignBento } from "../lib/bento.js";
@@ -27,7 +28,11 @@ const now = new Date().toISOString();
 // Content-quality gate applied ONCE on the full list so EVERY downstream surface
 // — bento, rails, register — sees a clean feed: drop YouTube Shorts and obvious
 // non-content raw video clips (MIT-OCW lab footage etc.). Neither is "best signal."
-const all = dropJunkVideos(dropShorts(loadCurated(dataDir())));
+// `dropBelowFeedFloor` then enforces the SACRED ≥5-min Feed floor: curate now keeps
+// short (3–5 min) maker tutorials in curated.json for the Workshop, and this guard
+// stops them leaking into the Feed (the register/firehose has no floor of its own).
+// No-body bare links are kept, exactly as before.
+const all = dropBelowFeedFloor(dropJunkVideos(dropShorts(loadCurated(dataDir()))));
 const ticker = tickerTitles(all, 8);
 // Live instrument readout: total signals + how many arrived in the last 24h
 const nowMs = Date.parse(now);

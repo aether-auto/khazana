@@ -124,6 +124,48 @@ test("runCurate keeps items that meet the MIN_READ_MINUTES threshold exactly", a
   expect(ids).toContain("exactly-five");
 });
 
+// ── Two-tier maker floor (Task: lower the bar for maker items only) ───────────
+
+test("runCurate keeps a 3-min MAKER-source item (relaxed maker floor)", async () => {
+  const items = [
+    // hackaday ∈ PURE_MAKER_ALLOWLIST → isMakerCandidate true → relaxed 3-min floor.
+    {
+      ...makeItem("maker-short", "ESP32 sensor logger build", []),
+      source: "hackaday",
+      body: makeBody(3),
+    },
+  ];
+  const result = await runCurate(items, [], null, { now: NOW });
+  expect(result.items.map((it) => it.id)).toContain("maker-short");
+});
+
+test("runCurate keeps a 3-min item tagged with a HARD maker channel (relaxed floor)", async () => {
+  const items = [
+    { ...makeItem("embedded-short", "Blink an LED on an embedded board", ["embedded"]), body: makeBody(3) },
+  ];
+  const result = await runCurate(items, [], null, { now: NOW });
+  expect(result.items.map((it) => it.id)).toContain("embedded-short");
+});
+
+test("runCurate STILL rejects a 3-min NON-maker item (Feed floor unchanged for non-makers)", async () => {
+  const items = [
+    { ...makeItem("nonmaker-short", "A short tech opinion", ["tech"]), source: "some-blog", body: makeBody(3) },
+    { ...makeItem("long-read", "A substantial article", ["tech"]), body: makeBody(10) },
+  ];
+  const result = await runCurate(items, [], null, { now: NOW });
+  const ids = result.items.map((it) => it.id);
+  expect(ids).not.toContain("nonmaker-short");
+  expect(ids).toContain("long-read");
+});
+
+test("runCurate rejects a 1-min MAKER item (below the relaxed maker floor)", async () => {
+  const items = [
+    { ...makeItem("maker-tiny", "ESP32 quick note", ["embedded"]), source: "hackaday", body: makeBody(1) },
+  ];
+  const result = await runCurate(items, [], null, { now: NOW });
+  expect(result.items.map((it) => it.id)).not.toContain("maker-tiny");
+});
+
 test("runCurate emits no sub-5-min items in the output (curated.json guarantee)", async () => {
   // Mix of short, boundary, and long items.
   const items = [

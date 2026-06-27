@@ -203,6 +203,125 @@ test("selectIdeas: `ideas` channel alone never qualifies an item", () => {
   expect(selectMaker(items, sets())).toHaveLength(0);
 });
 
+// ── Task 4: short (sub-5-min) maker items need a TITLE build signal ────────────
+import { MIN_FEED_MINUTES, dropBelowFeedFloor } from "./feed.js";
+
+/** Body string that reads as ~N minutes at 225 wpm (wrapped in <p> like real bodies). */
+const bodyMin = (minutes: number): string =>
+  "<p>" + Array.from({ length: Math.round(minutes * 225) }, (_, i) => `word${i}`).join(" ") + "</p>";
+
+test("selectIdeas: a SHORT (3-min) item with a build title qualifies for the Workshop", () => {
+  const logger = item({
+    id: "esp32-logger",
+    source: "random-nerd-tutorials",
+    topics: ["iot", "embedded"],
+    title: "ESP32 sensor logger: log temperature to an SD card",
+    body: bodyMin(3),
+  });
+  expect(selectMaker([logger], sets()).map((i) => i.id)).toEqual(["esp32-logger"]);
+});
+
+test("selectIdeas: a SHORT (3-min) maker-source product announcement (no build title) does NOT qualify", () => {
+  // maker source (cnx-software-blog) scores ≥3 via the source bonus, but with a
+  // sub-5-min read AND no hands-on build tell in the title it must be rejected —
+  // this is a news/product item, not a build.
+  const chuwi = item({
+    id: "chuwi",
+    source: "cnx-software-blog",
+    topics: ["tech"],
+    title: "$449 CHUWI UniBook laptop ships with Intel N150",
+    body: bodyMin(3),
+  });
+  // sanity: it WOULD pass the bare score gate (pure source = +3) without the floor.
+  expect(makerScore(chuwi, { ...sets(), pure: new Set(["cnx-software-blog"]) })).toBeGreaterThanOrEqual(3);
+  expect(
+    selectMaker([chuwi], { ...sets(), pure: new Set(["cnx-software-blog"]) }).map((i) => i.id),
+  ).toEqual([]);
+});
+
+test("selectIdeas: a SHORT (4-min) item from a HANDS-ON source qualifies even with NO build keyword", () => {
+  // "Prusament PLA High Speed" has no hardware keyword and no build verb, but
+  // prusa-blog is a hands-on build source — a short item from it IS real signal.
+  const prusament = item({
+    id: "prusament",
+    source: "prusa-blog",
+    topics: ["3d-printing"],
+    title: "Prusament PLA High Speed",
+    body: bodyMin(4),
+  });
+  expect(
+    selectMaker([prusament], { ...sets(), pure: new Set(["prusa-blog"]) }).map((i) => i.id),
+  ).toEqual(["prusament"]);
+});
+
+test("selectIdeas: a SHORT (4-min) Raspberry-Pi 'LEAP' item (hands-on source, no keyword) qualifies", () => {
+  const leap = item({
+    id: "leap",
+    source: "raspberry-pi-blog",
+    topics: ["diy"],
+    title: "LEAP",
+    body: bodyMin(4),
+  });
+  expect(
+    selectMaker([leap], { ...sets(), pure: new Set(["raspberry-pi-blog"]) }).map((i) => i.id),
+  ).toEqual(["leap"]);
+});
+
+test("selectIdeas: a SHORT industry-news item (no hands-on source, no build keyword) does NOT qualify", () => {
+  // Industry/news source (3dprintingindustry, NOT hands-on) + a title with no
+  // hardware tell and no build verb → fails BOTH legs of the short-item rule.
+  const news = item({
+    id: "news",
+    source: "3dprintingindustry",
+    topics: ["3d-printing"],
+    title: "Company X raises a Series B funding round",
+    body: bodyMin(3),
+  });
+  expect(
+    selectMaker([news], { ...sets(), pure: new Set(["3dprintingindustry"]) }).map((i) => i.id),
+  ).toEqual([]);
+});
+
+test("selectIdeas: a LONG (≥5-min) maker item keeps the plain score>=threshold rule (no build title needed)", () => {
+  // A long maker-source piece with no explicit build tell in the title still
+  // qualifies — the build-title requirement only kicks in for SHORT items.
+  const longArticle = item({
+    id: "long-maker",
+    source: "hackaday",
+    topics: ["diy"],
+    title: "A retrospective on the maker movement",
+    body: bodyMin(9),
+  });
+  expect(
+    selectMaker([longArticle], { ...sets(), pure: new Set(["hackaday"]) }).map((i) => i.id),
+  ).toEqual(["long-maker"]);
+});
+
+// ── Task 3: the Feed floor keeps short maker items OUT of the Feed surfaces ────
+
+test("MIN_FEED_MINUTES is 5 (the sacred Feed floor)", () => {
+  expect(MIN_FEED_MINUTES).toBe(5);
+});
+
+test("dropBelowFeedFloor removes items whose body reads under 5 min, keeps the rest", () => {
+  const items = [
+    item({ id: "short-maker", source: "hackaday", topics: ["diy"], body: bodyMin(3) }),
+    item({ id: "long", topics: ["tech"], body: bodyMin(9) }),
+    item({ id: "exactly5", topics: ["tech"], body: bodyMin(5) }),
+  ];
+  expect(dropBelowFeedFloor(items).map((i) => i.id)).toEqual(["long", "exactly5"]);
+});
+
+test("dropBelowFeedFloor preserves existing behavior for bare-link / no-body items (kept)", () => {
+  // No-body items have always reached the register; the floor must not change that.
+  const items = [
+    item({ id: "bare", body: undefined }),
+    item({ id: "video-nobody", kind: "video", body: undefined }),
+    item({ id: "short-article", body: bodyMin(2) }),
+  ];
+  expect(dropBelowFeedFloor(items).map((i) => i.id)).toEqual(["bare", "video-nobody"]);
+});
+
 test("tickerTitles returns the first n titles", () => {
   const items = [item({ id: "1", title: "One" }), item({ id: "2", title: "Two" }), item({ id: "3", title: "Three" })];
   expect(tickerTitles(items, 2)).toEqual(["One", "Two"]);
