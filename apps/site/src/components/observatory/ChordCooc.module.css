@@ -1,0 +1,64 @@
+/* ChordCooc — co-occurrence chord. Tokens only + GROUP_COLORS fills (set in JS).
+   "Lines not boxes": no card chrome, just the ring on the warm ground. */
+.wrap {
+  position: relative;
+  width: 100%;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* radial mono channel labels */
+.label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  fill: var(--ink-dim);
+  pointer-events: none;
+  transition: fill-opacity var(--dur) var(--ease-out);
+}
+
+/* themed tooltip — follows cursor */
+.tip {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-width: 220px;
+  padding: var(--s-2) var(--s-3);
+  border: var(--hair) solid var(--rule-bright);
+  border-radius: var(--r-md);
+  background: var(--bg-raised);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  line-height: 1.4;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.tipHead {
+  color: var(--ink);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.tipDim {
+  color: var(--ink-faint);
+  white-space: pre;
+}
+
+.empty {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  text-align: center;
+  padding: var(--s-8);
+}

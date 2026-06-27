@@ -1,0 +1,81 @@
+/* The Observatory — shared chrome for the analytics dashboard.
+   "Lines not boxes": hairline rules, mono labels, lots of negative space,
+   instrument-like restraint. Tokens only (tokens.css). Chart islands add their
+   own styles; this file owns the section frame + the stub placeholder. */
+
+/* ── Stub placeholder (overwritten by chart agents; here so the page renders
+   meaningfully before the islands ship) ─────────────────────────────────── */
+.obs-chart-stub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  padding: var(--s-6);
+  border: var(--hair) dashed var(--rule);
+  border-radius: var(--r-md);
+  background: var(--bg-card);
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+/* ── Section frame ───────────────────────────────────────────────────────── */
+.obs-section {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: var(--s-10) 0;
+  border-top: var(--hair) solid var(--rule);
+}
+.obs-section:first-of-type {
+  border-top: none;
+}
+.obs-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  margin: 0 0 var(--s-3);
+}
+.obs-h2 {
+  font-family: var(--font-display);
+  font-weight: 480;
+  font-size: var(--t-xl);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0 0 var(--s-3);
+}
+.obs-lede {
+  max-width: var(--measure);
+  color: var(--ink-dim);
+  font-size: var(--t-sm);
+  line-height: 1.55;
+  margin: 0 0 var(--s-6);
+}
+.obs-subhead {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  margin: 0 0 var(--s-4);
+  padding-bottom: var(--s-2);
+  border-bottom: var(--hair) solid var(--rule);
+}
+
+/* reveal entrance — mirror the taste page (transform/opacity only, GPU-cheap).
+   No-JS / reduced-motion: fully visible immediately (handled by Shell). */
+:global(html.reveal-ready) .obs-section[data-reveal] {
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity var(--dur-slow) var(--ease-out),
+    transform var(--dur-slow) var(--ease-out);
+}
+:global(html.reveal-ready) .obs-section[data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+}

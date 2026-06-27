@@ -1,81 +1,685 @@
 ---
+// THE OBSERVATORY — a dense, scroll-through intelligence dashboard about the
+// curated signal. Route stays /graph (the old node-link graph is gone). Most of
+// this page is server-rendered (no-JS) charts computed at build time; six
+// interactive island charts (client:visible) layer motion on top.
 import Shell from "../layouts/Shell.astro";
-import ConnectionsGraph from "../components/graph/ConnectionsGraph.tsx";
 import { loadCurated, tickerTitles } from "../lib/feed.js";
-import { dataDir } from "../lib/data.js";
-import { buildGraph, type GraphItem, type GraphPost } from "../components/graph/lib/build-graph.js";
+import { dataDir, repoDataDir } from "../lib/data.js";
+import { loadTaste } from "../lib/taste.js";
 import { getCollection } from "astro:content";
+import * as d3 from "d3";
+import {
+  analyze,
+  calendarDays,
+  channelGroup,
+  GROUP_COLORS,
+  type AnalyticsItem,
+} from "../components/observatory/lib/build-analytics.js";
+import ChordCooc from "../components/observatory/ChordCooc.tsx";
+import ClusterBubbles from "../components/observatory/ClusterBubbles.tsx";
+import TrustTasteScatter from "../components/observatory/TrustTasteScatter.tsx";
+import ReadTimeDist from "../components/observatory/ReadTimeDist.tsx";
+import TemporalStream from "../components/observatory/TemporalStream.tsx";
+import ReadBySource from "../components/observatory/ReadBySource.tsx";
+import "../components/observatory/observatory.css";
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-const items = loadCurated(dataDir());
-const ticker = tickerTitles(items, 8);
+const rawItems = loadCurated(dataDir());
+const ticker = tickerTitles(rawItems, 8);
 
 const posts = await getCollection("blog", ({ data }) => !data.draft);
 
-const graphItems: GraphItem[] = items.map((it) => ({
+// Project FeedItem → the analytics input shape (a structural subset).
+const items: AnalyticsItem[] = rawItems.map((it) => ({
   id: it.id,
-  title: it.title,
-  topics: it.topics,
-  entities: it.entities,
+  source: it.source,
+  sourceType: it.sourceType,
   url: it.url,
+  title: it.title,
+  author: it.author,
+  publishedAt: it.publishedAt,
+  topics: it.topics,
+  summary: it.summary,
+  body: it.body,
+  trustScore: it.trustScore,
+  tasteScore: it.tasteScore,
+  clusterId: it.clusterId,
+  kind: it.kind,
 }));
-const graphPosts: GraphPost[] = posts.map((p) => ({
+const analyticsPosts = posts.map((p) => ({
   slug: p.id,
   title: p.data.title,
   channels: p.data.channels,
 }));
+const taste = loadTaste(repoDataDir());
 
-const model = buildGraph(graphItems, graphPosts, { minShared: 2, maxNodes: 60, base });
+const a = analyze(items, analyticsPosts, taste, { base });
+const empty = items.length === 0;
+
+const colorFor = (group: string) => GROUP_COLORS[group] ?? GROUP_COLORS.science!;
+const pct = (v: number, max: number) => (max > 0 ? `${Math.round((v / max) * 100)}%` : "0%");
+
+// ── SSR TREEMAP — squarified d3-hierarchy layout, emitted as static <svg> ──
+const TM_W = 720;
+const TM_H = 360;
+let treemapRects: {
+  channel: string;
+  group: string;
+  color: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  count: number;
+  avgTaste: number;
+  showLabel: boolean;
+}[] = [];
+if (a.treemap.length > 0) {
+  const root = d3
+    .hierarchy<{ children: typeof a.treemap }>({ children: a.treemap } as any)
+    .sum((d: any) => (d.count as number) ?? 0)
+    .sort((x, y) => (y.value ?? 0) - (x.value ?? 0));
+  d3.treemap().size([TM_W, TM_H]).paddingInner(2).tile(d3.treemapSquarify)(root as any);
+  treemapRects = (root.leaves() as any[]).map((leaf) => {
+    const d = leaf.data as (typeof a.treemap)[number];
+    const w = leaf.x1 - leaf.x0;
+    const h = leaf.y1 - leaf.y0;
+    return {
+      channel: d.channel,
+      group: d.group,
+      color: colorFor(d.group),
+      x: leaf.x0,
+      y: leaf.y0,
+      w,
+      h,
+      count: d.count,
+      avgTaste: d.avgTaste,
+      // opacity scales with avgTaste so "hotter" channels glow brighter
+      showLabel: w > 56 && h > 26,
+    };
+  });
+}
+const maxAvgTaste = Math.max(...a.treemap.map((t) => t.avgTaste), 1);
+const tasteOpacity = (avg: number) => 0.34 + 0.56 * (maxAvgTaste > 0 ? avg / maxAvgTaste : 0);
+
+// ── SSR DONUT — d3 pie/arc, source-type mix, static <svg> ──────────────────
+const DO_R = 120;
+const DO_INNER = 78;
+type DonutArc = { sourceType: string; count: number; path: string; color: string };
+let donutArcs: DonutArc[] = [];
+const sourceTypeGroupColor: Record<string, string> = {
+  "eng-blog": GROUP_COLORS.science!,
+  rss: GROUP_COLORS.data!,
+  news: GROUP_COLORS.world!,
+  podcast: GROUP_COLORS.ai!,
+};
+if (a.sourceMix.length > 0) {
+  const pie = d3
+    .pie<{ sourceType: string; count: number }>()
+    .value((d) => d.count)
+    .sort(null);
+  const arcGen = d3.arc<d3.PieArcDatum<{ sourceType: string; count: number }>>().innerRadius(DO_INNER).outerRadius(DO_R).padAngle(0.02).cornerRadius(1);
+  donutArcs = pie(a.sourceMix).map((p) => ({
+    sourceType: p.data.sourceType,
+    count: p.data.count,
+    path: arcGen(p) ?? "",
+    color: sourceTypeGroupColor[p.data.sourceType] ?? GROUP_COLORS.make!,
+  }));
+}
+const sourceTotal = a.sourceMix.reduce((s, m) => s + m.count, 0);
+
+// ── SSR CALENDAR HEATMAP — items/day, GitHub-style grid ────────────────────
+const calDays = calendarDays(items);
+// group days into week columns (Mon-anchored); compute month labels.
+type CalCell = { date: string; count: number; col: number; row: number };
+let calCells: CalCell[] = [];
+let calCols = 0;
+let calMonthLabels: { col: number; label: string }[] = [];
+const calMax = Math.max(...calDays.map((d) => d.count), 1);
+if (calDays.length > 0) {
+  const first = new Date(`${calDays[0]!.date}T00:00:00.000Z`);
+  const firstDow = (first.getUTCDay() + 6) % 7; // 0 = Monday
+  calCells = calDays.map((d, i) => {
+    const slot = i + firstDow;
+    return { date: d.date, count: d.count, col: Math.floor(slot / 7), row: slot % 7 };
+  });
+  calCols = Math.max(...calCells.map((c) => c.col)) + 1;
+  // month label at the first column that contains the 1st-ish of a month
+  const seenMonth = new Set<string>();
+  for (const c of calCells) {
+    const dt = new Date(`${c.date}T00:00:00.000Z`);
+    const key = `${dt.getUTCFullYear()}-${dt.getUTCMonth()}`;
+    if (dt.getUTCDate() <= 7 && !seenMonth.has(key)) {
+      seenMonth.add(key);
+      calMonthLabels.push({
+        col: c.col,
+        label: dt.toLocaleString("en-US", { month: "short", timeZone: "UTC" }),
+      });
+    }
+  }
+}
+const CAL_CELL = 12;
+const CAL_GAP = 3;
+const calIntensity = (count: number) => (count === 0 ? 0 : 0.18 + 0.82 * (count / calMax));
+
+const maxTasteVal = Math.max(...a.tasteByChannel.map((t) => t.avgTaste), 1);
+const maxSourceCount = Math.max(...a.topSources.map((s) => s.count), 1);
+const maxTrust = Math.max(...a.trustHist.map((b) => b.count), 1);
 ---
 
-<Shell title="khazana — graph" active="graph" tickerTitles={ticker}>
-  <header class="graph-head" data-reveal>
-    <p class="eyebrow">graph</p>
-    <h1 class="graph-h1">how the signal connects</h1>
-    <p class="graph-sub">
-      Curated items <span class="dot dot--item">●</span> and reads
-      <span class="dot dot--post">●</span> linked where they share topics or
-      entities. Hover to trace neighbors; click to open.
-    </p>
-  </header>
+<Shell title="khazana — observatory" active="graph" tickerTitles={ticker}>
+  {empty ? (
+    <section class="obs-empty" data-reveal>
+      <p class="obs-eyebrow">observatory</p>
+      <h1 class="obs-empty-h">the instrument is dark</h1>
+      <p class="obs-empty-b">
+        No signal in the corpus yet. The Observatory measures what's been curated —
+        the shape of your interests, your reading rhythm, how topics converge. It
+        lights up the moment the feed has something to read.
+      </p>
+    </section>
+  ) : (
+    <>
+      {/* ── 1. MASTHEAD ─────────────────────────────────────────────── */}
+      <section class="obs-section obs-masthead" data-reveal>
+        <p class="obs-eyebrow">observatory</p>
+        <h1 class="obs-h1">the shape of your signal</h1>
+        <p class="obs-masthead-sub">
+          Everything below is computed from your curated corpus and your taste model,
+          here on this page, at build time — a portrait of what you read drawn only
+          from what you've kept. Nothing is phoned home; nothing leaves the device.
+          The instrument simply turns its gaze inward.
+        </p>
+      </section>
 
-  {
-    model.nodes.length === 0 ? (
-      <p class="graph-empty">No items to connect yet — the graph fills in as the feed grows.</p>
-    ) : (
-      <ConnectionsGraph model={model} client:visible />
-    )
-  }
+      {/* ── 2. STAT BAND ────────────────────────────────────────────── */}
+      <section class="obs-section obs-statband" data-reveal aria-label="signal at a glance">
+        <ul class="obs-stats">
+          {a.hero.map((s) => (
+            <li class="obs-stat">
+              <span class="obs-stat-v tnum" data-countup={/^[\d.]+$/.test(s.value) ? s.value : null}>{s.value}</span>
+              <span class="obs-stat-l">{s.label}</span>
+              {s.sub && <span class="obs-stat-s">{s.sub}</span>}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* ── 3. INTERESTS ────────────────────────────────────────────── */}
+      <section class="obs-section" data-reveal>
+        <p class="obs-eyebrow">interests</p>
+        <h2 class="obs-h2">where your attention lives</h2>
+        <p class="obs-lede">
+          Every channel you've curated, sized by volume and lit by taste — the brighter
+          the block, the more it resonates. Beside it, how those channels travel together.
+        </p>
+        <div class="obs-interests">
+          <figure class="obs-treemap">
+            <svg viewBox={`0 0 ${TM_W} ${TM_H}`} role="img" aria-label="Channel treemap" preserveAspectRatio="xMidYMid meet">
+              {treemapRects.map((r) => (
+                <g>
+                  <rect
+                    x={r.x}
+                    y={r.y}
+                    width={r.w}
+                    height={r.h}
+                    rx="2"
+                    fill={r.color}
+                    fill-opacity={tasteOpacity(r.avgTaste).toFixed(3)}
+                    stroke="var(--bg)"
+                    stroke-width="1"
+                  />
+                  {r.showLabel && (
+                    <>
+                      <text x={r.x + 8} y={r.y + 18} class="tm-label">{r.channel}</text>
+                      <text x={r.x + 8} y={r.y + 32} class="tm-count">{r.count}</text>
+                    </>
+                  )}
+                </g>
+              ))}
+            </svg>
+            <figcaption class="obs-cap">block size = items · brightness = avg taste</figcaption>
+          </figure>
+          <div class="obs-chord">
+            <ChordCooc client:visible data={a.cooc} />
+          </div>
+        </div>
+      </section>
+
+      {/* ── 4. TASTE ────────────────────────────────────────────────── */}
+      <section class="obs-section" data-reveal>
+        <p class="obs-eyebrow">taste</p>
+        <h2 class="obs-h2">credible, and worth your time</h2>
+        <p class="obs-lede">
+          Trust against taste for every item — the upper-right quadrant is the catch:
+          sources you trust, saying things you care about.
+        </p>
+        <TrustTasteScatter client:visible data={a.scatter} />
+
+        <div class="obs-taste-grid">
+          <div>
+            <h3 class="obs-subhead">taste by channel</h3>
+            <ul class="obs-bars">
+              {a.tasteByChannel.slice(0, 12).map((t) => (
+                <li class="obs-bar-row">
+                  <span class="obs-bar-label" style={`color:${colorFor(t.group)}`}>{t.channel}</span>
+                  <span class="obs-bar-track">
+                    <span class="obs-bar-fill" style={`width:${pct(t.avgTaste, maxTasteVal)};background:${colorFor(t.group)}`}></span>
+                  </span>
+                  <span class="obs-bar-val">{t.avgTaste.toFixed(1)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3 class="obs-subhead">highest resonance</h3>
+            <ol class="obs-leader">
+              {a.topItems.map((it, i) => (
+                <li class="obs-leader-row">
+                  <span class="obs-leader-n tnum">{String(i + 1).padStart(2, "0")}</span>
+                  <a class="obs-leader-title" href={it.href}>{it.title}</a>
+                  <span class="obs-leader-meta">
+                    <span class="obs-leader-ch" style={`color:${colorFor(channelGroup(it.channel))}`}>{it.channel}</span>
+                    <span class="obs-leader-min">{it.readMin}m</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 5. READING RHYTHM ───────────────────────────────────────── */}
+      <section class="obs-section" data-reveal>
+        <p class="obs-eyebrow">reading rhythm</p>
+        <h2 class="obs-h2">how long you sit with things</h2>
+        <p class="obs-lede">
+          The corpus skews toward a ~15-minute read — long enough to say something,
+          short enough to finish. The curve is the target; the bars are reality.
+        </p>
+        <div class="obs-rhythm">
+          <ReadTimeDist client:visible data={a.readDist} />
+          <ReadBySource client:visible data={a.readBySource} />
+        </div>
+      </section>
+
+      {/* ── 6. PROVENANCE ───────────────────────────────────────────── */}
+      <section class="obs-section" data-reveal>
+        <p class="obs-eyebrow">provenance</p>
+        <h2 class="obs-h2">where it all comes from</h2>
+        <p class="obs-lede">
+          The mix of mediums, the sources that feed you most, and how much you trust
+          what comes in.
+        </p>
+        <div class="obs-prov-grid">
+          <figure class="obs-donut">
+            <svg viewBox={`0 0 ${DO_R * 2} ${DO_R * 2}`} role="img" aria-label="Source-type mix" preserveAspectRatio="xMidYMid meet">
+              <g transform={`translate(${DO_R},${DO_R})`}>
+                {donutArcs.map((arc) => (
+                  <path d={arc.path} fill={arc.color} fill-opacity="0.82"></path>
+                ))}
+                <text class="obs-donut-total tnum" text-anchor="middle" dy="-2">{sourceTotal}</text>
+                <text class="obs-donut-cap" text-anchor="middle" dy="16">items</text>
+              </g>
+            </svg>
+            <figcaption class="obs-donut-legend">
+              {a.sourceMix.map((m) => (
+                <span class="obs-legend-item">
+                  <span class="obs-legend-dot" style={`background:${sourceTypeGroupColor[m.sourceType] ?? GROUP_COLORS.make}`}></span>
+                  {m.sourceType} <span class="obs-legend-n">{m.count}</span>
+                </span>
+              ))}
+            </figcaption>
+          </figure>
+
+          <div class="obs-sources">
+            <h3 class="obs-subhead">top sources</h3>
+            <ul class="obs-bars">
+              {a.topSources.map((s) => (
+                <li class="obs-bar-row">
+                  <span class="obs-bar-label" title={s.source}>{s.source}</span>
+                  <span class="obs-bar-track">
+                    <span class="obs-bar-fill obs-bar-fill--amber" style={`width:${pct(s.count, maxSourceCount)}`}></span>
+                  </span>
+                  <span class="obs-bar-val">{s.count}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div class="obs-provenance-side">
+            <h3 class="obs-subhead">top authors</h3>
+            {a.topAuthors.length === 0 ? (
+              <p class="obs-none">no bylines recorded</p>
+            ) : (
+              <ul class="obs-authors">
+                {a.topAuthors.map((au) => (
+                  <li class="obs-author-row">
+                    <span class="obs-author-name">{au.author}</span>
+                    <span class="obs-author-n tnum">{au.count}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <h3 class="obs-subhead obs-subhead--gap">trust distribution</h3>
+            <div class="obs-trusthist" aria-label="Trust score distribution">
+              {a.trustHist.map((b) => (
+                <span class="obs-trust-col" title={`${b.x0.toFixed(1)}–${b.x1.toFixed(1)}: ${b.count}`}>
+                  <span class="obs-trust-bar" style={`height:${Math.round((b.count / maxTrust) * 100)}%`}></span>
+                </span>
+              ))}
+            </div>
+            <p class="obs-cap obs-cap--axis"><span>0.0</span><span>trust →</span><span>1.0</span></p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 7. TEMPORAL ─────────────────────────────────────────────── */}
+      <section class="obs-section" data-reveal>
+        <p class="obs-eyebrow">temporal</p>
+        <h2 class="obs-h2">the signal over time</h2>
+        <p class="obs-lede">
+          What's flowed in week by week, banded by group — and every day the corpus
+          drew breath.
+        </p>
+        <TemporalStream client:visible data={a.timeSeries} />
+
+        <h3 class="obs-subhead obs-subhead--gap">activity calendar</h3>
+        {calCells.length === 0 ? (
+          <p class="obs-none">not enough dated items to chart</p>
+        ) : (
+          <figure class="obs-calendar">
+            <svg
+              viewBox={`0 0 ${calCols * (CAL_CELL + CAL_GAP) + 28} ${7 * (CAL_CELL + CAL_GAP) + 18}`}
+              role="img"
+              aria-label="Items per day calendar"
+              preserveAspectRatio="xMinYMid meet"
+            >
+              {calMonthLabels.map((m) => (
+                <text class="cal-month" x={28 + m.col * (CAL_CELL + CAL_GAP)} y="10">{m.label}</text>
+              ))}
+              {["M", "", "W", "", "F", "", ""].map((d, i) => (
+                d ? <text class="cal-dow" x="0" y={18 + 12 + i * (CAL_CELL + CAL_GAP) + 9}>{d}</text> : null
+              ))}
+              <g transform="translate(28,18)">
+                {calCells.map((c) => (
+                  <rect
+                    x={c.col * (CAL_CELL + CAL_GAP)}
+                    y={c.row * (CAL_CELL + CAL_GAP)}
+                    width={CAL_CELL}
+                    height={CAL_CELL}
+                    rx="2"
+                    fill={c.count === 0 ? "var(--bg-inset)" : "var(--accent)"}
+                    fill-opacity={c.count === 0 ? 1 : calIntensity(c.count).toFixed(3)}
+                  >
+                    <title>{c.date}: {c.count} item{c.count === 1 ? "" : "s"}</title>
+                  </rect>
+                ))}
+              </g>
+            </svg>
+          </figure>
+        )}
+      </section>
+
+      {/* ── 8. CLUSTERS ─────────────────────────────────────────────── */}
+      <section class="obs-section" data-reveal>
+        <p class="obs-eyebrow">clusters</p>
+        <h2 class="obs-h2">where the stories converged</h2>
+        <p class="obs-lede">
+          The day's most-covered stories — bigger means more sources converged on the
+          same thread.
+        </p>
+        <ClusterBubbles client:visible data={a.clusters} base={base} />
+      </section>
+    </>
+  )}
 </Shell>
 
 <style>
-  .graph-head {
-    margin-bottom: var(--s-5);
-    max-width: var(--measure);
-  }
-  .graph-h1 {
-    font-family: var(--font-sans);
-    font-size: var(--t-2xl);
-    line-height: var(--lh-tight);
+  .obs-h1 {
+    font-family: var(--font-display);
+    font-weight: 460;
+    font-size: var(--t-3xl);
+    line-height: var(--lh-display);
     letter-spacing: -0.02em;
-    margin: 0 0 var(--s-3);
-    font-weight: 600;
+    color: var(--ink);
+    margin: 0 0 var(--s-4);
+    text-wrap: balance;
   }
-  .graph-sub {
+  .obs-masthead { padding-top: var(--s-8); }
+  .obs-masthead-sub {
+    max-width: var(--measure);
     color: var(--ink-dim);
-    font-size: var(--t-sm);
+    font-family: var(--font-read);
+    font-size: var(--t-read);
+    line-height: var(--lh-read);
     margin: 0;
   }
-  .dot {
-    font-size: 0.7em;
-    vertical-align: middle;
+
+  /* ── empty state ─────────────────────────────────────────────────── */
+  .obs-empty {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: var(--s-12) 0;
   }
-  .dot--item { color: var(--editorial); }
-  .dot--post { color: var(--accent); }
-  .graph-empty {
-    padding: var(--s-8) 0;
-    color: var(--ink-faint);
+  .obs-empty-h {
+    font-family: var(--font-display);
+    font-weight: 460;
+    font-size: var(--t-2xl);
+    color: var(--ink);
+    margin: var(--s-2) 0 var(--s-4);
+  }
+  .obs-empty-b {
+    max-width: var(--measure);
+    color: var(--ink-dim);
+    font-family: var(--font-read);
+    font-size: var(--t-read);
+    line-height: var(--lh-read);
+    margin: 0;
+  }
+
+  /* ── stat band ───────────────────────────────────────────────────── */
+  .obs-stats {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--s-6) var(--s-5);
+  }
+  .obs-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15em;
+    padding-left: var(--s-3);
+    border-left: 2px solid var(--rule);
+  }
+  .obs-stat-v {
     font-family: var(--font-mono);
-    text-align: center;
+    font-size: var(--t-2xl);
+    line-height: 1;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .obs-stat-l {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-dim);
+  }
+  .obs-stat-s {
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+  }
+
+  /* ── interests / treemap + chord ─────────────────────────────────── */
+  .obs-interests {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: var(--s-6);
+    align-items: start;
+  }
+  .obs-treemap { margin: 0; }
+  .obs-treemap svg { width: 100%; height: auto; display: block; }
+  .obs-chord { min-width: 0; }
+  :global(.tm-label) {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    fill: var(--bg-inset);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  :global(.tm-count) {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    fill: var(--bg-inset);
+    fill-opacity: 0.7;
+  }
+  .obs-cap {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    margin: var(--s-3) 0 0;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── taste grid (bars + leaderboard) ─────────────────────────────── */
+  .obs-taste-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s-8);
+    margin-top: var(--s-8);
+  }
+  .obs-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s-3); }
+  .obs-bar-row {
+    display: grid;
+    grid-template-columns: 8rem 1fr 2.6rem;
+    align-items: center;
+    gap: var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--t-sm);
+  }
+  .obs-bar-label { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .obs-bar-track {
+    height: 0.5rem;
+    background: var(--bg-inset);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-sm);
+    overflow: hidden;
+  }
+  .obs-bar-fill { display: block; height: 100%; transform-origin: left; border-radius: var(--r-sm); }
+  .obs-bar-fill--amber { background: var(--accent); }
+  .obs-bar-val { color: var(--ink-faint); font-size: var(--t-xs); text-align: right; }
+
+  .obs-leader { list-style: none; margin: 0; padding: 0; counter-reset: none; }
+  .obs-leader-row {
+    display: grid;
+    grid-template-columns: 1.8rem 1fr auto;
+    align-items: baseline;
+    gap: var(--s-3);
+    padding: var(--s-2) 0;
+    border-bottom: var(--hair) solid var(--rule);
+  }
+  .obs-leader-n { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--ink-faint); }
+  .obs-leader-title {
+    color: var(--ink);
+    font-size: var(--t-sm);
+    line-height: 1.35;
+    text-decoration: none;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .obs-leader-title:hover { color: var(--accent); }
+  .obs-leader-meta { display: inline-flex; gap: var(--s-3); font-family: var(--font-mono); font-size: var(--t-xs); white-space: nowrap; }
+  .obs-leader-min { color: var(--ink-faint); }
+
+  /* ── rhythm ──────────────────────────────────────────────────────── */
+  .obs-rhythm { display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--s-6); align-items: start; }
+
+  /* ── provenance ──────────────────────────────────────────────────── */
+  .obs-prov-grid { display: grid; grid-template-columns: auto 1.2fr 1fr; gap: var(--s-8); align-items: start; }
+  .obs-donut { margin: 0; }
+  .obs-donut svg { width: 200px; height: auto; display: block; }
+  :global(.obs-donut-total) { font-family: var(--font-mono); font-size: 30px; fill: var(--ink); font-weight: 500; }
+  :global(.obs-donut-cap) { font-family: var(--font-mono); font-size: 10px; fill: var(--ink-faint); letter-spacing: 0.08em; text-transform: uppercase; }
+  .obs-donut-legend { display: flex; flex-direction: column; gap: var(--s-2); margin: var(--s-4) 0 0; font-family: var(--font-mono); font-size: var(--t-xs); color: var(--ink-dim); }
+  .obs-legend-item { display: inline-flex; align-items: center; gap: var(--s-2); }
+  .obs-legend-dot { width: 8px; height: 8px; border-radius: 1px; display: inline-block; }
+  .obs-legend-n { color: var(--ink-faint); margin-left: auto; }
+
+  .obs-authors { list-style: none; margin: 0; padding: 0; }
+  .obs-author-row {
+    display: flex; justify-content: space-between; gap: var(--s-3);
+    padding: var(--s-2) 0; border-bottom: var(--hair) solid var(--rule);
+    font-family: var(--font-mono); font-size: var(--t-sm);
+  }
+  .obs-author-name { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .obs-author-n { color: var(--ink-faint); }
+  .obs-subhead--gap { margin-top: var(--s-6); }
+  .obs-none { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--ink-faint); margin: 0; }
+
+  .obs-trusthist { display: flex; align-items: flex-end; gap: 3px; height: 64px; }
+  .obs-trust-col { flex: 1; display: flex; align-items: flex-end; height: 100%; }
+  .obs-trust-bar { width: 100%; background: var(--good); border-radius: var(--r-sm) var(--r-sm) 0 0; min-height: 1px; }
+  .obs-cap--axis { display: flex; justify-content: space-between; }
+
+  /* ── calendar ────────────────────────────────────────────────────── */
+  .obs-calendar { margin: 0; overflow-x: auto; }
+  .obs-calendar svg { display: block; max-width: 100%; height: auto; }
+  :global(.cal-month) { font-family: var(--font-mono); font-size: 9px; fill: var(--ink-faint); letter-spacing: 0.04em; }
+  :global(.cal-dow) { font-family: var(--font-mono); font-size: 8px; fill: var(--ink-faint); }
+
+  /* ── responsive ──────────────────────────────────────────────────── */
+  @media (max-width: 920px) {
+    .obs-stats { grid-template-columns: repeat(2, 1fr); }
+    .obs-interests,
+    .obs-taste-grid,
+    .obs-rhythm { grid-template-columns: 1fr; }
+    .obs-prov-grid { grid-template-columns: 1fr 1fr; }
+    .obs-donut { grid-column: 1 / -1; }
+  }
+  @media (max-width: 560px) {
+    .obs-prov-grid { grid-template-columns: 1fr; }
   }
 </style>
+
+<script>
+  // Count-up on reveal — progressive enhancement only. SSR renders the full
+  // value; under no-JS / reduced-motion this never runs and the value stays put.
+  function initCountUps(): void {
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce || !("IntersectionObserver" in window)) return;
+    const els = document.querySelectorAll<HTMLElement>("[data-countup]");
+    const io = new IntersectionObserver(
+      (entries, obs) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          const el = e.target as HTMLElement;
+          obs.unobserve(el);
+          const target = parseFloat(el.dataset.countup ?? "0");
+          if (!Number.isFinite(target)) continue;
+          const decimals = (el.dataset.countup ?? "").includes(".") ? 1 : 0;
+          const dur = 900;
+          const start = performance.now();
+          const tick = (t: number) => {
+            const p = Math.min(1, (t - start) / dur);
+            const eased = 1 - Math.pow(1 - p, 3);
+            el.textContent = (target * eased).toFixed(decimals);
+            if (p < 1) requestAnimationFrame(tick);
+            else el.textContent = target.toFixed(decimals);
+          };
+          requestAnimationFrame(tick);
+        }
+      },
+      { threshold: 0.4 },
+    );
+    for (const el of els) io.observe(el);
+  }
+  initCountUps();
+  document.addEventListener("astro:page-load", initCountUps);
+</script>

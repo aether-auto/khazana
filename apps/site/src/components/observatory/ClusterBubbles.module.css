@@ -1,0 +1,64 @@
+/* ClusterBubbles — circle-packed story clusters. Tokens only + GROUP_COLORS
+   fills (set in JS). Lines not boxes; the bubbles float on the warm ground. */
+.wrap {
+  position: relative;
+  width: 100%;
+  min-height: 360px;
+}
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.01em;
+  fill: var(--bg-inset);
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.tip {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 260px;
+  padding: var(--s-2) var(--s-3);
+  border: var(--hair) solid var(--rule-bright);
+  border-radius: var(--r-md);
+  background: var(--bg-raised);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  line-height: 1.4;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.tipHead {
+  color: var(--ink);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.tipMeta {
+  color: var(--ink-faint);
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  max-width: var(--measure);
+  margin: 0 auto;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.03em;
+  line-height: 1.6;
+  color: var(--ink-faint);
+  text-align: center;
+}
