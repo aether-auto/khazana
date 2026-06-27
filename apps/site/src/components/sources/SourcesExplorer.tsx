@@ -22,7 +22,10 @@ import type {
   FacetCount,
   SourceStatus,
   SourcesData,
+  TrustFactor,
+  TrustPolarity,
 } from "./lib/build-sources.js";
+import { assessTrust } from "./lib/build-sources.js";
 import styles from "./SourcesExplorer.module.css";
 
 interface Props {
@@ -54,11 +57,18 @@ const SORTS: { key: SortKey; label: string }[] = [
 const STATUS_LABEL: Record<SourceStatus, string> = {
   producing: "producing",
   dormant: "dormant",
+  deferred: "deferred",
   failing: "failing",
   disabled: "disabled",
 };
 // Statuses that read in clay (the "needs attention" tie to the Scout).
 const ATTENTION_STATUS = new Set<SourceStatus>(["failing", "dormant"]);
+// Deferred is informational, not a problem — it reads in a cool/info tone and
+// carries a fuller label ("deferred · runs in Actions").
+const STATUS_FULL_LABEL: Record<SourceStatus, string> = {
+  ...STATUS_LABEL,
+  deferred: "deferred · runs in Actions",
+};
 
 type Selected = Record<FacetKey, Set<string>>;
 const emptySelected = (): Selected => ({
@@ -426,9 +436,12 @@ function FacetChip({
 }) {
   // Status chips for the "needs attention" states read in clay, not amber.
   const attention = facetKey === "status" && ATTENTION_STATUS.has(facet.value as SourceStatus);
+  // Deferred reads in a cool/info tone — present, not a problem.
+  const info = facetKey === "status" && facet.value === "deferred";
   const cls = [
     styles.chip,
     attention ? styles.chipAttention : "",
+    info ? styles.chipInfo : "",
     reduced ? styles.noMotion : "",
   ]
     .filter(Boolean)
@@ -454,11 +467,26 @@ function statusDotClass(status: SourceStatus): string {
       return styles.dotProducing;
     case "failing":
       return styles.dotFailing;
+    case "deferred":
+      return styles.dotDeferred;
     case "disabled":
       return styles.dotDisabled;
     case "dormant":
     default:
       return styles.dotDormant;
+  }
+}
+
+// Polarity → the affordance class for a trust factor (sage / ink-dim / clay).
+function polarityClass(polarity: TrustPolarity): string {
+  switch (polarity) {
+    case "positive":
+      return styles.factorPositive;
+    case "caution":
+      return styles.factorCaution;
+    case "neutral":
+    default:
+      return styles.factorNeutral;
   }
 }
 
@@ -505,7 +533,7 @@ function SourceRow({
               <span className={styles.rowItemsUnit}>items</span>
             </span>
           )}
-          <span className={styles.rowTrust} title="trust score">
+          <span className={styles.rowTrust} title="trust score — open for the trust basis">
             <span className={styles.trustBar} aria-hidden="true">
               <span className={styles.trustFill} style={{ width: `${trustPct}%` }} />
             </span>
@@ -515,8 +543,8 @@ function SourceRow({
 
         <span
           className={`${styles.statusDot} ${statusDotClass(s.status)}`}
-          title={s.status}
-          aria-label={`status: ${s.status}`}
+          title={STATUS_FULL_LABEL[s.status]}
+          aria-label={`status: ${STATUS_FULL_LABEL[s.status]}`}
         />
       </button>
     </li>
@@ -595,6 +623,8 @@ function SourceDrawer({
   if (!open || !s) return null;
 
   const trustPct = Math.round(s.trustScore * 100);
+  // The transparent trust basis — explains the headline score from observable signals.
+  const trust = assessTrust(s);
   // Channels the source actually produced that it never declared — the divergence.
   const declared = new Set(s.channels);
   const undeclaredProduced = s.producedChannels.filter((c) => !declared.has(c));
@@ -621,7 +651,7 @@ function SourceDrawer({
             <span className={`type-badge type-${s.type}`}>{s.type}</span>
             <span className={`${styles.dStatus} ${statusPillClass(s.status)}`}>
               <span className={`${styles.chipDot} ${statusDotClass(s.status)}`} aria-hidden="true" />
-              {s.status}
+              {STATUS_FULL_LABEL[s.status]}
             </span>
             <button type="button" className={styles.dClose} aria-label="close" onClick={onClose}>
               ×
@@ -671,6 +701,29 @@ function SourceDrawer({
               )}
             </div>
             {s.notes && <p className={styles.dNotes}>{s.notes}</p>}
+            {s.status === "deferred" && (
+              <p className={styles.dDeferred}>
+                YouTube ingestion runs in GitHub Actions, not locally — this source
+                activates in the cloud pipeline. It's cloud-gated, not disabled.
+              </p>
+            )}
+          </section>
+
+          {/* Trust basis — why this score */}
+          <section className={styles.dSection}>
+            <h3 className={styles.dSectionHead}>trust basis · why this score</h3>
+            <div className={styles.dTrustBasis}>
+              <span className={styles.dTier}>{trust.tier}</span>
+              <span className={styles.dTrustScore} title="stored trust score">
+                {trustPct}
+              </span>
+            </div>
+            <p className={styles.dRationale}>{trust.rationale}</p>
+            <ul className={styles.dFactors}>
+              {trust.factors.map((f, i) => (
+                <TrustFactorRow key={`${f.label}-${i}`} factor={f} />
+              ))}
+            </ul>
           </section>
 
           {/* Live feed stats */}
@@ -719,8 +772,9 @@ function SourceDrawer({
               </>
             ) : (
               <p className={styles.dQuiet}>
-                No items in the current local feed yet — an Actions-only source, or below the
-                read-time floor.
+                {s.status === "deferred"
+                  ? "No items locally — this source's ingestion runs in GitHub Actions, where it activates."
+                  : "No items in the current local feed yet — an Actions-only source, or below the read-time floor."}
               </p>
             )}
           </section>
@@ -748,7 +802,28 @@ function SourceDrawer({
 }
 
 function statusPillClass(status: SourceStatus): string {
+  if (status === "deferred") return styles.dStatusInfo;
   return ATTENTION_STATUS.has(status) ? styles.dStatusAttention : "";
+}
+
+// ── Trust factor row (one evidenced signal behind the score) ─────────────────
+const POLARITY_GLYPH: Record<TrustPolarity, string> = {
+  positive: "+",
+  neutral: "·",
+  caution: "!",
+};
+function TrustFactorRow({ factor }: { factor: TrustFactor }) {
+  return (
+    <li className={`${styles.factor} ${polarityClass(factor.polarity)}`}>
+      <span className={styles.factorMark} aria-hidden="true">
+        {POLARITY_GLYPH[factor.polarity]}
+      </span>
+      <span className={styles.factorBody}>
+        <span className={styles.factorLabel}>{factor.label}</span>
+        <span className={styles.factorDetail}>{factor.detail}</span>
+      </span>
+    </li>
+  );
 }
 
 // ── date helpers (deterministic; relative to the newest lastPublished) ───────

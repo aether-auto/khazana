@@ -146,6 +146,10 @@ const trustPct = (t?: number) => (t != null ? Math.round(t * 100) : null);
               <dt>dormant</dt>
               <dd>{health.dormant}</dd>
             </div>
+            <div class="src-stat src-stat--info">
+              <dt>deferred</dt>
+              <dd>{health.deferred}</dd>
+            </div>
             <div class="src-stat src-stat--attention">
               <dt>failing</dt>
               <dd>{health.failing}</dd>

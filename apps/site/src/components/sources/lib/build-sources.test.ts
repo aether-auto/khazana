@@ -1,8 +1,10 @@
 import { expect, test, describe } from "vitest";
 import {
   buildSources,
+  assessTrust,
   type SourcesItem,
   type SourcesEntry,
+  type EnrichedSource,
 } from "./build-sources.js";
 
 // ── Deterministic fixture ────────────────────────────────────────────────
@@ -220,5 +222,196 @@ describe("base href + purity + empty input", () => {
     expect(z.health.candidates).toBe(0);
     expect(z.health.avgTrust).toBe(0);
     expect(z.health.byType).toEqual([]);
+  });
+});
+
+// ── deferred (Actions-only) status ────────────────────────────────────────
+// YouTube is disabled LOCALLY (its ingestion only runs in GitHub Actions, where
+// this IP is not blocked). Those sources are cloud-gated, not dead — "deferred",
+// not "disabled". Other disabled types remain plainly "disabled".
+describe("deferred status (Actions-only types)", () => {
+  test("a disabled youtube source is deferred, not disabled", () => {
+    const out = buildSources(
+      [entry({ id: "yt", type: "youtube", enabled: false })],
+      [],
+      [],
+    );
+    expect(out.sources[0]!.status).toBe("deferred");
+  });
+
+  test("a disabled non-youtube source stays disabled", () => {
+    const out = buildSources(
+      [entry({ id: "pod", type: "podcast", enabled: false })],
+      [],
+      [],
+    );
+    expect(out.sources[0]!.status).toBe("disabled");
+  });
+
+  test("an ENABLED youtube source is not forced to deferred", () => {
+    // deferred is only the off-but-cloud-gated state; an enabled youtube with
+    // items still produces, an enabled one with none is dormant.
+    const dormantYt = buildSources([entry({ id: "yt", type: "youtube" })], [], []);
+    expect(dormantYt.sources[0]!.status).toBe("dormant");
+    const failingYt = buildSources(
+      [entry({ id: "yt", type: "youtube", failureCount: 2 })],
+      [],
+      [],
+    );
+    expect(failingYt.sources[0]!.status).toBe("failing");
+  });
+
+  test("status facet includes deferred in canonical order", () => {
+    const out = buildSources(
+      [
+        entry({ id: "p", type: "rss" }), // producing? no items -> dormant
+        entry({ id: "yt1", type: "youtube", enabled: false }),
+        entry({ id: "yt2", type: "youtube", enabled: false }),
+        entry({ id: "off", type: "rss", enabled: false }),
+      ],
+      [item({ id: "i1", source: "p" })],
+      [],
+    );
+    const order = out.facets.status.map((f) => f.value);
+    // canonical: producing → dormant → deferred → failing → disabled
+    const producingIdx = order.indexOf("producing");
+    const deferredIdx = order.indexOf("deferred");
+    const disabledIdx = order.indexOf("disabled");
+    expect(deferredIdx).toBeGreaterThan(-1);
+    expect(out.facets.status.find((f) => f.value === "deferred")!.count).toBe(2);
+    expect(out.facets.status.find((f) => f.value === "disabled")!.count).toBe(1);
+    if (producingIdx > -1) expect(producingIdx).toBeLessThan(deferredIdx);
+    expect(deferredIdx).toBeLessThan(disabledIdx);
+  });
+
+  test("health splits deferred from disabled", () => {
+    const out = buildSources(
+      [
+        entry({ id: "yt1", type: "youtube", enabled: false }),
+        entry({ id: "yt2", type: "youtube", enabled: false }),
+        entry({ id: "off", type: "rss", enabled: false }),
+      ],
+      [],
+      [],
+    );
+    expect(out.health.deferred).toBe(2);
+    expect(out.health.disabled).toBe(1); // truly-disabled only
+  });
+});
+
+// ── trust basis (the "why this score" explanation) ────────────────────────
+describe("assessTrust", () => {
+  // Build a single enriched source through buildSources so we test the real shape.
+  const enrich = (e: Partial<SourcesEntry> & Pick<SourcesEntry, "id">, its: SourcesItem[] = []): EnrichedSource =>
+    buildSources([entry(e)], its, []).sources[0]!;
+
+  test("score is the source's stored trustScore, unchanged", () => {
+    const b = assessTrust(enrich({ id: "s", trustScore: 0.82 }));
+    expect(b.score).toBe(0.82);
+  });
+
+  test("tier reflects the source type", () => {
+    expect(assessTrust(enrich({ id: "a", type: "arxiv" })).tier).toMatch(/scholarly|preprint/i);
+    expect(assessTrust(enrich({ id: "e", type: "eng-blog" })).tier).toMatch(/engineering/i);
+    expect(assessTrust(enrich({ id: "n", type: "news" })).tier).toMatch(/press|journalism/i);
+    expect(assessTrust(enrich({ id: "r", type: "reddit" })).tier).toMatch(/community/i);
+  });
+
+  test("provenance factor: seed is curator-vetted (positive)", () => {
+    const b = assessTrust(enrich({ id: "s", addedBy: "seed" }));
+    const f = b.factors.find((x) => /vetted|curator/i.test(x.label + x.detail))!;
+    expect(f).toBeTruthy();
+    expect(f.polarity).toBe("positive");
+  });
+
+  test("provenance factor: scout is auto-added (neutral)", () => {
+    const b = assessTrust(enrich({ id: "s", addedBy: "scout" }));
+    const f = b.factors.find((x) => /scout/i.test(x.label + x.detail))!;
+    expect(f.polarity).toBe("neutral");
+  });
+
+  test("transport: http is a caution, https is positive", () => {
+    const insecure = assessTrust(enrich({ id: "s", url: "http://x.com/feed" }));
+    const tf = insecure.factors.find((x) => /transport|http/i.test(x.label))!;
+    expect(tf.polarity).toBe("caution");
+    const secure = assessTrust(enrich({ id: "s", url: "https://x.com/feed" }));
+    const tf2 = secure.factors.find((x) => /transport|http/i.test(x.label))!;
+    expect(tf2.polarity).toBe("positive");
+  });
+
+  test("reliability: failures are a caution factor", () => {
+    const b = assessTrust(enrich({ id: "s", failureCount: 3 }));
+    const f = b.factors.find((x) => /reliab|failure/i.test(x.label + x.detail))!;
+    expect(f.polarity).toBe("caution");
+    expect(f.detail).toContain("3");
+    const clean = assessTrust(enrich({ id: "s", failureCount: 0 }));
+    const cf = clean.factors.find((x) => /reliab|failure/i.test(x.label + x.detail))!;
+    expect(cf.polarity).toBe("positive");
+  });
+
+  test("track record: producing is positive with item count", () => {
+    const its = [
+      item({ id: "i1", source: "s", body: "<p>" + Array.from({ length: 2250 }, () => "w").join(" ") + "</p>" }),
+    ];
+    const b = assessTrust(enrich({ id: "s" }, its));
+    const f = b.factors.find((x) => /track|producing|items/i.test(x.label + x.detail))!;
+    expect(f.polarity).toBe("positive");
+    expect(f.detail).toMatch(/1/);
+  });
+
+  test("track record: no items is neutral", () => {
+    const b = assessTrust(enrich({ id: "s" }));
+    const f = b.factors.find((x) => /track|item/i.test(x.label + x.detail))!;
+    expect(f.polarity).toBe("neutral");
+  });
+
+  test("editorial notes surface as a neutral factor when present", () => {
+    const b = assessTrust(enrich({ id: "s", notes: "primary source, well-edited" }));
+    const f = b.factors.find((x) => x.detail.includes("primary source, well-edited"));
+    expect(f).toBeTruthy();
+    expect(f!.polarity).toBe("neutral");
+  });
+
+  test("divergence: high stored trust but currently failing is flagged caution", () => {
+    const b = assessTrust(enrich({ id: "s", trustScore: 0.9, failureCount: 2 }));
+    const f = b.factors.find((x) => /review|diverg|currently failing/i.test(x.detail));
+    expect(f).toBeTruthy();
+    expect(f!.polarity).toBe("caution");
+  });
+
+  test("rationale is a non-empty plain sentence", () => {
+    const b = assessTrust(enrich({ id: "s", trustScore: 0.8, type: "eng-blog" }));
+    expect(typeof b.rationale).toBe("string");
+    expect(b.rationale.length).toBeGreaterThan(10);
+    expect(b.rationale.trim().endsWith(".")).toBe(true);
+  });
+
+  test("pure: same input -> deeply equal basis", () => {
+    const s = enrich({ id: "s", trustScore: 0.7, type: "rss", notes: "x" });
+    expect(assessTrust(s)).toEqual(assessTrust(s));
+  });
+
+  test("guards a source missing optional fields without throwing", () => {
+    const bare: EnrichedSource = {
+      id: "bare",
+      type: "x",
+      url: "not a url",
+      host: "not a url",
+      channels: [],
+      enabled: true,
+      trustScore: 0.5,
+      addedBy: "manual",
+      failureCount: 0,
+      notes: null,
+      itemCount: 0,
+      avgReadMin: 0,
+      avgTaste: 0,
+      lastPublished: null,
+      producedChannels: [],
+      recentItems: [],
+      status: "dormant",
+    };
+    expect(() => assessTrust(bare)).not.toThrow();
+    expect(assessTrust(bare).factors.length).toBeGreaterThan(0);
   });
 });

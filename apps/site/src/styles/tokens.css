@@ -32,6 +32,9 @@
   --editorial: #c1554a;
   --editorial-dim: #8f3c34;
   --good: #7faa6e;
+  /* INFO — cool slate. Calm, non-alarming status (e.g. "deferred / runs in the
+     cloud"): present but not a problem, distinct from clay attention. */
+  --info: #6b8a9e;
   --focus: #ffb627;
 
   /* incandescent light bleeding into a dark room — display-size amber only */
@@ -134,6 +137,7 @@
     --editorial: #a8463c;
     --editorial-dim: #7d3129;
     --good: #5e8a4e;
+    --info: #4e7488;
     --focus: #b8851d;
     --halo-display: none;
     --halo-star: none;

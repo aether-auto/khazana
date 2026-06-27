@@ -188,6 +188,12 @@
   border-color: color-mix(in oklab, var(--editorial) 55%, var(--rule));
   background: color-mix(in oklab, var(--editorial) 9%, transparent);
 }
+/* status:deferred reads in cool/info — cloud-gated, informational, not a problem. */
+.chipInfo[aria-pressed="true"] {
+  color: var(--info);
+  border-color: color-mix(in oklab, var(--info) 55%, var(--rule));
+  background: color-mix(in oklab, var(--info) 9%, transparent);
+}
 .chipText {
   white-space: nowrap;
 }
@@ -239,6 +245,11 @@
 .dotDisabled {
   background: var(--ink-faint);
   opacity: 0.3;
+}
+/* deferred — cool/info: present, runs in the cloud, NOT a problem. */
+.dotDeferred {
+  background: var(--info);
+  box-shadow: 0 0 6px color-mix(in oklab, var(--info) 55%, transparent);
 }
 
 /* ── Result meta ─────────────────────────────────────────────────────────── */
@@ -519,6 +530,10 @@
   color: var(--editorial);
   border-color: color-mix(in oklab, var(--editorial) 45%, var(--rule));
 }
+.dStatusInfo {
+  color: var(--info);
+  border-color: color-mix(in oklab, var(--info) 45%, var(--rule));
+}
 .dClose {
   margin-left: auto;
   display: grid;
@@ -719,6 +734,106 @@
   font-size: 0.62rem;
   color: var(--ink-faint);
   white-space: nowrap;
+}
+
+/* deferred (Actions-only) explainer in the registry section — cool/info prose. */
+.dDeferred {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  line-height: 1.55;
+  color: var(--ink-dim);
+  padding-left: var(--s-3);
+  border-left: 2px solid color-mix(in oklab, var(--info) 60%, transparent);
+}
+
+/* ── Trust basis (why this score) ────────────────────────────────────────── */
+.dTrustBasis {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+.dTier {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  text-transform: lowercase;
+}
+.dTrustScore {
+  font-family: var(--font-display);
+  font-size: var(--t-xl);
+  line-height: 1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.dRationale {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  line-height: 1.55;
+  color: var(--read);
+}
+.dFactors {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.factor {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+}
+.factorMark {
+  flex: none;
+  width: 1.1em;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+.factorBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1em;
+  min-width: 0;
+}
+.factorLabel {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.factorDetail {
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  line-height: 1.45;
+  color: var(--ink-dim);
+}
+/* polarity affordance: positive = sage, neutral = ink-dim, caution = clay */
+.factorPositive .factorMark {
+  color: var(--good);
+}
+.factorPositive .factorLabel {
+  color: color-mix(in oklab, var(--good) 70%, var(--ink-faint));
+}
+.factorCaution .factorMark {
+  color: var(--editorial);
+}
+.factorCaution .factorLabel {
+  color: color-mix(in oklab, var(--editorial) 70%, var(--ink-faint));
+}
+.factorCaution .factorDetail {
+  color: var(--ink);
+}
+.factorNeutral .factorMark {
+  color: var(--ink-faint);
 }
 
 /* reduced-motion blanket: no chip / element transitions */

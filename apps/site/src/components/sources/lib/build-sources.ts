@@ -44,7 +44,12 @@ export interface RecentItem {
   publishedAt: string;
   href: string; // `${base}/item/${id}`
 }
-export type SourceStatus = "producing" | "dormant" | "failing" | "disabled";
+export type SourceStatus = "producing" | "dormant" | "deferred" | "failing" | "disabled";
+
+// Types whose ingestion only runs in GitHub Actions (this machine's IP is blocked
+// for them), so they're switched OFF locally. A disabled source of one of these
+// types is "deferred" — cloud-gated, not dead — never plainly "disabled".
+const ACTIONS_ONLY_TYPES = new Set<string>(["youtube"]);
 export interface EnrichedSource {
   id: string;
   type: string;
@@ -71,7 +76,8 @@ export interface FacetCount {
 export interface SourcesHealth {
   total: number;
   enabled: number;
-  disabled: number;
+  disabled: number; // truly-disabled only (excludes deferred / Actions-only)
+  deferred: number; // off locally but cloud-gated (runs in Actions)
   failing: number;
   producing: number;
   dormant: number;
@@ -118,8 +124,9 @@ function tally(values: string[]): FacetCount[] {
     .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
 }
 
-// Stable canonical order for the status facet (most→least healthy).
-const STATUS_ORDER: SourceStatus[] = ["producing", "dormant", "failing", "disabled"];
+// Stable canonical order for the status facet (most→least healthy; deferred sits
+// between dormant and failing — informational, not a problem).
+const STATUS_ORDER: SourceStatus[] = ["producing", "dormant", "deferred", "failing", "disabled"];
 // Stable canonical order for the provenance facet.
 const PROVENANCE_ORDER = ["seed", "scout", "manual"];
 
@@ -140,11 +147,17 @@ function tallyOrdered(values: string[], order: readonly string[]): FacetCount[] 
 }
 
 /**
- * Classify a source: `disabled` if not enabled; else `failing` if it has any
- * failures; else `producing` if it has curated items; else `dormant`.
+ * Classify a source. If it's off, it's `deferred` when its type only ingests in
+ * Actions (cloud-gated, not dead) and plainly `disabled` otherwise. If it's on:
+ * `failing` with any failures, else `producing` with curated items, else `dormant`.
  */
-function statusOf(enabled: boolean, failureCount: number, itemCount: number): SourceStatus {
-  if (!enabled) return "disabled";
+function statusOf(
+  enabled: boolean,
+  failureCount: number,
+  itemCount: number,
+  type: string,
+): SourceStatus {
+  if (!enabled) return ACTIONS_ONLY_TYPES.has(type) ? "deferred" : "disabled";
   if (failureCount > 0) return "failing";
   if (itemCount > 0) return "producing";
   return "dormant";
@@ -219,7 +232,7 @@ export function buildSources(
       lastPublished,
       producedChannels,
       recentItems,
-      status: statusOf(s.enabled, s.failureCount, itemCount),
+      status: statusOf(s.enabled, s.failureCount, itemCount, s.type),
     };
   });
 
@@ -247,6 +260,7 @@ export function buildSources(
     total,
     enabled: enriched.filter((s) => s.enabled).length,
     disabled: statusCount("disabled"),
+    deferred: statusCount("deferred"),
     failing: statusCount("failing"),
     producing: statusCount("producing"),
     dormant: statusCount("dormant"),
@@ -265,4 +279,166 @@ export function buildSources(
     },
     health,
   };
+}
+
+// ── trust basis ────────────────────────────────────────────────────────────
+// The stored trustScore is hand-authored (seed) or claimedTrust+0.05 (scout) —
+// there's no recorded rationale. assessTrust does NOT fake-reconstruct that exact
+// number; it EXPLAINS credibility honestly from the observable signals we DO have
+// (type, provenance, transport, fetch reliability, track record, editorial notes),
+// keeping the stored score as the headline. Pure + deterministic; guards missing
+// fields so it never throws.
+
+export type TrustPolarity = "positive" | "neutral" | "caution";
+export interface TrustFactor {
+  label: string;
+  detail: string;
+  polarity: TrustPolarity;
+}
+export interface TrustBasis {
+  score: number; // the stored trustScore (0-1), unchanged — the headline
+  tier: string; // a credibility tier read from the source type (+ trust band)
+  rationale: string; // one plain-English sentence synthesizing the factors
+  factors: TrustFactor[];
+}
+
+// Credibility tier by source type — what KIND of source this is, before any score.
+const TYPE_TIER: Record<string, string> = {
+  arxiv: "scholarly preprint",
+  "eng-blog": "primary engineering source",
+  news: "press / journalism",
+  rss: "independent feed",
+  reddit: "community discussion",
+  hn: "community aggregator",
+  podcast: "audio / interview",
+  youtube: "video / creator",
+  x: "social post",
+};
+
+/** A short trust-band qualifier from the 0-1 score (high / mid / provisional). */
+function trustBand(score: number): string {
+  if (score >= 0.8) return "high-trust";
+  if (score >= 0.6) return "trusted";
+  if (score >= 0.4) return "mid-trust";
+  return "provisional";
+}
+
+export function assessTrust(s: EnrichedSource): TrustBasis {
+  const score = s.trustScore;
+  const baseTier = TYPE_TIER[s.type] ?? "uncategorized source";
+  const tier = `${trustBand(score)} ${baseTier}`;
+
+  const factors: TrustFactor[] = [];
+
+  // 1. Credibility tier (type-based). Scholarly / primary / press read positive;
+  //    community / social are neutral context (not a knock, just lower provenance).
+  const COMMUNITY = new Set(["reddit", "hn", "x"]);
+  factors.push({
+    label: "credibility tier",
+    detail: `${baseTier} — ${s.type}`,
+    polarity: COMMUNITY.has(s.type) ? "neutral" : "positive",
+  });
+
+  // 2. Provenance — how it entered the registry.
+  if (s.addedBy === "seed") {
+    factors.push({
+      label: "provenance",
+      detail: "curator-vetted (in the seed registry)",
+      polarity: "positive",
+    });
+  } else if (s.addedBy === "scout") {
+    factors.push({
+      label: "provenance",
+      detail: "auto-added by Scout",
+      polarity: "neutral",
+    });
+  } else {
+    factors.push({
+      label: "provenance",
+      detail: `manually added${s.addedBy ? ` (${s.addedBy})` : ""}`,
+      polarity: "neutral",
+    });
+  }
+
+  // 3. Transport — HTTPS is table stakes; plain HTTP is a caution.
+  const isHttps = /^https:/i.test(s.url);
+  factors.push({
+    label: "transport",
+    detail: isHttps ? "served over HTTPS" : "served over plain HTTP — unencrypted",
+    polarity: isHttps ? "positive" : "caution",
+  });
+
+  // 4. Reliability — recent fetch failures.
+  if (s.failureCount > 0) {
+    factors.push({
+      label: "reliability",
+      detail: `${s.failureCount} recent fetch failure${s.failureCount === 1 ? "" : "s"}`,
+      polarity: "caution",
+    });
+  } else {
+    factors.push({
+      label: "reliability",
+      detail: "reliable fetch, no recent failures",
+      polarity: "positive",
+    });
+  }
+
+  // 5. Track record — is it actually producing into the feed?
+  if (s.itemCount > 0) {
+    factors.push({
+      label: "track record",
+      detail: `producing — ${s.itemCount} item${s.itemCount === 1 ? "" : "s"}, ~avg ${s.avgReadMin}-min reads`,
+      polarity: "positive",
+    });
+  } else {
+    factors.push({
+      label: "track record",
+      detail: "no items in the current feed yet",
+      polarity: "neutral",
+    });
+  }
+
+  // 6. Editorial note — the curator's prose, as neutral context.
+  if (s.notes) {
+    factors.push({
+      label: "editorial note",
+      detail: s.notes,
+      polarity: "neutral",
+    });
+  }
+
+  // 7. Divergence flag — a high stored trust that's currently failing is worth a look.
+  if (score >= 0.75 && s.status === "failing") {
+    factors.push({
+      label: "needs review",
+      detail: "high rated trust but currently failing — may need review",
+      polarity: "caution",
+    });
+  }
+
+  return { score, tier, rationale: synthesizeRationale(s, baseTier, factors), factors };
+}
+
+/** One plain-English sentence in the founder's voice, synthesizing the factors. */
+function synthesizeRationale(s: EnrichedSource, baseTier: string, factors: TrustFactor[]): string {
+  const cautions = factors.filter((f) => f.polarity === "caution");
+  const pct = Math.round(s.trustScore * 100);
+
+  // Lead clause: what it is + provenance.
+  const prov =
+    s.addedBy === "seed" ? "hand-vetted into the seed" : s.addedBy === "scout" ? "surfaced by the Scout" : "manually registered";
+  const article = /^[aeiou]/i.test(baseTier) ? "An" : "A";
+  let lead = `${article} ${baseTier} ${prov}, scored ${pct}`;
+
+  // Track-record clause.
+  if (s.itemCount > 0) {
+    lead += `, and currently producing (${s.itemCount} item${s.itemCount === 1 ? "" : "s"} in the feed)`;
+  } else {
+    lead += `, not yet producing into the local feed`;
+  }
+
+  // Caution clause, if any.
+  if (cautions.length === 0) return `${lead} with no outstanding reliability concerns.`;
+  const reasons = cautions.map((c) => c.label).join(" and ");
+  return `${lead}; watch its ${reasons}.`;
 }

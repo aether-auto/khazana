@@ -71,6 +71,10 @@
 .src-stat--muted dd {
   color: var(--ink-dim);
 }
+/* deferred (Actions-only) — informational, cool/info tone, NOT clay */
+.src-stat--info dd {
+  color: var(--info);
+}
 
 /* by-type breakdown — a compact horizontal stacked bar */
 .src-bytype {
