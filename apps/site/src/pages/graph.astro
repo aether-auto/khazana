@@ -57,6 +57,21 @@ const taste = loadTaste(repoDataDir());
 const a = analyze(items, analyticsPosts, taste, { base });
 const empty = items.length === 0;
 
+// Freshness affordance — the corpus is recomputed on every daily build (curate
+// re-exports reading behaviour → taste, re-ranks the feed), so this is a living
+// instrument, not a frozen snapshot. Surface the snapshot date to make the cadence
+// legible. (The personal/behaviour layer goes LIVE between builds with the Taste
+// page's Worker summary endpoint — see ledger 2026-06-27.)
+const newestMs = items.reduce((m, it) => {
+  const t = new Date(it.publishedAt).getTime();
+  return Number.isNaN(t) ? m : Math.max(m, t);
+}, 0);
+const updatedLabel = newestMs
+  ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(
+      new Date(newestMs),
+    )
+  : null;
+
 const colorFor = (group: string) => GROUP_COLORS[group] ?? GROUP_COLORS.science!;
 const pct = (v: number, max: number) => (max > 0 ? `${Math.round((v / max) * 100)}%` : "0%");
 
@@ -191,6 +206,12 @@ const maxTrust = Math.max(...a.trustHist.map((b) => b.count), 1);
           from what you've kept. Nothing is phoned home; nothing leaves the device.
           The instrument simply turns its gaze inward.
         </p>
+        {updatedLabel && (
+          <p class="obs-freshness">
+            <span class="obs-fresh-dot" aria-hidden="true"></span>
+            snapshot {updatedLabel} · refreshes daily as you read
+          </p>
+        )}
       </section>
 
       {/* ── 2. STAT BAND ────────────────────────────────────────────── */}
@@ -456,6 +477,34 @@ const maxTrust = Math.max(...a.trustHist.map((b) => b.count), 1);
     font-size: var(--t-read);
     line-height: var(--lh-read);
     margin: 0;
+  }
+  .obs-freshness {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    margin: var(--s-4) 0 0;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.04em;
+    color: var(--ink-faint);
+  }
+  .obs-fresh-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--good);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--good) 22%, transparent);
+  }
+  /* a slow, calm pulse — the "live" tell; killed under reduced-motion */
+  :global(html.reveal-ready) .obs-fresh-dot {
+    animation: obs-fresh-pulse 2.8s var(--ease-out) infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .obs-fresh-dot { animation: none; }
+  }
+  @keyframes obs-fresh-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
   }
 
   /* ── empty state ─────────────────────────────────────────────────── */
