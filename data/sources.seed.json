@@ -1160,17 +1160,17 @@
     },
     {
       "id": "r-3dprinting",
-      "type": "rss",
+      "type": "reddit",
       "url": "https://www.reddit.com/r/3Dprinting/.rss",
       "channels": [
         "3d-printing",
         "diy"
       ],
       "enabled": true,
-      "trustScore": 0.5,
-      "addedBy": "seed",
+      "trustScore": 0.65,
+      "addedBy": "scout",
       "failureCount": 0,
-      "notes": "r/3Dprinting via RSS"
+      "notes": "Canonical reddit .rss form (unchanged). Note: type is 'reddit' not 'rss' here matching the existing seed entry. Reddit rate-limits/blocks generic UAs (429/403 to probe) but the ingest pipeline's reddit fetcher handles it. Atom feed, recent threads."
     },
     {
       "id": "r-machinelearning",
@@ -3160,10 +3160,10 @@
         "tech"
       ],
       "enabled": true,
-      "trustScore": 0.72,
-      "addedBy": "seed",
+      "trustScore": 0.7,
+      "addedBy": "scout",
       "failureCount": 0,
-      "notes": "All3DP — 3D printing news, reviews, guides; free RSS"
+      "notes": "UNCONFIRMED. https://all3dp.com/feed/ is hard-blocked by Cloudflare challenge to every probe UA (returns JS challenge page, not XML). Site is live and actively publishing (verified via search 2026-06). Likely works from the ingest pipeline if it uses a real browser UA / passes CF; keep enabled and watch failureCount. If it keeps returning 0, disable."
     },
     {
       "id": "3dprintingindustry",
@@ -3216,26 +3216,26 @@
         "3d-printing",
         "diy"
       ],
-      "enabled": true,
-      "trustScore": 0.6,
-      "addedBy": "seed",
+      "enabled": false,
+      "trustScore": 0.5,
+      "addedBy": "scout",
       "failureCount": 0,
-      "notes": "Instructables 3D Printing Projects — maker project tutorials"
+      "notes": "DEAD, no first-party replacement found. Old channel feed 404s; /feed/ now redirects to a login wall; content.instructables.com/rss.xml 403s. Instructables removed public category RSS. DISABLED until a working endpoint surfaces (Workshop covered by hackaday/printables/prusa/makezine instead)."
     },
     {
       "id": "hackaday-io",
       "type": "rss",
-      "url": "https://hackaday.io/blog/feed/",
+      "url": "https://hackaday.io/feed",
       "channels": [
         "iot",
         "diy",
         "embedded"
       ],
-      "enabled": true,
-      "trustScore": 0.72,
-      "addedBy": "seed",
+      "enabled": false,
+      "trustScore": 0.5,
+      "addedBy": "scout",
       "failureCount": 0,
-      "notes": "Hackaday.io Blog — hardware maker projects"
+      "notes": "DEAD, no first-party feed. https://hackaday.io/blog/feed/ 404s; https://hackaday.io/feed returns HTML (not XML, 0 items). Only third-party generators exist (hackaday-rss.fly.dev/project/:id) which are per-project and not durable. DISABLED. Use hackaday.com/blog/feed/ (added separately) for Hackaday content instead."
     },
     {
       "id": "iot-analytics-blog",
@@ -3269,17 +3269,17 @@
     {
       "id": "sparkfun-blog",
       "type": "rss",
-      "url": "https://www.sparkfun.com/news.rss",
+      "url": "https://rss.app/feeds/CGkjvxycb6QCW7uT.xml",
       "channels": [
         "iot",
         "embedded",
         "diy"
       ],
       "enabled": true,
-      "trustScore": 0.72,
-      "addedBy": "seed",
+      "trustScore": 0.6,
+      "addedBy": "scout",
       "failureCount": 0,
-      "notes": "SparkFun Electronics Blog — electronics tutorials and maker news"
+      "notes": "REPAIR of dead https://www.sparkfun.com/news.rss (404). SparkFun retired native news.rss; their /feeds page now points news to this rss.app-hosted feed. Fetched 2026-06: 7 items, desc ~290 chars. THIN + third-party host (rss.app) = fragility risk. full-text: no (headlines/summaries). Consider product feed https://www.sparkfun.com/rss/feed/index/type/new_products/ (substantial descriptions but product listings, not projects)."
     },
     {
       "id": "make-magazine",
@@ -3358,17 +3358,17 @@
     {
       "id": "espressif-blog",
       "type": "rss",
-      "url": "https://blog.espressif.com/feed",
+      "url": "https://developer.espressif.com/blog/index.xml",
       "channels": [
         "embedded",
         "iot",
         "diy"
       ],
       "enabled": true,
-      "trustScore": 0.72,
-      "addedBy": "seed",
+      "trustScore": 0.8,
+      "addedBy": "scout",
       "failureCount": 0,
-      "notes": "Espressif Blog — ESP32/IoT firmware and hardware news"
+      "notes": "REPAIR of dead https://blog.espressif.com/feed (404). Espressif moved blog to developer portal. Fetched 2026-06: 303 items, descriptions ~500 chars. full-text: substantial summaries with technical ESP32/ESP-IDF build content."
     },
     {
       "id": "interrupt-memfault",
@@ -5077,32 +5077,32 @@
     },
     {
       "id": "r-functionalprint",
-      "type": "rss",
+      "type": "reddit",
       "url": "https://www.reddit.com/r/functionalprint/.rss",
       "channels": [
         "3d-printing",
         "diy"
       ],
       "enabled": true,
-      "trustScore": 0.6,
-      "addedBy": "seed",
+      "trustScore": 0.65,
+      "addedBy": "scout",
       "failureCount": 0,
-      "notes": "r/functionalprint — practical 3D prints Reddit"
+      "notes": "Canonical reddit .rss form (unchanged). type 'reddit' matching existing seed. Probe hit 429 (rate limit) but the URL form is correct and the reddit fetcher handles it. Recent functional-print project threads."
     },
     {
       "id": "hackster-io-blog",
       "type": "rss",
-      "url": "https://www.hackster.io/rss/blog",
+      "url": "https://www.hackster.io/news.atom",
       "channels": [
         "diy",
         "iot",
         "embedded"
       ],
       "enabled": true,
-      "trustScore": 0.72,
-      "addedBy": "seed",
+      "trustScore": 0.75,
+      "addedBy": "scout",
       "failureCount": 0,
-      "notes": "Hackster.io Blog — hardware maker projects and IoT"
+      "notes": "REPAIR of dead https://www.hackster.io/rss/blog (404). Fetched 2026-06: 25 Atom entries. Hackster news; entries carry summaries (no content:encoded) but link to full buildable project writeups. Also available: https://www.hackster.io/projects.atom (24 entries). full-text: partial (summaries)."
     },
     {
       "id": "arduino-blog",
@@ -9778,6 +9778,345 @@
       "addedBy": "seed",
       "failureCount": 0,
       "notes": "arXiv q-bio.QM — Quantitative Methods in Biology; computational biology, biostatistics; RSS verified June 2026"
+    },
+    {
+      "id": "hackaday-3d-printer-hacks",
+      "type": "rss",
+      "url": "https://hackaday.com/category/3d-printer-hacks/feed/",
+      "channels": [
+        "3d-printing",
+        "diy"
+      ],
+      "enabled": true,
+      "trustScore": 0.82,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 7 items, content:encoded up to 7628 chars. full-text: YES. Hackaday's 3D-printer-hacks category; directly feeds the Workshop 3d-printing channel with buildable content."
+    },
+    {
+      "id": "robohub",
+      "type": "rss",
+      "url": "https://robohub.org/feed/",
+      "channels": [
+        "iot",
+        "embedded",
+        "ai-projects"
+      ],
+      "enabled": true,
+      "trustScore": 0.82,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 43 items, content:encoded up to 63726 chars (full articles inline). full-text: YES, excellent. Robotics/ROS news and build writeups."
+    },
+    {
+      "id": "opensource-ecology",
+      "type": "rss",
+      "url": "https://www.opensourceecology.org/feed/",
+      "channels": [
+        "diy",
+        "embedded"
+      ],
+      "enabled": true,
+      "trustScore": 0.72,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 10 items, content:encoded up to 43618 chars. full-text: YES. Open-source machine/hardware build logs; substantial long-form."
+    },
+    {
+      "id": "partsnotincluded",
+      "type": "rss",
+      "url": "https://www.partsnotincluded.com/feed/",
+      "channels": [
+        "3d-printing",
+        "diy",
+        "embedded"
+      ],
+      "enabled": true,
+      "trustScore": 0.78,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 10 items, content:encoded up to 24052 chars. full-text: YES. Deep 3D-printing + electronics build tutorials, exactly Workshop-grade."
+    },
+    {
+      "id": "hardwarebee",
+      "type": "rss",
+      "url": "https://hardwarebee.com/feed/",
+      "channels": [
+        "embedded",
+        "iot",
+        "tech"
+      ],
+      "enabled": true,
+      "trustScore": 0.7,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 10 items, content:encoded up to 41825 chars. full-text: YES. Electronics/FPGA/embedded engineering articles."
+    },
+    {
+      "id": "adafruit-blog-2",
+      "type": "rss",
+      "url": "https://blog.adafruit.com/feed/",
+      "channels": [
+        "diy",
+        "iot",
+        "embedded",
+        "3d-printing"
+      ],
+      "enabled": true,
+      "trustScore": 0.85,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 50 items, content:encoded up to 14322 chars. full-text: YES. (Overlaps existing 'adafruit-blog' seed at https://blog.adafruit.com/feed — same source, trailing-slash variant; dedup.)"
+    },
+    {
+      "id": "pimoroni-blog",
+      "type": "rss",
+      "url": "https://blog.pimoroni.com/rss/",
+      "channels": [
+        "diy",
+        "iot",
+        "embedded"
+      ],
+      "enabled": true,
+      "trustScore": 0.78,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 15 items, content:encoded up to 23421 chars. full-text: YES, excellent. Pimoroni maker product build guides (Pi/Pico/electronics)."
+    },
+    {
+      "id": "bambulab-blog",
+      "type": "rss",
+      "url": "https://blog.bambulab.com/rss/",
+      "channels": [
+        "3d-printing",
+        "diy"
+      ],
+      "enabled": true,
+      "trustScore": 0.75,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 15 items, content:encoded up to 51113 chars. full-text: YES. Bambu Lab 3D-printing blog, long-form guides and releases."
+    },
+    {
+      "id": "tindie-blog",
+      "type": "rss",
+      "url": "https://blog.tindie.com/feed/",
+      "channels": [
+        "embedded",
+        "diy",
+        "iot"
+      ],
+      "enabled": true,
+      "trustScore": 0.72,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 10 items, content:encoded up to 7416 chars. full-text: YES. Tindie maker-hardware spotlights and build interviews. (www.tindie.com/blog/feed/ redirects here.)"
+    },
+    {
+      "id": "diy-photography",
+      "type": "rss",
+      "url": "https://www.diyphotography.net/feed/",
+      "channels": [
+        "diy",
+        "tech"
+      ],
+      "enabled": true,
+      "trustScore": 0.7,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 10 items, descriptions up to 1746 chars (no content:encoded). full-text: substantial summaries. DIY camera/lighting/photo-gear builds."
+    },
+    {
+      "id": "bald-engineer",
+      "type": "rss",
+      "url": "https://www.baldengineer.com/feed",
+      "channels": [
+        "embedded",
+        "diy",
+        "iot"
+      ],
+      "enabled": true,
+      "trustScore": 0.74,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 10 items, content:encoded up to 2942 chars. full-text: YES. James Lewis' electronics tutorials (Arduino/embedded fundamentals)."
+    },
+    {
+      "id": "big-mess-o-wires",
+      "type": "rss",
+      "url": "https://www.bigmessowires.com/feed/",
+      "channels": [
+        "embedded",
+        "diy"
+      ],
+      "enabled": true,
+      "trustScore": 0.74,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 6 items, content:encoded up to 5736 chars. full-text: YES. Steve Chamberlin's deep hardware/retro-computer build logs."
+    },
+    {
+      "id": "voltlog",
+      "type": "rss",
+      "url": "https://www.voltlog.com/feed/",
+      "channels": [
+        "embedded",
+        "diy",
+        "iot"
+      ],
+      "enabled": true,
+      "trustScore": 0.68,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 10 items, content:encoded up to 2954 chars. full-text: YES. Electronics teardowns and project writeups."
+    },
+    {
+      "id": "eevblog-text",
+      "type": "rss",
+      "url": "https://www.eevblog.com/feed/",
+      "channels": [
+        "embedded",
+        "iot",
+        "diy"
+      ],
+      "enabled": true,
+      "trustScore": 0.72,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 50 items, content:encoded up to 2754 chars. full-text: YES (blog text, distinct from the YouTube feed already seeded). Electronics engineering blog."
+    },
+    {
+      "id": "notes-and-volts",
+      "type": "rss",
+      "url": "https://www.notesandvolts.com/feeds/posts/default",
+      "channels": [
+        "embedded",
+        "diy"
+      ],
+      "enabled": true,
+      "trustScore": 0.66,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 25 items (Blogger Atom). full-text: body in <content> (Blogger inlines full post). Arduino/synth/electronics DIY projects."
+    },
+    {
+      "id": "toms-hardware-all",
+      "type": "rss",
+      "url": "https://www.tomshardware.com/feeds/all",
+      "channels": [
+        "tech",
+        "embedded",
+        "diy"
+      ],
+      "enabled": true,
+      "trustScore": 0.7,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 24 items (redirects to /feeds.xml). full-text: partial (descriptions). Strong Raspberry Pi / DIY / single-board-computer coverage; filter to maker items downstream."
+    },
+    {
+      "id": "ieee-spectrum-diy",
+      "type": "rss",
+      "url": "https://spectrum.ieee.org/feeds/topic/diy.rss",
+      "channels": [
+        "diy",
+        "embedded",
+        "tech"
+      ],
+      "enabled": true,
+      "trustScore": 0.8,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 30 items, descriptions up to 17840 chars (near full-text). full-text: substantial. IEEE Spectrum DIY topic — high-quality hands-on hardware projects."
+    },
+    {
+      "id": "electronics-lab",
+      "type": "rss",
+      "url": "https://www.electronics-lab.com/feed/",
+      "channels": [
+        "embedded",
+        "iot",
+        "diy"
+      ],
+      "enabled": true,
+      "trustScore": 0.68,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 6 items, descriptions up to 477 chars (no content:encoded). full-text: summaries only — borderline for a 5-min-read gate; enabled but lower priority. Electronics projects/news."
+    },
+    {
+      "id": "predictable-designs",
+      "type": "rss",
+      "url": "https://predictabledesigns.com/feed/",
+      "channels": [
+        "embedded",
+        "iot",
+        "tech"
+      ],
+      "enabled": true,
+      "trustScore": 0.68,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 15 items, descriptions up to 631 chars. full-text: summaries. Hardware-product-development how-to (bringing electronics to production)."
+    },
+    {
+      "id": "jeff-geerling-blog",
+      "type": "rss",
+      "url": "https://www.jeffgeerling.com/blog.xml",
+      "channels": [
+        "embedded",
+        "iot",
+        "tech"
+      ],
+      "enabled": true,
+      "trustScore": 0.8,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 20 items, descriptions up to 1196 chars. full-text: substantial. Raspberry Pi / homelab / SBC deep-dive blog (text companion to the seeded YouTube feed)."
+    },
+    {
+      "id": "magpi-magazine",
+      "type": "rss",
+      "url": "https://magpi.raspberrypi.com/feed",
+      "channels": [
+        "embedded",
+        "iot",
+        "diy"
+      ],
+      "enabled": true,
+      "trustScore": 0.78,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 12 items (redirects to magazine.raspberrypi.com/feed, the merged MagPi+HackSpace feed). full-text: summaries (~350 chars). Official Raspberry Pi magazine projects. NOTE: hackspace.raspberrypi.com/feed now resolves to this SAME merged feed."
+    },
+    {
+      "id": "recantha-pi-pod",
+      "type": "rss",
+      "url": "https://www.recantha.co.uk/blog/?feed=rss2",
+      "channels": [
+        "embedded",
+        "iot",
+        "diy"
+      ],
+      "enabled": true,
+      "trustScore": 0.64,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: 10 items, descriptions up to 639 chars. full-text: summaries. Raspberry Pi Pod / Recantha maker project roundups."
+    },
+    {
+      "id": "bantam-tools-blog",
+      "type": "rss",
+      "url": "https://bantamtools.com/blogs/news.atom",
+      "channels": [
+        "diy",
+        "3d-printing"
+      ],
+      "enabled": true,
+      "trustScore": 0.62,
+      "addedBy": "scout",
+      "failureCount": 0,
+      "notes": "Fetched 2026-06: valid Shopify Atom feed but only 1 recent item present. full-text: no (summary). LOW-VOLUME (desktop CNC/milling). Enabled but expect few items; deprioritize if it stays at 0-1."
     }
   ]
 }
