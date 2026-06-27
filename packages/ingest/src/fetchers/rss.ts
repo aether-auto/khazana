@@ -41,7 +41,15 @@ export function pickTranscriptUrl(refs: TranscriptRef[] | undefined): string | u
 export async function parseRssFeed(xml: string, entry: SourceEntry, now: string): Promise<FeedItem[]> {
   const feed = await parser.parseString(xml);
   const kind =
-    entry.type === "arxiv" ? "paper" : entry.type === "youtube" ? "video" : entry.type === "podcast" ? "audio" : "link";
+    entry.type === "arxiv"
+      ? "paper"
+      : entry.type === "youtube"
+        ? "video"
+        : entry.type === "podcast"
+          ? "audio"
+          : entry.type === "reddit" // reddit .rss fallback: still a discussion thread
+            ? "discussion"
+            : "link";
   const out: FeedItem[] = [];
   for (const it of feed.items ?? []) {
     const url = it.link?.trim();

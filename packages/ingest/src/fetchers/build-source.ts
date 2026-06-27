@@ -1,5 +1,5 @@
 import type { FeedItem, FetchContext, Source, SourceEntry } from "@khazana/core";
-import { parseRedditListing } from "./reddit.js";
+import { fetchReddit } from "./reddit.js";
 import { parseRssFeed } from "./rss.js";
 
 export interface FetchResult {
@@ -15,21 +15,19 @@ export const defaultFetch: FetchFn = async (url, init) => {
   return { ok: res.ok, status: res.status, text: () => res.text(), json: () => res.json() };
 };
 
-const USER_AGENT = "khazana/0.1 (+https://github.com/khazana)";
-
 export function buildSource(entry: SourceEntry, fetchFn: FetchFn = defaultFetch): Source {
   return {
     id: entry.id,
     type: entry.type,
     channels: entry.channels,
     async fetch(ctx: FetchContext): Promise<FeedItem[]> {
-      const headers: Record<string, string> = entry.type === "reddit" ? { "User-Agent": USER_AGENT } : {};
-      const res = await fetchFn(entry.url, { headers });
+      // reddit: JSON listing API (rich) → bounded 429/403 backoff → .rss fallback.
+      // See fetchReddit; it owns its own UA, retry, and graceful degradation.
+      if (entry.type === "reddit") return fetchReddit(entry, fetchFn, ctx);
+
+      const res = await fetchFn(entry.url);
       if (!res.ok) throw new Error(`${entry.id}: HTTP ${res.status}`);
-      const items =
-        entry.type === "reddit"
-          ? parseRedditListing(await res.json(), entry, ctx.now)
-          : await parseRssFeed(await res.text(), entry, ctx.now);
+      const items = await parseRssFeed(await res.text(), entry, ctx.now);
       return ctx.limit ? items.slice(0, ctx.limit) : items;
     },
   };
