@@ -1,4 +1,4 @@
-import { isMakerCandidate, MAKER_MIN_READ_MINUTES, type FeedItem } from "@khazana/core";
+import { dedupeItems, isMakerCandidate, MAKER_MIN_READ_MINUTES, type DedupeOpts, type FeedItem } from "@khazana/core";
 import { enrichItems, type LlmClient } from "./enrich.js";
 import { clusterItems, type ClusterOpts } from "./cluster.js";
 import { computeTasteProfile, type TasteOpts } from "./taste.js";
@@ -8,6 +8,7 @@ import type { EngagementEvent } from "./io.js";
 export interface CurateOpts {
   now: string;
   cluster?: ClusterOpts;
+  dedupe?: DedupeOpts;
   taste?: Omit<TasteOpts, "now">;
   rank?: Omit<RankOpts, "now">;
   concurrency?: number;
@@ -16,6 +17,8 @@ export interface CurateOpts {
 export interface CurateResult {
   items: FeedItem[];
   clusterCount: number;
+  /** Mirror duplicates collapsed before clustering (enriched.length − deduped.length). */
+  duplicatesRemoved: number;
   profileReady: boolean;
 }
 
@@ -26,7 +29,14 @@ export async function runCurate(
   opts: CurateOpts,
 ): Promise<CurateResult> {
   const enriched = await enrichItems(items, client, { concurrency: opts.concurrency });
-  const clustered = clusterItems(enriched, opts.cluster);
+
+  // Collapse near-duplicate mirrors (one article registered under two source ids
+  // → same normalized title + publishedAt, or exact-URL match) BEFORE clustering,
+  // so cluster boost and counts operate on unique articles, not inflated mirrors.
+  const deduped = dedupeItems(enriched, opts.dedupe);
+  const duplicatesRemoved = enriched.length - deduped.length;
+
+  const clustered = clusterItems(deduped, opts.cluster);
 
   // TWO-TIER read-time floor (drop short items before ranking so counts are correct):
   //   • Default floor MIN_READ_MINUTES (5) for everything — the Feed's sacred bar.
@@ -50,5 +60,5 @@ export async function runCurate(
   const ranked = applyDiversityFloor(rankItems(substantial, profile, { now: opts.now, ...opts.rank }));
 
   const clusterCount = new Set(clustered.map((it) => it.clusterId)).size;
-  return { items: ranked, clusterCount, profileReady: profile.ready };
+  return { items: ranked, clusterCount, duplicatesRemoved, profileReady: profile.ready };
 }

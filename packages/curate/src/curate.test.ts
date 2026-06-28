@@ -78,6 +78,41 @@ test("runCurate marks the profile ready and personalizes when events suffice", a
   expect(result.items[0]!.id).toBe("ai"); // affinity dominates
 });
 
+// ── Near-duplicate collapse (dedup) ───────────────────────────────────────────
+
+test("runCurate collapses a mirror pair (same title + publishedAt, two source ids) to ONE", async () => {
+  // The verified bug: one article registered under two source ids appears twice.
+  const items = [
+    {
+      ...makeItem("import-ai-462-a", "Import AI 462: scaling and safety", ["ai"]),
+      source: "import-ai",
+      url: "https://importai.substack.com/p/462",
+    },
+    {
+      ...makeItem("import-ai-462-b", "Import AI 462: scaling and safety", ["ai"]),
+      source: "jack-clark-import-ai-substack",
+      url: "https://jack-clark.net/import-ai-462",
+    },
+    makeItem("c", "Spring gardening tips for beginners", ["diy"]),
+  ];
+  const result = await runCurate(items, [], null, { now: NOW });
+  const titles = result.items.map((it) => it.title);
+  // Exactly one Import AI 462 survives; the gardening item is untouched.
+  expect(titles.filter((t) => t.startsWith("Import AI 462"))).toHaveLength(1);
+  expect(result.items).toHaveLength(2);
+  expect(result.duplicatesRemoved).toBe(1);
+});
+
+test("runCurate reports duplicatesRemoved = 0 when there are no mirrors", async () => {
+  const items = [
+    makeItem("a", "OpenAI releases GPT-5 with agentic tool use", ["ai"]),
+    makeItem("c", "Spring gardening tips for beginners", ["diy"]),
+  ];
+  const result = await runCurate(items, [], null, { now: NOW });
+  expect(result.duplicatesRemoved).toBe(0);
+  expect(result.items).toHaveLength(2);
+});
+
 // ── MIN_READ_MINUTES reject filter tests (Task B) ─────────────────────────────
 
 /** Build a body string that produces ~N minutes of read time at 225 wpm. */
