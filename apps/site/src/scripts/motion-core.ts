@@ -10,6 +10,7 @@
 import Lenis from "lenis";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { registerLenis, unregisterLenis } from "./scroll-to";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -31,10 +32,14 @@ function startLenis() {
   gsap.ticker.add(onTick);
   gsap.ticker.lagSmoothing(0);
   (lenis as unknown as { _onTick?: typeof onTick })._onTick = onTick;
+  // Publish to the shared scroll bridge so islands (site nav) reuse this exact
+  // smooth-scroll instance rather than creating their own.
+  registerLenis(lenis);
 }
 
 function stopLenis() {
   if (!lenis) return;
+  unregisterLenis(lenis);
   const onTick = (lenis as unknown as { _onTick?: (t: number) => void })._onTick;
   if (onTick) gsap.ticker.remove(onTick);
   lenis.destroy();
