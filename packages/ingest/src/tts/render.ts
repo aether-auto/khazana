@@ -66,6 +66,15 @@ export interface ParagraphMark {
   index: number;
   /** Start time of this paragraph within the audio, in seconds. */
   startSec: number;
+  /**
+   * The clean, spoken prose of this paragraph (exactly what `narratableParagraphs`
+   * produced and the voice narrated). The Read page's `data-para-index` rehype
+   * plugin matches rendered prose blocks to these marks BY normalized text rather
+   * than by document order, because the rendered prose contains blocks the
+   * narration drops (a standalone display-math `<Annotation>`), so a pure
+   * order-based mapping drifts. Text-matching keeps index N ↔ paragraph N exact.
+   */
+  text: string;
 }
 
 /** The narration manifest written next to the audio for a single Read. */
@@ -228,10 +237,13 @@ export async function renderNarration(
     for (let pi = 0; pi < paragraphs.length; pi++) {
       const para = paragraphs[pi]!;
 
-      // Record this paragraph's start BEFORE appending its audio.
+      // Record this paragraph's start BEFORE appending its audio. The clean
+      // spoken `text` rides along so the Read page can align its highlight by
+      // content, not by a drift-prone document order.
       marks.push({
         index: para.index,
         startSec: round3(cumulativeSamples / KOKORO_SAMPLE_RATE),
+        text: para.text,
       });
 
       const pcm = await synthesizeParagraph(tts, para.text, { voice });

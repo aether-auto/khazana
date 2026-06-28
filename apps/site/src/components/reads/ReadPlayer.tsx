@@ -380,7 +380,7 @@ export default function ReadPlayer({ tracks, paragraphs, title }: ReadPlayerProp
               {track ? (
                 <>
                   <span className={styles.voiceGlyph} aria-hidden="true">◈</span>
-                  <span className={styles.voiceTag}>{track.voice}</span>
+                  <span className={styles.voiceTag}>{track.label}</span>
                 </>
               ) : (
                 "narration"
