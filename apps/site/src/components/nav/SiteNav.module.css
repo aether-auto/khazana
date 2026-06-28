@@ -1,0 +1,312 @@
+/* SITE NAV — three quiet affordances that live in the page chrome:
+   a back tab (top-left rail), a scroll-to-top control (bottom-right), and a
+   near-invisible section tick-rail (right edge). All transform/opacity only,
+   tokens-only, dark+light, reduced-motion safe. The whole layer is a fixed,
+   pointer-events:none overlay; only the interactive bits re-enable pointers. */
+
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 45; /* under the sticky topbar (z-50), over page content */
+  pointer-events: none;
+  font-family: var(--font-mono);
+}
+.layer > * {
+  pointer-events: auto;
+}
+
+/* ── BACK ──────────────────────────────────────────────────────────────────
+   A small, quiet tab tucked just below the topbar on the left. Quiet at rest
+   (faint hairline + dim ink), clearly tappable on hover (amber edge + the arrow
+   nudges left). Keyboard-focusable with a visible ring. */
+.back {
+  position: fixed;
+  left: max(var(--s-3), calc((100vw - var(--maxw)) / 2 - var(--s-4)));
+  top: calc(var(--s-10) + var(--s-2));
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 0.35em 0.7em 0.35em 0.55em;
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  background: color-mix(in oklab, var(--bg-raised) 70%, transparent);
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-md);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    opacity var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out);
+}
+/* Mounts in after hydration so it never flashes before JS decides it applies. */
+.back.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+.back:hover {
+  color: var(--ink);
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--rule));
+  background: color-mix(in oklab, var(--accent) 8%, var(--bg-raised));
+}
+.back:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  color: var(--ink);
+}
+.backArrow {
+  color: var(--accent);
+  transition: transform var(--dur) var(--ease-overshoot);
+  will-change: transform;
+}
+.back:hover .backArrow {
+  transform: translateX(-2px);
+}
+.backLabel {
+  letter-spacing: 0.05em;
+}
+/* On narrow screens the label drops; the arrow tab alone stays usable. */
+@media (max-width: 720px) {
+  .backLabel {
+    display: none;
+  }
+  .back {
+    padding: 0.4em 0.5em;
+    left: var(--s-3);
+    top: calc(var(--s-8) + var(--s-3));
+  }
+}
+
+/* ── SCROLL TO TOP ──────────────────────────────────────────────────────────
+   A small round control hugging the bottom-right. Hidden until the reader is
+   ~1.5 viewports down, then fades + lifts in. Amber accent on hover. The thin
+   ring tracks reading progress (scaleX-free: it's a conic mask via --p). */
+.toTop {
+  position: fixed;
+  right: max(var(--s-4), calc((100vw - var(--maxw)) / 2 - var(--s-4)));
+  bottom: var(--s-5);
+  width: 2.6rem;
+  height: 2.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--ink-dim);
+  background: color-mix(in oklab, var(--bg-raised) 82%, transparent);
+  border: var(--hair) solid var(--rule);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  /* hidden + non-interactive until shown (no layout shift — opacity/transform) */
+  opacity: 0;
+  transform: translateY(10px) scale(0.92);
+  pointer-events: none;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    opacity var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-overshoot);
+  will-change: transform, opacity;
+}
+.toTop.shown {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.toTop:hover {
+  color: var(--accent);
+  border-color: color-mix(in oklab, var(--accent) 50%, var(--rule));
+  background: color-mix(in oklab, var(--accent) 10%, var(--bg-raised));
+}
+.toTop:active {
+  transform: translateY(0) scale(0.94);
+}
+.toTop:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+/* The progress ring: a conic-gradient stroke driven by --p (0..1), masked to a
+   thin annulus. Decorative — sits behind the arrow glyph. */
+.toTopRing {
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--accent) calc(var(--p, 0) * 360deg),
+    transparent 0
+  );
+  -webkit-mask: radial-gradient(circle, transparent 60%, #000 61%, #000 70%, transparent 71%);
+  mask: radial-gradient(circle, transparent 60%, #000 61%, #000 70%, transparent 71%);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.toTopArrow {
+  position: relative;
+  font-size: var(--t-md);
+  line-height: 1;
+}
+@media (max-width: 720px) {
+  .toTop {
+    right: var(--s-4);
+    bottom: var(--s-4);
+  }
+}
+
+/* ── SECTION TICK-RAIL ──────────────────────────────────────────────────────
+   A near-invisible vertical rail pinned to the right edge, one tick per section.
+   At rest: short faint hairline ticks (a quiet hint that it exists). The active
+   section's tick is amber + longer. On hover/focus the rail EXPANDS: ticks grow
+   and each reveals its section label in a small plate, so a reader who brushes
+   the edge instantly discovers a jump-nav. Recedes when idle. */
+.rail {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-3) var(--s-4) var(--s-5);
+  /* a faint persistent presence: the hover target is wide (padding-left), the
+     visible hint is the ticks themselves. */
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease-out);
+}
+.rail.in {
+  opacity: 1;
+}
+/* a hairline spine behind the ticks — the "there's a rail here" hint */
+.rail::before {
+  content: "";
+  position: absolute;
+  right: calc(var(--s-3) + 2px);
+  top: var(--s-4);
+  bottom: var(--s-4);
+  width: var(--hair);
+  background: var(--rule);
+  opacity: 0.5;
+  transition: opacity var(--dur) var(--ease-out);
+}
+.rail:hover::before,
+.rail:focus-within::before {
+  opacity: 0.9;
+}
+
+.tick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s-3);
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+}
+.tick:focus-visible {
+  outline: none;
+}
+.tick:focus-visible .tickMark {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+/* the tick mark — a short horizontal bar. width animates on active/hover. */
+.tickMark {
+  display: block;
+  height: 2px;
+  width: 12px;
+  border-radius: 2px;
+  background: var(--rule-bright);
+  transition:
+    width var(--dur) var(--ease-spring),
+    background var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+.tick:hover .tickMark {
+  width: 20px;
+  background: var(--ink-dim);
+}
+.tick.active .tickMark {
+  width: 26px;
+  background: var(--accent);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--accent) 50%, transparent);
+}
+
+/* the label plate — hidden at rest, revealed on rail hover/focus, slides in from
+   the right. Lives left of the tick. */
+.tickLabel {
+  max-width: 14rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.02em;
+  color: var(--ink-dim);
+  padding: 0.2em 0.55em;
+  border-radius: var(--r-sm);
+  background: color-mix(in oklab, var(--bg-raised) 88%, transparent);
+  border: var(--hair) solid var(--rule);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transform: translateX(8px);
+  transition:
+    opacity var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+  pointer-events: none;
+}
+/* Reveal all labels when the rail is hovered/focused (discovery), and always
+   keep the ACTIVE one a touch more present so "where am I" is legible even at
+   rest is NOT shown — at rest we stay minimal; reveal is the discovery moment. */
+.rail:hover .tickLabel,
+.rail:focus-within .tickLabel {
+  opacity: 1;
+  transform: translateX(0);
+}
+.tick.active .tickLabel {
+  color: var(--accent);
+}
+.tick:hover .tickLabel {
+  color: var(--ink);
+  border-color: color-mix(in oklab, var(--accent) 35%, var(--rule));
+}
+
+/* On touch / narrow screens the section rail is dropped entirely — it's an
+   edge-hover affordance with no good touch analogue, and back + scroll-top
+   already cover the essentials there. */
+@media (max-width: 900px) {
+  .rail {
+    display: none;
+  }
+}
+
+/* ── REDUCED MOTION ─────────────────────────────────────────────────────────
+   Collapse all motion to instant; final/hover states still apply. The global
+   reduced-motion net in global.css already zeroes durations, but we also drop
+   the entrance transforms so nothing ever starts off-position. */
+@media (prefers-reduced-motion: reduce) {
+  .back,
+  .toTop {
+    transition: none;
+  }
+  .back.in {
+    transform: none;
+  }
+  .toTop.shown {
+    transform: none;
+  }
+  .tickMark,
+  .tickLabel,
+  .rail,
+  .rail::before {
+    transition: none;
+  }
+}

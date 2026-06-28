@@ -5,6 +5,7 @@ import Ticker from "../components/Ticker.astro";
 import Beacon from "../components/Beacon.astro";
 import CommandPalette from "../components/cmdk/CommandPalette.tsx";
 import NavRail from "../components/header/NavRail.tsx";
+import SiteNav from "../components/nav/SiteNav.tsx";
 import { ClientRouter } from "astro:transitions";
 import { CHANNELS } from "@khazana/core";
 
@@ -243,6 +244,10 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
     </footer>
 
     <CommandPalette base={base} client:idle />
+    <!-- The three quiet navigation affordances (back / scroll-top / section
+         tick-rail). Self-contained island that detects sections at runtime, so
+         it needs no per-page wiring and lives entirely here in the shell. -->
+    <SiteNav base={base} client:idle />
     <Beacon />
 
     <!-- Feed-page hierarchical channel filter.
