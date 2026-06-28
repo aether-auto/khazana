@@ -94,10 +94,12 @@ export class Semaphore {
 export class PerHostLimiter {
   private readonly maxConcurrent: number;
   private readonly minGapMs: number;
+  /** Per-host min-gap overrides (e.g. reddit needs a much larger gap than default). */
+  private readonly hostGapMs: Map<string, number>;
   private readonly semaphores = new Map<string, Semaphore>();
   private readonly lastFinished = new Map<string, number>();
 
-  constructor(opts?: { maxConcurrent?: number; minGapMs?: number }) {
+  constructor(opts?: { maxConcurrent?: number; minGapMs?: number; hostGapMs?: Record<string, number> }) {
     this.maxConcurrent =
       opts?.maxConcurrent ??
       (parseInt(process.env["PER_HOST_MAX_CONCURRENT"] ?? "", 10) ||
@@ -106,6 +108,7 @@ export class PerHostLimiter {
       opts?.minGapMs ??
       (parseInt(process.env["PER_HOST_MIN_GAP_MS"] ?? "", 10) ||
         DEFAULT_PER_HOST_MIN_GAP_MS);
+    this.hostGapMs = new Map(Object.entries(opts?.hostGapMs ?? {}));
   }
 
   async run<T>(hostname: string, fn: () => Promise<T>): Promise<T> {
@@ -117,12 +120,13 @@ export class PerHostLimiter {
 
     const release = await sem.acquire();
 
-    // Enforce min gap between successive requests to same host
+    // Enforce min gap between successive requests to same host (per-host override wins).
+    const gap = this.hostGapMs.get(hostname) ?? this.minGapMs;
     const last = this.lastFinished.get(hostname) ?? 0;
     const now = Date.now();
     const elapsed = now - last;
-    if (elapsed < this.minGapMs) {
-      await new Promise<void>(r => setTimeout(r, this.minGapMs - elapsed));
+    if (elapsed < gap) {
+      await new Promise<void>(r => setTimeout(r, gap - elapsed));
     }
 
     try {

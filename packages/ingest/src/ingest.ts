@@ -3,6 +3,7 @@ import { buildSource, defaultFetch, type FetchFn } from "./fetchers/build-source
 import { enrichContent, type EnrichContentOptions } from "./enrich-content.js";
 import { withRetry, MAX_ATTEMPTS, BACKOFF_BASE_MS, defaultSleep, type SleepFn } from "./retry.js";
 import { pooledMap, PerHostLimiter, DEFAULT_INGEST_CONCURRENCY } from "./concurrency.js";
+import { resolveRedditMinGapMs } from "./fetchers/reddit.js";
 
 export interface SourceResult {
   id: string;
@@ -34,7 +35,11 @@ export async function runIngest(
 
   const concurrency =
     parseInt(process.env["INGEST_CONCURRENCY"] ?? "", 10) || DEFAULT_INGEST_CONCURRENCY;
-  const hostLimiter = new PerHostLimiter();
+  // Reddit's unauth `.rss` budget is tight — give www.reddit.com a generous gap
+  // (REDDIT_MIN_GAP_MS, default 4s) without slowing every other host.
+  const hostLimiter = new PerHostLimiter({
+    hostGapMs: { "www.reddit.com": resolveRedditMinGapMs() },
+  });
 
   const sourceResults = await pooledMap(
     enabled,

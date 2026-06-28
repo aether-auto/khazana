@@ -1,5 +1,13 @@
 import { expect, test } from "vitest";
-import { parseRedditListing, redditJsonUrl, fetchReddit, REDDIT_USER_AGENT } from "./reddit.js";
+import {
+  parseRedditListing,
+  redditJsonUrl,
+  fetchReddit,
+  resolveRedditMinGapMs,
+  REDDIT_BROWSER_UA,
+  REDDIT_OAUTH_UA,
+  DEFAULT_REDDIT_MIN_GAP_MS,
+} from "./reddit.js";
 import type { FetchFn, FetchResult } from "./build-source.js";
 import type { SourceEntry } from "@khazana/core";
 
@@ -99,9 +107,6 @@ const redditEntry: SourceEntry = {
   enabled: true, trustScore: 0.5, addedBy: "seed", failureCount: 0,
 };
 
-const jsonOk = (json: unknown): FetchResult => ({
-  ok: true, status: 200, text: async () => "", json: async () => json,
-});
 const blocked = (status: number): FetchResult => ({
   ok: false, status, text: async () => "", json: async () => ({}),
 });
@@ -114,70 +119,117 @@ const rssOk: FetchResult = { ok: true, status: 200, text: async () => REDDIT_RSS
 const noSleep = async () => {};
 const now = "2026-06-23T00:00:00.000Z";
 
-const LISTING_JSON = { data: { children: [{ data: { title: "JSON thread", permalink: "/r/Physics/comments/abc/json_thread/", score: 99, num_comments: 12 } }] } };
+// Keep tests deterministic and $0-default: ensure no OAuth creds leak in from the
+// real environment. Each OAuth test sets them explicitly and clears after.
+delete process.env["REDDIT_CLIENT_ID"];
+delete process.env["REDDIT_CLIENT_SECRET"];
 
-test("fetchReddit: JSON success → rich discussion items, hits JSON url with descriptive UA", async () => {
+// ---------------------------------------------------------------------------
+// fetchReddit — PRIMARY path: browser-UA .rss (no creds = $0 default)
+// ---------------------------------------------------------------------------
+
+test("fetchReddit: .rss primary success → discussion items, browser UA, hits registry .rss url", async () => {
   const calls: Array<{ url: string; ua?: string }> = [];
   const fetchFn: FetchFn = async (url, init) => {
     calls.push({ url, ua: init?.headers?.["User-Agent"] });
-    return jsonOk(LISTING_JSON);
-  };
-  const items = await fetchReddit(redditEntry, fetchFn, { now }, noSleep);
-  expect(items).toHaveLength(1);
-  expect(items[0]!.kind).toBe("discussion");
-  expect(items[0]!.metrics).toEqual({ score: 99, comments: 12 });
-  expect(calls).toHaveLength(1);
-  expect(calls[0]!.url).toBe("https://www.reddit.com/r/Physics/hot.json?limit=50");
-  expect(calls[0]!.ua).toBe(REDDIT_USER_AGENT);
-});
-
-test("fetchReddit: respects ctx.limit on JSON path (passed to url and slice)", async () => {
-  const urls: string[] = [];
-  const big = { data: { children: [
-    { data: { title: "a", permalink: "/r/Physics/comments/1/a/" } },
-    { data: { title: "b", permalink: "/r/Physics/comments/2/b/" } },
-  ] } };
-  const fetchFn: FetchFn = async (url) => { urls.push(url); return jsonOk(big); };
-  const items = await fetchReddit(redditEntry, fetchFn, { now, limit: 1 }, noSleep);
-  expect(items).toHaveLength(1);
-  expect(urls[0]).toBe("https://www.reddit.com/r/Physics/hot.json?limit=1");
-});
-
-test("fetchReddit: 429 on JSON → backoff retry → .rss fallback (Atom) succeeds", async () => {
-  const urls: string[] = [];
-  let jsonHits = 0;
-  const fetchFn: FetchFn = async (url) => {
-    urls.push(url);
-    if (url.endsWith(".json?limit=50")) { jsonHits++; return blocked(429); }
-    return rssOk; // the original .rss url
-  };
-  const items = await fetchReddit(redditEntry, fetchFn, { now }, noSleep);
-  expect(jsonHits).toBe(2); // bounded retry: 2 JSON attempts
-  expect(items).toHaveLength(1);
-  expect(items[0]!.kind).toBe("discussion"); // reddit .rss maps to discussion
-  expect(items[0]!.url).toBe("https://www.reddit.com/r/Physics/comments/xyz/atom_thread/");
-  expect(urls[urls.length - 1]).toBe("https://www.reddit.com/r/Physics/.rss");
-});
-
-test("fetchReddit: 403 block → .rss fallback", async () => {
-  const fetchFn: FetchFn = async (url) =>
-    url.includes(".json") ? blocked(403) : rssOk;
-  const items = await fetchReddit(redditEntry, fetchFn, { now }, noSleep);
-  expect(items).toHaveLength(1);
-  expect(items[0]!.kind).toBe("discussion");
-});
-
-test("fetchReddit: JSON network error → .rss fallback", async () => {
-  const fetchFn: FetchFn = async (url) => {
-    if (url.includes(".json")) throw new Error("ECONNRESET");
     return rssOk;
   };
   const items = await fetchReddit(redditEntry, fetchFn, { now }, noSleep);
   expect(items).toHaveLength(1);
+  expect(items[0]!.kind).toBe("discussion");
+  expect(items[0]!.url).toBe("https://www.reddit.com/r/Physics/comments/xyz/atom_thread/");
+  expect(calls).toHaveLength(1);
+  expect(calls[0]!.url).toBe("https://www.reddit.com/r/Physics/.rss"); // the registry url, unchanged
+  expect(calls[0]!.ua).toBe(REDDIT_BROWSER_UA); // browser UA, NOT a bot UA
 });
 
-test("fetchReddit: both JSON and .rss fail → throws", async () => {
-  const fetchFn: FetchFn = async (url) =>
-    url.includes(".json") ? blocked(429) : blocked(503);
-  await expect(fetchReddit(redditEntry, fetchFn, { now }, noSleep)).rejects.toThrow("503");
+test("fetchReddit: .rss path respects ctx.limit (slices)", async () => {
+  const TWO_RSS = `<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom">
+    <entry><title>a</title><link href="https://www.reddit.com/r/Physics/comments/1/a/"/></entry>
+    <entry><title>b</title><link href="https://www.reddit.com/r/Physics/comments/2/b/"/></entry>
+  </feed>`;
+  const fetchFn: FetchFn = async () => ({ ok: true, status: 200, text: async () => TWO_RSS, json: async () => ({}) });
+  const items = await fetchReddit(redditEntry, fetchFn, { now, limit: 1 }, noSleep);
+  expect(items).toHaveLength(1);
+});
+
+test("fetchReddit: 429 on .rss → bounded backoff retry → success", async () => {
+  let hits = 0;
+  const fetchFn: FetchFn = async () => {
+    hits++;
+    return hits < 3 ? blocked(429) : rssOk; // two 429s, then a 200
+  };
+  const items = await fetchReddit(redditEntry, fetchFn, { now }, noSleep);
+  expect(hits).toBe(3); // retried through the 429s (RSS_MAX_ATTEMPTS = 3)
+  expect(items).toHaveLength(1);
+});
+
+test("fetchReddit: persistent 429 on .rss → throws (one sub fails, run survives upstream)", async () => {
+  const fetchFn: FetchFn = async () => blocked(429);
+  await expect(fetchReddit(redditEntry, fetchFn, { now }, noSleep)).rejects.toThrow("429");
+});
+
+test("fetchReddit: 403 on .rss is not retried → throws", async () => {
+  let hits = 0;
+  const fetchFn: FetchFn = async () => { hits++; return blocked(403); };
+  await expect(fetchReddit(redditEntry, fetchFn, { now }, noSleep)).rejects.toThrow("403");
+  expect(hits).toBe(1); // 403 (UA block) is not a rate-limit; no retry
+});
+
+// ---------------------------------------------------------------------------
+// fetchReddit — OAuth escalation when creds present
+// ---------------------------------------------------------------------------
+
+test("fetchReddit: with creds → OAuth token then oauth.reddit.com JSON (rich metrics)", async () => {
+  process.env["REDDIT_CLIENT_ID"] = "id";
+  process.env["REDDIT_CLIENT_SECRET"] = "secret";
+  const calls: Array<{ url: string; ua?: string; auth?: string; method?: string }> = [];
+  const fetchFn: FetchFn = async (url, init) => {
+    calls.push({ url, ua: init?.headers?.["User-Agent"], auth: init?.headers?.["Authorization"], method: init?.method });
+    if (url.includes("access_token")) {
+      return { ok: true, status: 200, text: async () => "", json: async () => ({ access_token: "tok123" }) };
+    }
+    return { ok: true, status: 200, text: async () => "", json: async () => ({
+      data: { children: [{ data: { title: "OAuth thread", permalink: "/r/Physics/comments/o/oauth/", score: 7, num_comments: 3 } }] },
+    }) };
+  };
+  const items = await fetchReddit(redditEntry, fetchFn, { now }, noSleep);
+  delete process.env["REDDIT_CLIENT_ID"];
+  delete process.env["REDDIT_CLIENT_SECRET"];
+
+  expect(items).toHaveLength(1);
+  expect(items[0]!.metrics).toEqual({ score: 7, comments: 3 }); // rich JSON metrics
+  // token call: POST to access_token with Basic auth + descriptive UA
+  expect(calls[0]!.url).toBe("https://www.reddit.com/api/v1/access_token");
+  expect(calls[0]!.method).toBe("POST");
+  expect(calls[0]!.auth).toMatch(/^Basic /);
+  // listing call: oauth.reddit.com with Bearer + descriptive UA
+  expect(calls[1]!.url).toBe("https://oauth.reddit.com/r/Physics/hot.json?limit=50");
+  expect(calls[1]!.auth).toBe("Bearer tok123");
+  expect(calls[1]!.ua).toBe(REDDIT_OAUTH_UA);
+});
+
+test("fetchReddit: creds present but token fetch fails → degrades to .rss browser-UA", async () => {
+  process.env["REDDIT_CLIENT_ID"] = "id";
+  process.env["REDDIT_CLIENT_SECRET"] = "secret";
+  const seen: string[] = [];
+  const fetchFn: FetchFn = async (url, init) => {
+    seen.push(`${url}|${init?.headers?.["User-Agent"]}`);
+    if (url.includes("access_token")) return blocked(401); // token denied
+    return rssOk; // the .rss fallback
+  };
+  const items = await fetchReddit(redditEntry, fetchFn, { now }, noSleep);
+  delete process.env["REDDIT_CLIENT_ID"];
+  delete process.env["REDDIT_CLIENT_SECRET"];
+
+  expect(items).toHaveLength(1);
+  expect(seen.some((s) => s.includes(".rss") && s.includes(REDDIT_BROWSER_UA))).toBe(true);
+});
+
+test("resolveRedditMinGapMs: env override wins, else default", () => {
+  delete process.env["REDDIT_MIN_GAP_MS"];
+  expect(resolveRedditMinGapMs()).toBe(DEFAULT_REDDIT_MIN_GAP_MS);
+  process.env["REDDIT_MIN_GAP_MS"] = "7000";
+  expect(resolveRedditMinGapMs()).toBe(7000);
+  delete process.env["REDDIT_MIN_GAP_MS"];
 });
