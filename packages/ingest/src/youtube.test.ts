@@ -1,17 +1,24 @@
-import { expect, test, describe, it, afterEach } from "vitest";
+import { expect, test, describe, it, afterEach, beforeEach } from "vitest";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import {
+  buildYtDlpArgs,
   extractInnertubeApiKey,
   extractPlayerResponse,
   fetchYouTubeTranscript,
   fetchYouTubeTranscriptResult,
+  fetchYtDlpTranscript,
   isDirectYouTubeEnabled,
   fetchDirectYouTubeTranscript,
   parseTranscriptJson3,
   parseTranscriptXml,
   pickCaptionTrack,
   transcriptToHtml,
+  YtDlpGate,
   youTubeVideoId,
 } from "./youtube.js";
+import type { ExecRunner } from "./youtube.js";
 import type { FetchFn } from "./fetchers/build-source.js";
 
 // ---------------------------------------------------------------------------
@@ -696,18 +703,268 @@ describe("fetchYouTubeTranscriptResult - direct fallback", () => {
       return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
     };
     await withProxyEnv(TEST_INV_INSTANCE, TEST_PIPED_INSTANCE, async () => {
-      const result = await fetchYouTubeTranscriptResult("test123", fetchFn);
+      // Force yt-dlp "unavailable" so no real subprocess spawns and the
+      // watch-page tier is exercised.
+      const result = await fetchYouTubeTranscriptResult("test123", fetchFn, {
+        ytDlpAvailable: () => false,
+      });
       expect(result.kind).toBe("transcript");
     });
   });
 
   it("does not try yt-dlp when ALLOW_DIRECT_YOUTUBE not set", async () => {
     delete process.env["ALLOW_DIRECT_YOUTUBE"];
+    let ytDlpCalled = false;
     const fetchFn: FetchFn = async () => ({ ok: false, status: 404, text: async () => "", json: async () => ({}) });
     await withProxyEnv(TEST_INV_INSTANCE, TEST_PIPED_INSTANCE, async () => {
-      const result = await fetchYouTubeTranscriptResult("test456", fetchFn);
+      const result = await fetchYouTubeTranscriptResult("test456", fetchFn, {
+        ytDlpAvailable: () => true,
+        ytDlp: async () => { ytDlpCalled = true; return ""; },
+      });
       expect(result.kind).toBe("none");
     });
+    expect(ytDlpCalled).toBe(false);
+  });
+
+  it("tries yt-dlp FIRST (before watch-page) when enabled and available", async () => {
+    process.env["ALLOW_DIRECT_YOUTUBE"] = "1";
+    const order: string[] = [];
+    const fetchFn: FetchFn = async (url) => {
+      if (url.includes("youtube.com/watch")) order.push("watch");
+      return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
+    };
+    await withProxyEnv(TEST_INV_INSTANCE, TEST_PIPED_INSTANCE, async () => {
+      const result = await fetchYouTubeTranscriptResult("orderXYZ", fetchFn, {
+        ytDlpAvailable: () => true,
+        ytDlp: async () => { order.push("ytdlp"); return "a real yt-dlp transcript body"; },
+      });
+      expect(result.kind).toBe("transcript");
+      if (result.kind === "transcript") expect(result.text).toContain("yt-dlp transcript");
+    });
+    // yt-dlp ran first; because it succeeded the watch-page was never hit.
+    expect(order[0]).toBe("ytdlp");
+    expect(order).not.toContain("watch");
+  });
+
+  it("falls through yt-dlp → watch-page → proxy when each prior tier fails", async () => {
+    process.env["ALLOW_DIRECT_YOUTUBE"] = "1";
+    const order: string[] = [];
+    const mockWatchHtml = `var ytInitialPlayerResponse = {"captions":{"playerCaptionsTracklistRenderer":{"captionTracks":[]}}};`;
+    const fetchFn: FetchFn = async (url) => {
+      if (url.includes("youtube.com/watch")) {
+        order.push("watch");
+        return { ok: true, status: 200, text: async () => mockWatchHtml, json: async () => ({}) };
+      }
+      if (url.startsWith(TEST_INV_INSTANCE)) order.push("proxy");
+      return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
+    };
+    await withProxyEnv(TEST_INV_INSTANCE, "", async () => {
+      const result = await fetchYouTubeTranscriptResult("fallXYZ", fetchFn, {
+        ytDlpAvailable: () => true,
+        ytDlp: async () => { order.push("ytdlp"); return ""; },
+      });
+      expect(result.kind).toBe("none");
+    });
+    expect(order[0]).toBe("ytdlp");
+    expect(order).toContain("watch");
+    expect(order.indexOf("ytdlp")).toBeLessThan(order.indexOf("watch"));
+    expect(order.indexOf("watch")).toBeLessThan(order.indexOf("proxy"));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// buildYtDlpArgs — lean, English-only, paced flags
+// ---------------------------------------------------------------------------
+
+describe("buildYtDlpArgs", () => {
+  const savedEnv: Record<string, string | undefined> = {};
+  beforeEach(() => {
+    for (const k of ["YT_DLP_SLEEP_REQUESTS", "YT_DLP_SLEEP_SUBTITLES", "YT_DLP_IMPERSONATE"]) {
+      savedEnv[k] = process.env[k];
+      delete process.env[k];
+    }
+  });
+  afterEach(() => {
+    for (const [k, v] of Object.entries(savedEnv)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+  });
+
+  it("restricts to an explicit English list, never a broad glob", () => {
+    const args = buildYtDlpArgs("vid123", "/tmp/base");
+    const i = args.indexOf("--sub-langs");
+    expect(i).toBeGreaterThanOrEqual(0);
+    expect(args[i + 1]).toBe("en,en-orig");
+    // No translated-variant glob that triggered the 429.
+    expect(args.join(" ")).not.toContain("en.*");
+    expect(args.join(" ")).not.toContain("all");
+  });
+
+  it("requests both manual and auto English subs as vtt, skipping the download", () => {
+    const args = buildYtDlpArgs("vid123", "/tmp/base");
+    expect(args).toContain("--write-subs");
+    expect(args).toContain("--write-auto-subs");
+    expect(args).toContain("--skip-download");
+    const fi = args.indexOf("--sub-format");
+    expect(args[fi + 1]).toBe("vtt");
+  });
+
+  it("includes yt-dlp's own pacing + retry flags (defaults)", () => {
+    const args = buildYtDlpArgs("vid123", "/tmp/base");
+    expect(args[args.indexOf("--sleep-requests") + 1]).toBe("1");
+    expect(args[args.indexOf("--sleep-subtitles") + 1]).toBe("1");
+    expect(args).toContain("--retries");
+    expect(args).toContain("--extractor-retries");
+  });
+
+  it("honors env-configured sleep values", () => {
+    process.env["YT_DLP_SLEEP_REQUESTS"] = "3";
+    process.env["YT_DLP_SLEEP_SUBTITLES"] = "2";
+    const args = buildYtDlpArgs("vid123", "/tmp/base");
+    expect(args[args.indexOf("--sleep-requests") + 1]).toBe("3");
+    expect(args[args.indexOf("--sleep-subtitles") + 1]).toBe("2");
+  });
+
+  it("omits --impersonate unless YT_DLP_IMPERSONATE is set", () => {
+    expect(buildYtDlpArgs("vid123", "/tmp/base")).not.toContain("--impersonate");
+    process.env["YT_DLP_IMPERSONATE"] = "1";
+    const args = buildYtDlpArgs("vid123", "/tmp/base");
+    expect(args).toContain("--impersonate");
+    expect(args[args.indexOf("--impersonate") + 1]).toBe("chrome");
+  });
+
+  it("passes the video id and output base after the -- separator", () => {
+    const args = buildYtDlpArgs("vid123", "/tmp/base");
+    expect(args[args.indexOf("-o") + 1]).toBe("/tmp/base");
+    expect(args[args.length - 1]).toBe("vid123");
+    expect(args[args.length - 2]).toBe("--");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// YtDlpGate — serialize (concurrency 1) + min-gap, deterministic clock
+// ---------------------------------------------------------------------------
+
+describe("YtDlpGate", () => {
+  /** A fake clock: `now` is advanced explicitly; `sleep` jumps it forward. */
+  function fakeClock() {
+    let t = 0;
+    return {
+      now: () => t,
+      sleep: async (ms: number) => { t += ms; },
+      advance: (ms: number) => { t += ms; },
+      get t() { return t; },
+    };
+  }
+
+  it("serializes calls (concurrency 1) — never overlaps", async () => {
+    const clock = fakeClock();
+    const gate = new YtDlpGate(() => 0, clock);
+    let active = 0;
+    let maxActive = 0;
+    const make = (id: number) =>
+      gate.run(async () => {
+        active++;
+        maxActive = Math.max(maxActive, active);
+        // Yield a couple of microtasks to expose any overlap.
+        await Promise.resolve();
+        await Promise.resolve();
+        active--;
+        return id;
+      });
+    const results = await Promise.all([make(1), make(2), make(3)]);
+    expect(results).toEqual([1, 2, 3]);
+    expect(maxActive).toBe(1);
+  });
+
+  it("enforces the min-gap between invocations via the injected sleep", async () => {
+    const clock = fakeClock();
+    const starts: number[] = [];
+    const gate = new YtDlpGate(() => 5000, clock);
+    const run = () => gate.run(async () => { starts.push(clock.now()); });
+    await run();
+    await run();
+    await run();
+    // Each invocation starts >= 5000ms after the previous one's start.
+    expect(starts).toEqual([0, 5000, 10000]);
+  });
+
+  it("does not sleep when enough time already elapsed", async () => {
+    const clock = fakeClock();
+    const starts: number[] = [];
+    const gate = new YtDlpGate(() => 1000, clock);
+    await gate.run(async () => { starts.push(clock.now()); });
+    clock.advance(5000); // more than the gap passes on its own
+    await gate.run(async () => { starts.push(clock.now()); });
+    expect(starts).toEqual([0, 5000]); // no extra sleep added
+  });
+
+  it("a rejecting run does not wedge the gate for later callers", async () => {
+    const clock = fakeClock();
+    const gate = new YtDlpGate(() => 0, clock);
+    await expect(gate.run(async () => { throw new Error("boom"); })).rejects.toThrow("boom");
+    await expect(gate.run(async () => "ok")).resolves.toBe("ok");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// fetchYtDlpTranscript — injected async exec + gate, no real subprocess
+// ---------------------------------------------------------------------------
+
+describe("fetchYtDlpTranscript (injected exec)", () => {
+  it("passes the lean arg list to the exec runner", async () => {
+    let seenArgs: readonly string[] = [];
+    const exec: ExecRunner = async (_file, args) => { seenArgs = args; };
+    // No transcript file written → returns "".
+    const out = await fetchYtDlpTranscript("argcheck", {
+      exec,
+      gate: new YtDlpGate(() => 0),
+    });
+    expect(out).toBe("");
+    expect(seenArgs).toContain("--sub-langs");
+    expect(seenArgs[seenArgs.indexOf("--sub-langs") + 1]).toBe("en,en-orig");
+    expect(seenArgs).toContain("--sleep-requests");
+    expect(seenArgs).toContain("--skip-download");
+    expect(seenArgs.join(" ")).not.toContain("en.*");
+  });
+
+  it("returns '' and never throws when exec rejects", async () => {
+    const exec: ExecRunner = async () => { throw new Error("spawn failed"); };
+    await expect(
+      fetchYtDlpTranscript("boom", { exec, gate: new YtDlpGate(() => 0) }),
+    ).resolves.toBe("");
+  });
+
+  it("reads the written .en.vtt, sanitizes it, and cleans up temp files", async () => {
+    const vid = `vtttest-${Date.now()}`;
+    const tmpBase = path.join(os.tmpdir(), `khzytdlp-${vid}`);
+    const vttPath = `${tmpBase}.en.vtt`;
+    const exec: ExecRunner = async () => {
+      fs.writeFileSync(
+        vttPath,
+        `WEBVTT\n\n00:00:01.000 --> 00:00:04.000\nThis is a real spoken transcript line.\n\n` +
+          `00:00:04.500 --> 00:00:08.000\nAnother spoken line of the transcript here.\n`,
+      );
+    };
+    const out = await fetchYtDlpTranscript(vid, { exec, gate: new YtDlpGate(() => 0) });
+    expect(out).toContain("real spoken transcript");
+    // Temp file cleaned up afterwards.
+    expect(fs.existsSync(vttPath)).toBe(false);
+  });
+
+  it("serializes + paces real fetch calls through the gate (deterministic clock)", async () => {
+    let t = 0;
+    const clock = { now: () => t, sleep: async (ms: number) => { t += ms; } };
+    const gate = new YtDlpGate(() => 3000, clock);
+    const starts: number[] = [];
+    const exec: ExecRunner = async () => { starts.push(t); };
+    await Promise.all([
+      fetchYtDlpTranscript("a", { exec, gate }),
+      fetchYtDlpTranscript("b", { exec, gate }),
+      fetchYtDlpTranscript("c", { exec, gate }),
+    ]);
+    expect(starts).toEqual([0, 3000, 6000]);
   });
 });
 

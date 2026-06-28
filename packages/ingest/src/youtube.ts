@@ -1,4 +1,4 @@
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -269,6 +269,158 @@ export function isYtDlpAvailable(): boolean {
   }
 }
 
+// ---------------------------------------------------------------------------
+// yt-dlp rate-limit gate (process-level)
+// ---------------------------------------------------------------------------
+//
+// yt-dlp runs as a subprocess, so it bypasses the HTTP `PerHostLimiter`. To keep
+// a bulk 200+-source run polite, every `fetchYtDlpTranscript` call awaits this
+// gate, which enforces TWO things across the whole process:
+//   1. concurrency 1 — only one yt-dlp subprocess at a time (serialized), and
+//   2. a minimum gap between consecutive yt-dlp *invocations* (env
+//      `YT_DLP_MIN_GAP_MS`, default 4000ms).
+// The gate is injectable (clock + sleep) so tests are deterministic with no real
+// timers. A single shared module-level instance serializes all real calls.
+
+/** Read the min-gap (ms) between yt-dlp invocations from env, with a default. */
+export function ytDlpMinGapMs(): number {
+  const raw = Number(process.env["YT_DLP_MIN_GAP_MS"]);
+  return Number.isFinite(raw) && raw >= 0 ? raw : 4000;
+}
+
+/** Injectable clock + sleep so the gate's timing is deterministic in tests. */
+export interface GateClock {
+  now: () => number;
+  sleep: (ms: number) => Promise<void>;
+}
+
+const realClock: GateClock = {
+  now: () => Date.now(),
+  sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+};
+
+/**
+ * A serializing async gate that paces yt-dlp invocations. Concurrency is fixed
+ * at 1: each `run` waits for the previous one to finish, then sleeps until at
+ * least `minGapMs()` has elapsed since the previous invocation *started*, then
+ * runs. `minGapMs` is read per-call so env changes (and tests) take effect.
+ */
+export class YtDlpGate {
+  private tail: Promise<unknown> = Promise.resolve();
+  private lastStart = Number.NEGATIVE_INFINITY;
+
+  constructor(
+    private readonly minGapMs: () => number,
+    private readonly clock: GateClock = realClock,
+  ) {}
+
+  /** Serialize + pace `fn`. Resolves/rejects with `fn`'s result. */
+  run<T>(fn: () => Promise<T>): Promise<T> {
+    const result = this.tail.then(async () => {
+      const gap = this.minGapMs();
+      const wait = this.lastStart + gap - this.clock.now();
+      if (wait > 0) await this.clock.sleep(wait);
+      this.lastStart = this.clock.now();
+      return fn();
+    });
+    // Keep the chain alive even when `fn` rejects, so one failure doesn't wedge
+    // the gate for every later caller.
+    this.tail = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
+  }
+}
+
+/** Shared process-wide gate used by all real `fetchYtDlpTranscript` calls. */
+const sharedYtDlpGate = new YtDlpGate(ytDlpMinGapMs);
+
+/** The async subprocess runner the transcript fetcher uses (injectable in tests). */
+export type ExecRunner = (
+  file: string,
+  args: readonly string[],
+  opts: { timeout: number },
+) => Promise<void>;
+
+/**
+ * Default runner: spawn yt-dlp via async `execFile`. Resolves on a clean exit
+ * and on a non-zero exit alike — yt-dlp may exit non-zero (e.g. when only one of
+ * the two requested sub formats exists) yet still have written the .vtt we want.
+ * The caller decides success by whether a transcript file appeared.
+ */
+const defaultExecRunner: ExecRunner = (file, args, opts) =>
+  new Promise((resolve) => {
+    execFile(file, [...args], { timeout: opts.timeout }, () => resolve());
+  });
+
+/** Injectable dependencies for `fetchYtDlpTranscript` (all default to real impls). */
+export interface YtDlpDeps {
+  exec?: ExecRunner;
+  gate?: YtDlpGate;
+}
+
+/**
+ * Build the lean yt-dlp arg list for fetching ONE English transcript with the
+ * fewest requests. Exported for tests.
+ *
+ * - Restricts subtitles to English only via an explicit `--sub-langs "en,en-orig"`
+ *   list — NOT a broad `en.*` glob — so yt-dlp does not pull translated variants
+ *   (`en-de-DE`, etc.) that triggered the 429.
+ * - Pulls both manual (`--write-subs`) and auto (`--write-auto-subs`) captions.
+ * - Adds yt-dlp's own pacing: `--sleep-requests`, `--sleep-subtitles`, plus a few
+ *   `--retries` / `--extractor-retries`.
+ * - Optionally impersonates a browser (`--impersonate chrome`) when
+ *   `YT_DLP_IMPERSONATE` is truthy and curl_cffi is installed.
+ */
+export function buildYtDlpArgs(videoId: string, tmpBase: string): string[] {
+  const sleepReq = ytDlpSleepRequests();
+  const sleepSubs = ytDlpSleepSubtitles();
+  const args = [
+    "--write-subs",
+    "--write-auto-subs",
+    // Explicit English-only list — never a broad glob (that pulled translated
+    // variants and caused the 429).
+    "--sub-langs",
+    "en,en-orig",
+    "--sub-format",
+    "vtt",
+    "--skip-download",
+    "--no-warnings",
+    "--sleep-requests",
+    String(sleepReq),
+    "--sleep-subtitles",
+    String(sleepSubs),
+    "--retries",
+    "3",
+    "--extractor-retries",
+    "2",
+  ];
+  if (ytDlpImpersonate()) {
+    args.push("--impersonate", "chrome");
+  }
+  args.push("-o", tmpBase, "--", videoId);
+  return args;
+}
+
+/** Per-request sleep (seconds) yt-dlp waits between HTTP requests. Env-configurable. */
+function ytDlpSleepRequests(): number {
+  const raw = Number(process.env["YT_DLP_SLEEP_REQUESTS"]);
+  return Number.isFinite(raw) && raw >= 0 ? raw : 1;
+}
+
+/** Sleep (seconds) yt-dlp waits between subtitle downloads. Env-configurable. */
+function ytDlpSleepSubtitles(): number {
+  const raw = Number(process.env["YT_DLP_SLEEP_SUBTITLES"]);
+  return Number.isFinite(raw) && raw >= 0 ? raw : 1;
+}
+
+/** Whether to pass `--impersonate chrome` (needs curl_cffi). Off unless opted in. */
+function ytDlpImpersonate(): boolean {
+  const v = process.env["YT_DLP_IMPERSONATE"];
+  return v === "1" || v === "true" || v === "chrome";
+}
+
 /**
  * Fetch transcript via the direct watch-page method (no proxy).
  * ONLY call when ALLOW_DIRECT_YOUTUBE=1.
@@ -329,57 +481,63 @@ export async function fetchDirectYouTubeTranscript(
 }
 
 /**
- * Fetch transcript via yt-dlp subprocess.
+ * Fetch transcript via yt-dlp subprocess — lean, English-only, rate-limited.
  * ONLY call when ALLOW_DIRECT_YOUTUBE=1 AND isYtDlpAvailable().
- * Returns "" on any failure.
+ *
+ * Every call passes through a process-level gate (concurrency 1 + min-gap between
+ * invocations, env `YT_DLP_MIN_GAP_MS`) so a bulk run paces yt-dlp politely. The
+ * subprocess itself also sleeps between requests/subtitles (`--sleep-requests`,
+ * `--sleep-subtitles`). One transcript is fetched with the fewest requests:
+ * English-only manual+auto subs, no translated variants. The 60s timeout, the
+ * temp-file read of `.en.vtt` / `.en-orig.vtt`, `sanitizePodcastTranscript`, and
+ * temp-file cleanup are preserved. Returns "" on any failure; never throws.
+ *
+ * `deps` is injectable for tests (the exec runner and the gate); production uses
+ * the real async `execFile` and the shared module-level gate.
  */
-export async function fetchYtDlpTranscript(videoId: string): Promise<string> {
-  const tmpBase = path.join(os.tmpdir(), `khzytdlp-${videoId}`);
-  try {
-    spawnSync(
-      "yt-dlp",
-      [
-        "--write-auto-sub",
-        "--write-sub",
-        "--sub-lang", "en",
-        "--sub-format", "vtt",
-        "--skip-download",
-        "--no-warnings",
-        "-o", tmpBase,
-        "--",
-        videoId,
-      ],
-      { timeout: 60000 },
-    );
+export async function fetchYtDlpTranscript(
+  videoId: string,
+  deps: YtDlpDeps = {},
+): Promise<string> {
+  const exec = deps.exec ?? defaultExecRunner;
+  const gate = deps.gate ?? sharedYtDlpGate;
+  return gate.run(async () => {
+    const tmpBase = path.join(os.tmpdir(), `khzytdlp-${videoId}`);
+    try {
+      await exec("yt-dlp", buildYtDlpArgs(videoId, tmpBase), { timeout: 60000 });
 
-    // Check primary VTT path, then fallback
-    const candidates = [
-      `${tmpBase}.en.vtt`,
-      `${tmpBase}.en-orig.vtt`,
-    ];
+      // Check primary VTT path, then the auto-generated fallback.
+      const candidates = [`${tmpBase}.en.vtt`, `${tmpBase}.en-orig.vtt`];
 
-    let content = "";
-    for (const candidate of candidates) {
-      if (fs.existsSync(candidate)) {
-        content = fs.readFileSync(candidate, "utf8");
-        break;
+      let content = "";
+      for (const candidate of candidates) {
+        if (fs.existsSync(candidate)) {
+          content = fs.readFileSync(candidate, "utf8");
+          break;
+        }
+      }
+
+      return content ? sanitizePodcastTranscript(content, "text/vtt") : "";
+    } catch {
+      return "";
+    } finally {
+      // Clean up all temp files matching the base pattern.
+      try {
+        const dir = path.dirname(tmpBase);
+        const base = path.basename(tmpBase);
+        const files = fs.readdirSync(dir).filter((f) => f.startsWith(base));
+        for (const f of files) {
+          try {
+            fs.unlinkSync(path.join(dir, f));
+          } catch {
+            /* ignore individual cleanup failures */
+          }
+        }
+      } catch {
+        /* ignore cleanup scan failures */
       }
     }
-
-    return content ? sanitizePodcastTranscript(content, "text/vtt") : "";
-  } catch {
-    return "";
-  } finally {
-    // Clean up all temp files matching the base pattern
-    try {
-      const dir = path.dirname(tmpBase);
-      const base = path.basename(tmpBase);
-      const files = fs.readdirSync(dir).filter((f) => f.startsWith(base));
-      for (const f of files) {
-        try { fs.unlinkSync(path.join(dir, f)); } catch {}
-      }
-    } catch {}
-  }
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -391,32 +549,56 @@ export async function fetchYtDlpTranscript(videoId: string): Promise<string> {
  * direct fallback methods gated on ALLOW_DIRECT_YOUTUBE=1.
  *
  * Layer order:
- *   1. Proxy (Invidious → Piped) — always attempted first.
- *   2. Direct watch-page — only when ALLOW_DIRECT_YOUTUBE=1.
- *   3. yt-dlp subprocess — only when ALLOW_DIRECT_YOUTUBE=1 AND yt-dlp is on PATH.
+ *   - Proxy (Invidious → Piped) — always attempted first when direct is OFF.
+ *   When ALLOW_DIRECT_YOUTUBE=1 (e.g. GitHub Actions):
+ *     1. yt-dlp subprocess FIRST — it's the path that actually works from a clean
+ *        IP; rate-limited via the process gate (see `fetchYtDlpTranscript`).
+ *     2. Direct watch-page — second.
+ *     3. Proxy (Invidious → Piped) — last, best-effort (the public proxies are
+ *        currently dead, but kept as a final fallback).
  *
  * Returns a `TranscriptResult`. Never throws.
+ *
+ * `deps` is injectable for tests: `ytDlpAvailable` (avoid probing/spawning the
+ * real binary) and `ytDlp` (the underlying `fetchYtDlpTranscript` so it can be
+ * stubbed). Production passes neither and uses the real implementations.
  */
+export interface TranscriptResolverDeps {
+  ytDlpAvailable?: () => boolean;
+  ytDlp?: (videoId: string) => Promise<string>;
+}
+
 export async function fetchYouTubeTranscriptResult(
   videoId: string,
   fetchFn: FetchFn,
+  deps: TranscriptResolverDeps = {},
 ): Promise<TranscriptResult> {
   if (!videoId) return { kind: "none" };
 
-  // 1. Always try proxy first
-  const proxyResult = await fetchProxyTranscript(videoId, fetchFn);
-  if (proxyResult.kind === "transcript") return proxyResult;
+  const ytDlpAvailable = deps.ytDlpAvailable ?? isYtDlpAvailable;
+  const ytDlp = deps.ytDlp ?? fetchYtDlpTranscript;
 
-  // 2-3. Direct methods — only if explicitly enabled (e.g. GitHub Actions)
   if (isDirectYouTubeEnabled()) {
+    // 1. yt-dlp first — the working path from a non-blocked IP.
+    if (ytDlpAvailable()) {
+      const ytdlp = await ytDlp(videoId);
+      if (ytdlp) return { kind: "transcript", text: ytdlp };
+    }
+
+    // 2. Direct watch-page next.
     const direct = await fetchDirectYouTubeTranscript(videoId, fetchFn);
     if (direct) return { kind: "transcript", text: direct };
 
-    if (isYtDlpAvailable()) {
-      const ytdlp = await fetchYtDlpTranscript(videoId);
-      if (ytdlp) return { kind: "transcript", text: ytdlp };
-    }
+    // 3. Proxies last, best-effort (currently dead).
+    const proxyResult = await fetchProxyTranscript(videoId, fetchFn);
+    if (proxyResult.kind === "transcript") return proxyResult;
+
+    return { kind: "none" };
   }
+
+  // Direct OFF (default/local): proxy only — never hit youtube.com directly.
+  const proxyResult = await fetchProxyTranscript(videoId, fetchFn);
+  if (proxyResult.kind === "transcript") return proxyResult;
 
   return { kind: "none" };
 }
