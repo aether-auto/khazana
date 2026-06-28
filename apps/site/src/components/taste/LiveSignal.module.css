@@ -1,0 +1,206 @@
+/* §6 LIVE SIGNAL — live-vs-snapshot readout, sparkline, fuel gauges. Tokens only.
+   Amber = live machine signal; ink-dim = the snapshot baseline. */
+.live {
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  flex: none;
+}
+.dotLive {
+  background: var(--good);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--good) 22%, transparent);
+}
+:global(html.reveal-ready) .dotLive {
+  animation: live-pulse 2.8s var(--ease-out) infinite;
+}
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dotLive {
+    animation: none;
+  }
+}
+.statusLabel {
+  color: var(--ink-dim);
+  letter-spacing: 0.03em;
+}
+.device {
+  color: var(--ink-faint);
+}
+.counts {
+  margin-left: auto;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── sparkline ── */
+.sparkWrap {
+  height: 24px;
+}
+.spark {
+  width: 100%;
+  height: 24px;
+  display: block;
+}
+
+/* ── live-vs-snapshot bars ── */
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.barsHead {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  margin-bottom: var(--s-1);
+}
+.barRow {
+  display: grid;
+  grid-template-columns: 7rem 1fr auto;
+  align-items: center;
+  gap: var(--s-3);
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+}
+.barLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.barTrack {
+  position: relative;
+  height: 0.55rem;
+  background: var(--bg-inset);
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+/* live (amber) on the top half, snapshot (ink-dim) on the bottom half — paired
+   bars read as "your live clicks vs. the build snapshot". When not live, only the
+   snapshot fill renders (full height). */
+.barFillLive {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 50%;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  transition: width var(--dur-slow) var(--ease-out);
+  z-index: 1;
+}
+.barFillSnap {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 50%;
+  background: color-mix(in oklab, var(--ink-dim) 60%, transparent);
+  border-radius: 0 0 var(--r-sm) var(--r-sm);
+  transition: width var(--dur-slow) var(--ease-out);
+}
+/* not-live: snapshot fills the whole track (no paired live row) */
+.barTrack:not(:has(.barFillLive)) .barFillSnap {
+  height: 100%;
+  border-radius: var(--r-sm);
+}
+@media (prefers-reduced-motion: reduce) {
+  .barFillSnap,
+  .barFillLive {
+    transition: none;
+  }
+}
+.barVals {
+  display: inline-flex;
+  gap: var(--s-2);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-xs);
+}
+.barLive {
+  color: var(--accent);
+}
+.barSnap {
+  color: var(--ink-faint);
+}
+
+/* ── fuel gauges ── */
+.gauges {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-top: var(--s-3);
+  border-top: var(--hair) solid var(--rule);
+}
+.gauge {
+  display: grid;
+  grid-template-columns: 4rem 1fr auto;
+  align-items: center;
+  gap: var(--s-3);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+}
+.gaugeName {
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.gaugeBar {
+  display: flex;
+  gap: 2px;
+}
+.seg {
+  flex: 1;
+  height: 8px;
+  border-radius: 1px;
+  background: var(--bg-inset);
+  border: var(--hair) solid var(--rule);
+}
+.segOn {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.gaugeCount {
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.gaugeLabel {
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  color: var(--ink-dim);
+  margin: var(--s-1) 0 0;
+}
+.ready {
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  color: var(--good);
+  margin: 0;
+}
+
+.foot {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--ink-faint);
+  margin: 0;
+}
+.foot code {
+  color: var(--ink-dim);
+}

@@ -1,219 +1,363 @@
 ---
+// THE CALIBRATION BENCH — /taste. The third panel of the instrument: it turns the
+// gaze on the RANKING MACHINE ITSELF and hands the founder the screwdrivers. Most
+// of the page is SSR-readable with JS off (default weights as static text, model
+// bars from taste.json, the default #1 item's why-this); five React islands layer
+// the live, operable bench on top. Everything routes through @khazana/core's
+// shared scoring — no second copy of the ranker math.
 import Shell from "../layouts/Shell.astro";
+import { loadCurated } from "../lib/feed.js";
 import { loadTaste, topN, formatBars } from "../lib/taste.js";
-import { repoDataDir } from "../lib/data.js";
-import { FORMATS } from "@khazana/core";
+import { dataDir, repoDataDir } from "../lib/data.js";
+import {
+  RANK_WEIGHTS,
+  GAUSSIAN_DEFAULTS,
+  MIN_READ_MINUTES,
+  FEATURED_SIZE,
+  DEFAULT_HALF_LIFE_DAYS,
+  FORMATS,
+  type RankProfile,
+} from "@khazana/core";
+import { serializeCandidate, type CuratedInput } from "../components/taste/lib/serialize.js";
+import { assessRank } from "../components/taste/lib/assess-rank.js";
+import { defaultRerank } from "../components/taste/lib/rerank.js";
+import { BENCH_DATA_ID, type BenchData } from "../components/taste/lib/bench-data.js";
+import { GROUP_COLORS, channelGroup } from "../components/observatory/lib/build-analytics.js";
+import "../components/observatory/observatory.css";
+import "../styles/taste.css";
 
+import BenchConsole from "../components/taste/BenchConsole.tsx";
+import ReadTimeBench from "../components/taste/ReadTimeBench.tsx";
+import WhyThisItem from "../components/taste/WhyThisItem.tsx";
+import DecayCurve from "../components/taste/DecayCurve.tsx";
+import LiveSignal from "../components/taste/LiveSignal.tsx";
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const now = new Date().toISOString();
+
+// ── candidate corpus (top ~300 by curated order) → trimmed RerankItem[] ──────
+const CANDIDATE_CAP = 300;
+const rawItems = loadCurated(dataDir()).slice(0, CANDIDATE_CAP);
+const candidates = rawItems.map((it) => {
+  const input: CuratedInput = {
+    id: it.id,
+    title: it.title,
+    topics: it.topics,
+    entities: it.entities ?? [],
+    publishedAt: it.publishedAt,
+    trustScore: it.trustScore,
+    metrics: it.metrics,
+    clusterId: it.clusterId,
+    kind: it.kind,
+    source: it.source,
+    url: it.url,
+    body: it.body,
+  };
+  return serializeCandidate(input, base);
+});
+
+// cluster sizes over the candidate set (for §4's cluster-factor detail)
+const clusterSizes: Record<string, number> = {};
+for (const c of candidates) {
+  if (c.clusterId) clusterSizes[c.clusterId] = (clusterSizes[c.clusterId] ?? 0) + 1;
+}
+
+// channels present in the corpus (for the filter chips), by frequency desc
+const channelCount = new Map<string, number>();
+for (const c of candidates) channelCount.set(c.channel, (channelCount.get(c.channel) ?? 0) + 1);
+const channels = [...channelCount.entries()]
+  .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+  .map(([ch]) => ch)
+  .slice(0, 12);
+
+// ── taste snapshot (the model the affinity term reads) ──────────────────────
 const taste = loadTaste(repoDataDir());
-const topics = topN(taste.topics, 10);
-const entities = topN(taste.entities, 10);
-const formats = formatBars(taste.formatAffinity);
+const profile: RankProfile = { ready: taste.ready, topics: taste.topics, entities: taste.entities };
+const channelAffinity = topN(taste.topics, 12);
+const formatAffinity = formatBars(taste.formatAffinity);
 
+// ── SSR FALLBACKS (readable with JS off) ────────────────────────────────────
+// the default ranking (factory knobs) so the feed renders statically
+const ssrRanked = defaultRerank(candidates, profile, now).slice(0, FEATURED_SIZE);
+// the default #1 item's why-this basis
+const ssrTop = ssrRanked[0];
+const ssrBasis = ssrTop
+  ? assessRank(ssrTop, {
+      weights: RANK_WEIGHTS,
+      gaussian: GAUSSIAN_DEFAULTS,
+      profile,
+      now,
+      clusterSize: ssrTop.clusterId ? clusterSizes[ssrTop.clusterId] ?? 1 : 1,
+    })
+  : null;
+
+// The SINGLE shared payload for all bench islands — emitted once as a JSON script
+// so the ~300-item candidate array isn't duplicated across three islands' props.
+const benchData: BenchData = {
+  candidates,
+  clusterSizes,
+  profile,
+  channels,
+  snapshotTopics: taste.topics,
+  now,
+};
+const benchDataJson = JSON.stringify(benchData);
+
+const empty = candidates.length === 0;
+const colorFor = (group: string) => GROUP_COLORS[group] ?? GROUP_COLORS.science!;
 const pct = (v: number) => `${Math.round(v * 100)}%`;
+const maxChAff = Math.max(...channelAffinity.map((b) => b.value), 1);
+const maxFmtAff = Math.max(...formatAffinity.map((b) => b.value), 1);
 const fmtName = (label: string) =>
   label in FORMATS ? FORMATS[label as keyof typeof FORMATS].name : label;
+
+// the canonical default values, for the masthead reference + SSR console text
+const FADER_DEFAULTS = [
+  { label: "recency", c: "W_RECENCY", v: RANK_WEIGHTS.recency },
+  { label: "trust", c: "W_TRUST", v: RANK_WEIGHTS.trust },
+  { label: "metrics", c: "W_METRICS", v: RANK_WEIGHTS.metrics },
+  { label: "cluster", c: "W_CLUSTER", v: RANK_WEIGHTS.cluster },
+  { label: "affinity", c: "W_AFFINITY", v: RANK_WEIGHTS.affinity, star: true },
+  { label: "full-text", c: "W_FULLTEXT", v: RANK_WEIGHTS.fullText },
+  { label: "media", c: "W_MEDIA", v: RANK_WEIGHTS.media },
+  { label: "read-time", c: "W_READTIME", v: RANK_WEIGHTS.readTime },
+];
 ---
 
-<Shell title="khazana — taste" active="taste">
-  <header class="taste-head" data-reveal>
-    <p class="eyebrow">taste</p>
-    <h1 class="taste-h1">what khazana thinks you like</h1>
-    <p class="taste-sub">
-      A transparent read on your reading — topics and entities you return to, and
-      the formats you spend time in. Computed locally from your engagement; nothing
-      leaves your device.
-    </p>
-  </header>
-
+<Shell title="khazana — calibration bench" active="taste">
   {
-    !taste.ready ? (
-      <section class="taste-learning">
-        <p class="taste-learning-h">still learning</p>
-        <p class="taste-learning-b">
-          khazana needs more reading history before it can model your taste. Open a
-          few reads and come back — affinities appear once there's enough signal.
+    empty ? (
+      <section class="obs-section bench-masthead" data-reveal>
+        <p class="obs-eyebrow">calibrate</p>
+        <h1 class="obs-h1">the bench is dark</h1>
+        <p class="bench-masthead-sub">
+          No signal in the corpus yet. The Calibration Bench tunes the machine that
+          ranks your feed — it lights up the moment there's something to rank.
         </p>
       </section>
     ) : (
-      <div class="taste-cols">
-        <section class="taste-block" aria-labelledby="t-topics" data-reveal>
-          <h2 id="t-topics" class="taste-block-h">topic affinity</h2>
-          {topics.length === 0 ? (
-            <p class="taste-none">no topic signal yet</p>
-          ) : (
-            <ul class="bars">
-              {topics.map((b) => (
-                <li class="bar-row">
-                  <span class="bar-label">{b.label}</span>
-                  <span class="bar-track">
-                    <span class="bar-fill bar-fill--topic" style={`width:${pct(b.value)}`} />
-                  </span>
-                  <span class="bar-val">{pct(b.value)}</span>
+      <>
+        {/* The single shared bench payload — read by every island (bench-data.ts). */}
+        <script id={BENCH_DATA_ID} type="application/json" is:inline set:html={benchDataJson} />
+
+        {/* ── §1 MASTHEAD ─────────────────────────────────────────── */}
+        <section class="obs-section bench-masthead" data-reveal>
+          <div class="bench-masthead-top">
+            <p class="obs-eyebrow">calibrate</p>
+            <span class="live-pill" id="live-pill" data-live="0" aria-live="polite">
+              <span class="live-pill-dot" data-pill-dot>○</span>
+              <span class="live-pill-label" data-pill-label>snapshot</span>
+            </span>
+          </div>
+          <h1 class="obs-h1">the calibration bench</h1>
+          <p class="bench-masthead-sub">
+            Tune the machine that ranks your feed. Every knob below is a real constant
+            from the ranker. Turn one and the feed on the right re-ranks — live, in
+            front of you. Nothing is hidden behind “the algorithm”; the whole transfer
+            function is exposed, and one click snaps it back to factory defaults.
+          </p>
+          <details class="factory-card">
+            <summary>factory defaults ▾</summary>
+            <ul class="factory-list">
+              {FADER_DEFAULTS.map((f) => (
+                <li>
+                  <span class="factory-c">{f.c}</span>
+                  <span class="factory-v">{f.v}</span>
                 </li>
               ))}
+              <li>
+                <span class="factory-c">READ_TIME_PEAK</span>
+                <span class="factory-v">{GAUSSIAN_DEFAULTS.peakMin}m</span>
+              </li>
+              <li>
+                <span class="factory-c">READ_TIME_SIGMA</span>
+                <span class="factory-v">{GAUSSIAN_DEFAULTS.sigmaMin}m</span>
+              </li>
+              <li>
+                <span class="factory-c">MIN_READ</span>
+                <span class="factory-v">{MIN_READ_MINUTES}m</span>
+              </li>
+              <li>
+                <span class="factory-c">HALF_LIFE</span>
+                <span class="factory-v">{DEFAULT_HALF_LIFE_DAYS}d</span>
+              </li>
             </ul>
+          </details>
+        </section>
+
+        {/* ── §2 THE BENCH ───────────────────────────────────────── */}
+        <section class="obs-section" data-reveal>
+          <p class="obs-eyebrow">the bench</p>
+          <h2 class="obs-h2">turn a knob, watch it re-rank</h2>
+          <p class="obs-lede">
+            The eight weights, in the exact order the ranker sums them. Affinity (★) is
+            the dominant term — it’s what mostly moves the feed. Drag a fader and the
+            live re-rank reorders; the ▲/▼ chips show how far each item moved from the
+            factory ranking.
+          </p>
+
+          {/* JS-on: the live bench. JS-off: a static console + the default feed. */}
+          <div class="bench-island">
+            <BenchConsole client:load />
+          </div>
+
+          <noscript>
+            <div class="bench-ssr">
+              <div class="bench-ssr-console">
+                <p class="obs-subhead">weight console — factory defaults</p>
+                <ul class="bench-ssr-faders">
+                  {FADER_DEFAULTS.map((f) => (
+                    <li>
+                      <span class="bssr-label">
+                        {f.label}
+                        {f.star && <span class="bssr-star"> ★</span>}
+                      </span>
+                      <span class="bssr-const">{f.c}</span>
+                      <span class="bssr-val">{f.v}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div class="bench-ssr-feed">
+                <p class="obs-subhead">live re-rank · top {FEATURED_SIZE} (static)</p>
+                <ol class="bench-ssr-rows">
+                  {ssrRanked.map((it, i) => (
+                    <li>
+                      <span class="bssr-n">{String(i + 1).padStart(2, "0")}</span>
+                      <span class="bssr-title">{it.title}</span>
+                      <span class="bssr-ch" style={`color:${colorFor(it.group)}`}>{it.channel}</span>
+                      <span class="bssr-min">{it.readMin}m</span>
+                      <span class="bssr-score">{it.tasteScore.toFixed(1)}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+          </noscript>
+        </section>
+
+        {/* ── §3 THE GAUSSIAN ────────────────────────────────────── */}
+        <section class="obs-section" data-reveal>
+          <p class="obs-eyebrow">the gaussian</p>
+          <h2 class="obs-h2">the read-time sweet spot, in your hands</h2>
+          <p class="obs-lede">
+            The read-time quality curve — the same instrument as the Observatory’s, but
+            draggable. Move the crest to shift the ideal length, widen the shoulders to
+            be more forgiving, drag the reject edge to raise the floor. Each drag
+            re-ranks the bench feed above.
+          </p>
+          <div class="bench-island">
+            <ReadTimeBench client:visible />
+          </div>
+          <noscript>
+            <p class="obs-cap">
+              Default curve: peak {GAUSSIAN_DEFAULTS.peakMin} min, σ {GAUSSIAN_DEFAULTS.sigmaMin},
+              reject under {MIN_READ_MINUTES} min. Enable JavaScript to drag the curve.
+            </p>
+          </noscript>
+        </section>
+
+        {/* ── §4 WHY THIS ITEM ───────────────────────────────────── */}
+        <section class="obs-section" data-reveal>
+          <p class="obs-eyebrow">why this item</p>
+          <h2 class="obs-h2">the ranking, explained term by term</h2>
+          <p class="obs-lede">
+            Pick any row in the bench feed. Here is exactly why it ranks where it does —
+            each scoring term’s contribution stacked into one bar, then spelled out. It
+            updates with the knobs: drop affinity to zero and watch its share collapse.
+          </p>
+          <div class="bench-island">
+            <WhyThisItem client:visible />
+          </div>
+          {ssrBasis && (
+            <noscript>
+              <div class="why-ssr">
+                <p class="why-ssr-title">▸ {ssrTop!.title} — {ssrBasis.tier} · score {ssrBasis.score.toFixed(1)}</p>
+                <p class="why-ssr-rationale">{ssrBasis.rationale}</p>
+                <ul class="why-ssr-factors">
+                  {ssrBasis.factors.map((f) => (
+                    <li>
+                      <span class="wssr-label">{f.label}</span>
+                      <span class="wssr-c">+{f.contribution.toFixed(2)}</span>
+                      <span class="wssr-detail">{f.detail}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </noscript>
           )}
         </section>
 
-        <section class="taste-block" aria-labelledby="t-entities" data-reveal style="--reveal-delay:80ms">
-          <h2 id="t-entities" class="taste-block-h">entity affinity</h2>
-          {entities.length === 0 ? (
-            <p class="taste-none">no entity signal yet</p>
-          ) : (
-            <ul class="bars">
-              {entities.map((b) => (
-                <li class="bar-row">
-                  <span class="bar-label">{b.label}</span>
-                  <span class="bar-track">
-                    <span class="bar-fill bar-fill--entity" style={`width:${pct(b.value)}`} />
-                  </span>
-                  <span class="bar-val">{pct(b.value)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+        {/* ── §5 THE MODEL ───────────────────────────────────────── */}
+        <section class="obs-section" data-reveal>
+          <p class="obs-eyebrow">the model</p>
+          <h2 class="obs-h2">what the affinity term reads from</h2>
+          <p class="obs-lede">
+            The taste model behind the affinity weight: which channels and formats you
+            return to, how engagement decays with age, and how close the model is to
+            ready. The channel and format affinities are the build snapshot; the live
+            layer hydrates them below.
+          </p>
+
+          <div class="model-grid">
+            <div class="model-affinity">
+              <h3 class="obs-subhead">channel affinity</h3>
+              {channelAffinity.length === 0 ? (
+                <p class="obs-none">no channel signal yet</p>
+              ) : (
+                <ul class="obs-bars">
+                  {channelAffinity.map((b) => (
+                    <li class="obs-bar-row">
+                      <span class="obs-bar-label" style={`color:${colorFor(channelGroup(b.label))}`}>{b.label}</span>
+                      <span class="obs-bar-track">
+                        <span class="obs-bar-fill" style={`width:${pct(b.value / maxChAff)};background:${colorFor(channelGroup(b.label))}`} />
+                      </span>
+                      <span class="obs-bar-val">{b.value.toFixed(2)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <h3 class="obs-subhead obs-subhead--gap">format affinity</h3>
+              {formatAffinity.length === 0 ? (
+                <p class="obs-none">no format signal yet</p>
+              ) : (
+                <ul class="obs-bars">
+                  {formatAffinity.map((b) => (
+                    <li class="obs-bar-row">
+                      <span class="obs-bar-label">{fmtName(b.label)}</span>
+                      <span class="obs-bar-track">
+                        <span class="obs-bar-fill obs-bar-fill--clay" style={`width:${pct(b.value / maxFmtAff)}`} />
+                      </span>
+                      <span class="obs-bar-val">{b.value.toFixed(2)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div class="model-decay">
+              <h3 class="obs-subhead">engagement decay</h3>
+              <div class="bench-island">
+                <DecayCurve client:visible />
+              </div>
+            </div>
+          </div>
         </section>
 
-        <section class="taste-block taste-block--wide" aria-labelledby="t-formats" data-reveal style="--reveal-delay:160ms">
-          <h2 id="t-formats" class="taste-block-h">how you like to read</h2>
-          {formats.length === 0 ? (
-            <p class="taste-none">no format signal yet</p>
-          ) : (
-            <ul class="bars">
-              {formats.map((b) => (
-                <li class="bar-row">
-                  <span class="bar-label">{fmtName(b.label)}</span>
-                  <span class="bar-track">
-                    <span class="bar-fill bar-fill--format" style={`width:${pct(b.value)}`} />
-                  </span>
-                  <span class="bar-val">{pct(b.value)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+        {/* ── §6 LIVE SIGNAL ─────────────────────────────────────── */}
+        <section class="obs-section" data-reveal>
+          <p class="obs-eyebrow">live signal</p>
+          <h2 class="obs-h2">your signal, between builds</h2>
+          <p class="obs-lede">
+            The bench runs on the build snapshot until your live engagement is ready.
+            This reads your device’s aggregate from the Worker — your live clicks against
+            the snapshot, your engagement rhythm, and how close the model is to ready.
+            If the Worker is quiet, it stays on the snapshot; never an error.
+          </p>
+          <LiveSignal client:load />
         </section>
-      </div>
+      </>
     )
   }
 </Shell>
-
-<style>
-  .taste-head {
-    margin-bottom: var(--s-6);
-    max-width: var(--measure);
-  }
-  .taste-h1 {
-    font-family: var(--font-sans);
-    font-size: var(--t-2xl);
-    line-height: var(--lh-tight);
-    letter-spacing: -0.02em;
-    margin: 0 0 var(--s-3);
-    font-weight: 600;
-  }
-  .taste-sub {
-    color: var(--ink-dim);
-    font-size: var(--t-sm);
-    margin: 0;
-  }
-  .taste-learning {
-    border: var(--hair) solid var(--rule);
-    border-left: 2px solid var(--accent);
-    border-radius: var(--r-md);
-    background: var(--bg-raised);
-    padding: var(--s-5);
-    max-width: var(--measure);
-  }
-  .taste-learning-h {
-    font-family: var(--font-mono);
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-size: var(--t-xs);
-    margin: 0 0 var(--s-2);
-  }
-  .taste-learning-b {
-    color: var(--ink-dim);
-    margin: 0;
-    font-size: var(--t-sm);
-  }
-  .taste-cols {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--s-6) var(--s-8);
-  }
-  .taste-block--wide {
-    grid-column: 1 / -1;
-  }
-  .taste-block-h {
-    font-family: var(--font-mono);
-    font-size: var(--t-xs);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ink-faint);
-    margin: 0 0 var(--s-4);
-    padding-bottom: var(--s-2);
-    border-bottom: var(--hair) solid var(--rule);
-  }
-  .bars {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--s-3);
-  }
-  .bar-row {
-    display: grid;
-    grid-template-columns: 9rem 1fr 2.5rem;
-    align-items: center;
-    gap: var(--s-3);
-    font-family: var(--font-mono);
-    font-size: var(--t-sm);
-  }
-  .bar-label {
-    color: var(--ink);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .bar-track {
-    height: 0.5rem;
-    background: var(--bg-inset);
-    border: var(--hair) solid var(--rule);
-    border-radius: var(--r-sm);
-    overflow: hidden;
-  }
-  .bar-fill {
-    display: block;
-    height: 100%;
-    transform-origin: left;
-  }
-  /* When the block reveals, grow the fill in (transform-scaleX, GPU-cheap).
-     No-JS / reduced-motion: fills render at full width immediately. */
-  :global(html.reveal-ready) .taste-block[data-reveal] .bar-fill {
-    transform: scaleX(0);
-    transition: transform var(--dur-slow) var(--ease-out);
-    transition-delay: var(--reveal-delay, 0ms);
-  }
-  :global(html.reveal-ready) .taste-block[data-reveal].is-in .bar-fill {
-    transform: scaleX(1);
-  }
-  .bar-fill--topic { background: var(--accent); }
-  .bar-fill--entity { background: var(--editorial); }
-  .bar-fill--format { background: var(--good); }
-  .bar-val {
-    color: var(--ink-faint);
-    font-size: var(--t-xs);
-    text-align: right;
-  }
-  .taste-none {
-    color: var(--ink-faint);
-    font-family: var(--font-mono);
-    font-size: var(--t-xs);
-    margin: 0;
-  }
-  @media (max-width: 640px) {
-    .taste-cols { grid-template-columns: 1fr; }
-    .bar-row { grid-template-columns: 7rem 1fr 2.5rem; }
-  }
-</style>

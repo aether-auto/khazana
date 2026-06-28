@@ -1,8 +1,8 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { handleRequest } from "./handler.js";
 import { createFakeKV } from "./test-kv.js";
 import type { Env } from "./env.js";
-import type { EngagementEvent } from "@khazana/core";
+import { eventWeight, gateState, type EngagementEvent } from "@khazana/core";
 
 function makeEnv(over: Partial<Env> = {}): Env {
   return { KV: createFakeKV(), ...over };
@@ -169,4 +169,215 @@ test("GET /events with the correct bearer token returns 200", async () => {
 test("unknown route returns 404", async () => {
   const res = await handleRequest(new Request("https://w.dev/nope"), makeEnv());
   expect(res.status).toBe(404);
+});
+
+interface SummaryResponse {
+  deviceId: string;
+  eventCount: number;
+  firstAt: string | null;
+  lastAt: string | null;
+  spanDays: number;
+  ready: boolean;
+  gates: { minEvents: number; minDays: number };
+  daily: { date: string; weight: number }[];
+  events: EngagementEvent[];
+}
+
+function summaryReq(query: string): Request {
+  return new Request(`https://w.dev/summary${query}`);
+}
+
+function evtKey(ev: EngagementEvent, suffix: string): string {
+  return `evt:${ev.deviceId ?? "anon"}:${ev.at}:${suffix}`;
+}
+
+describe("GET /summary", () => {
+  test("returns 400 when deviceId is missing", async () => {
+    const res = await handleRequest(summaryReq(""), makeEnv());
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "deviceId required" });
+  });
+
+  test("returns 400 when deviceId is empty", async () => {
+    const res = await handleRequest(summaryReq("?deviceId="), makeEnv());
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "deviceId required" });
+  });
+
+  test("unknown device → 200 with empty aggregate and ready false", async () => {
+    const res = await handleRequest(summaryReq("?deviceId=ghost"), makeEnv());
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as SummaryResponse;
+    expect(body).toEqual({
+      deviceId: "ghost",
+      eventCount: 0,
+      firstAt: null,
+      lastAt: null,
+      spanDays: 0,
+      ready: false,
+      gates: { minEvents: 20, minDays: 5 },
+      daily: [],
+      events: [],
+    });
+  });
+
+  test("aggregates events: counts, span, daily weights, sorted events, gate", async () => {
+    // 21 events spanning 6 UTC days for one device → meets both gates.
+    const dev = "dev-x";
+    const seed: Record<string, string> = {};
+    const made: EngagementEvent[] = [];
+    let n = 0;
+    for (let day = 0; day < 6; day++) {
+      const perDay = day === 0 ? 6 : 3; // 6 + 5*3 = 21 events
+      for (let i = 0; i < perDay; i++) {
+        const at = `2026-06-0${day + 1}T0${i}:00:00.000Z`;
+        const ev: EngagementEvent = { itemId: `i${n}`, type: "read", at, deviceId: dev };
+        seed[evtKey(ev, `s${n}`)] = JSON.stringify(ev);
+        made.push(ev);
+        n++;
+      }
+    }
+    const env = makeEnv({ KV: createFakeKV(seed) });
+    const res = await handleRequest(summaryReq(`?deviceId=${dev}`), env);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as SummaryResponse;
+
+    expect(body.deviceId).toBe(dev);
+    expect(body.eventCount).toBe(21);
+    expect(body.firstAt).toBe("2026-06-01T00:00:00.000Z");
+    expect(body.lastAt).toBe("2026-06-06T02:00:00.000Z");
+    expect(body.spanDays).toBeCloseTo(5 + 2 / 24, 6);
+
+    // events sorted ascending by `at`
+    const ats = body.events.map((e) => e.at);
+    expect([...ats].sort()).toEqual(ats);
+    expect(body.events).toHaveLength(21);
+
+    // daily buckets: one entry per UTC date, sorted asc, weight = sum eventWeight
+    expect(body.daily.map((d) => d.date)).toEqual([
+      "2026-06-01",
+      "2026-06-02",
+      "2026-06-03",
+      "2026-06-04",
+      "2026-06-05",
+      "2026-06-06",
+    ]);
+    const perRead = eventWeight({ itemId: "x", type: "read", at: "2026-06-01T00:00:00.000Z" });
+    expect(body.daily[0]!.weight).toBeCloseTo(6 * perRead, 6);
+    expect(body.daily[1]!.weight).toBeCloseTo(3 * perRead, 6);
+
+    const expectedGate = gateState(21, body.spanDays);
+    expect(body.ready).toBe(expectedGate.ready);
+    expect(body.ready).toBe(true);
+    expect(body.gates).toEqual({ minEvents: 20, minDays: 5 });
+  });
+
+  test("few events → spanDays 0 and ready false", async () => {
+    const ev: EngagementEvent = {
+      itemId: "solo",
+      type: "open",
+      at: "2026-06-10T00:00:00.000Z",
+      deviceId: "dev-solo",
+    };
+    const env = makeEnv({ KV: createFakeKV({ [evtKey(ev, "s")]: JSON.stringify(ev) }) });
+    const res = await handleRequest(summaryReq("?deviceId=dev-solo"), env);
+    const body = (await res.json()) as SummaryResponse;
+    expect(body.eventCount).toBe(1);
+    expect(body.spanDays).toBe(0);
+    expect(body.firstAt).toBe("2026-06-10T00:00:00.000Z");
+    expect(body.lastAt).toBe("2026-06-10T00:00:00.000Z");
+    expect(body.ready).toBe(false);
+  });
+
+  test("dwell events contribute eventWeight to daily buckets", async () => {
+    const dev = "dev-dwell";
+    const ev: EngagementEvent = {
+      itemId: "d",
+      type: "dwell",
+      at: "2026-06-12T00:00:00.000Z",
+      dwellMs: 60000,
+      deviceId: dev,
+    };
+    const env = makeEnv({ KV: createFakeKV({ [evtKey(ev, "s")]: JSON.stringify(ev) }) });
+    const res = await handleRequest(summaryReq(`?deviceId=${dev}`), env);
+    const body = (await res.json()) as SummaryResponse;
+    expect(body.daily).toHaveLength(1);
+    expect(body.daily[0]!.weight).toBeCloseTo(eventWeight(ev), 6);
+  });
+
+  test("caps events to the most-recent 2000", async () => {
+    const dev = "dev-many";
+    const seed: Record<string, string> = {};
+    const total = 2050;
+    for (let i = 0; i < total; i++) {
+      // distinct minute-resolution timestamps, ascending
+      const mm = String(i % 60).padStart(2, "0");
+      const hh = String(Math.floor(i / 60) % 24).padStart(2, "0");
+      const dd = String((Math.floor(i / 1440) % 28) + 1).padStart(2, "0");
+      const at = `2026-07-${dd}T${hh}:${mm}:00.000Z`;
+      const ev: EngagementEvent = { itemId: `i${i}`, type: "open", at, deviceId: dev };
+      seed[evtKey(ev, `s${i}`)] = JSON.stringify(ev);
+    }
+    const env = makeEnv({ KV: createFakeKV(seed) });
+    const res = await handleRequest(summaryReq(`?deviceId=${dev}`), env);
+    const body = (await res.json()) as SummaryResponse;
+    expect(body.eventCount).toBe(total); // count reflects all valid events
+    expect(body.events).toHaveLength(2000); // events array is capped
+    // capped to the LATEST 2000 → first kept is the 51st chronological event
+    const ats = body.events.map((e) => e.at);
+    expect([...ats].sort()).toEqual(ats);
+    expect(body.events[body.events.length - 1]!.at).toBe(body.lastAt);
+  });
+
+  test("skips malformed KV values, still 200", async () => {
+    const dev = "dev-bad";
+    const good: EngagementEvent = {
+      itemId: "ok",
+      type: "open",
+      at: "2026-06-15T00:00:00.000Z",
+      deviceId: dev,
+    };
+    const env = makeEnv({
+      KV: createFakeKV({
+        [`evt:${dev}:2026-06-15T01:00:00.000Z:bad1`]: "{ not json",
+        [`evt:${dev}:2026-06-15T02:00:00.000Z:bad2`]: JSON.stringify({ type: "nope" }),
+        [evtKey(good, "ok")]: JSON.stringify(good),
+      }),
+    });
+    const res = await handleRequest(summaryReq(`?deviceId=${dev}`), env);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as SummaryResponse;
+    expect(body.eventCount).toBe(1);
+    expect(body.events.map((e) => e.itemId)).toEqual(["ok"]);
+  });
+
+  test("isolates devices: other deviceId prefixes are excluded", async () => {
+    const mine: EngagementEvent = {
+      itemId: "mine",
+      type: "open",
+      at: "2026-06-16T00:00:00.000Z",
+      deviceId: "alice",
+    };
+    const theirs: EngagementEvent = {
+      itemId: "theirs",
+      type: "open",
+      at: "2026-06-16T00:00:00.000Z",
+      deviceId: "alice-2", // shares a prefix-substring but NOT the "alice:" boundary
+    };
+    const env = makeEnv({
+      KV: createFakeKV({
+        [evtKey(mine, "a")]: JSON.stringify(mine),
+        [evtKey(theirs, "b")]: JSON.stringify(theirs),
+      }),
+    });
+    const res = await handleRequest(summaryReq("?deviceId=alice"), env);
+    const body = (await res.json()) as SummaryResponse;
+    expect(body.events.map((e) => e.itemId)).toEqual(["mine"]);
+    expect(body.eventCount).toBe(1);
+  });
+
+  test("includes CORS Access-Control-Allow-Origin header on 200", async () => {
+    const res = await handleRequest(summaryReq("?deviceId=any"), makeEnv());
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+  });
 });

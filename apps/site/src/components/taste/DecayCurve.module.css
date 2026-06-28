@@ -1,0 +1,83 @@
+/* §5 ENGAGEMENT DECAY — curve + half-life knob + weight ladder. Tokens only. */
+.decay {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--s-6);
+  align-items: start;
+}
+.chartCol {
+  min-width: 0;
+}
+.chartCol svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+.note {
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+  color: var(--ink-dim);
+  margin: 0;
+}
+.ladder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-top: var(--s-3);
+  border-top: var(--hair) solid var(--rule);
+}
+.ladderHead {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  margin-bottom: var(--s-1);
+}
+.rung {
+  display: grid;
+  grid-template-columns: 4rem 2.5rem 1fr;
+  align-items: baseline;
+  gap: var(--s-2);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+}
+.rungLabel {
+  color: var(--ink);
+}
+.rungWeight {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.rungNote {
+  color: var(--ink-faint);
+}
+
+:global(.dc-tick) {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+:global(.dc-axis-title) {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+:global(.dc-hl) {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+}
+
+@media (max-width: 760px) {
+  .decay {
+    grid-template-columns: 1fr;
+  }
+}

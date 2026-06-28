@@ -1,0 +1,164 @@
+/* The machined bench fader. Amber = the machine. Hairline track, lifting thumb,
+   scaleX fill, default notch. Tokens only. */
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.head {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: baseline;
+  gap: var(--s-2) var(--s-3);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+}
+.label {
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4ch;
+}
+.star {
+  color: var(--accent);
+  font-size: 0.7em;
+  text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 45%, transparent);
+}
+.const {
+  color: var(--ink-faint);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+}
+.value {
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+  min-width: 3.2ch;
+  text-align: right;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.valueActive {
+  color: var(--accent);
+  text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 35%, transparent);
+}
+.starred .value {
+  color: var(--accent);
+}
+.reset {
+  appearance: none;
+  background: none;
+  border: none;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  cursor: pointer;
+  padding: 0 0.2ch;
+  line-height: 1;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.reset:hover:not(:disabled) {
+  color: var(--accent);
+}
+.reset:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+/* ── the track ── */
+.track {
+  position: relative;
+  height: 22px;
+  cursor: pointer;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+}
+.track::before {
+  /* the hairline rail */
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--bg-inset);
+  border: var(--hair) solid var(--rule);
+}
+.track:focus-visible {
+  outline: none;
+}
+.track:focus-visible::before {
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--rule));
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 14%, transparent);
+}
+
+.fill {
+  position: absolute;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  border-radius: 2px;
+  background: var(--accent-dim);
+  transform-origin: left;
+  will-change: transform;
+}
+.starred .fill {
+  background: var(--accent);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--accent) 30%, transparent);
+}
+
+.notch {
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: 9px;
+  margin-left: -1px;
+  transform: translateY(-50%);
+  background: color-mix(in oklab, var(--accent) 40%, var(--rule-bright));
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+.thumb {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: var(--hair) solid color-mix(in oklab, var(--accent) 60%, #000);
+  transform: translateY(-50%);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 color-mix(in oklab, #fff 30%, transparent);
+  pointer-events: none;
+  transition: transform var(--dur) var(--ease-overshoot);
+  will-change: transform;
+}
+.thumbDrag {
+  transform: translateY(-50%) scale(1.35);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.6),
+    var(--halo-star),
+    inset 0 1px 0 color-mix(in oklab, #fff 35%, transparent);
+}
+.starred .thumb {
+  width: 13px;
+  height: 13px;
+  margin-left: -6.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumb {
+    transition: none;
+  }
+  .thumbDrag {
+    transform: translateY(-50%); /* no lift under reduced-motion */
+  }
+  .value {
+    transition: none;
+  }
+}

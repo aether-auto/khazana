@@ -1,5 +1,32 @@
-import type { FeedItem } from "@khazana/core";
+import {
+  RANK_WEIGHTS,
+  GAUSSIAN_DEFAULTS,
+  scoreContributions,
+  hasFullText,
+  readTimeMinutes,
+  readTimeScore,
+  MIN_READ_MINUTES,
+  FEATURED_SIZE,
+  type FeedItem,
+} from "@khazana/core";
 import type { TasteProfile } from "./taste.js";
+
+// ── Re-exports ────────────────────────────────────────────────────────────────
+// The scoring math now lives in @khazana/core so the build pipeline and the
+// browser client share ONE implementation. We re-export the constants and pure
+// helpers under their original curate names so downstream imports (and the
+// existing rank.test.ts) keep working unchanged.
+export { hasFullText, readTimeMinutes, readTimeScore, MIN_READ_MINUTES, FEATURED_SIZE };
+
+export const W_RECENCY = RANK_WEIGHTS.recency;
+export const W_TRUST = RANK_WEIGHTS.trust;
+export const W_METRICS = RANK_WEIGHTS.metrics;
+export const W_CLUSTER = RANK_WEIGHTS.cluster;
+export const W_AFFINITY = RANK_WEIGHTS.affinity;
+export const W_FULLTEXT = RANK_WEIGHTS.fullText;
+export const W_MEDIA = RANK_WEIGHTS.media;
+export const W_READTIME = RANK_WEIGHTS.readTime;
+export const READ_TIME_PEAK_MIN = GAUSSIAN_DEFAULTS.peakMin;
 
 export interface RankOpts {
   now: string;
@@ -8,70 +35,7 @@ export interface RankOpts {
 
 export const DEFAULT_RANK_OPTS = { halfLifeDays: 7 } as const;
 
-export const W_RECENCY = 1;
-export const W_TRUST = 1;
-export const W_METRICS = 1;
-export const W_CLUSTER = 0.5;
-export const W_AFFINITY = 6;
-/**
- * Bonus for items that carry real full text (vs. summary-/link-only). The
- * founder wants to read articles in-app, not be linked out; this clearly ranks
- * full-text items above otherwise-equal summary-only ones.
- */
-export const W_FULLTEXT = 1.5;
-/**
- * Partial content credit for video/audio items that have no transcript. A
- * YouTube video or podcast episode is substantive even without extracted text,
- * so they should not take the same flat zero as a bare link. Tuned so that a
- * fresh, trusted video item lands inside the visible top ~50 without leapfrogging
- * genuinely high-value full-text articles (W_MEDIA < W_FULLTEXT).
- */
-export const W_MEDIA = 0.9;
-
-/**
- * Heavy weight for the read-time quality term. Tuned so that read time is the
- * dominant ordering signal: a 15-min item clearly beats an otherwise-equal
- * 3-min or 45-min item even at max trust/recency. Total read-time contribution
- * ranges 0–W_READTIME; other base terms each contribute ~0–1.5.
- */
-export const W_READTIME = 3;
-
-/**
- * Peak of the read-time Gaussian curve (minutes). The curve rewards items
- * closest to this target length the most and falls off symmetrically on both
- * sides. Named constant so tests and downstream code reference the same value.
- */
-export const READ_TIME_PEAK_MIN = 15;
-
-/**
- * Hard reject: items whose rendered read time is below this threshold are
- * dropped from curated output entirely, BEFORE ranking. This removes bare-link
- * items (0 min), short summaries, and transcript-less videos (0 min) in one
- * single filter — no separate video flag needed.
- */
-export const MIN_READ_MINUTES = 5;
-
-/** Words-per-minute used for FeedItem.body read-time estimation. Matches apps/site's FEED_WPM. */
-const FEED_WPM = 225;
-
-/**
- * Standard deviation of the Gaussian read-time curve (minutes). σ=10 gives a
- * natural hump: items 10 min away from the 15-min peak score ≈0.61 of max,
- * while items 30+ min away approach 0. This rewards the 8–22 min band heavily.
- */
-const READ_TIME_SIGMA = 10;
-
-/** Min plain-text length of `body` for an item to count as having full text. */
-const MIN_FULLTEXT_CHARS = 800;
-
 // ── Diversity floor constants ─────────────────────────────────────────────────
-/**
- * Number of items that form the bento/featured region at the head of the feed.
- * The diversity floor NEVER promotes items into this region — featured slots
- * require a ≥7-min read gate (enforced in apps/site) that transcript-less
- * media items cannot satisfy. Promotions are injected AFTER this offset.
- */
-export const FEATURED_SIZE = 10;
 /**
  * Size of the "visible scrollable list" we guarantee diversity within.
  * Covers the first list page (~40 items) after the bento. Total positions
@@ -84,68 +48,8 @@ export const DIVERSITY_MIN_VIDEO = 2;
 /** Minimum number of `audio` items guaranteed within the list window. */
 export const DIVERSITY_MIN_AUDIO = 2;
 
-const MS_PER_DAY = 86_400_000;
-
-/** Approx plain-text length of an item's body (strips HTML tags cheaply). */
-function bodyTextLength(body: string | undefined): number {
-  if (!body) return 0;
-  return body
-    .replace(/<[^>]*>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim().length;
-}
-
-/**
- * Estimate rendered read time (whole minutes, can be 0) from a FeedItem's body.
- * Strips HTML, counts whitespace-delimited words, divides by FEED_WPM (225).
- * Returns 0 for items with no body — this is intentional: 0-min items are
- * caught by the MIN_READ_MINUTES filter before they reach the ranker.
- */
-export function readTimeMinutes(item: FeedItem): number {
-  if (!item.body) return 0;
-  const text = item.body.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-  if (text === "") return 0;
-  const words = text.split(/\s+/).length;
-  return Math.round(words / FEED_WPM);
-}
-
-/**
- * Gaussian read-time quality score in [0, 1] peaked at READ_TIME_PEAK_MIN (15).
- * Formula: exp(-((minutes - PEAK)^2) / (2 * σ^2))
- *
- * Shape with σ=10:
- *   2 min → 0.02   5 min → 0.61   8 min → 0.82
- *  15 min → 1.00  25 min → 0.61  45 min → 0.01
- *
- * This rewards the 8–22 min band heavily and gently discounts both very short
- * reads (≤5 min) and very long ones (≥40 min).
- */
-export function readTimeScore(minutes: number): number {
-  const diff = minutes - READ_TIME_PEAK_MIN;
-  return Math.exp(-(diff * diff) / (2 * READ_TIME_SIGMA * READ_TIME_SIGMA));
-}
-
-/** Whether an item carries real full text rather than a summary / bare link. */
-export function hasFullText(item: FeedItem): boolean {
-  return bodyTextLength(item.body) > MIN_FULLTEXT_CHARS;
-}
-
-/** Whether an item is a media-only video or audio item (no transcript/full text). */
-function isTranscriptlessMedia(item: FeedItem): boolean {
-  if (hasFullText(item)) return false;
-  return item.kind === "video" || item.kind === "audio";
-}
-
-function mean(values: number[]): number {
-  if (values.length === 0) return 0;
-  let sum = 0;
-  for (const v of values) sum += v;
-  return sum / values.length;
-}
-
 export function rankItems(items: FeedItem[], profile: TasteProfile, opts: RankOpts): FeedItem[] {
   const halfLifeDays = opts.halfLifeDays ?? DEFAULT_RANK_OPTS.halfLifeDays;
-  const nowMs = Date.parse(opts.now);
 
   const clusterSizes = new Map<string, number>();
   for (const it of items) {
@@ -153,38 +57,16 @@ export function rankItems(items: FeedItem[], profile: TasteProfile, opts: RankOp
   }
 
   const scored = items.map((it) => {
-    const ageDays = (nowMs - Date.parse(it.publishedAt)) / MS_PER_DAY;
-    const recency = Math.exp((-Math.LN2 * Math.max(ageDays, 0)) / halfLifeDays);
-    const trust = it.trustScore ?? 0.5;
-    const rawMetric = (it.metrics?.score ?? 0) + (it.metrics?.comments ?? 0);
-    const metrics = Math.log10(1 + Math.max(rawMetric, 0)) / 5; // ~[0,1] for typical volumes
     const clusterSize = it.clusterId ? clusterSizes.get(it.clusterId) ?? 1 : 1;
-    const clusterBoost = Math.log10(1 + (clusterSize - 1));
-
-    // Full-text or partial media credit — mutually exclusive, no double-counting.
-    const contentCredit = hasFullText(it) ? W_FULLTEXT : isTranscriptlessMedia(it) ? W_MEDIA : 0;
-
-    // Read-time quality term: Gaussian peaked at READ_TIME_PEAK_MIN (15 min).
-    // Items that survived the MIN_READ_MINUTES filter have ≥5 min read time,
-    // so this term always contributes positively; 0-min items are filtered
-    // upstream and never reach the ranker.
-    const rtScore = readTimeScore(readTimeMinutes(it));
-
-    let score =
-      W_RECENCY * recency +
-      W_TRUST * trust +
-      W_METRICS * metrics +
-      W_CLUSTER * clusterBoost +
-      contentCredit +
-      W_READTIME * rtScore;
-
-    if (profile.ready) {
-      const topicAffinity = mean(it.topics.map((t) => profile.topics[t] ?? 0));
-      const entityAffinity = mean(it.entities.map((e) => profile.entities[e] ?? 0));
-      score += W_AFFINITY * (topicAffinity + entityAffinity);
-    }
-
-    return { ...it, tasteScore: score };
+    const { total } = scoreContributions(it, {
+      weights: RANK_WEIGHTS,
+      gaussian: GAUSSIAN_DEFAULTS,
+      clusterSize,
+      now: opts.now,
+      profile,
+      halfLifeDays,
+    });
+    return { ...it, tasteScore: total };
   });
 
   return scored.sort((a, b) => b.tasteScore - a.tasteScore);

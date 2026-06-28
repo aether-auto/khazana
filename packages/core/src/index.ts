@@ -6,3 +6,5 @@ export * from "./registry.js";
 export * from "./format.js";
 export * from "./events.js";
 export * from "./maker.js";
+export * from "./scoring.js";
+export * from "./taste-model.js";
