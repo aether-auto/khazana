@@ -169,6 +169,261 @@
       "notes": "GitHub Engineering Blog — verified Atom 1.0"
     },
     {
+      "id": "gh-rel-home-assistant",
+      "type": "eng-blog",
+      "url": "https://github.com/home-assistant/core/releases.atom",
+      "channels": [
+        "iot",
+        "embedded",
+        "diy"
+      ],
+      "enabled": true,
+      "trustScore": 0.75,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "Home Assistant core release notes (GitHub Atom) — rich changelogs. SHORT items; route to Workshop, not main Feed."
+    },
+    {
+      "id": "gh-rel-esphome",
+      "type": "eng-blog",
+      "url": "https://github.com/esphome/esphome/releases.atom",
+      "channels": [
+        "iot",
+        "embedded",
+        "diy"
+      ],
+      "enabled": true,
+      "trustScore": 0.72,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "ESPHome release notes — per-component changelogs. SHORT items; Workshop surface."
+    },
+    {
+      "id": "gh-rel-tasmota",
+      "type": "eng-blog",
+      "url": "https://github.com/arendst/Tasmota/releases.atom",
+      "channels": [
+        "iot",
+        "embedded",
+        "diy"
+      ],
+      "enabled": true,
+      "trustScore": 0.7,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "Tasmota firmware release notes — Added/Changed/Fixed + hardware. SHORT items; Workshop."
+    },
+    {
+      "id": "gh-rel-micropython",
+      "type": "eng-blog",
+      "url": "https://github.com/micropython/micropython/releases.atom",
+      "channels": [
+        "embedded",
+        "iot",
+        "diy"
+      ],
+      "enabled": true,
+      "trustScore": 0.75,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "MicroPython release notes — new boards / machine APIs. SHORT items; Workshop."
+    },
+    {
+      "id": "gh-rel-circuitpython",
+      "type": "eng-blog",
+      "url": "https://github.com/adafruit/circuitpython/releases.atom",
+      "channels": [
+        "embedded",
+        "iot",
+        "diy"
+      ],
+      "enabled": true,
+      "trustScore": 0.72,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "CircuitPython (Adafruit) release notes — highlights + new boards. SHORT items; Workshop."
+    },
+    {
+      "id": "gh-rel-marlin",
+      "type": "eng-blog",
+      "url": "https://github.com/MarlinFirmware/Marlin/releases.atom",
+      "channels": [
+        "3d-printing",
+        "embedded",
+        "diy"
+      ],
+      "enabled": true,
+      "trustScore": 0.72,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "Marlin 3D-printer firmware release notes — emoji-tagged changelogs. SHORT items; Workshop."
+    },
+    {
+      "id": "gh-rel-octoprint",
+      "type": "eng-blog",
+      "url": "https://github.com/OctoPrint/OctoPrint/releases.atom",
+      "channels": [
+        "3d-printing",
+        "diy",
+        "iot"
+      ],
+      "enabled": true,
+      "trustScore": 0.72,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "OctoPrint release notes — features + security fixes. SHORT items; Workshop."
+    },
+    {
+      "id": "gh-rel-prusa-buddy",
+      "type": "eng-blog",
+      "url": "https://github.com/prusa3d/Prusa-Firmware-Buddy/releases.atom",
+      "channels": [
+        "3d-printing",
+        "diy",
+        "embedded"
+      ],
+      "enabled": true,
+      "trustScore": 0.7,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "Prusa Buddy firmware (MK4/CORE) release notes — feature-level. SHORT items; Workshop."
+    },
+    {
+      "id": "gh-rel-kicad",
+      "type": "eng-blog",
+      "url": "https://github.com/KiCad/kicad-source-mirror/releases.atom",
+      "channels": [
+        "embedded",
+        "diy",
+        "iot"
+      ],
+      "enabled": true,
+      "trustScore": 0.65,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "KiCad EDA release notes — brief but milestone-level. SHORT items; Workshop."
+    },
+    {
+      "id": "gh-trending-weekly-all",
+      "type": "rss",
+      "url": "https://mshibanami.github.io/GitHubTrendingRSS/weekly/all.xml",
+      "channels": [
+        "tech",
+        "ai-projects",
+        "ideas"
+      ],
+      "enabled": true,
+      "trustScore": 0.55,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "GitHub Trending weekly (all langs) via THIRD-PARTY mirror mshibanami.github.io. Discovery firehose; lower trust + monitor reliability."
+    },
+    {
+      "id": "gh-rel-llama-cpp",
+      "type": "eng-blog",
+      "url": "https://github.com/ggml-org/llama.cpp/releases.atom",
+      "channels": [
+        "ai",
+        "ai-projects",
+        "tech"
+      ],
+      "enabled": true,
+      "trustScore": 0.7,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "llama.cpp release builds — local-LLM inference edge. High cadence, SHORT items; route off main Feed."
+    },
+    {
+      "id": "gh-rel-vllm",
+      "type": "eng-blog",
+      "url": "https://github.com/vllm-project/vllm/releases.atom",
+      "channels": [
+        "ai",
+        "data-science",
+        "tech"
+      ],
+      "enabled": true,
+      "trustScore": 0.75,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "vLLM release notes — model support / perf / distributed highlights. SHORT items; route off main Feed."
+    },
+    {
+      "id": "gh-rel-transformers",
+      "type": "eng-blog",
+      "url": "https://github.com/huggingface/transformers/releases.atom",
+      "channels": [
+        "ai",
+        "data-science",
+        "tech"
+      ],
+      "enabled": true,
+      "trustScore": 0.75,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "HF Transformers releases — new model architectures + kernels. SHORT items; route off main Feed."
+    },
+    {
+      "id": "gh-rel-duckdb",
+      "type": "eng-blog",
+      "url": "https://github.com/duckdb/duckdb/releases.atom",
+      "channels": [
+        "data-science",
+        "data-strategy",
+        "tech"
+      ],
+      "enabled": true,
+      "trustScore": 0.75,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "DuckDB release notes — SQL features + perf. SHORT items; route off main Feed."
+    },
+    {
+      "id": "gh-rel-polars",
+      "type": "eng-blog",
+      "url": "https://github.com/pola-rs/polars/releases.atom",
+      "channels": [
+        "data-science",
+        "data-strategy",
+        "tech"
+      ],
+      "enabled": true,
+      "trustScore": 0.72,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "Polars release notes — structured perf/enhancement/bugfix sections. SHORT items; route off main Feed."
+    },
+    {
+      "id": "gh-blog",
+      "type": "eng-blog",
+      "url": "https://github.blog/feed/",
+      "channels": [
+        "tech",
+        "ai",
+        "ideas"
+      ],
+      "enabled": true,
+      "trustScore": 0.8,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "The GitHub Blog (first-party RSS 2.0) — long-form posts; OK for main Feed (>=5 min)."
+    },
+    {
+      "id": "gh-changelog",
+      "type": "eng-blog",
+      "url": "https://github.blog/changelog/feed/",
+      "channels": [
+        "tech",
+        "ai",
+        "ideas"
+      ],
+      "enabled": true,
+      "trustScore": 0.7,
+      "addedBy": "manual",
+      "failureCount": 0,
+      "notes": "GitHub Changelog (first-party RSS 2.0) — concise product updates. SHORT items; Workshop/releases surface."
+    },
+    {
       "id": "dropbox-tech",
       "type": "eng-blog",
       "url": "https://dropbox.tech/feed",
