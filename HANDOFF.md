@@ -2,9 +2,14 @@
 
 > You are taking over as **cofounder** of khazana. Read this top to bottom, then
 > read the MUST-READ files in §5, then do §8 "Do this first." This doc is the
-> single source of truth for picking up cold. **Your next focus is the TASTE page**
-> (`/taste`) — and the Cloudflare Worker per-device summary endpoint that powers it.
-> (Feed, Workshop, Graph→**Observatory**, and **Sources** are all DONE — see §4.)
+> single source of truth for picking up cold. **Your next focus is the FEED
+> personalization pass ("for you" ordering, now that the live affinity layer
+> exists), then P9 (Publish + full ingest / deploy).** Everything else on the
+> page-by-page roadmap is DONE: Feed, Workshop, Graph→**Observatory**, **Sources**,
+> **Taste → the Calibration Bench**, plus this-session additions — **code/math
+> typography (KaTeX + themed Shiki)**, **quiet navigation**, **build-time TTS
+> narration**, an ingest **mirror-dedup**, a **retention** prune utility, **17 GitHub
+> sources**, and a **node_modules dedupe (4.2G→1.2G)**. See §4.
 
 ---
 
@@ -84,9 +89,12 @@ packages/curate    @khazana/curate  — enrich → cluster/dedup → rank (read-
 packages/generate  @khazana/generate— assignment → grounded brief → validate draft (AI-author harness)
 packages/scout     @khazana/scout   — source discovery/eval/prune
 apps/site          @khazana/site    — Astro static site (the product UI)
-apps/worker        @khazana/worker  — Cloudflare Worker + KV behavior store
+apps/worker        @khazana/worker  — Cloudflare Worker + KV (POST /event · GET /events auth'd · GET /summary public per-device — powers the Taste live layer)
+packages/ingest/src/tts/            — build-time Kokoro TTS (kokoro/chunk/render/voices); render via `packages/ingest/scripts/render-audio.mts` → apps/site/public/audio/reads (gitignored)
+packages/core/src/{scoring,taste-model,dedupe,retention}.ts — shared pure cores (ranking parity · taste aggregation · mirror-dedup · 3-day retention via scripts/prune-history.mts)
+apps/site/src/components/{taste,reads,nav}/ — Calibration Bench islands · ReadPlayer narration · SiteNav
 .claude/skills/writers/*            — per-format writer SKILLS
-data/sources.seed.json              — source registry (682 sources, tracked). data/sources.json = live cache (gitignored; DELETE it to pick up new seed sources)
+data/sources.seed.json              — source registry (722 sources incl. +17 GitHub this session, tracked). data/sources.json = live cache (gitignored; DELETE it to pick up new seed sources)
 data/feed/{raw,curated}.json        — GENERATED (gitignored; produced by ingest+curate)
 scripts/real-ingest.mts             — the ingest runner (see §6)
 docs/superpowers/{specs,plans}/     — spec + per-phase plans
@@ -109,9 +117,55 @@ youtube, podcast · **FeedItem.kind:** link, discussion, paper, idea, video, aud
 
 ## 4. Current state (branch `p1-foundation`, never deployed, no git remote)
 
-**DONE + committed + browser-verified (0 console errors both motion modes, 726
-tests, typecheck clean): Feed, Workshop, the Observatory (`/graph`), Sources
-(`/sources`), and an ingestion-robustness pass (reddit / arxiv / youtube / generic
+### Session 2026-06-28 additions (all committed, browser-verified by the orchestrator, 916 tests green)
+- **TASTE → "The Calibration Bench"** (`/taste`): the flat affinity bars are gone — `/taste`
+  is now a transparent, tunable instrument over the WHOLE ranking machine. 8 weight faders →
+  the real curated feed re-ranks LIVE (gsap FLIP, contained + softened); draggable read-time
+  Gaussian; a "why this item" per-term contribution breakdown (`assessRank()` — twin of Sources'
+  `assessTrust()`); the taste model (channel/format affinity, decay curve + half-life knob,
+  still-learning fuel gauges); a LIVE signal panel hydrating from the new public Worker
+  `GET /summary?deviceId=`. **Architecture spine:** the scoring + taste-aggregation math was
+  lifted into `@khazana/core` (`scoring.ts` `scoreContributions`, `taste-model.ts`
+  `aggregateProfile`/`gateState`) so the browser re-ranker == the pipeline BY CONSTRUCTION
+  (byte-identical parity test); curate delegates. Site pure libs: `components/taste/lib/{rerank,
+  assess-rank,taste-derive}.ts`. Worker `/summary` is public + read-only (returns the device's
+  raw events; the CLIENT computes affinity with the shared core — the Worker has no feed).
+- **CODE + MATH typography:** there was NO math renderer (the flagship *faked* equations with
+  inline backtick code). Added remark-math + rehype-katex (KaTeX bundled OFFLINE — 0 CDN) +
+  Shiki `css-variables` theme mapped to brand tokens (`apps/site/src/styles/code.css`, the ONE
+  source of truth — replaced duplicated per-surface code rules). Flagship math migrated to real
+  LaTeX; `Annotation` typesets its `term` via KaTeX.
+- **TTS NARRATION (build-time, $0):** Kokoro-82M (`packages/ingest/src/tts/`, reuses whisper.ts
+  ONNX/ffmpeg/cache) renders each Read's prose → ONE channel-cast voice (Fable for
+  history/geopolitics/politics/geography; Onyx otherwise — `voiceForChannels`). Player
+  (`components/reads/ReadPlayer.tsx`): play/pause, scrub + **paragraph-synced highlight** +
+  click-to-seek, speed 0.75–2×, volume; single static voice label (no picker). Integration:
+  `reads/[slug].astro` loads the manifest, a rehype plugin stamps `data-para-index` by TEXT-MATCH
+  to the manifest's `paragraphs[].text`. **Codec DEFAULT = MP3** (Opus didn't play in Safari —
+  `NARRATION_CODEC=opus` available; ~½ size). **`NARRATION_SPEED` default 0.8** (~226 wpm; Kokoro's
+  natural ~270 was too fast). Flagship rendered (Onyx MP3, 8.7 min, 4.2 MB) — audio is
+  `apps/site/public/audio/reads/*` (gitignored, deploy-not-commit). FULL RENDER (orchestrator runs
+  it, never a subagent): `pnpm --filter @khazana/ingest exec tsx scripts/render-audio.mts`.
+- **NAV:** one global `SiteNav` island in Shell.astro — history-aware back, scroll-to-top (after
+  ~1.5vh), and a near-invisible right-edge **section tick-rail** (active = amber "you are here",
+  reveals labels on hover/focus, hidden on <2-section pages). Reuses the site Lenis.
+- **INGEST DEDUP:** mirror-source near-duplicates (same publisher via two source ids — Import AI
+  via substack+jack-clark.net; Quanta news+regular) were appearing twice (clustering only TAGS).
+  Pure `dedupeItems` in `@khazana/core` (norm-title+publishedAt-window OR exact-url → best-extracted
+  representative, merge topics/entities + max metrics), wired into `runCurate` before clustering.
+  Local recurate: 340→337.
+- **RETENTION (additive, P9-forward):** `selectExpired` in `@khazana/core` + `scripts/prune-history.mts`
+  (DRY-RUN default; `--apply` deletes expired Read MDX + audio), 3-day window. NOTE: pin the seed
+  flagship (`pinned:true`) when P9 wires the cron (it's age>3 → would be pruned).
+- **17 GitHub sources** added to `data/sources.seed.json` (722 total): workshop firmware-release
+  feeds (Marlin/OctoPrint/ESPHome/Prusa/MicroPython…) + research (vLLM/DuckDB/Polars/GitHub Blog).
+  All flow through the generic RSS path. Re-ingest deferred to P9 (release feeds are short → Workshop,
+  not the main Feed's 5-min floor).
+- **node_modules dedupe 4.2G→1.2G:** a pnpm `override` forces `@huggingface/transformers` to 4.2.0
+  (kokoro-js pinned 3.8.1; verified kokoro synthesizes fine on 4.2.0). Dev-only; shipped site unaffected.
+
+**DONE earlier + committed + browser-verified: Feed, Workshop, the Observatory (`/graph`),
+Sources (`/sources`), and an ingestion-robustness pass (reddit / arxiv / youtube / generic
 fetcher).** Recent commits (newest first):
 - `cf1f37f` ingest: fetcher robustness — browser UA, Accept headers, explicit redirects
 - `c268ad4` ingest(youtube): yt-dlp transcripts with a process-level rate-limit gate
@@ -254,6 +308,13 @@ strong concept + real interactivity wins. Keep the "Observatory/first light" ide
    `operating-mode-subagents`, `feed-quality-bars`, `khazana-page-by-page-roadmap`).
 4. `docs/superpowers/specs/2026-06-23-khazana-design.md` (vision), `CLAUDE.md`, `STYLE.md`.
 5. Recent reports in `.superpowers/sdd/` (newest work first) —
+   **this session:** `taste-design-report.md` (the Calibration Bench design),
+   `taste-foundation-report.md` (core scoring/taste extraction), `taste-worker-summary-report.md`,
+   `taste-libs-report.md`, `taste-bench-ui-report.md` (incl. the #418 hydration fix);
+   `code-math-revamp-report.md`; `tts-research-report.md`, `tts-pipeline-report.md`,
+   `tts-player-report.md`, `tts-integration-report.md`; `nav-ux-report.md`; `dedup-report.md`;
+   `retention-design.md`; `github-sources-proposal.md`; and **the ledger `progress.md`** has the
+   full chronology of decisions (read it first). **older:**
    `observatory-foundation-report.md` + `observatory-chart{A,B,C}-report.md`;
    `sources-foundation-report.md`, `sources-island-report.md`,
    `sources-trust-deferred-report.md`, `sources-lazyload-report.md`;
@@ -328,7 +389,44 @@ re-curate after a curate-logic change WITHOUT re-fetching, use `scripts/recurate
 
 ---
 
-## 8. Do this FIRST — the TASTE page (`/taste`) + the live personal layer
+## 8. Do this FIRST — the FEED personalization pass, then P9
+
+> **Boot:** read §5, `pnpm install`, `pnpm --filter @khazana/site build`, preview on :4321,
+> LOOK at the live site (`/taste` Calibration Bench, the narrated Read at
+> `/reads/the-arithmetic-of-ruin/`, `/graph`, `/sources`). Restart preview after any change.
+> Re-render narration audio if missing (it's gitignored): `pnpm --filter @khazana/ingest exec
+> tsx scripts/render-audio.mts`.
+
+**(A) FEED personalization pass ("for you" ordering).** The Feed's bento ordering was left a
+stub pending personalization; the machinery now exists. The ranking math is shared in
+`@khazana/core` (`scoreContributions`, `aggregateProfile`) and the live per-device taste layer
+exists (Worker `GET /summary` + `taste-derive.ts` `liveProfileFromEvents`). Wire the Feed's
+"for you" ordering to the affinity-weighted score (reuse the Taste `rerank.ts` approach /
+the core scoring), with an honest fallback to the quality ranking when the taste model isn't
+`ready`. Same house pattern: a pure TDD lib + the existing Feed islands. 0 console errors both
+motion modes; verify in a real browser.
+
+**(B) P9 — Publish + full ingest + deploy.** Build the GitHub Actions cron
+(ingest→curate→generate→**render-audio**→scout→build→deploy) + the CF Worker + Pages + the
+Claude Code Action. Wire the env knobs: ingest (`ALLOW_DIRECT_YOUTUBE=1`, the `python3 -m
+yt_dlp` shim + `pip install "yt-dlp[default,curl-cffi]"`, the rate-limit gaps, a free-LLM
+enrichment key) + the **TTS render step** (`render-audio.mts`; default `NARRATION_CODEC=mp3`
++ `NARRATION_SPEED=0.8`; cache the ~90MB Kokoro model via `actions/cache`; audio is
+generate-and-deploy, NOT committed) + the **retention prune** step (`prune-history.mts
+--apply`, and add `pinned:true` to the seed flagship's frontmatter so it isn't pruned) + a
+free re-ingest to pick up the 17 new GitHub sources. **Deploy the Worker** — then the live
+`/summary` hydration on Taste/Observatory finally has real per-device data (today it falls back
+to the build snapshot, which is correct + 0-error). A copy-paste account runbook for the founder.
+
+### Open polish / decisions the founder may raise (cheap, one-knob each)
+- **TTS pace** is `NARRATION_SPEED=0.8` (~226 wpm). Founder accepted it; dial via the env if asked.
+- **TTS codec** defaults to **MP3** (Safari plays it; Opus didn't). Founder wanted the smaller
+  file — a **dual-source** (`<source>` opus + mp3, browser picks) would give small-where-supported
+  AND universal playback. Offered, not yet built — do it if the founder wants Opus's size back.
+- **Worker `/summary`** live layer is verified only against the snapshot fallback locally
+  (`PUBLIC_WORKER_URL` unset) — a real end-to-end fetch lands at the P9 Worker deploy.
+
+> ── historical Taste brief (DONE — kept for context; the Taste page is built, §4) ──────────
 
 1. **Boot:** read §5, `pnpm install`, build + preview, **look at the live site** — `/taste`
    first, plus `/graph` (the Observatory) and `/sources` (the model for a polished,
@@ -373,22 +471,30 @@ re-curate after a curate-logic change WITHOUT re-fetching, use `scripts/recurate
    the ledger. No destructive re-ingest needed.
 
 **Roadmap order (memory `khazana-page-by-page-roadmap`):** Feed ✅ → Workshop ✅ → Graph ✅
-(Observatory) → Sources ✅ → **Taste** → Feed (final/personalization pass) → **Publish + full
-ingest (P9)**.
+(Observatory) → Sources ✅ → Taste ✅ (Calibration Bench) → **Feed final/personalization pass
+← YOU ARE HERE** → **Publish + full ingest (P9)**. Also DONE this session (not on the original
+page-by-page list): code/math typography, navigation, TTS narration, ingest dedup, retention,
+17 GitHub sources, node_modules dedupe.
 
 ---
 
 ## 9. Idea backlog (cofounder — propose + build)
-- **Taste (current task, §8): genuine affinity surface + "why you see this" transparency +
-  the live per-device Worker `/summary` endpoint hydrating both Taste and the Observatory.**
+- **Taste ✅ DONE** (the Calibration Bench, §4). Follow-up: the half-life knob only reshapes the
+  decay *curve* today (labeled "applied at next build") — a future pass could recompute the taste
+  model from raw events client-side.
+- **TTS follow-ups:** a **dual-source** Opus+MP3 player (small file where supported + universal
+  playback — the founder wanted Opus's size, MP3 is the safe default); narrate MORE Reads (run
+  `render-audio.mts` after generating each); a per-Read `narratorVoice` frontmatter override; wire
+  the render step into P9 Actions. (Pace `NARRATION_SPEED=0.8` accepted; codec default MP3.)
 - **Source health / Scout (P8):** prune-or-rediscover the 122 failing feeds (mostly dead/moved/
   mis-registered — §7) + fix mis-registered URLs (e.g. `linkedin-engineering` points at an HTML
   page). The `/sources` health band + `failing`/`dormant`/`deferred` statuses already surface the
   targets. High-value, self-contained.
-- **Observatory follow-ups:** the taste panels currently use curate's *quality* tasteScore — swap
-  to the live personal affinity once the Taste/Worker endpoint exists (§8B).
-- **Feed final pass:** the "for you" bento ordering was left a stub pending personalization —
-  wire it once Taste lands.
+- **Observatory follow-ups:** the taste panels still use curate's *quality* tasteScore — the Worker
+  `/summary` + `liveProfileFromEvents` now exist, so hydrate the Observatory's taste panels from the
+  live personal affinity too (reuse the Taste page's hydration; endpoint is built).
+- **Feed final pass (NOW the next task — §8A):** wire the "for you" bento ordering to the
+  affinity-weighted score; the shared `@khazana/core` scoring + the live taste layer now exist.
 - Workshop follow-ups: "build difficulty"/"parts list" extraction; narrow the `3D print` regex.
 - Generate more real Reads (only 1 flagship exists; each grounded in real sources).
 - Podcast transcripts: optional free **Groq** (`GROQ_API_KEY`) as primary, local Whisper fallback.
