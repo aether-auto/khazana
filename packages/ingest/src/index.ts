@@ -6,3 +6,6 @@ export * from "./arxiv-fulltext.js";
 export * from "./youtube.js";
 export * from "./podcast.js";
 export * from "./enrich-content.js";
+export * from "./tts/voices.js";
+export * from "./tts/chunk.js";
+export * from "./tts/render.js";

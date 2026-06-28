@@ -1,0 +1,128 @@
+---
+// DEV harness for ReadPlayer — NOT part of the real site nav (underscore dir).
+// Renders the island against a mock single-voice manifest + placeholder tone
+// audio so the player can be exercised in a browser: play / scrub / speed /
+// volume / paragraph highlight + click-to-seek. Also carries the prose-side
+// highlight CSS the real Read page will own at integration time (see the report).
+import Shell from "../../layouts/Shell.astro";
+import ReadPlayer, {
+  type NarrationTrack,
+  type ParagraphMark,
+} from "../../components/reads/ReadPlayer.tsx";
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+// MOCK manifest — ONE channel-selected narrator (the pipeline renders a single
+// voice per piece; the player shows it as a static "narrated by …" label).
+const tracks: NarrationTrack[] = [
+  { voice: "Fable", label: "Fable — storyteller", src: `${base}/audio/_dev/fable.wav`, durationSec: 24 },
+];
+
+// Paragraph marks spread across the 24s tone so the highlight visibly advances.
+const paragraphs: ParagraphMark[] = [
+  { index: 0, startSec: 0 },
+  { index: 1, startSec: 4 },
+  { index: 2, startSec: 9 },
+  { index: 3, startSec: 14 },
+  { index: 4, startSec: 19 },
+];
+
+const demoParas = [
+  "The observatory hums before dawn. Somewhere in the dark a feed wakes, pulls the night's signal down a wire, and lays it out in one warm format — ready to be read aloud.",
+  "Narration is not decoration here. A read is a performance: the prose sets itself in light, and a voice carries you through the argument the way a good editor reads over your shoulder.",
+  "Click any paragraph and the narration leaps to it. Drag the rail and the highlight follows. One narrator carries the whole piece — chosen by the channel, named quietly on the deck.",
+  "Amber is the signal — the instrument's own light, marking where you are. Clay is attention, the human heat, marking what the machine thinks matters to you.",
+  "When the last paragraph finishes, the deck rests. The pulse stills. The read remains, set in Fraunces and Newsreader, waiting for the next dawn.",
+];
+---
+
+<Shell title="ReadPlayer — dev harness" description="Dev harness for the narration deck." active="reads">
+  <div class="wrap">
+    <p class="dev-flag">dev harness · not in site nav</p>
+    <h1 class="dev-title">Narration Deck</h1>
+
+    <div class="deck-mount">
+      <ReadPlayer client:visible tracks={tracks} paragraphs={paragraphs} title="The Observatory at Dawn" />
+    </div>
+
+    <article class="prose" data-prose>
+      {demoParas.map((p, i) => <p data-para-index={i}>{p}</p>)}
+    </article>
+  </div>
+</Shell>
+
+<style>
+  .wrap {
+    max-width: 65ch;
+    margin-inline: auto;
+    padding-block: var(--s-8);
+  }
+  .dev-flag {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 var(--s-2);
+  }
+  .dev-title {
+    font-family: var(--font-display);
+    font-size: var(--t-2xl);
+    color: var(--ink);
+    margin: 0 0 var(--s-6);
+    letter-spacing: -0.01em;
+  }
+  .deck-mount {
+    position: sticky;
+    top: var(--s-4);
+    z-index: 10;
+    margin-bottom: var(--s-8);
+  }
+
+  /* prose — a trimmed echo of the real reading column, enough to demo highlight */
+  .prose {
+    font-family: var(--font-read);
+    font-optical-sizing: auto;
+    font-size: var(--t-read);
+    line-height: var(--lh-read);
+    letter-spacing: var(--track-read);
+    color: var(--read);
+  }
+  .prose p {
+    margin: 0 0 var(--s-5);
+  }
+
+  /* ── THE NARRATION-HIGHLIGHT CONTRACT ─────────────────────────────────────
+     The player applies `.is-narrating` (and aria-current="true") to the
+     [data-para-index] element of the currently-spoken paragraph, and a pointer
+     affordance on hover signals it's seekable. The real Read page must carry an
+     equivalent rule on its `.prose [data-para-index]`. */
+  .prose :global([data-para-index]) {
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    padding-left: var(--s-4);
+    margin-left: calc(-1 * var(--s-4) - 2px);
+    transition:
+      border-color var(--dur) var(--ease-out),
+      color var(--dur) var(--ease-out),
+      background-color var(--dur) var(--ease-out);
+  }
+  .prose :global([data-para-index]:hover) {
+    color: var(--ink);
+  }
+  .prose :global([data-para-index].is-narrating) {
+    color: var(--ink);
+    border-left-color: var(--accent);
+    background: linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--accent) 7%, transparent),
+      transparent 70%
+    );
+  }
+  /* reduced motion — the highlight snaps, no transition. */
+  @media (prefers-reduced-motion: reduce) {
+    .prose :global([data-para-index]) {
+      transition: none;
+    }
+  }
+</style>
