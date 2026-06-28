@@ -431,6 +431,55 @@
   justify-self: center;
 }
 
+/* ── Lazy window (sentinel + "showing N of M" + fallback) ────────────────── */
+/* Zero-height observation target; lives just below the last rendered row. */
+.sentinel {
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+.lazyFoot {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-3);
+}
+.showing {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.showingNum {
+  color: var(--ink-dim);
+}
+.showMore {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  background: transparent;
+  border: var(--hair) dashed var(--rule);
+  border-radius: 999px;
+  padding: 0.22em 0.8em;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+.showMore:hover {
+  color: var(--accent);
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--rule));
+}
+.showMore:focus-visible {
+  outline: none;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 /* ── No results ──────────────────────────────────────────────────────────── */
 .noResults {
   display: flex;

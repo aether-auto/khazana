@@ -44,6 +44,12 @@ const FACET_GROUPS: { key: FacetKey; label: string; collapsible: boolean }[] = [
 // How many chips to show before a group collapses behind "more".
 const COLLAPSE_AT = 6;
 
+// Lazy rendering: render results a page at a time so the DOM stays light even
+// across 680+ sources. Each scroll-into-view of the sentinel (or a click on the
+// fallback button) reveals one more page; any filter/sort/search change resets
+// the window to the top.
+const PAGE_SIZE = 60;
+
 // ── sort definitions ─────────────────────────────────────────────────────────
 type SortKey = "trust" | "name" | "items" | "failures" | "active";
 const SORTS: { key: SortKey; label: string }[] = [
@@ -112,10 +118,14 @@ export default function SourcesExplorer({ data, base }: Props) {
   const [sort, setSort] = useState<SortKey>("trust");
   const [openId, setOpenId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  // How many rows are currently rendered. Grows a page at a time as the sentinel
+  // scrolls into view; resets to PAGE_SIZE whenever the filtered/sorted set changes.
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   // Gates URL-writing until we've read the incoming URL once (avoids clobbering it).
   const hydrated = useRef(false);
 
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const sentinelRef = useRef<HTMLLIElement | null>(null);
   const reducedMotion = usePrefersReducedMotion();
 
   // Read deep-link state from the URL once, after mount.
@@ -217,6 +227,38 @@ export default function SourcesExplorer({ data, base }: Props) {
 
   const anyFilter =
     query.trim() !== "" || sort !== "trust" || FACET_GROUPS.some(({ key }) => selected[key].size > 0);
+
+  // ── lazy rendering ───────────────────────────────────────────────────────────
+  const visible = useMemo(() => results.slice(0, visibleCount), [results, visibleCount]);
+  const hasMore = visibleCount < results.length;
+
+  // A new query/facet/sort starts a fresh window at the top of the result set.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [query, selected, sort]);
+
+  // Reveal the next page when the sentinel scrolls into view. Guarded for SSR /
+  // browsers without IntersectionObserver; the fallback "show more" button covers
+  // those. Re-arms whenever there is more to show (the sentinel re-mounts each time).
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof IntersectionObserver === "undefined") return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMore) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisibleCount((c) => Math.min(c + PAGE_SIZE, results.length));
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
+    io.observe(sentinel);
+    return () => io.disconnect();
+  }, [hasMore, results.length, visibleCount]);
+
+  const showMore = useCallback(() => {
+    setVisibleCount((c) => Math.min(c + PAGE_SIZE, results.length));
+  }, [results.length]);
 
   // ── URL sync (replaceState; never spams history) ─────────────────────────────
   useEffect(() => {
@@ -382,16 +424,41 @@ export default function SourcesExplorer({ data, base }: Props) {
           )}
         </div>
       ) : (
-        <ul className={styles.rows} role="list">
-          {results.map((s) => (
-            <SourceRow
-              key={s.id}
-              source={s}
-              active={s.id === openId}
-              onOpen={() => setOpenId(s.id)}
-            />
-          ))}
-        </ul>
+        <>
+          <ul className={styles.rows} role="list">
+            {visible.map((s) => (
+              <SourceRow
+                key={s.id}
+                source={s}
+                active={s.id === openId}
+                onOpen={() => setOpenId(s.id)}
+              />
+            ))}
+            {/* Sentinel: when it scrolls into view the IntersectionObserver reveals
+                the next page. Keyed so it re-mounts (and re-arms the observer) each
+                time the window grows. Hidden from assistive tech. */}
+            {hasMore && (
+              <li
+                key={`sentinel-${visibleCount}`}
+                ref={sentinelRef}
+                className={styles.sentinel}
+                aria-hidden="true"
+              />
+            )}
+          </ul>
+          {hasMore && (
+            <div className={styles.lazyFoot}>
+              <span className={styles.showing}>
+                showing <span className={styles.showingNum}>{visible.length}</span> of {results.length}
+              </span>
+              {/* Fallback for no-JS / no-IntersectionObserver — and a keyboard
+                  affordance to page without scrolling. */}
+              <button type="button" className={styles.showMore} onClick={showMore}>
+                show {Math.min(PAGE_SIZE, results.length - visible.length)} more
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {/* ── Drawer ───────────────────────────────────────────────────────── */}
