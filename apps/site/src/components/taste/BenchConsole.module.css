@@ -122,6 +122,14 @@
   list-style: none;
   margin: 0;
   padding: 0;
+  /* CONTAIN the re-rank: rows translate during the FLIP settle, and a far-moving
+     row must never visually streak OUT of this box into the filter strip / the
+     "THE GAUSSIAN" section below. `overflow: hidden` clips any in-flight transform
+     to the feed's bounds; `contain: paint` promises the browser nothing paints
+     outside, so the settle reads as a calm reshuffle inside one panel — never a
+     cascade flowing downward into the next component. */
+  overflow: hidden;
+  contain: paint;
 }
 /* the FEATURED_SIZE divider — a brighter hairline above row 11 when the gate is on */
 .gateRow {
@@ -179,6 +187,15 @@
   font-variant-numeric: tabular-nums;
   font-size: var(--t-xs);
   letter-spacing: -0.02em;
+  /* Soften the ▲/▼ recolour: when a row's rank delta flips during a re-rank, the
+     chip eases between good/editorial/faint instead of hard-flashing — a calm tint
+     shift that matches the gentle settle, never a jarring blink. */
+  transition: color var(--dur) var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .delta {
+    transition: none;
+  }
 }
 .deltaUp { color: var(--good); }
 .deltaDown { color: var(--editorial); }

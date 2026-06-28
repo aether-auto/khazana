@@ -81,7 +81,15 @@ export default function BenchConsole() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── FLIP: capture FIRST before paint, INVERT+PLAY after. GPU translateY only. ──
+  // ── FLIP: capture FIRST before paint, INVERT+PLAY after. GPU translate+opacity. ──
+  // SUBTLE & CONTAINED settle. The founder felt the re-rank "flow into the bottom
+  // component": a 340ms power3 reshuffle with rows streaking the full list height
+  // read as a distracting downward cascade. So we (1) keep it near-synchronous (no
+  // stagger — a calm collective settle, not a cascade), (2) shorten + ease it out
+  // gently (~220ms, power2.out), and (3) CLAMP the visible travel: a row that moves
+  // a long way doesn't streak across the whole list — it starts from a small offset
+  // and cross-FADES through, so far jumps register as a soft reseat rather than a
+  // flying row. The list is also `overflow:hidden` (CSS) so nothing escapes the box.
   useEffect(() => {
     const ol = listRef.current;
     if (!ol) return;
@@ -91,6 +99,10 @@ export default function BenchConsole() {
     for (const row of rows) next.set(row.dataset.rowId!, row.getBoundingClientRect().top);
 
     if (!reduce && prevRects.current.size > 0) {
+      // Cap how far a row visibly travels. Beyond this, the extra distance is spent
+      // as a brief cross-fade instead of a long translate, so big reshuffles settle
+      // calmly rather than streaking from one end of the list to the other.
+      const MAX_TRAVEL = 64; // px
       for (const row of rows) {
         const id = row.dataset.rowId!;
         const prev = prevRects.current.get(id);
@@ -98,10 +110,19 @@ export default function BenchConsole() {
         if (prev === undefined) continue;
         const dy = prev - curr;
         if (Math.abs(dy) < 1) continue;
+        const clamped = Math.max(-MAX_TRAVEL, Math.min(MAX_TRAVEL, dy));
+        const far = Math.abs(dy) > MAX_TRAVEL;
         gsap.fromTo(
           row,
-          { y: dy },
-          { y: 0, duration: 0.34, ease: "power3.out", overwrite: "auto" },
+          { y: clamped, opacity: far ? 0.35 : 1 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.22,
+            ease: "power2.out",
+            overwrite: "auto",
+            clearProps: "opacity",
+          },
         );
       }
     }
