@@ -7,11 +7,11 @@ describe("codec selection", () => {
     expect(codecExtension("opus")).toBe("opus");
   });
 
-  it("defaults to opus unless NARRATION_CODEC=mp3", () => {
+  it("defaults to mp3 unless NARRATION_CODEC=opus", () => {
     // The module reads NARRATION_CODEC at import time; in the test env the var is
-    // unset, so the default must be opus (the smaller file — what we ship).
-    const expected = process.env["NARRATION_CODEC"] === "mp3" ? "mp3" : "opus";
+    // unset, so the default must be mp3 (plays in every browser incl. Safari).
+    const expected = process.env["NARRATION_CODEC"] === "opus" ? "opus" : "mp3";
     expect(NARRATION_CODEC).toBe(expected);
-    if (!process.env["NARRATION_CODEC"]) expect(NARRATION_CODEC).toBe("opus");
+    if (!process.env["NARRATION_CODEC"]) expect(NARRATION_CODEC).toBe("mp3");
   });
 });

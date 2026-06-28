@@ -40,6 +40,7 @@ import {
   hasFfmpeg,
   KOKORO_SAMPLE_RATE,
   NARRATION_CODEC,
+  NARRATION_SPEED,
   type NarrationCodec,
 } from "./kokoro.js";
 import { findVoice } from "./voices.js";
@@ -159,8 +160,10 @@ export interface RenderOptions {
   voices: ReadonlyArray<string>;
   /** Directory to write `<slug>.<voice>.<ext>` + `<slug>.manifest.json` into. */
   outDir: string;
-  /** Audio codec (default: `NARRATION_CODEC`, i.e. opus unless overridden). */
+  /** Audio codec (default: `NARRATION_CODEC`, i.e. mp3 unless overridden). */
   codec?: NarrationCodec;
+  /** Speech-rate multiplier (default: `NARRATION_SPEED`, 0.8 = measured pace). */
+  speed?: number;
   /**
    * Optional cap on the number of paragraphs to render (quick validation runs).
    * When set, only the first N narratable paragraphs are synthesized.
@@ -183,6 +186,7 @@ export async function renderNarration(
 ): Promise<NarrationManifest> {
   const { slug, raw, voices, outDir } = opts;
   const codec: NarrationCodec = opts.codec ?? NARRATION_CODEC;
+  const speed = opts.speed ?? NARRATION_SPEED;
   const log = opts.log ?? ((m: string) => console.log(m));
 
   if (!hasFfmpeg()) {
@@ -246,7 +250,7 @@ export async function renderNarration(
         text: para.text,
       });
 
-      const pcm = await synthesizeParagraph(tts, para.text, { voice });
+      const pcm = await synthesizeParagraph(tts, para.text, { voice, speed });
       segments.push(pcm);
       cumulativeSamples += pcm.length;
 

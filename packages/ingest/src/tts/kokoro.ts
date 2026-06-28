@@ -50,13 +50,24 @@ export const FFMPEG_PATH = process.env["FFMPEG_PATH"] ?? "ffmpeg";
 export type NarrationCodec = "mp3" | "opus";
 
 /**
- * The codec for the final narration tracks. DEFAULT is `opus` (libopus, mono):
- * the smaller file — Opus is dramatically more efficient than MP3 for speech
- * (~½ the size), and that's what we ship. `mp3` (libmp3lame, mono) stays
- * selectable for broad-compat fallback. Env: NARRATION_CODEC = opus | mp3
+ * The codec for the final narration tracks. DEFAULT is `mp3` (libmp3lame, mono):
+ * it plays in EVERY browser including Safari, where Ogg-`opus` `<audio>` support
+ * is unreliable (a silent player is worse than a slightly larger file). `opus`
+ * (libopus, mono — ~½ the size) stays selectable for Chrome/modern contexts.
+ * Env: NARRATION_CODEC = mp3 | opus
  */
 export const NARRATION_CODEC: NarrationCodec =
-  process.env["NARRATION_CODEC"] === "mp3" ? "mp3" : "opus";
+  process.env["NARRATION_CODEC"] === "opus" ? "opus" : "mp3";
+
+/**
+ * Narration speech-rate multiplier (1.0 = Kokoro's natural rate). The model's
+ * natural rate reads ~270 wpm here, which is brisk for dramatic narration; the
+ * default 0.8 yields a more measured ~210 wpm. Env: NARRATION_SPEED
+ */
+export const NARRATION_SPEED: number = (() => {
+  const v = Number(process.env["NARRATION_SPEED"]);
+  return Number.isFinite(v) && v > 0 ? v : 0.8;
+})();
 
 /**
  * MP3 encode bitrate. 64kbps mono is comfortable for speech and keeps files
