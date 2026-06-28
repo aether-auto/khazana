@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import * as Plot from "@observablehq/plot";
 import {
   normalizeChartSpec,
+  coerceNumericX,
   type ChartProps,
   type NormalizedMark,
 } from "./lib/chart-spec.js";
@@ -30,9 +31,12 @@ function buildMark(m: NormalizedMark, data: ChartProps["data"]) {
  * the build get real content; the live plot mounts on hydration.
  */
 export default function Chart(props: ChartProps) {
-  const spec = normalizeChartSpec(props);
   const ref = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(0);
+
+  // Re-normalize whenever width changes so the rotation heuristic can use the
+  // actual container pixel width (the spec is pure and cheap to recompute).
+  const spec = normalizeChartSpec(props, width > 0 ? width : undefined);
 
   useEffect(() => {
     const el = ref.current;
@@ -48,17 +52,35 @@ export default function Chart(props: ChartProps) {
   useEffect(() => {
     const el = ref.current;
     if (!el || width === 0) return;
+
+    // ── x-axis options ────────────────────────────────────────────────────────
+    // For categorical bar charts with long labels, rotate ticks to prevent
+    // overlap. Numeric-x charts (line/area/dot) use the plain defaults.
+    const xOptions: Record<string, unknown> = { tickSize: 0, label: null };
+    if (spec.xTickRotate !== undefined) {
+      xOptions.tickRotate = spec.xTickRotate;
+    }
+
+    // Coerce numeric-string x values to real Numbers so Observable Plot does
+    // not emit its "strings that appear to be numbers" ⚠ warning glyph.
+    // Categorical x values ("10%", "bet max (all-in)") pass through unchanged.
+    const plotData = coerceNumericX(props.data, props.x);
+
     const chart = Plot.plot({
       width,
       height: spec.height,
       marginLeft: 48,
-      marginBottom: 32,
+      // Grow bottom margin to accommodate rotated tick labels when needed.
+      marginBottom: spec.xMarginBottom ?? 32,
       style: spec.style,
       grid: spec.grid,
-      x: { tickSize: 0, label: null },
-      y: { tickSize: 0, label: null, ...(spec.grid ? {} : {}) },
+      x: xOptions,
+      // Explicit tickFormat ensures negative values render with a minus sign
+      // (some environments / fonts substitute a Unicode minus that is very
+      // low-contrast; the explicit format forces an ASCII hyphen-minus).
+      y: { tickSize: 0, label: null, tickFormat: (d: number) => String(d) },
       color: spec.color ? { type: "categorical", ...spec.color, legend: !!props.series } : undefined,
-      marks: spec.marks.map((m) => buildMark(m, props.data)),
+      marks: spec.marks.map((m) => buildMark(m, plotData)),
     });
     el.replaceChildren(chart);
     return () => chart.remove();

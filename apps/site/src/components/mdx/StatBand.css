@@ -1,0 +1,107 @@
+/* apps/site/src/components/mdx/StatBand.css
+   A band of dramatic figures. "Lines, not boxes": no panel fill — the figures
+   sit on the ground, divided by hairline rules. Amber = signal (the figure),
+   mono = instrument (the label). */
+.statband-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0;
+}
+.statband-item {
+  flex: 1 1 0;
+  min-width: 9rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-5) var(--s-5);
+  /* the dividing hairline lives on the left edge; first item has none */
+  border-left: var(--hair) solid var(--rule);
+}
+.statband-item:first-child {
+  border-left: none;
+  padding-left: 0;
+}
+
+/* the figure — big Fraunces display, tabular so digits don't jitter mid-count */
+.statband-figure {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--t-3xl);
+  line-height: var(--lh-display);
+  letter-spacing: -0.01em;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  /* incandescent glow on the display-size amber (tokens: halation rule) */
+  text-shadow: var(--halo-star);
+  display: block;
+}
+
+.statband-label {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+}
+.statband-sub {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.02em;
+  color: var(--ink-faint);
+}
+
+/* a cited figure: clay underline keyed to "attention", brightens to amber */
+.statband-cite {
+  text-decoration: none;
+  display: inline-block;
+}
+.statband-cite .statband-figure {
+  border-bottom: var(--hair) solid color-mix(in oklab, var(--editorial) 36%, transparent);
+  padding-bottom: var(--s-1);
+  transition: border-color var(--dur) var(--ease-out);
+}
+.statband-cite:hover .statband-figure,
+.statband-cite:focus-visible .statband-figure {
+  border-bottom-color: var(--accent);
+}
+
+/* screen-reader value: figures animate visually, but SR/no-JS get the real
+   final number (the visible figure is aria-hidden). */
+.statband-srvalue {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 720px) {
+  .statband-row {
+    flex-direction: column;
+  }
+  .statband-item {
+    border-left: none;
+    border-top: var(--hair) solid var(--rule);
+    padding: var(--s-4) 0;
+  }
+  .statband-item:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+  .statband-figure {
+    font-size: var(--t-2xl);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  /* halation is off in light mode (tokens set --halo-star: none) — already inherited */
+  .statband-figure {
+    text-shadow: none;
+  }
+}

@@ -1,6 +1,6 @@
 ---
 name: writers/dispatch
-description: This skill should be used to author a DISPATCH post for khazana — a data-driven, Pudding/Distill-style interactive explainer where real charts lead the prose. Trigger when a brief's "Format:" line is `dispatch`, or when asked to "write a dispatch", "explain this with data", or produce a data-storytelling MDX post. Uses scripts/fetch-data.py for REAL numbers (FRED/World Bank/OWID). Produces one MDX file (Chart/Scrolly/DataTable/Annotation) that builds in apps/site and passes validateDraft.
+description: This skill should be used to author a DISPATCH post for khazana — a data-driven, Pudding/Distill-style interactive explainer where real charts lead the prose. Trigger when a brief's "Format:" line is `dispatch`, or when asked to "write a dispatch", "explain this with data", or produce a data-storytelling MDX post. Uses scripts/fetch-data.py for REAL numbers (FRED/World Bank/OWID). Produces one MDX file (Chart/Scrolly/DataTable/Annotation/StatBand/Pullquote/NarrativeScene) targeting ~15-min rendered depth that builds in apps/site and passes validateDraft.
 version: 1.0.0
 ---
 
@@ -48,22 +48,41 @@ the discipline is: **every chart shows real, sourced data.**
 
 Full detail: **`references/craft.md`**.
 
-## Structural template (~1500–2000 words + charts)
+## Structural template (target ~15-min rendered read / `GAUSSIAN_DEFAULTS.peakMin`)
 
-Hook question + the key `<Chart>` immediately (100–150w) → context layer 1 as a
-`<Scrolly>`, one chart-update per step (300–400w) → complication, the read the
-simple chart misses, with `<DataTable>` (200–300w) → context layer 2 `<Scrolly>`,
-deeper/causal cut (300–400w) → "so what" payoff with inline `<Annotation>`
-citations (200–300w) → methodology note (100–150w). Annotated skeleton:
-**`references/template.mdx`**. Worked excerpts: **`references/exemplars.md`**.
+Aim for ~3000–4000 words + interactive charts. Reach depth through more data layers,
+richer methodology, deeper causal cuts — never padding.
+
+Opening `<StatBand>` with the key figures of the story (cited with `href`) → hook
+question + the key `<Chart>` immediately (100–150w) → context layer 1 as a `<Scrolly>`
+or `<NarrativeScene>`, one chart-update per step (400–600w) → complication (the read the
+simple chart misses) with `<DataTable>` (200–300w) → `<Pullquote>` of a striking data
+finding or expert statement → context layer 2 `<Scrolly>`, deeper/causal cut (400–600w)
+→ "so what" payoff with inline `<Annotation>` citations (200–300w) → methodology note
+(150–200w). Annotated skeleton: **`references/template.mdx`**. Worked excerpts:
+**`references/exemplars.md`**.
 
 ## Components (this format's kit only)
 
-`Chart`, `Scrolly` / `ScrollyStep`, `DataTable`, `Annotation` — nothing else.
-`<Chart mark="line|bar|area|dot">` with real `data={[...]}`; `<Scrolly>` with a
-pinned `<Chart>` graphic per step for stepped reveals; `<DataTable>` for the
-detailed breakdown; `<Annotation>` for inline citations. Exact props:
-**`references/mdx-contract.md`**.
+`Chart`, `Scrolly` / `ScrollyStep`, `DataTable`, `Annotation`,
+`StatBand`, `Pullquote`, `NarrativeScene` — nothing else.
+
+`<Chart mark="line|bar|area|dot">` with real `data={[...]}`; `<Scrolly>` with a pinned
+`<Chart>` per step for stepped reveals; `<DataTable>` for the detailed breakdown;
+`<Annotation>` for inline citations.
+
+New narrative components — use where they deepen the data story:
+- **`StatBand` (`client:visible`)**: leads the piece with the key figures (scale, rate,
+  delta). Props: `stats=[{ value, prefix?, suffix?, decimals?, group?, label, sub?, href? }]`,
+  `caption?`, `duration?`. Every `href` cites a source.
+- **`Pullquote` (static `.astro`, NO `client:` directive)**: a striking finding or expert
+  framing pulled out for visual weight. Props: `cite?`, `href?`, `kind?` (default `"quote"`).
+- **`NarrativeScene` (`client:visible`)**: when the story moves geographically or needs a
+  pinned visual that evolves per scroll step. Props: `steps=[{ panel, prose:"<html>" }]`,
+  `caption?`. Panel: `{kind:"map", regions, weights?}` | `{kind:"chart", ...ChartProps}` |
+  `{kind:"scene", headline, sub?, kicker?}`.
+
+Exact props: **`references/mdx-contract.md`**.
 
 ## Reading-comfort & voice
 
@@ -84,8 +103,10 @@ its source. Any number without a source → `[UNSUPPORTED]`. Do not write prose 
 
 ### `<phase>Outline</phase>`
 Section-by-section against the template: heading + intent + which chart/component
-+ which data source. Confirm ~1500–2000 words, a methodology note is planned, and
-every cited source appears at least once. Confirm only kit components are used.
++ which data source. Confirm target ~3000–4000 words (~15-min rendered read), a
+methodology note is planned, and every cited source appears at least once. Confirm
+only kit components are used. Note placement of `<StatBand>`, `<Pullquote>`, and
+`<NarrativeScene>` if used.
 
 ### `<phase>Draft</phase>`
 **Fetch data first.** For each chart backed by a public dataset, run

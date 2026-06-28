@@ -1,0 +1,189 @@
+/* apps/site/src/components/mdx/NarrativeScene.css
+   Sticky visual pane + stepped prose. The stage stacks all panels and
+   cross-fades by opacity (GPU-cheap, no layout thrash). Mirrors Scrolly's
+   grid + stacked-fallback structure. */
+.ns-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: var(--s-6);
+  align-items: start;
+}
+.ns-sticky {
+  position: sticky;
+  top: 10vh;
+  height: 80vh;
+  display: flex;
+  align-items: center;
+}
+
+/* the stage: a positioned context so panels can stack and cross-fade. Its
+   height is driven by the tallest panel via the active (in-flow) layer. */
+.ns-stage {
+  position: relative;
+  width: 100%;
+}
+.ns-panel {
+  /* inactive panels are taken out of flow and faded out; the active panel is
+     in flow so the stage sizes to it. opacity-only transition — no thrash. */
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out);
+  pointer-events: none;
+  will-change: opacity;
+}
+.ns-panel--active {
+  position: relative;
+  opacity: 1;
+  pointer-events: auto;
+}
+/* the inner islands already carry .mdx-figure margins; null them inside the
+   stage so the panel fills the pane cleanly. */
+.ns-panel :global(.mdx-figure) {
+  margin: 0;
+  max-width: 100%;
+}
+
+/* steps column — identical rhythm to Scrolly */
+.ns-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 42vh;
+  padding: 34vh 0;
+}
+.ns-step {
+  font-family: var(--font-read);
+  font-size: var(--t-md);
+  line-height: var(--lh-read);
+  color: var(--ink-faint);
+  transition: color 200ms ease, opacity 200ms ease;
+  opacity: 0.4;
+}
+.ns-step--active {
+  color: var(--read);
+  opacity: 1;
+}
+.ns-step--active::before {
+  content: "";
+  display: block;
+  width: 2rem;
+  height: 2px;
+  background: var(--editorial);
+  margin-bottom: var(--s-3);
+}
+.ns-step > p:first-child,
+.ns-prose > p:first-child {
+  margin-top: 0;
+}
+.ns-step > p:last-child,
+.ns-prose > p:last-child {
+  margin-bottom: 0;
+}
+/* shared citation link inside steps (same class Scrolly authors use) */
+.ns-step .scrolly-cite,
+.ns-prose .scrolly-cite {
+  color: var(--editorial);
+  border-bottom: var(--hair) solid color-mix(in oklab, var(--editorial) 30%, transparent);
+}
+.ns-step .scrolly-cite:hover,
+.ns-prose .scrolly-cite:hover {
+  color: var(--accent);
+}
+
+/* ── the typographic "scene" panel ───────────────────────────────────────── */
+.ns-scene {
+  width: 100%;
+  min-height: 22rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(
+      120% 90% at 50% 18%,
+      color-mix(in oklab, var(--accent) 7%, transparent),
+      transparent 60%
+    ),
+    var(--bg-card);
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-md);
+  padding: var(--s-8) var(--s-6);
+}
+.ns-scene-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--s-3);
+  max-width: 28ch;
+}
+.ns-scene-kicker {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--accent-dim);
+}
+.ns-scene-headline {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--t-3xl);
+  line-height: var(--lh-display);
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.ns-scene-sub {
+  font-family: var(--font-read);
+  font-style: italic;
+  font-size: var(--t-md);
+  line-height: 1.4;
+  color: var(--ink-dim);
+  text-wrap: balance;
+}
+.ns-scene-rule {
+  width: 2.5rem;
+  height: 2px;
+  background: var(--editorial);
+  margin-top: var(--s-2);
+}
+
+/* ── stacked fallback (SSR / no-JS / reduced-motion) ─────────────────────── */
+.ns--stacked .ns-stacked-step {
+  margin-bottom: var(--s-8);
+}
+.ns--stacked .ns-graphic {
+  margin-bottom: var(--s-4);
+}
+.ns--stacked .ns-prose {
+  font-family: var(--font-read);
+  font-size: var(--t-md);
+  line-height: var(--lh-read);
+  color: var(--read);
+}
+.ns--stacked .ns-scene {
+  min-height: 16rem;
+}
+
+@media (max-width: 720px) {
+  .ns-grid {
+    grid-template-columns: 1fr;
+  }
+  .ns-sticky {
+    position: static;
+    height: auto;
+  }
+  .ns-steps {
+    gap: var(--s-6);
+    padding: var(--s-6) 0;
+  }
+  .ns-step {
+    opacity: 1;
+    color: var(--read);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ns-step,
+  .ns-panel {
+    transition: none;
+  }
+}

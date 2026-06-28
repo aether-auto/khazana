@@ -59,6 +59,29 @@ frame.
 
 ---
 
+## Visual drama & length
+
+Every Read must be **visually dramatic and alive** — not a wall of prose with a chart bolted on.
+Reach depth through the rich interactive + narrative component palette, not word count alone.
+
+**Target the reading-time peak.** The ranking Gaussian peaks at `GAUSSIAN_DEFAULTS.peakMin = 15`
+minutes (σ=10, from `packages/core/src/scoring.ts`). Long-form feature formats (Chronicle,
+Dispatch, Teardown, Primer, Build Log) should aim for a ~15-minute rendered read. Reach that
+length through **genuine grounded depth** — more cited scenes, richer data layers, deeper
+mechanism coverage, more runnable examples — never through padding or repetition. STYLE.md's
+prohibition on filler is absolute: every sentence earns its place.
+
+**Field Notes is the deliberate exception.** It is a short, sharp briefing format by design; the
+peak-read-time target does not apply. Brevity is its craft.
+
+**Use the full component palette.** Three narrative storytelling components — `NarrativeScene`,
+`Pullquote`, and `StatBand` — join the existing kit. Use them where they deepen the story, not
+decoratively. A `<StatBand>` whose numbers don't tell a story is clutter; a `<NarrativeScene>`
+that wraps a single step is overhead. But in the formats built for drama (Chronicle, Dispatch,
+Teardown), their absence is almost always a missed opportunity.
+
+---
+
 ## Per-format notes
 
 ### Chronicle (narrate / feature)
@@ -67,7 +90,18 @@ summaries. "It is dawn, 14 October 1066, and Harold Godwinson has not slept." Ev
 — a date, a place, a decision — is grounded in a cited source. The citations appear as margin
 notes in the rendered output, never interrupting the prose. The spell must not break.
 
-Length target: 1800–2500 words. Component kit: Scrolly, Annotation, Timeline, Map.
+Length target: target the reading-time peak — ~15 min rendered (`GAUSSIAN_DEFAULTS.peakMin`);
+aim for ~3500–4500 words when source depth supports it. Reach it through more scenes, more
+cited detail, a deeper consequence arc — never padding.
+
+Component kit: Scrolly, Annotation, Timeline, Map, **NarrativeScene, Pullquote, StatBand**.
+— `NarrativeScene`: the marquee addition for Chronicle. Pin a geographic or typographic scene
+  as a visual anchor while stepped prose advances — ideal for multi-act narratives where the
+  visual (a region, a timeline card, a title frame) changes per beat.
+— `Pullquote`: period primary sources — a wire dispatch, a treaty line, a headline — rendered
+  dramatically (`kind="telegram"`, `kind="document"`, `kind="headline"`, `kind="quote"`).
+— `StatBand`: a row of big dramatic figures for the key numbers of the story (casualties,
+  distances, durations, dates). Count-up animation on scroll; cites sources via `href`.
 
 ### Dispatch (explain / feature)
 Data-driven explainer in the style of The Pudding or Distill.pub. The chart arrives before the
@@ -75,15 +109,28 @@ explanation — let the reader see the pattern and then understand it. Prose and
 elements are woven together, not sequential. Use scroll-driven reveals to build understanding
 step by step. Numbers are always contextualised.
 
-Length target: 1500–2000 words + interactive charts. Component kit: Chart, Scrolly, DataTable,
-Annotation.
+Length target: target the reading-time peak — ~15 min rendered (`GAUSSIAN_DEFAULTS.peakMin`);
+aim for ~3000–4000 words + interactive charts. Reach it through deeper data layers, more
+causal cuts, a richer methodology note — never padding.
+
+Component kit: Chart, Scrolly, DataTable, Annotation, **StatBand, Pullquote, NarrativeScene**.
+— `StatBand`: leads the piece — the key figures of the story, big and dramatic, counting up.
+  Immediately shows the reader the scale before the charts explain it.
+— `Pullquote`: a striking data finding or expert statement pulled out for visual weight.
+— `NarrativeScene` (with `kind:"chart"` or `kind:"map"` panels): when the story moves
+  geographically or needs a visual anchor that changes per scroll step.
 
 ### Field Notes (synthesize / brief)
 Short, sharp briefing for fast-moving news clusters. Structure: what happened (2–3 sentences),
 why it matters to the founder specifically (1–2 sentences), what to watch next (1 sentence),
 links to source FeedItems. No preamble, no recap, no closing flourish.
 
-Length target: 300–500 words. Component kit: Annotation, DataTable.
+Length target: 300–500 words. Field Notes is intentionally brief — the reading-time peak target
+does not apply here. Brevity is the format's craft; do not pad.
+
+Component kit: Annotation, DataTable. Sparingly: **StatBand** (one crystallizing figure if it
+sharpens the story), **Pullquote** (one striking primary-source line if it anchors the lede).
+Never add components to hit a length; every component must earn its place in a tight briefing.
 
 ### Teardown (explain / feature)
 Deep "how X actually works" deconstruction. Assume the reader is technically sophisticated.
@@ -91,15 +138,31 @@ Start with the intuition ("here is the problem X is solving"), then go deep. Int
 examples should be runnable. Diagrams should be interactive — hover to highlight, click to
 expand. Do not over-simplify; do not hand-wave the hard parts.
 
-Length target: 1500–2500 words + runnable code. Component kit: RunnableCode, Chart, Annotation.
+Length target: target the reading-time peak — ~15 min rendered (`GAUSSIAN_DEFAULTS.peakMin`);
+aim for ~3000–4000 words + runnable code. Reach it by going deeper on the mechanism, covering
+more failure modes, adding more runnable examples — never padding.
+
+Component kit: RunnableCode, Chart, Annotation, **StatBand, Pullquote, NarrativeScene**.
+— `StatBand`: the key performance numbers or design constants up front — the figures that
+  frame why the mechanism matters before the teardown begins.
+— `Pullquote`: a key spec line, a design-doc excerpt, or a memorable failure-mode quote.
+— `NarrativeScene` (with `kind:"chart"` panels): when the performance boundary or failure
+  cliff unfolds in stages — each scroll step adds a new variable to the chart.
 
 ### Primer (explain / feature)
 Evergreen foundational explainer. This is the piece a smart generalist will still find valuable
 in five years. Avoid current events as the hook — open with the underlying question instead.
 Interactive sandboxes let readers test their intuition. Build understanding progressively.
 
-Length target: 1500–2000 words + interactive sandboxes. Component kit: RunnableCode, Chart,
-Annotation.
+Length target: target the reading-time peak — ~15 min rendered (`GAUSSIAN_DEFAULTS.peakMin`);
+aim for ~3000–4000 words + interactive sandboxes. Reach it through more scaffold layers, more
+worked examples, a richer "where to go next" — never padding.
+
+Component kit: RunnableCode, Chart, Annotation, **StatBand, Pullquote, NarrativeScene**.
+— `StatBand`: the striking numbers that motivate the concept — why this matters, at scale.
+— `Pullquote`: a crisp foundational definition or a memorable framing from the literature.
+— `NarrativeScene` (with `kind:"chart"` or `kind:"scene"` panels): when progressive concept
+  scaffolding benefits from a pinned visual that evolves per step.
 
 ### Build Log (build / feature)
 DIY/project walkthrough. Parts list, step-by-step process, runnable code where applicable.
@@ -107,7 +170,15 @@ Write for a maker who wants to reproduce what you built. Be specific: part numbe
 exact commands. Acknowledge what went wrong and how you fixed it — that's the most useful
 part.
 
-Length target: 1000–2000 words + code. Component kit: RunnableCode, DataTable, Annotation.
+Length target: target the reading-time peak — ~15 min rendered (`GAUSSIAN_DEFAULTS.peakMin`);
+aim for ~2500–4000 words + code. Reach it through more detail in the build steps, a thorough
+failures section, a richer reproduce-this checklist — never padding.
+
+Component kit: RunnableCode, DataTable, Annotation, **StatBand, Pullquote**.
+— `StatBand`: key project stats — total cost, build time, measured output — at the top.
+— `Pullquote`: a striking spec line, a datasheet excerpt, or a vendor warning worth
+  dramatizing. Use `kind="document"` for datasheets, `kind="headline"` for a project reveal.
+  (NarrativeScene is not natural for step-by-step walkthroughs; omit it in Build Log.)
 
 ---
 

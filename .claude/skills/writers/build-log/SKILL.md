@@ -1,6 +1,6 @@
 ---
 name: writers/build-log
-description: This skill should be used to author a BUILD LOG post for khazana — a DIY/project walkthrough a maker can reproduce, with a parts list, numbered steps, runnable code, and an honest "what went wrong" section. Trigger when a brief's "Format:" line is `build-log`, or when asked to "write a build log", "walk through building X", or produce a reproducible project-build MDX post. Produces one MDX file (RunnableCode/DataTable/Annotation) that builds in apps/site and passes validateDraft.
+description: This skill should be used to author a BUILD LOG post for khazana — a DIY/project walkthrough a maker can reproduce, with a parts list, numbered steps, runnable code, and an honest "what went wrong" section. Trigger when a brief's "Format:" line is `build-log`, or when asked to "write a build log", "walk through building X", or produce a reproducible project-build MDX post. Produces one MDX file (RunnableCode/DataTable/Annotation/StatBand/Pullquote) targeting ~15-min rendered depth that builds in apps/site and passes validateDraft.
 version: 1.0.0
 ---
 
@@ -46,21 +46,38 @@ A build log's value is reproducibility, which demands accuracy:
 
 Full detail: **`references/craft.md`**.
 
-## Structural template (~1000–2000 words + code)
+## Structural template (target ~15-min rendered read / `GAUSSIAN_DEFAULTS.peakMin`)
 
-What we're building (100–150w) → parts + tools as a `<DataTable>` (with cited source
-links) → step-by-step (600–1000w, numbered; each step: action → expected result →
-code block or `<RunnableCode>`; gotcha callouts) → what went wrong (200–300w: real
-errors, real fixes) → results (100–150w: does it work? measurements) → "Reproduce
-this" checklist. Annotated skeleton: **`references/template.mdx`**. Worked excerpts:
-**`references/exemplars.md`**.
+Aim for ~2500–4000 words + code. Reach depth through more detail in build steps, a
+thorough failures section, a richer reproduce-this checklist — never padding.
+
+Opening `<StatBand>` with the key project stats (total cost, build time, measured
+output — cited with `href`) → what we're building (100–150w) → optionally a
+`<Pullquote>` of a striking spec line or vendor warning → parts + tools as a
+`<DataTable>` (with cited source links) → step-by-step (900–1500w, numbered; each
+step: action → expected result → code block or `<RunnableCode>`; gotcha callouts)
+→ what went wrong (300–500w: real errors, real fixes) → results (150–200w: does it
+work? measurements) → "Reproduce this" checklist. Annotated skeleton:
+**`references/template.mdx`**. Worked excerpts: **`references/exemplars.md`**.
 
 ## Components (this format's kit only)
 
-`RunnableCode`, `DataTable`, `Annotation` — nothing else. `<DataTable>` is the parts
-list (and any measurements table); `<RunnableCode>` for runnable JS logic the reader
-can try; `<Annotation>` cites part sources, datasheet values, and commands inline.
-Non-JS commands (shell, YAML, C) go in plain fenced code blocks, not `<RunnableCode>`.
+`RunnableCode`, `DataTable`, `Annotation`, `StatBand`, `Pullquote` — nothing else.
+(`NarrativeScene` is not natural for step-by-step walkthroughs; omit it.)
+
+`<DataTable>` is the parts list (and any measurements table); `<RunnableCode>` for
+runnable JS logic the reader can try; `<Annotation>` cites part sources, datasheet
+values, and commands inline. Non-JS commands (shell, YAML, C) go in plain fenced
+code blocks, not `<RunnableCode>`.
+
+New narrative components — use where they deepen the build story:
+- **`StatBand` (`client:visible`)**: project stats at the top — cost, time, output.
+  Props: `stats=[{ value, prefix?, suffix?, decimals?, group?, label, sub?, href? }]`,
+  `caption?`. Every `href` cites a source.
+- **`Pullquote` (static `.astro`, NO `client:` directive)**: a spec line, datasheet
+  excerpt, or vendor warning worth dramatizing. Props: `cite?`, `href?`, `kind?` (try
+  `kind="document"` for datasheets, `kind="headline"` for a project reveal).
+
 Exact props: **`references/mdx-contract.md`**.
 
 ## Reading-comfort & voice
@@ -82,8 +99,9 @@ Anything unsourced → `[UNSUPPORTED]`. Do not write prose yet.
 ### `<phase>Outline</phase>`
 Section-by-section against the template: the `<DataTable>` parts list, the numbered
 steps (each one completable), the failures section, the reproduce-this checklist.
-Confirm ~1000–2000 words, every command is exact, every cited source is used, and
-only kit components appear.
+Confirm target ~2500–4000 words (~15-min rendered read), every command is exact,
+every cited source is used, and only kit components appear. Note placement of
+`<StatBand>` and `<Pullquote>` if used.
 
 ### `<phase>Draft</phase>`
 Write the parts `<DataTable>` first (cited sources). Write numbered steps with exact

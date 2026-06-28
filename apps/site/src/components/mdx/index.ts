@@ -26,3 +26,15 @@ export { default as Sidenote } from "./Sidenote.js";
 export type { SidenoteProps } from "./Sidenote.js";
 export { default as DrawChart } from "./DrawChart.js";
 export type { DrawChartProps } from "./DrawChart.js";
+export { default as StatBand } from "./StatBand.js";
+export type { StatBandProps, Stat } from "./StatBand.js";
+export { default as Pullquote } from "./Pullquote.astro";
+export { default as NarrativeScene } from "./NarrativeScene.js";
+export type { NarrativeSceneProps } from "./NarrativeScene.js";
+export type {
+  PanelSpec,
+  MapPanelSpec,
+  ChartPanelSpec,
+  ScenePanelSpec,
+  NarrativeStep,
+} from "./lib/narrative-scene.js";

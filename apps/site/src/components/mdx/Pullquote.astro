@@ -1,0 +1,207 @@
+---
+// apps/site/src/components/mdx/Pullquote.astro
+//
+// A dramatic primary-source / pull-quote block: Carrington's own words, a
+// telegraph operator's account, a treaty line. Static (no island) — it reveals
+// via the shared [data-reveal] IntersectionObserver wired in Shell.astro, which
+// animates transform/opacity only and is disabled under reduced motion.
+//
+// `kind` selects a styling variant, all sharing one frame language:
+//   quote     — large Newsreader italic, clay edge-rule, hanging punctuation
+//   document  — a quoted excerpt set like an archival document (mono, framed)
+//   telegram  — a clipped dispatch: mono, hairline frame, uppercase routing
+//   headline  — a period newspaper headline (Fraunces, ruled top & bottom)
+//
+// Children = the quote/excerpt text (MDX prose).
+export interface PullquoteProps {
+  /** attribution: who said/wrote it, and when. */
+  cite?: string;
+  /** source link surfaced after the attribution. */
+  href?: string;
+  /** styling variant (default "quote"). */
+  kind?: "quote" | "document" | "telegram" | "headline";
+}
+const { cite, href, kind = "quote" } = Astro.props as PullquoteProps;
+---
+
+<figure class={`pullquote pullquote--${kind}`} data-reveal>
+  <blockquote class="pullquote-body">
+    {kind === "telegram" && <span class="pullquote-routing" aria-hidden="true">— transmission —</span>}
+    <slot />
+  </blockquote>
+  {
+    (cite || href) && (
+      <figcaption class="pullquote-cite">
+        <span class="pullquote-dash" aria-hidden="true" />
+        {cite}
+        {href && (
+          <>
+            {cite ? " " : ""}
+            <a class="pullquote-src" href={href} rel="noopener noreferrer">
+              source
+            </a>
+          </>
+        )}
+      </figcaption>
+    )
+  }
+</figure>
+
+<style>
+  /* ── shared frame ──────────────────────────────────────────────────────── */
+  .pullquote {
+    margin: var(--s-8) auto;
+    max-width: var(--measure);
+  }
+  .pullquote-cite {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    margin-top: var(--s-3);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+  }
+  .pullquote-dash {
+    width: 1.5rem;
+    height: 1px;
+    background: var(--editorial);
+    flex: none;
+  }
+  .pullquote-src {
+    color: var(--editorial);
+    text-decoration: none;
+    border-bottom: var(--hair) solid color-mix(in oklab, var(--editorial) 30%, transparent);
+    transition: color var(--dur) var(--ease-out);
+  }
+  .pullquote-src:hover {
+    color: var(--accent);
+  }
+
+  /* ── quote: large Newsreader italic with a clay edge-rule + hanging quote ── */
+  .pullquote--quote {
+    padding-left: var(--s-5);
+    border-left: 2px solid var(--editorial);
+  }
+  .pullquote--quote .pullquote-body {
+    margin: 0;
+    font-family: var(--font-read);
+    font-style: italic;
+    font-size: var(--t-xl);
+    line-height: 1.32;
+    color: var(--ink);
+    text-wrap: balance;
+    /* hanging open-quote in the gutter — the editorial flourish */
+    position: relative;
+    text-indent: -0.05em;
+  }
+  .pullquote--quote .pullquote-body::before {
+    content: "\201C";
+    position: absolute;
+    left: -0.62em;
+    top: -0.12em;
+    font-family: var(--font-display);
+    font-size: 1.6em;
+    line-height: 1;
+    color: color-mix(in oklab, var(--editorial) 70%, transparent);
+  }
+
+  /* ── document: an archival excerpt, set in the instrument voice, framed ──── */
+  .pullquote--document {
+    border: var(--hair) solid var(--rule-bright);
+    border-radius: var(--r-md);
+    background: var(--bg-card);
+    padding: var(--s-5) var(--s-6);
+    position: relative;
+  }
+  .pullquote--document::before {
+    content: "document";
+    position: absolute;
+    top: 0;
+    left: var(--s-5);
+    transform: translateY(-50%);
+    background: var(--bg);
+    padding: 0 var(--s-2);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint);
+  }
+  .pullquote--document .pullquote-body {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--t-sm);
+    line-height: 1.7;
+    color: var(--read);
+    letter-spacing: 0.01em;
+  }
+
+  /* ── telegram: a clipped dispatch — mono, frame, uppercase routing ───────── */
+  .pullquote--telegram {
+    border: var(--hair) solid var(--rule-bright);
+    border-radius: var(--r-sm);
+    background: var(--bg-inset);
+    padding: var(--s-5) var(--s-6) var(--s-4);
+    /* perforated-edge dashes on the top, like a telegraph tape header */
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--rule) 0 6px,
+      transparent 6px 12px
+    );
+    background-size: 100% 2px;
+    background-repeat: no-repeat;
+    background-position: top;
+  }
+  .pullquote--telegram .pullquote-routing {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--accent-dim);
+    margin-bottom: var(--s-3);
+  }
+  .pullquote--telegram .pullquote-body {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--t-sm);
+    line-height: 1.6;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--read);
+    word-spacing: 0.2em;
+  }
+
+  /* ── headline: a period newspaper headline, ruled top & bottom ───────────── */
+  .pullquote--headline {
+    border-top: 2px solid var(--ink-dim);
+    border-bottom: 1px solid var(--rule-bright);
+    padding: var(--s-4) 0;
+    text-align: center;
+  }
+  .pullquote--headline .pullquote-body {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--t-2xl);
+    line-height: 1.06;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+  .pullquote--headline .pullquote-cite {
+    justify-content: center;
+  }
+
+  @media (max-width: 720px) {
+    .pullquote--quote .pullquote-body {
+      font-size: var(--t-lg);
+    }
+    .pullquote--headline .pullquote-body {
+      font-size: var(--t-xl);
+    }
+  }
+</style>

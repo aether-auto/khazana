@@ -1,60 +1,213 @@
 ---
 import Shell from "../../layouts/Shell.astro";
-import ReadCard from "../../components/ReadCard.astro";
+import FeaturedRead from "../../components/reads/FeaturedRead.astro";
+import ReadGalleryCard from "../../components/reads/ReadGalleryCard.astro";
+import ReadsFilter from "../../components/reads/ReadsFilter.astro";
+import { buildReadsIndex, type ReadInput } from "../../components/reads/lib/build-reads.js";
 import { getCollection } from "astro:content";
+import { FORMAT_NAMES } from "@khazana/core";
 
-const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
-  (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime(),
-);
+// Pull the published reads, map to the lib's input shape (raw MDX body so the
+// lib derives read-time exactly like the read page does), then let the PURE lib
+// sort, split off the featured read, and compute facets + the editorial stats.
+const posts = await getCollection("blog", ({ data }) => !data.draft);
+const inputs: ReadInput[] = posts.map((post) => ({
+  slug: post.id,
+  title: post.data.title,
+  format: post.data.format,
+  channels: post.data.channels,
+  summary: post.data.summary,
+  publishedAt: post.data.publishedAt.toISOString(),
+  body: post.body ?? "",
+  sourceCount: post.data.sources.length,
+}));
+
+const { featured, gallery, formatFacet, channelFacet, stats } = buildReadsIndex(inputs, {
+  base: import.meta.env.BASE_URL,
+  formatOrder: FORMAT_NAMES,
+});
 ---
 
 <Shell title="khazana — reads" active="reads">
   <header class="reads-head" data-reveal>
     <p class="eyebrow">reads</p>
-    <h1 class="reads-h1">long-form, in your voice</h1>
+    <h1 class="reads-h1 display">a daily long-form, <em>set</em> in your voice</h1>
     <p class="reads-sub">
-      Original, interactive, AI-authored reads — grounded in the day's signal and
-      cited to the source.
+      Original, interactive reads — grounded in the day's signal, set in Fraunces
+      &amp; Newsreader, cited to the source.
     </p>
+
+    <!-- editorial readout — the collection's telemetry as a tasteful mono row -->
+    {
+      stats.total > 0 && (
+        <dl class="reads-stats tnum" aria-label="collection telemetry">
+          <div class="rstat">
+            <dt>reads</dt>
+            <dd>{String(stats.total).padStart(2, "0")}</dd>
+          </div>
+          <div class="rstat">
+            <dt>minutes</dt>
+            <dd>{stats.totalMinutes}</dd>
+          </div>
+          <div class="rstat">
+            <dt>formats</dt>
+            <dd>{stats.formats}</dd>
+          </div>
+          <div class="rstat">
+            <dt>channels</dt>
+            <dd>{stats.channels}</dd>
+          </div>
+          <div class="rstat">
+            <dt>sources</dt>
+            <dd>{stats.sources}</dd>
+          </div>
+        </dl>
+      )
+    }
   </header>
 
-  <section class="reads-grid">
-    {
-      posts.map((post, i) => (
-        <ReadCard
-          slug={post.id}
-          title={post.data.title}
-          format={post.data.format}
-          summary={post.data.summary}
-          publishedAt={post.data.publishedAt}
-          revealDelay={Math.min(i, 6) * 60}
+  {
+    featured && (
+      <FeaturedRead
+        slug={featured.slug}
+        title={featured.title}
+        format={featured.format}
+        channels={featured.channels}
+        summary={featured.summary}
+        href={featured.href}
+        dateLabel={featured.dateLabel}
+        readMin={featured.readMin}
+        sourceCount={featured.sourceCount}
+      />
+    )
+  }
+
+  {
+    gallery.length > 0 && (
+      <section class="reads-collection" aria-label="The collection">
+        <div class="collection-head" data-reveal>
+          <p class="eyebrow">the collection</p>
+          <span class="collection-rule" aria-hidden="true" />
+        </div>
+
+        <ReadsFilter
+          formatFacet={formatFacet}
+          channelFacet={channelFacet}
+          galleryCount={gallery.length}
         />
-      ))
-    }
-  </section>
+
+        <div class="reads-grid" data-reads-grid>
+          {gallery.map((card, i) => (
+            <ReadGalleryCard
+              slug={card.slug}
+              title={card.title}
+              format={card.format}
+              channels={card.channels}
+              summary={card.summary}
+              href={card.href}
+              dateLabel={card.dateLabel}
+              readMin={card.readMin}
+              sourceCount={card.sourceCount}
+              revealDelay={Math.min(i, 6) * 60}
+            />
+          ))}
+        </div>
+      </section>
+    )
+  }
 </Shell>
 
 <style>
   .reads-head {
     margin-bottom: var(--s-8);
-    max-width: var(--measure);
+    max-width: var(--maxw);
   }
   .reads-h1 {
-    font-family: var(--font-read);
     font-size: var(--t-2xl);
     line-height: var(--lh-tight);
     letter-spacing: -0.02em;
     margin: 0 0 var(--s-3);
+    max-width: 22ch;
   }
   .reads-sub {
     font-family: var(--font-read);
     color: var(--ink-dim);
     font-size: var(--t-md);
     margin: 0;
+    max-width: var(--measure);
   }
+
+  /* ── editorial readout — a hairline-ruled row of mono stat cells ─────────── */
+  .reads-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    margin: var(--s-6) 0 0;
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    width: fit-content;
+    max-width: 100%;
+  }
+  .rstat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15em;
+    padding: var(--s-3) var(--s-5);
+    border-right: var(--hair) solid var(--rule);
+  }
+  .rstat:last-child {
+    border-right: 0;
+  }
+  .rstat dt {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+  }
+  .rstat dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--t-lg);
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  /* ── the collection ─────────────────────────────────────────────────────── */
+  .reads-collection {
+    margin-top: var(--s-4);
+  }
+  .collection-head {
+    display: flex;
+    align-items: center;
+    gap: var(--s-4);
+    margin-bottom: var(--s-5);
+  }
+  .collection-head .eyebrow {
+    margin: 0;
+    flex: none;
+  }
+  .collection-rule {
+    flex: 1;
+    height: var(--hair);
+    background: linear-gradient(90deg, var(--rule), transparent);
+  }
+
   .reads-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
     gap: var(--s-5);
+    align-items: start;
+  }
+
+  @media (max-width: 560px) {
+    .reads-stats {
+      width: 100%;
+    }
+    .rstat {
+      flex: 1 1 33%;
+      border-bottom: var(--hair) solid var(--rule);
+    }
   }
 </style>

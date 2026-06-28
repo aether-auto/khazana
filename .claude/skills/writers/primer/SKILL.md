@@ -1,6 +1,6 @@
 ---
 name: writers/primer
-description: This skill should be used to author a PRIMER post for khazana — an evergreen, foundational explainer that will still be valuable in five years, built on progressive scaffolding with interactive sandboxes. Trigger when a brief's "Format:" line is `primer`, or when asked to "write a primer", "explain the fundamentals of X", or produce a timeless foundational explainer MDX post. Produces one MDX file (RunnableCode/Chart/Annotation) that builds in apps/site and passes validateDraft.
+description: This skill should be used to author a PRIMER post for khazana — an evergreen, foundational explainer that will still be valuable in five years, built on progressive scaffolding with interactive sandboxes. Trigger when a brief's "Format:" line is `primer`, or when asked to "write a primer", "explain the fundamentals of X", or produce a timeless foundational explainer MDX post. Produces one MDX file (RunnableCode/Chart/Annotation/StatBand/Pullquote/NarrativeScene) targeting ~15-min rendered depth that builds in apps/site and passes validateDraft.
 version: 1.0.0
 ---
 
@@ -45,23 +45,43 @@ actually runs — a primer's whole job is to be trustworthy bedrock.
 
 Full detail: **`references/craft.md`**.
 
-## Structural template (~1500–2000 words + sandboxes)
+## Structural template (target ~15-min rendered read / `GAUSSIAN_DEFAULTS.peakMin`)
 
-Opening question (100–150w, no jargon, no current events) → common misconception
-(150–200w) with a `<RunnableCode>` sandbox that *breaks* it → concept 1 / foundation
-(300–400w), definition + worked example + a `<Chart>` → concept 2 / build on
-foundation (300–400w), `<RunnableCode>` the reader tweaks → concept 3 / the
-interesting part (300–400w), the "aha" → synthesis + where to go next (150–200w, a
-mental model, links to cited deeper resources, one question to sit with). Annotated
-skeleton: **`references/template.mdx`**. Worked excerpts:
+Aim for ~3000–4000 words + interactive sandboxes. Reach depth through more scaffold
+layers, more worked examples, a richer synthesis — never padding.
+
+Opening `<StatBand>` with the striking numbers that motivate the concept (why this
+matters, at scale) → opening question (100–150w, no jargon, no current events) →
+`<Pullquote>` of a crisp foundational definition or memorable framing from the
+literature → common misconception (200–300w) with a `<RunnableCode>` sandbox that
+*breaks* it → concept 1 / foundation (400–600w), definition + worked example + a
+`<Chart>` → concept 2 / build on foundation (400–600w), `<RunnableCode>` the reader
+tweaks, optionally `<NarrativeScene>` if concept scaffolding benefits from a pinned
+evolving visual → concept 3 / the interesting part (400–600w), the "aha" → synthesis
++ where to go next (150–200w, a mental model, links, one question to sit with).
+Annotated skeleton: **`references/template.mdx`**. Worked excerpts:
 **`references/exemplars.md`**.
 
 ## Components (this format's kit only)
 
-`RunnableCode`, `Chart`, `Annotation` — nothing else. `<RunnableCode>` is the
-intuition sandbox (place it *before* the explanation); `<Chart>` visualizes the
-concept; `<Annotation>` cites every definition and number inline. Exact props:
-**`references/mdx-contract.md`**.
+`RunnableCode`, `Chart`, `Annotation`, `StatBand`, `Pullquote`, `NarrativeScene`
+— nothing else.
+
+`<RunnableCode>` is the intuition sandbox (place it *before* the explanation);
+`<Chart>` visualizes the concept; `<Annotation>` cites every definition and number
+inline.
+
+New narrative components — use where they deepen the conceptual story:
+- **`StatBand` (`client:visible`)**: striking numbers that motivate the concept — the
+  scale or consequence that makes it worth understanding. Props:
+  `stats=[{ value, prefix?, suffix?, decimals?, group?, label, sub?, href? }]`, `caption?`.
+- **`Pullquote` (static `.astro`, NO `client:` directive)**: a crisp foundational
+  definition or memorable framing. Props: `cite?`, `href?`, `kind?` (default `"quote"`).
+- **`NarrativeScene` (`client:visible`)**: when progressive concept scaffolding benefits
+  from a pinned visual that evolves per scroll step. Props: `steps=[{ panel, prose:"<html>"}]`,
+  `caption?`. Panel: `{kind:"chart", ...ChartProps}` | `{kind:"scene", headline, sub?, kicker?}`.
+
+Exact props: **`references/mdx-contract.md`**.
 
 ## Reading-comfort & voice
 
@@ -82,8 +102,9 @@ not write prose yet.
 ### `<phase>Outline</phase>`
 Section-by-section against the template: heading + intent + component placement +
 source. Confirm the scaffold is strictly ordered (each section depends only on
-prior ones), ~1500–2000 words, no current-events examples, every cited source used.
-Confirm only kit components.
+prior ones), target ~3000–4000 words (~15-min rendered read), no current-events
+examples, every cited source used. Confirm only kit components. Note placement of
+`<StatBand>`, `<Pullquote>`, and `<NarrativeScene>` if used.
 
 ### `<phase>Draft</phase>`
 Write each `<RunnableCode>` sandbox first and mentally run it; place it *before* its

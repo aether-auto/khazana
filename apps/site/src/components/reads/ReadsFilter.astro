@@ -1,0 +1,320 @@
+---
+// The /reads facet filter — a small client-enhanced island. Two facet rows:
+// FORMAT (canonical order) and CHANNEL (count desc), each chip showing a live
+// count. Progressive enhancement: with JS off it's a static, intentional-looking
+// legend of what the collection contains; JS wires live filtering of the gallery
+// cards by toggling [hidden], with a FLIP/opacity reflow so cards animate in/out.
+// "all" is the default for each facet. The featured hero is NOT filtered — it is
+// always the latest read; the chips act on the gallery grid below.
+import type { FacetCount } from "./lib/build-reads.js";
+
+interface Props {
+  formatFacet: FacetCount[];
+  channelFacet: FacetCount[];
+  /** total reads in the gallery (excludes featured) — the count for "all". */
+  galleryCount: number;
+}
+const { formatFacet, channelFacet, galleryCount } = Astro.props;
+---
+
+<form class="rfilter" data-reads-filter aria-label="Filter reads">
+  <div class="rfilter-row">
+    <span class="rfilter-label">format /</span>
+    <div class="rfilter-chips" role="group" aria-label="Filter by format">
+      <button
+        type="button"
+        class="rchip rchip-active"
+        data-facet="format"
+        data-value=""
+        aria-pressed="true"
+      >
+        all<span class="rchip-n tnum">{galleryCount}</span>
+      </button>
+      {
+        formatFacet.map((f) => (
+          <button
+            type="button"
+            class="rchip"
+            data-facet="format"
+            data-value={f.value}
+            aria-pressed="false"
+          >
+            {f.value}
+            <span class="rchip-n tnum">{f.count}</span>
+          </button>
+        ))
+      }
+    </div>
+  </div>
+
+  <div class="rfilter-row">
+    <span class="rfilter-label">channel /</span>
+    <div class="rfilter-chips" role="group" aria-label="Filter by channel">
+      <button
+        type="button"
+        class="rchip rchip-active"
+        data-facet="channel"
+        data-value=""
+        aria-pressed="true"
+      >
+        all<span class="rchip-n tnum">{galleryCount}</span>
+      </button>
+      {
+        channelFacet.map((c) => (
+          <button
+            type="button"
+            class="rchip"
+            data-facet="channel"
+            data-value={c.value}
+            aria-pressed="false"
+          >
+            {c.value}
+            <span class="rchip-n tnum">{c.count}</span>
+          </button>
+        ))
+      }
+    </div>
+  </div>
+
+  <!-- live region for the result count; updated by JS, polite so SR users hear
+       "showing N reads" after a filter without it stealing focus. -->
+  <p class="rfilter-status" data-reads-status aria-live="polite"></p>
+</form>
+
+<script>
+  // ── /reads facet filter ────────────────────────────────────────────────
+  // Two independent facets (format AND channel) intersect: a card shows only if
+  // it matches BOTH the active format and the active channel ("" = any). Cards
+  // are matched by their data-format / data-channels attributes (set by
+  // ReadGalleryCard). We animate the reflow with a FLIP pass — measure positions
+  // before, toggle [hidden], measure after, then play the inverse transform — so
+  // surviving cards glide to their new grid slots and entering cards fade up.
+  // Reduced-motion → no FLIP, just an instant toggle. No layout libs.
+
+  type Facet = "format" | "channel";
+
+  function initReadsFilter(): void {
+    const form = document.querySelector<HTMLFormElement>("[data-reads-filter]");
+    if (!form) return;
+    if (form.dataset.filterReady === "1") return;
+    form.dataset.filterReady = "1";
+
+    // The gallery grid lives as a sibling section on the page; find it by a stable
+    // hook so the island never reaches blindly into the DOM.
+    const grid = document.querySelector<HTMLElement>("[data-reads-grid]");
+    const status = form.querySelector<HTMLElement>("[data-reads-status]");
+    if (!grid) return;
+
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const active: Record<Facet, string> = { format: "", channel: "" };
+
+    const cards = Array.from(grid.querySelectorAll<HTMLElement>("[data-read]"));
+
+    function matches(card: HTMLElement): boolean {
+      const fmt = card.dataset.format ?? "";
+      const chans = (card.dataset.channels ?? "").split(",").filter(Boolean);
+      const fmtOk = active.format === "" || fmt === active.format;
+      const chanOk = active.channel === "" || chans.includes(active.channel);
+      return fmtOk && chanOk;
+    }
+
+    // Empty-state node — shown when no card matches, so the grid is never a void.
+    let empty = grid.querySelector<HTMLElement>("[data-reads-empty]");
+    if (!empty) {
+      empty = document.createElement("p");
+      empty.setAttribute("data-reads-empty", "");
+      empty.className = "rfilter-empty";
+      empty.hidden = true;
+      empty.textContent = "No reads match this filter yet.";
+      grid.appendChild(empty);
+    }
+
+    function apply(): void {
+      // FLIP: capture first positions of currently-visible cards.
+      const firstRects = new Map<HTMLElement, DOMRect>();
+      if (!reduce) {
+        for (const card of cards) {
+          if (!card.hidden) firstRects.set(card, card.getBoundingClientRect());
+        }
+      }
+
+      // Toggle visibility per the intersection of active facets.
+      let shown = 0;
+      for (const card of cards) {
+        const show = matches(card);
+        card.hidden = !show;
+        if (show) shown += 1;
+      }
+      if (empty) empty.hidden = shown !== 0;
+      if (status) status.textContent = `Showing ${shown} read${shown === 1 ? "" : "s"}.`;
+
+      if (reduce) return;
+
+      // FLIP: measure last positions, then invert+play. Entering cards (no first
+      // rect) fade + rise; surviving cards glide from their old slot.
+      for (const card of cards) {
+        if (card.hidden) continue;
+        const last = card.getBoundingClientRect();
+        const first = firstRects.get(card);
+        if (first) {
+          const dx = first.left - last.left;
+          const dy = first.top - last.top;
+          if (dx === 0 && dy === 0) continue;
+          card.animate(
+            [
+              { transform: `translate(${dx}px, ${dy}px)` },
+              { transform: "translate(0, 0)" },
+            ],
+            { duration: 280, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)" },
+          );
+        } else {
+          card.animate(
+            [
+              { opacity: 0, transform: "translateY(10px) scale(0.98)" },
+              { opacity: 1, transform: "translateY(0) scale(1)" },
+            ],
+            { duration: 240, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)" },
+          );
+        }
+      }
+    }
+
+    form.addEventListener("click", (ev) => {
+      const chip = (ev.target as HTMLElement | null)?.closest<HTMLButtonElement>(".rchip");
+      if (!chip) return;
+      ev.preventDefault();
+      const facet = chip.dataset.facet as Facet | undefined;
+      if (facet !== "format" && facet !== "channel") return;
+      const value = chip.dataset.value ?? "";
+      active[facet] = value;
+
+      // Update pressed state within this facet's chip group only.
+      const group = chip.closest(".rfilter-chips");
+      group?.querySelectorAll<HTMLButtonElement>(".rchip").forEach((c) => {
+        const on = (c.dataset.value ?? "") === value;
+        c.classList.toggle("rchip-active", on);
+        c.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+
+      apply();
+    });
+
+    // initial status (silent first paint already shows all)
+    if (status) status.textContent = `Showing ${cards.length} read${cards.length === 1 ? "" : "s"}.`;
+  }
+
+  initReadsFilter();
+  document.addEventListener("astro:page-load", initReadsFilter);
+</script>
+
+<style>
+  .rfilter {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    margin-bottom: var(--s-6);
+  }
+  .rfilter-row {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: var(--s-2) var(--s-3);
+  }
+  .rfilter-label {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    min-width: 5.5rem;
+  }
+  .rfilter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+  }
+  /* a chip is a mono pill with a tabular count — the "instrument legend" voice */
+  .rchip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.5ch;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-dim);
+    background: transparent;
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-sm);
+    padding: 0.22em 0.6em;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-overshoot);
+  }
+  .rchip:hover {
+    color: var(--accent);
+    border-color: var(--rule-bright);
+    transform: translateY(-1px);
+  }
+  .rchip:active {
+    transform: translateY(0);
+  }
+  .rchip:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .rchip-n {
+    font-size: 0.68rem;
+    color: var(--ink-faint);
+  }
+  .rchip-active {
+    color: var(--accent);
+    border-color: color-mix(in oklab, var(--accent) 38%, var(--rule));
+    background: color-mix(in oklab, var(--accent) 8%, transparent);
+    text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 35%, transparent);
+  }
+  .rchip-active .rchip-n {
+    color: color-mix(in oklab, var(--accent) 75%, var(--ink-faint));
+  }
+
+  .rfilter-status {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    /* keep it present in flow but visually quiet — telemetry, not a banner */
+    min-height: 1em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rchip {
+      transition: color var(--dur-fast) var(--ease-out);
+      transform: none !important;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .rfilter-label {
+      min-width: 100%;
+    }
+  }
+</style>
+
+<!-- The empty-state node style lives here too so it's bundled with the island. -->
+<style is:global>
+  .rfilter-empty {
+    grid-column: 1 / -1;
+    margin: var(--s-6) 0;
+    padding: var(--s-8) var(--s-5);
+    text-align: center;
+    font-family: var(--font-read);
+    font-style: italic;
+    color: var(--ink-dim);
+    border: var(--hair) dashed var(--rule);
+    border-radius: var(--r-md);
+  }
+</style>

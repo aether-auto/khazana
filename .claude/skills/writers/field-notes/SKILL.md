@@ -1,6 +1,6 @@
 ---
 name: writers/field-notes
-description: This skill should be used to author a FIELD NOTES post for khazana — a ruthlessly short, sharp news briefing on a fast-moving cluster, in the spirit of Stratechery's Daily Update or Axios. Trigger when a brief's "Format:" line is `field-notes`, or when asked to "write field notes", "brief me on this", or produce a short sharp news synthesis MDX post. Produces one MDX file (Annotation/DataTable) that builds in apps/site and passes validateDraft.
+description: This skill should be used to author a FIELD NOTES post for khazana — a ruthlessly short, sharp news briefing on a fast-moving cluster, in the spirit of Stratechery's Daily Update or Axios. Trigger when a brief's "Format:" line is `field-notes`, or when asked to "write field notes", "brief me on this", or produce a short sharp news synthesis MDX post. Produces one MDX file (Annotation/DataTable; sparingly StatBand/Pullquote) that builds in apps/site and passes validateDraft.
 version: 1.0.0
 ---
 
@@ -14,7 +14,8 @@ to watch. Every word justified; links to sources are the product, not decoration
 Input is an authoring brief on stdin: title, slug, channel, founder voice, and a
 **Source items** block — the real article(s) that are the verifiable source of
 truth. Output is one MDX file at the brief's path. This is the only **brief**-length
-format (~300–500 words).
+format (~300–500 words). Field Notes is the deliberate exception to the reading-time
+peak target — brevity is its craft; do not pad to 15 minutes.
 
 ## Grounding mandate (non-negotiable)
 
@@ -49,10 +50,19 @@ links). Annotated skeleton: **`references/template.mdx`**. Worked excerpts:
 
 ## Components (this format's kit only)
 
-`Annotation`, `DataTable` — nothing else. `<Annotation>` carries the crystallizing
+`Annotation`, `DataTable` — primary kit. `<Annotation>` carries the crystallizing
 figure and inline citations; `<DataTable>` is used *only* if a small comparison
-(2–4 rows) sharpens the story. Most of the piece is prose. Exact props:
-**`references/mdx-contract.md`**.
+(2–4 rows) sharpens the story. Most of the piece is prose.
+
+Sparingly, if they earn their place in a tight briefing:
+- **`StatBand` (`client:visible`)**: one crystallizing figure, if the number is the story.
+  Props: `stats=[{ value, prefix?, suffix?, decimals?, group?, label, sub?, href? }]`.
+  Use at most one StatBand; omit if Annotation/DataTable already carries the number.
+- **`Pullquote` (static `.astro`, NO `client:` directive)**: one striking primary-source
+  line if it anchors the lede. Props: `cite?`, `href?`, `kind?`. Keep it to one, short.
+
+Never add components just to fill space. The word limit (300–500w) is the ceiling, not the floor.
+Exact props: **`references/mdx-contract.md`**.
 
 ## Reading-comfort & voice
 

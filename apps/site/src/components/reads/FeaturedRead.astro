@@ -1,0 +1,270 @@
+---
+// The FEATURED hero for the /reads index — the most recent read, presented large.
+// CRITICAL View-Transition contract: this hero's <h1> owns `read-title-${slug}`
+// for the featured read, so the morph runs into the read page's title. Exactly
+// ONE element per page may carry a given transition:name, so the featured read is
+// EXCLUDED from the gallery grid (buildReadsIndex enforces the disjoint split).
+//
+// Atmosphere: a restrained, format-keyed amber/clay glow that drifts slowly behind
+// the masthead (transform/opacity only, GPU-cheap, 60fps; stilled under
+// prefers-reduced-motion). No WebGL, no rainbow — a single living detail.
+import FormatBadge from "../FormatBadge.astro";
+import ChannelChip from "../ChannelChip.astro";
+
+interface Props {
+  slug: string;
+  title: string;
+  format: string;
+  channels: string[];
+  summary: string;
+  href: string;
+  dateLabel: string;
+  readMin: number;
+  sourceCount: number;
+}
+const { slug, title, format, channels, summary, href, dateLabel, readMin, sourceCount } =
+  Astro.props;
+// A stable issue number derived from the slug — the same hand-built-artifact
+// detail the Article masthead uses (Article.astro), so the hero and the read agree.
+const issueNo = (Array.from(slug).reduce((a, c) => (a + c.charCodeAt(0)) % 999, 0) + 1);
+const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
+---
+
+<section class="featured" data-reveal aria-labelledby="featured-title">
+  <a class="featured-link" href={href}>
+    <!-- the living atmosphere: two slow-drifting amber/clay glows behind the
+         masthead. Pure transform/opacity, paused under reduced-motion. -->
+    <div class="featured-atmos" aria-hidden="true">
+      <span class="atmos-glow atmos-amber"></span>
+      <span class="atmos-glow atmos-clay"></span>
+    </div>
+
+    <div class="featured-inner">
+      <p class="featured-kicker">
+        <span class="featured-flag">latest read</span>
+        <span class="featured-issue">{issueLabel}</span>
+        <span class="ksep" aria-hidden="true">·</span>
+        <FormatBadge format={format} />
+        <span class="ksep" aria-hidden="true">·</span>
+        <time class="tnum" datetime={dateLabel}>{dateLabel}</time>
+      </p>
+
+      <h1 class="featured-title display" id="featured-title" transition:name={`read-title-${slug}`}>
+        {title}
+      </h1>
+
+      <p class="featured-standfirst">{summary}</p>
+
+      <div class="featured-foot">
+        <div class="featured-channels">
+          {channels.map((c) => <ChannelChip channel={c} />)}
+        </div>
+        <p class="featured-telemetry tnum" aria-label="reading telemetry">
+          <span>{readMin} min read</span>
+          <span class="tsep" aria-hidden="true">·</span>
+          <span>{sourceCount} source{sourceCount === 1 ? "" : "s"}</span>
+        </p>
+      </div>
+
+      <span class="featured-cta">
+        read the latest <span class="cta-arrow" aria-hidden="true">→</span>
+      </span>
+    </div>
+  </a>
+</section>
+
+<style>
+  .featured {
+    position: relative;
+    margin-bottom: var(--s-10);
+  }
+  .featured-link {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-md);
+    /* deep instrument-panel surface with a warm top-edge light — same family as
+       the read masthead (Article .article-head). */
+    background:
+      radial-gradient(130% 120% at 16% 0%, color-mix(in oklab, var(--accent) 8%, transparent), transparent 56%),
+      var(--bg-card);
+    box-shadow:
+      inset 0 var(--hair) 0 color-mix(in oklab, var(--accent) 18%, transparent),
+      inset 0 0 0 var(--hair) var(--rule);
+    transition:
+      border-color var(--dur) var(--ease-out),
+      transform var(--dur) var(--ease-out),
+      box-shadow var(--dur) var(--ease-out);
+  }
+  .featured-link:hover {
+    text-decoration: none;
+    border-color: color-mix(in oklab, var(--accent) 40%, var(--rule));
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 var(--hair) 0 color-mix(in oklab, var(--accent) 26%, transparent),
+      inset 0 0 0 var(--hair) var(--rule),
+      0 18px 50px -28px color-mix(in oklab, var(--accent) 40%, transparent);
+  }
+  .featured-link:active {
+    transform: translateY(0);
+  }
+
+  /* ── living atmosphere — slow-drifting glows, transform/opacity only ─────── */
+  .featured-atmos {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+  }
+  .atmos-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(46px);
+    opacity: 0.5;
+    will-change: transform;
+  }
+  .atmos-amber {
+    width: 42%;
+    height: 130%;
+    top: -28%;
+    left: 4%;
+    background: radial-gradient(circle, color-mix(in oklab, var(--accent) 30%, transparent), transparent 66%);
+    animation: drift-amber 19s var(--ease-out) infinite alternate;
+  }
+  .atmos-clay {
+    width: 38%;
+    height: 130%;
+    top: -10%;
+    right: 2%;
+    background: radial-gradient(circle, color-mix(in oklab, var(--editorial) 26%, transparent), transparent 66%);
+    animation: drift-clay 23s var(--ease-out) infinite alternate;
+  }
+  @keyframes drift-amber {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to { transform: translate3d(8%, 6%, 0) scale(1.12); }
+  }
+  @keyframes drift-clay {
+    from { transform: translate3d(0, 4%, 0) scale(1.05); }
+    to { transform: translate3d(-7%, -5%, 0) scale(0.95); }
+  }
+  /* a faint amber lift on hover — the atmosphere responds to attention */
+  .featured-link:hover .atmos-glow {
+    opacity: 0.7;
+  }
+  .atmos-glow {
+    transition: opacity var(--dur-slow) var(--ease-out);
+  }
+
+  .featured-inner {
+    position: relative;
+    z-index: 1;
+    padding: clamp(var(--s-6), 5vw, var(--s-10)) clamp(var(--s-5), 5vw, var(--s-10));
+    max-width: 62ch;
+  }
+
+  .featured-kicker {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+    margin: 0 0 var(--s-5);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+  }
+  .featured-flag {
+    color: var(--bg-inset);
+    background: var(--accent);
+    border-radius: var(--r-sm);
+    padding: 0.18em 0.55em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    box-shadow: 0 0 16px -4px color-mix(in oklab, var(--accent) 70%, transparent);
+  }
+  .featured-issue {
+    color: var(--accent);
+    letter-spacing: 0.04em;
+  }
+  .ksep {
+    color: var(--rule-bright);
+  }
+
+  .featured-title {
+    margin: 0 0 var(--s-5);
+    font-size: var(--t-display-sm);
+    line-height: 1.02;
+    color: var(--ink);
+    font-variation-settings: "opsz" 120, "SOFT" 0, "WONK" 0;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .featured-standfirst {
+    margin: 0 0 var(--s-6);
+    font-family: var(--font-read);
+    font-optical-sizing: auto;
+    font-size: var(--t-lg);
+    line-height: 1.45;
+    color: var(--read);
+    font-style: italic;
+    max-width: 52ch;
+  }
+
+  .featured-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--s-3);
+    margin-bottom: var(--s-6);
+  }
+  .featured-channels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+  }
+  .featured-telemetry {
+    margin: 0;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.6ch;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+  .tsep {
+    color: var(--rule-bright);
+  }
+
+  .featured-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5ch;
+    font-family: var(--font-mono);
+    font-size: var(--t-sm);
+    letter-spacing: 0.04em;
+    color: var(--accent);
+  }
+  .cta-arrow {
+    display: inline-block;
+    transition: transform var(--dur) var(--ease-overshoot);
+  }
+  .featured-link:hover .cta-arrow {
+    transform: translateX(5px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .atmos-amber,
+    .atmos-clay {
+      animation: none;
+    }
+    .cta-arrow,
+    .featured-link {
+      transition: none;
+    }
+  }
+</style>

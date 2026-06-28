@@ -18,7 +18,7 @@
 import { useEffect, useRef, useState } from "react";
 import scrollama from "scrollama";
 import Chart from "./Chart.js";
-import { resolveActiveStep } from "./lib/scrolly-state.js";
+import { resolveActiveStep, safeActiveStep } from "./lib/scrolly-state.js";
 import type { ChartProps } from "./lib/chart-spec.js";
 import "./mdx.css";
 import "./Scrolly.css";
@@ -83,6 +83,16 @@ export default function Scrolly({ steps, caption }: ScrollyProps) {
     };
   }, [reduced, safeSteps.length]);
 
+  // Guard: empty steps → render a minimal placeholder so the figure is never
+  // blank AND never throws (safeSteps[0] would be undefined otherwise).
+  if (safeSteps.length === 0) {
+    return caption ? (
+      <figure className="mdx-figure mdx-figure--wide scrolly scrolly--stacked">
+        <figcaption className="mdx-caption">{caption}</figcaption>
+      </figure>
+    ) : null;
+  }
+
   // Stacked fallback (SSR, no-JS, reduced motion): graphic above its prose.
   // This is what renders into the static HTML, so the figure is NEVER blank.
   if (reduced) {
@@ -101,18 +111,22 @@ export default function Scrolly({ steps, caption }: ScrollyProps) {
     );
   }
 
+  // Clamp active to a valid index; safeActiveStep returns null for empty arrays
+  // (already handled above) and a clamped number otherwise.
+  const activeIdx = safeActiveStep(active, safeSteps.length) ?? 0;
+
   return (
     <figure className="mdx-figure mdx-figure--wide scrolly" ref={rootRef}>
       <div className="scrolly-grid">
         <div className="scrolly-sticky">
           <div className="scrolly-graphic">
-            <Chart {...(safeSteps[active] ?? safeSteps[0]).chart} />
+            <Chart {...safeSteps[activeIdx].chart} />
           </div>
         </div>
         <div className="scrolly-steps">
           {safeSteps.map((s, i) => (
             <div
-              className={i === active ? "scrolly-step scrolly-step--active" : "scrolly-step"}
+              className={i === activeIdx ? "scrolly-step scrolly-step--active" : "scrolly-step"}
               key={i}
               dangerouslySetInnerHTML={{ __html: s.prose }}
             />

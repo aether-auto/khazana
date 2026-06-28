@@ -19,7 +19,6 @@
 .tl-tick-label {
   font-family: var(--font-mono);
   font-size: 11px;
-  text-anchor: middle;
   fill: var(--ink-faint);
 }
 
@@ -43,7 +42,6 @@
 .tl-label {
   font-family: var(--font-mono);
   font-size: 10px;
-  text-anchor: middle;
   fill: var(--ink-dim);
 }
 

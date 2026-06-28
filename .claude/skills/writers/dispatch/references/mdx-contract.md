@@ -49,6 +49,7 @@ this allow-list:
 
 ```
 Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  RunnableCode  Map
+StatBand  Pullquote  NarrativeScene
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -147,6 +148,59 @@ return fnv1a("cat") % 16;`} />
 runs JS only. Use `console.log(...)` for traces and `return <value>` for the
 result. Keep it self-contained (no imports, no network). `timeoutMs` defaults
 2000. This is the runnable component for teardown / primer / build-log.
+
+### `<StatBand>` — dramatic figure row, counts up on scroll (`client:visible`)
+```jsx
+<StatBand client:visible caption="The scale of the event"
+  stats={[
+    { value: 17.6, suffix: " HRS", label: "OUTAGE DURATION", sub: "North America", href: "https://..." },
+    { value: 1859, label: "YEAR", group: false },
+    { value: 2.6, prefix: "$", suffix: "T", label: "ESTIMATED DAMAGE", sub: "2024 USD", href: "https://..." }
+  ]} />
+```
+`stats` is a non-empty array of `Stat` objects. Each `Stat`: `value` (number, required),
+`prefix?` ("$"), `suffix?` (" HRS"), `decimals?` (fixed precision), `group?` (default `true`;
+set `false` for years, IDs), `label` (mono label, required), `sub?` (smaller qualifier),
+`href?` (source link — turns the stat into a citation). `caption?` is a caption below.
+`duration?` is animation duration in ms (default 1400). Place near the top of the piece.
+
+### `<Pullquote>` — dramatic primary-source block (static Astro, NO `client:` directive)
+```jsx
+<Pullquote cite="Source, Date" href="https://..." kind="quote">
+  The quoted text or document excerpt goes here.
+</Pullquote>
+```
+Props: `cite?` (attribution), `href?` (source link), `kind?` (default `"quote"`).
+Variants: `"quote"` (large italic, hanging quotation mark), `"document"` (mono archival excerpt,
+hairline frame), `"telegram"` (perforated-tape top, amber routing header, uppercase mono body),
+`"headline"` (Fraunces, ruled top & bottom, centered attribution). Children = the quote text.
+**No `client:` directive** — this is a static Astro component.
+
+### `<NarrativeScene>` — scrollytelling with pinned evolving visual (`client:visible`)
+```jsx
+<NarrativeScene client:visible caption="Caption for the whole scene"
+  steps={[
+    {
+      panel: { kind: "scene", kicker: "DATE / PLACE", headline: "Title Card", sub: "subtitle" },
+      prose: "<p>Step prose as an HTML string. One beat per step.</p>"
+    },
+    {
+      panel: { kind: "map", regions: ["USA", "GBR", "FRA"], caption: "Affected regions" },
+      prose: "<p>Second step prose.</p>"
+    },
+    {
+      panel: { kind: "chart", mark: "line", x: "year", y: "value", data: [{ year: "1990", value: 1 }] },
+      prose: "<p>Third step — chart panel.</p>"
+    }
+  ]} />
+```
+`steps` is a non-empty array of `{ panel: PanelSpec, prose: string }`. `prose` is an HTML string.
+Panel union — pick one `kind` per step:
+- `{ kind: "scene", headline: string, sub?: string, kicker?: string }` — typographic moment
+- `{ kind: "map", regions: string[], weights?: Record<string, number>, caption?: string }` — `regions` = iso3 codes to highlight; `weights` = optional 0..1 graded highlight per iso3
+- `{ kind: "chart", ...ChartProps }` — any `<Chart>` spec with `kind: "chart"` prepended
+
+`caption?` is a caption below the whole component.
 
 ## 4. Body conventions
 

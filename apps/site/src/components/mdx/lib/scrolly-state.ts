@@ -8,6 +8,16 @@ export function clampStepIndex(index: number, count: number): number {
   return index;
 }
 
+/**
+ * Returns the clamped active step index when `count > 0`, or `null` when the
+ * steps array is empty.  Callers that get `null` must render a safe fallback
+ * rather than indexing into the steps array.
+ */
+export function safeActiveStep(active: number, count: number): number | null {
+  if (count <= 0) return null;
+  return clampStepIndex(active, count);
+}
+
 export interface ResolveArgs {
   /** index reported by scrollama onStepEnter */
   entered: number;
