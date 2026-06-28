@@ -1,0 +1,269 @@
+/* ── TECHNICAL TYPOGRAPHY — one code + math system, every surface ─────────
+   khazana sets code the way a precision instrument prints a readout: the mono
+   voice (Berkeley/JetBrains) is the INSTRUMENT register, so code is machined,
+   calm, and amber-keyed — never a loud GitHub-themed box bolted onto warm
+   editorial prose. This file is the SINGLE source of truth for:
+
+     • inline `<code>` in the reading flow,
+     • fenced code blocks `<pre>` (lang tag + copy affordance),
+     • Shiki syntax-highlight token colors (via css-variables theme), and
+     • KaTeX typeset math (inline + display).
+
+   This is a PLAIN global stylesheet (imported via global.css), so selectors are
+   plain descendant selectors — NOT Astro `:global()` (which is only valid inside
+   scoped <style> blocks). Everything is scoped under `.prose`, the reading
+   column on BOTH the MDX Reads page and the in-app reader, so MDX-rendered code
+   and extracted-HTML <pre><code> are one identical family. Tokens come from
+   tokens.css; all of it flips with dark/light automatically. No CDN, no runtime
+   theme JS. */
+
+/* ── 1. Shiki token palette (css-variables theme) ────────────────────────
+   Astro's `css-variables` Shiki theme emits these `--astro-code-*` custom
+   properties for each token scope. We map them to the Observatory palette so
+   highlighting reads as warm instrument light, not rainbow soup: ink for the
+   body, amber for the active/signal tokens (keywords, functions), clay for
+   strings/heat, dim for comments/punctuation, slate for numbers/constants. */
+:root {
+  --astro-code-foreground: var(--read);
+  --astro-code-background: transparent;
+
+  --astro-code-token-comment: var(--ink-faint);
+  --astro-code-token-punctuation: var(--ink-dim);
+  --astro-code-token-keyword: var(--accent);
+  --astro-code-token-function: #e8a85f; /* warm gold — sits beside amber */
+  --astro-code-token-string: var(--editorial); /* clay = heat */
+  --astro-code-token-string-expression: var(--editorial);
+  --astro-code-token-constant: var(--info); /* cool slate for literals */
+  --astro-code-token-number: var(--info);
+  --astro-code-token-parameter: var(--ink);
+  --astro-code-token-link: var(--accent);
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --astro-code-token-function: #9a6a16;
+  }
+}
+
+/* ── 2. Inline code — calm in the Newsreader flow ────────────────────────
+   Sits inside serif body text without towering over it. 0.9em so x-heights
+   roughly align, a recessed inset ground, a hairline so it reads as a chip not
+   a highlight, and a faint amber key on the ink. Never wraps mid-token. */
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  /* nudge the smaller mono cap-height back onto the serif baseline */
+  line-height: 1;
+  color: color-mix(in oklab, var(--accent) 26%, var(--ink));
+  background: var(--bg-inset);
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-sm);
+  padding: 0.1em 0.4em;
+  white-space: nowrap;
+  /* tabular + ligature-free so identifiers read as typed */
+  font-feature-settings: "liga" 0, "calt" 0;
+  word-break: keep-all;
+}
+@media (prefers-color-scheme: light) {
+  .prose code {
+    background: var(--bg-active);
+  }
+}
+
+/* ── 3. Code blocks — the machined readout panel ─────────────────────────
+   A raised instrument surface: card ground, hairline frame, a warm top-edge
+   bezel light (the same physical-panel cue the article header uses), comfy
+   padding, 1.6 leading, momentum horizontal scroll. The block is wrapped (by
+   the copy-enhance script) in `.code-block` so the lang tag + copy button can
+   live in a bezel. The bare, un-enhanced <pre> (no-JS / extracted HTML before
+   enhance) is still beautiful on its own. */
+.prose pre {
+  position: relative;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  line-height: 1.6;
+  color: var(--read);
+  background:
+    /* warm top-edge bezel light — lit from above like the instrument header */
+    linear-gradient(180deg, color-mix(in oklab, var(--accent) 4%, transparent), transparent 2.5rem),
+    var(--bg-card);
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-md);
+  padding: var(--s-4) var(--s-5);
+  margin: var(--s-6) 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  /* inset top hairline reads as a bezel; subtle lift off the page */
+  box-shadow:
+    inset 0 var(--hair) 0 color-mix(in oklab, var(--accent) 12%, transparent),
+    0 1px 0 color-mix(in oklab, #000 18%, transparent);
+  tab-size: 2;
+  font-feature-settings: "liga" 0, "calt" 0;
+  /* break out of the strict reading measure for breathing room, but stay in
+     the column's available width. */
+  max-width: min(100%, 52rem);
+}
+@media (prefers-color-scheme: light) {
+  .prose pre {
+    background:
+      linear-gradient(180deg, color-mix(in oklab, var(--accent) 6%, transparent), transparent 2.5rem),
+      var(--bg-card);
+    box-shadow:
+      inset 0 var(--hair) 0 color-mix(in oklab, var(--accent) 18%, transparent),
+      0 1px 0 color-mix(in oklab, var(--ink) 6%, transparent);
+  }
+}
+/* code inside a pre carries NO chip styling — the block is the surface */
+.prose pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+  white-space: pre;
+  border-radius: 0;
+  line-height: inherit;
+}
+
+/* thin amber-keyed scrollbar so overflow reads as instrument, not chrome */
+.prose pre::-webkit-scrollbar {
+  height: 8px;
+}
+.prose pre::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--accent) 22%, transparent);
+  border-radius: 99px;
+}
+.prose pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ── 4. The enhanced block bezel (lang tag + copy) ───────────────────────
+   `enhance-code.ts` wraps each `.prose pre` in `<div class="code-block">` and
+   injects a `.code-block__bar`. Progressive: with no JS the bare <pre> stands
+   alone (section 3). The bar floats over the top-right of the block, never
+   shifting layout, and is reduced-motion safe. */
+.prose .code-block {
+  position: relative;
+  margin: var(--s-6) 0;
+  max-width: min(100%, 52rem);
+}
+.prose .code-block > pre {
+  margin: 0;
+  /* give the <pre> top room so the bar never overlaps line 1 */
+  padding-top: calc(var(--s-4) + 1.1em);
+}
+.prose .code-block__bar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  /* sit inside the pre's top bezel band; pointer only on the button */
+  pointer-events: none;
+  z-index: 2;
+}
+.prose .code-block__lang {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: lowercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  user-select: none;
+}
+.prose .code-block__lang::before {
+  content: "‹ ";
+  color: var(--accent);
+}
+.prose .code-block__lang::after {
+  content: " ›";
+  color: var(--accent);
+}
+.prose .code-block__copy {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4ch;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  background: color-mix(in oklab, var(--bg-raised) 88%, transparent);
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-sm);
+  padding: 0.18em 0.5em;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+.prose .code-block__copy:hover {
+  color: var(--accent);
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--rule));
+}
+.prose .code-block__copy[data-copied="true"] {
+  color: var(--good);
+  border-color: color-mix(in oklab, var(--good) 50%, var(--rule));
+}
+.prose .code-block__copy-icon {
+  width: 0.95em;
+  height: 0.95em;
+}
+@media (prefers-reduced-motion: reduce) {
+  .prose .code-block__copy {
+    transition: none;
+  }
+}
+
+/* ── 5. KaTeX — typeset math in the Observatory palette ───────────────────
+   KaTeX ships its own katex.min.css (bundled offline in global.css). We only
+   re-key COLOR to the reading ink and give DISPLAY equations a tasteful framed
+   treatment. Inline math sits at the prose size on the serif baseline; display
+   math is centered in a faint inset panel with a hairline + horizontal scroll
+   on overflow for narrow screens. */
+.prose .katex {
+  color: var(--ink);
+  /* KaTeX defaults to 1.21em; trim it so inline math doesn't tower over the
+     serif body — it should read at the prose weight, not as a callout. */
+  font-size: 1.08em;
+}
+
+/* DISPLAY math ($$…$$) — the framed instrument readout */
+.prose .katex-display {
+  margin: var(--s-6) 0;
+  padding: var(--s-5);
+  background: var(--bg-inset);
+  border: var(--hair) solid var(--rule);
+  border-left: 2px solid color-mix(in oklab, var(--accent) 55%, var(--rule));
+  border-radius: var(--r-md);
+  /* horizontal scroll for wide equations on mobile, momentum + clipped frame */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  box-shadow: inset 0 var(--hair) 0 color-mix(in oklab, var(--accent) 8%, transparent);
+}
+.prose .katex-display > .katex {
+  font-size: 1.18em; /* a touch larger when it stands alone */
+  color: var(--ink);
+}
+@media (prefers-color-scheme: light) {
+  .prose .katex-display {
+    background: var(--bg-active);
+  }
+}
+/* thin amber scrollbar on overflowing display math, matching code blocks */
+.prose .katex-display::-webkit-scrollbar {
+  height: 7px;
+}
+.prose .katex-display::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--accent) 22%, transparent);
+  border-radius: 99px;
+}
+
+/* ── 6. Annotated math term (Annotation.tsx, KaTeX-typeset) ──────────────
+   The <Annotation> term is now typeset with KaTeX into `.mdx-annot__math`.
+   Keep it on the dotted-underline affordance baseline, at the reading size. */
+.mdx-annot__math .katex {
+  font-size: 1.02em;
+  color: inherit;
+}

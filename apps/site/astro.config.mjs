@@ -3,6 +3,8 @@ import { defineConfig } from "astro/config";
 import { fileURLToPath } from "node:url";
 import mdx from "@astrojs/mdx";
 import react from "@astrojs/react";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 
 // $0 GitHub Pages project pages: site + base are env-configurable with safe defaults.
 // PUBLIC_SITE_URL e.g. "https://arnavmarda.github.io"; PUBLIC_BASE_PATH e.g. "/khazana".
@@ -23,6 +25,25 @@ export default defineConfig({
   output: "static",
   trailingSlash: "ignore",
   integrations: [react(), mdx()],
+  // Markdown/MDX pipeline. @astrojs/mdx inherits this `markdown` config by
+  // default (extendMarkdownConfig defaults true), so remark-math/rehype-katex
+  // and the brand-themed Shiki apply to BOTH .md and .mdx Reads uniformly.
+  markdown: {
+    // Real typeset math: remark-math parses `$…$` / `$$…$$`, rehype-katex
+    // renders it to KaTeX HTML at BUILD time (zero runtime JS). KaTeX CSS +
+    // fonts are bundled offline (imported in global.css) — never a CDN.
+    remarkPlugins: [remarkMath],
+    rehypePlugins: [rehypeKatex],
+    // Brand-themed code highlighting. `css-variables` makes Shiki emit
+    // `--astro-code-*` custom properties instead of hard-coded colors; we map
+    // those to the Observatory palette in code.css, so highlighting matches the
+    // amber/clay system AND flips automatically with dark/light. One theme,
+    // tokens-driven — the uniformity guarantee.
+    shikiConfig: {
+      theme: "css-variables",
+      wrap: false,
+    },
+  },
   build: { assets: "_assets" },
   vite: {
     resolve: {

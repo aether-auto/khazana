@@ -118,6 +118,8 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
      around it. Reduced-motion / no-VT → plain, instantly-set title. -->
 <script>
   import "../scripts/study-set";
+  // lang tag + copy button on every code block in the reading column
+  import "../scripts/enhance-code";
 </script>
 
 <style>
@@ -360,23 +362,9 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
     background-size: 100% var(--hair);
     text-decoration: none;
   }
-  .prose :global(code) {
-    font-family: var(--font-mono);
-    font-size: 0.9em;
-    background: var(--bg-raised);
-    padding: 0.1em 0.35em;
-    border-radius: var(--r-sm);
-  }
-  .prose :global(pre) {
-    font-family: var(--font-mono);
-    background: var(--bg-inset);
-    border: var(--hair) solid var(--rule);
-    border-radius: var(--r-md);
-    padding: var(--s-4);
-    overflow-x: auto;
-    font-size: var(--t-sm);
-    line-height: 1.5;
-  }
+  /* inline code, code blocks (Shiki) and KaTeX math are styled GLOBALLY in
+     styles/code.css so the MDX Reads column and the in-app reader render code +
+     math as one identical family. (No .prose code/pre rules here on purpose.) */
 
   .sources {
     margin-top: var(--s-10);

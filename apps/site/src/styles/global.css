@@ -10,6 +10,11 @@
    reading column is identical & dark-tuned on every machine. */
 @import "@fontsource-variable/newsreader/opsz.css";
 @import "@fontsource-variable/newsreader/opsz-italic.css";
+/* ── KaTeX math typesetting (bundled OFFLINE — Vite copies katex's fonts into
+   the build; NO CDN, NO runtime network) + the unified code/math typography
+   system (inline code, code blocks, Shiki tokens, KaTeX theming). ── */
+@import "katex/dist/katex.min.css";
+@import "./code.css";
 
 *,
 *::before,

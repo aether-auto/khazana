@@ -10,6 +10,13 @@
   border-bottom: 1px dotted color-mix(in oklab, var(--accent) 70%, transparent);
 }
 .mdx-annot__term:hover { color: var(--accent); }
+/* math terms are KaTeX-typeset (.mdx-annot__math); keep the dotted-underline
+   affordance but let the equation set at the reading baseline, not as mono. */
+.mdx-annot__term--math {
+  border-bottom-style: dotted;
+  line-height: 1.2;
+}
+.mdx-annot__term--math:hover .katex { color: var(--accent); }
 .mdx-annot__note {
   position: absolute;
   left: 0;

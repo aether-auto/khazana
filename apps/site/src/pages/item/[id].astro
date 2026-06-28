@@ -486,27 +486,9 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
     background-size: 100% var(--hair);
     text-decoration: none;
   }
-  .prose :global(code) {
-    font-family: var(--font-mono);
-    font-size: 0.9em;
-    background: var(--bg-raised);
-    padding: 0.1em 0.35em;
-    border-radius: var(--r-sm);
-  }
-  .prose :global(pre) {
-    font-family: var(--font-mono);
-    background: var(--bg-inset);
-    border: var(--hair) solid var(--rule);
-    border-radius: var(--r-md);
-    padding: var(--s-4);
-    overflow-x: auto;
-    font-size: var(--t-sm);
-    line-height: 1.5;
-  }
-  .prose :global(pre code) {
-    background: none;
-    padding: 0;
-  }
+  /* inline code, code blocks and KaTeX math: styled GLOBALLY in styles/code.css
+     so this in-app reader's extracted <pre><code> matches the MDX Reads column
+     exactly. (No .prose code/pre rules here on purpose.) */
 
   /* ── video embed facade ──────────────────────────────────────────────── */
   .media-player {
@@ -743,6 +725,11 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
     text-decoration: none;
   }
 </style>
+
+<script>
+  // lang tag + copy button on every code block in the extracted reading column
+  import "../../scripts/enhance-code";
+</script>
 
 <script>
   // Video facade: on click, swap the thumbnail + play UI for the live iframe.
