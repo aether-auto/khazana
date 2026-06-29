@@ -277,6 +277,15 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
       inset 0 var(--hair) 0 color-mix(in oklab, var(--accent) 16%, transparent),
       inset 0 0 0 var(--hair) var(--rule);
   }
+  /* See Article.astro: the --s-6 header bleed overruns the --s-5 shell padding by
+     8px each side at narrow widths (page-widener). Cap to the shell padding below
+     900px so the in-app reader header sits flush to the edge, not past it. */
+  @media (max-width: 900px) {
+    .article-head {
+      margin-inline: calc(-1 * var(--s-5));
+      padding-inline: var(--s-5);
+    }
+  }
   .article-kicker {
     position: relative;
     z-index: 1;

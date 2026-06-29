@@ -1,6 +1,6 @@
 // apps/site/src/components/mdx/Timeline.tsx
 import { useState } from "react";
-import { buildTimelineScale, deCollideLabels, labelAnchor, type TimelineEvent } from "./lib/timeline-scale.js";
+import { layoutTimeline, type TimelineEvent } from "./lib/timeline-scale.js";
 import "./mdx.css";
 import "./Timeline.css";
 
@@ -9,102 +9,168 @@ export interface TimelineProps {
   caption?: string;
 }
 
+// Fixed SVG coordinate width; the panel scales it to fit via viewBox. Height is
+// computed per-instance by layoutTimeline so the figure is sized to its content
+// (no dead vertical void) and the axis lift adapts to the number of label rows.
 const VIEW_W = 1000;
-// AXIS_Y is fixed; labels above it are stacked upward by ROW_STEP per row.
-// VIEW_H_BASE is the minimum viewBox height when there is only one label row.
-const AXIS_Y = 80;
-const VIEW_H_BASE = 130;
-// Vertical gap between label rows (px in SVG coordinate space).
-const ROW_STEP = 28;
-// Approximate character width for mono label font at --t-xs (0.75rem ≈ 12px).
-const CHAR_PX = 6.5;
+const ROW_STEP = 26;
+const GUTTER = 18;
+const CHAR_PX = 6.6;
 
 /**
- * Horizontal SVG timeline. Pure scale from buildTimelineScale; hover/focus a
- * marker to reveal its detail. Labels are de-collided vertically so closely
- * spaced events never overlap. SSR fallback is a semantic ordered list.
+ * Instrument-style horizontal timeline. All geometry comes from the pure,
+ * unit-tested `layoutTimeline`, which picks one of two readable modes:
+ *
+ *   sequence     — few/clustered events laid out evenly with the real elapsed
+ *                  gap written between them ("+17 hr"). The axis reports the
+ *                  gap as a number instead of stretching it into whitespace.
+ *   proportional — true time-x with a compressed (broken) axis so dense modern
+ *                  clusters spread out and read instead of piling at one edge.
+ *
+ * Labels stack into de-collided rows with leader lines; hovering/focusing a
+ * node reveals its detail in a stable readout strip (no layout shift). The SSR
+ * / no-JS fallback is a semantic ordered list.
  */
 export default function Timeline({ events, caption }: TimelineProps) {
-  const { points, ticks } = buildTimelineScale(events, VIEW_W);
+  const layout = layoutTimeline(events, {
+    width: VIEW_W,
+    charPx: CHAR_PX,
+    rowStep: ROW_STEP,
+    gutter: GUTTER,
+  });
+  const { mode, nodes, ticks, gaps, breaks, axisY, height } = layout;
   const [active, setActive] = useState<number | null>(null);
 
-  // Assign each label to a row so no two in the same row overlap.
-  const labeledPts = points.map((p) => ({ x: p.x, labelPx: p.label.length * CHAR_PX }));
-  const rows = deCollideLabels(labeledPts);
-  const maxRow = rows.reduce((m, r) => Math.max(m, r), 0);
-
-  // Expand the viewBox upward to fit all rows.
-  const viewH = VIEW_H_BASE + maxRow * ROW_STEP;
-  // y of the topmost label row (row 0 is closest to axis, higher rows go up).
-  const labelBaseY = AXIS_Y - 16; // row-0 label y (above the dot)
+  const activeNode = active != null ? nodes[active] : null;
+  // Reserve the readout strip's height always, so revealing detail never shifts
+  // the layout. It sits just below the axis/date band.
+  const readoutY = axisY + 46;
 
   return (
     <figure className="mdx-figure mdx-figure--wide tl">
-      <div className="mdx-panel tl-panel">
+      <div className={`mdx-panel tl-panel tl-panel--${mode}`}>
         <svg
           className="tl-svg"
-          viewBox={`0 ${-(maxRow * ROW_STEP + 10)} ${VIEW_W} ${viewH}`}
+          viewBox={`0 0 ${VIEW_W} ${height + 30}`}
           preserveAspectRatio="xMidYMid meet"
           role="group"
-          aria-label="Timeline"
+          aria-label={caption ? `Timeline: ${caption}` : "Timeline"}
         >
-          <line className="tl-axis" x1={0} y1={AXIS_Y} x2={VIEW_W} y2={AXIS_Y} />
-          {ticks.map((t) => {
-            // Year labels are 4 chars wide ("1900", "2013", …).
-            const tickLabelPx = 4 * CHAR_PX;
-            const tickAnchor = labelAnchor(t.x, VIEW_W, tickLabelPx);
-            return (
-              <g key={t.year} className="tl-tick">
-                <line x1={t.x} y1={AXIS_Y - 4} x2={t.x} y2={AXIS_Y + 4} />
-                <text
-                  x={t.x}
-                  y={AXIS_Y + 20}
-                  textAnchor={tickAnchor}
-                  className="tl-tick-label"
-                >
+          <defs>
+            <linearGradient id="tl-axis-grad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stopColor="var(--tl-axis-fade)" />
+              <stop offset="0.06" stopColor="var(--tl-axis)" />
+              <stop offset="0.94" stopColor="var(--tl-axis)" />
+              <stop offset="1" stopColor="var(--tl-axis-fade)" />
+            </linearGradient>
+          </defs>
+
+          {/* ── the axis line ───────────────────────────────────────────── */}
+          <line className="tl-axis" x1={0} y1={axisY} x2={VIEW_W} y2={axisY} />
+
+          {/* ── broken-axis marks where a dead span was compressed ────────── */}
+          {breaks.map((b, i) => (
+            <g key={`brk-${i}`} className="tl-break" aria-hidden="true">
+              <rect x={b.x - 7} y={axisY - 7} width={14} height={14} className="tl-break-mask" />
+              <line x1={b.x - 5} y1={axisY - 6} x2={b.x - 1} y2={axisY + 6} className="tl-break-slash" />
+              <line x1={b.x + 1} y1={axisY - 6} x2={b.x + 5} y2={axisY + 6} className="tl-break-slash" />
+            </g>
+          ))}
+
+          {/* ── proportional: adaptive year ticks below the axis ──────────── */}
+          {mode === "proportional" &&
+            ticks.map((t) => (
+              <g key={`tick-${t.year}`} className="tl-tick" aria-hidden="true">
+                <line x1={t.x} y1={axisY} x2={t.x} y2={axisY + 6} />
+                <text x={t.x} y={axisY + 20} textAnchor="middle" className="tl-tick-label">
                   {t.year}
                 </text>
               </g>
-            );
-          })}
-          {points.map((p, i) => {
-            const row = rows[i] ?? 0;
-            // Each row lifts the dot and label up by ROW_STEP from the previous.
-            const dotY = AXIS_Y - 14 - row * ROW_STEP;
-            const labelY = dotY - 8;
-            const labelPx = p.label.length * CHAR_PX;
-            const anchor = labelAnchor(p.x, VIEW_W, labelPx);
+            ))}
+
+          {/* ── sequence: elapsed-gap chips between nodes ─────────────────── */}
+          {mode === "sequence" &&
+            gaps.map((g, i) => (
+              <g key={`gap-${i}`} className="tl-gap" aria-hidden="true">
+                {/* a small bracket on the axis spanning the gap's reach */}
+                <line x1={g.x - 14} y1={axisY} x2={g.x + 14} y2={axisY} className="tl-gap-rule" />
+                <text x={g.x} y={axisY + 36} textAnchor="middle" className="tl-gap-label">
+                  {g.label}
+                </text>
+              </g>
+            ))}
+
+          {/* ── nodes: dot + leader stem + staggered label + date stamp ───── */}
+          {nodes.map((node, i) => {
+            const dotY = axisY;
+            const labelY = axisY - 16 - node.row * ROW_STEP;
+            const isActive = active === i;
             return (
               <g
-                key={`${p.t}-${i}`}
-                className={active === i ? "tl-pt tl-pt--active" : "tl-pt"}
+                key={`${node.t}-${i}`}
+                className={isActive ? "tl-node tl-node--active" : "tl-node"}
                 tabIndex={0}
                 role="button"
-                aria-label={`${p.date}: ${p.label}${p.detail ? `. ${p.detail}` : ""}`}
+                aria-label={`${node.dateLabel}: ${node.label}${node.detail ? `. ${node.detail}` : ""}`}
                 onMouseEnter={() => setActive(i)}
-                onMouseLeave={() => setActive(null)}
+                onMouseLeave={() => setActive((cur) => (cur === i ? null : cur))}
                 onFocus={() => setActive(i)}
-                onBlur={() => setActive(null)}
+                onBlur={() => setActive((cur) => (cur === i ? null : cur))}
               >
-                {/* Stem from axis to dot — lengthens naturally for higher rows. */}
-                <line x1={p.x} y1={AXIS_Y} x2={p.x} y2={dotY} className="tl-stem" />
-                <circle cx={p.x} cy={dotY} r={active === i ? 7 : 5} className="tl-dot" />
-                <text x={p.x} y={labelY} textAnchor={anchor} className="tl-label">
-                  {p.label}
+                {/* generous transparent hit-target for pointer + focus */}
+                <rect
+                  className="tl-hit"
+                  x={node.x - 22}
+                  y={labelY - 14}
+                  width={44}
+                  height={dotY - labelY + 30}
+                />
+                {/* leader stem from the axis up to the lifted label row */}
+                <line
+                  className="tl-stem"
+                  x1={node.x}
+                  y1={dotY}
+                  x2={node.x}
+                  y2={labelY + 4}
+                />
+                {/* the event label, anchored to dodge the panel edges */}
+                <text x={node.x} y={labelY} textAnchor={node.anchor} className="tl-label">
+                  {node.label}
                 </text>
-                {active === i && p.detail ? (
-                  <text x={p.x} y={AXIS_Y + 44} className="tl-detail">{p.detail}</text>
+                {/* the node marker on the axis */}
+                <circle className="tl-dot-halo" cx={node.x} cy={dotY} r={9} />
+                <circle className="tl-dot" cx={node.x} cy={dotY} r={isActive ? 6 : 4.5} />
+                {/* compact date stamp below the axis (sequence mode only —
+                    proportional mode reads its dates off the year ticks) */}
+                {mode === "sequence" ? (
+                  <text x={node.x} y={axisY + 18} textAnchor={node.anchor} className="tl-date">
+                    {node.dateLabel}
+                  </text>
                 ) : null}
               </g>
             );
           })}
+
+          {/* ── stable detail readout (no layout shift) ───────────────────── */}
+          {activeNode ? (
+            <text x={VIEW_W / 2} y={readoutY + 14} textAnchor="middle" className="tl-readout">
+              <tspan className="tl-readout-date">{activeNode.dateLabel}</tspan>
+              <tspan className="tl-readout-sep"> · </tspan>
+              <tspan className="tl-readout-text">{activeNode.detail ?? activeNode.label}</tspan>
+            </text>
+          ) : (
+            <text x={VIEW_W / 2} y={readoutY + 14} textAnchor="middle" className="tl-readout tl-readout--hint">
+              {mode === "sequence" ? "hover a moment for detail" : "hover an event for detail"}
+            </text>
+          )}
         </svg>
+
         {/* SSR / no-JS fallback */}
         <ol className="tl-fallback">
-          {points.map((p, i) => (
+          {nodes.map((node, i) => (
             <li key={`f-${i}`}>
-              <span className="mdx-label">{p.date}</span> {p.label}
-              {p.detail ? <span className="tl-fallback-detail"> — {p.detail}</span> : null}
+              <span className="mdx-label">{node.dateLabel}</span> {node.label}
+              {node.detail ? <span className="tl-fallback-detail"> — {node.detail}</span> : null}
             </li>
           ))}
         </ol>

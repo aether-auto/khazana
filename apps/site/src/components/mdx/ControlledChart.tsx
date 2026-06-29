@@ -108,6 +108,20 @@ export default function ControlledChart({
           </span>
         </div>
 
+        {/* Screen-reader mirror of the live readout — the visible strip is
+            aria-hidden, so this polite region announces each recompute. */}
+        <p className="cc-sr-readout" aria-live="polite">
+          {`Decay rate ${round(liveRate, 2)} per month, half-life ${
+            Number.isFinite(hl) ? `${round(hl, 1)} months` : "infinite"
+          }. Cost ${
+            cross == null
+              ? `never crosses ${threshold} ${unit}`
+              : cross === 0
+                ? `is already below ${threshold} ${unit}`
+                : `crosses ${threshold} ${unit} at month ${round(cross, 1)}`
+          }.`}
+        </p>
+
         <svg
           className="cc-svg"
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}

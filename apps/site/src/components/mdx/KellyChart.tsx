@@ -98,11 +98,33 @@ export default function KellyChart({ p = 0.6, b = 1, caption }: KellyChartProps)
               {fStar <= 0 ? "—" : `${round(gStar * 100, 2)}%`}
             </span>
           </span>
-          <span className="cc-stat">
-            <span className="cc-stat-l">P(ever −50%)</span>
-            <span className="cc-stat-v tnum">{round(drawdownProb(0.5, 1) * 100, 0)}%</span>
+          <span className="cc-stat" title="At full Kelly this is invariant — Thorp's drawdown law fixes P(ever fall to fraction x) = x, independent of edge or odds.">
+            <span className="cc-stat-l">
+              P(ever −50%)
+              {fStar > 0 ? <span className="kc-note" aria-hidden="true"> ⓘ</span> : null}
+            </span>
+            <span className="cc-stat-v tnum">
+              {fStar <= 0 ? "—" : `${round(drawdownProb(0.5, 1) * 100, 0)}%`}
+            </span>
           </span>
         </div>
+
+        {/* Screen-reader mirror of the live readout — the visible strip is
+            aria-hidden, so this polite region is what announces each recompute. */}
+        <p className="cc-sr-readout" aria-live="polite">
+          {fStar <= 0
+            ? `Edge ${ev > 0 ? "+" : ""}${round(ev * 100, 1)}%. Optimal bet f* is zero — skip this bet.`
+            : `Edge ${ev > 0 ? "+" : ""}${round(ev * 100, 1)}%. Optimal bet f* ${round(
+                fStar * 100,
+                1,
+              )}% of bankroll, growing the bankroll ${round(
+                gStar * 100,
+                2,
+              )}% per bet. At full Kelly the chance of ever dropping to half your bankroll is ${round(
+                drawdownProb(0.5, 1) * 100,
+                0,
+              )}%.`}
+        </p>
 
         <svg
           className="cc-svg"

@@ -17,17 +17,28 @@
   padding: var(--s-5) var(--s-5);
   /* the dividing hairline lives on the left edge; first item has none */
   border-left: var(--hair) solid var(--rule);
+  /* a too-wide value shrinks (below) rather than escaping; this is the backstop.
+     `clip` (not `hidden`): `overflow:hidden` on a flex item collapses its height
+     to 0 in some engines, which dropped the figure box and overlapped stacked
+     items on mobile. `clip` clips identically without the collapse. */
+  overflow: clip;
 }
 .statband-item:first-child {
   border-left: none;
   padding-left: 0;
 }
 
-/* the figure — big Fraunces display, tabular so digits don't jitter mid-count */
+/* the figure — big Fraunces display, tabular so digits don't jitter mid-count.
+   Width AND height are DEFINED by an in-flow measuring twin holding the FINAL
+   value, so the count-up never reflows (the shown text is overlaid absolutely).
+   The font-size is the base display size multiplied by a MEASURED per-item fit
+   (--statband-fit ≤ 1, set by the island), so the widest value always fits its
+   cell — at any column count, down to mobile — and never clips (S3 / B3). */
 .statband-figure {
+  --statband-base: var(--t-3xl);
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: var(--t-3xl);
+  font-size: calc(var(--statband-base) * var(--statband-fit, 1));
   line-height: var(--lh-display);
   letter-spacing: -0.01em;
   color: var(--accent);
@@ -35,7 +46,50 @@
   font-feature-settings: "tnum" 1, "lnum" 1;
   /* incandescent glow on the display-size amber (tokens: halation rule) */
   text-shadow: var(--halo-star);
+  /* inline-block so the figure shrinks to the twin's intrinsic size and stays
+     left-aligned; positioning context for the overlaid shown value + the probe. */
+  display: inline-block;
+  position: relative;
+  align-self: start;
+  max-width: 100%;
+  white-space: nowrap;
+  /* `clip` (not `hidden`): see .statband-item — `overflow:hidden` collapses a
+     flex/blockified item's height to 0 in some engines, dropping the figure. */
+  overflow: clip;
+  /* trailing pad so the value never sits flush against the dividing hairline */
+  padding-right: var(--s-2);
+}
+/* the in-flow measuring twin holds the FINAL value, so the figure box is always
+   exactly as wide AND tall as the settled value (no reflow mid-count, and the
+   figure has real height in a stacked column). Present in layout, never painted.
+   It scales with --statband-fit like the shown value, so the box footprint
+   shrinks to the fitted size. */
+.statband-measure {
   display: block;
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+/* the live count-up value, overlaid on the twin so it never affects the box. */
+.statband-shown {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: var(--s-2);
+  white-space: nowrap;
+}
+/* the measuring PROBE is out of flow (doesn't affect the box) and always at the
+   UNSCALED base size, so the island reads a stable intrinsic width to derive
+   the fit from, independent of the fit currently applied. */
+.statband-probe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+  font-size: var(--statband-base);
 }
 
 .statband-label {
@@ -88,14 +142,21 @@
   .statband-item {
     border-left: none;
     border-top: var(--hair) solid var(--rule);
-    padding: var(--s-4) 0;
+    /* horizontal padding so values don't kiss the left edge (AD-C4 / MOB) */
+    padding: var(--s-4) var(--s-4);
   }
   .statband-item:first-child {
     border-top: none;
     padding-top: 0;
+    /* stacked: restore left padding (the row-layout `padding-left:0` aligned the
+       first value to the figure's edge; stacked, that would kiss the screen). */
+    padding-left: var(--s-4);
   }
   .statband-figure {
-    font-size: var(--t-2xl);
+    /* stacked cells are full reading-width; the measured fit still shrinks any
+       value too wide for a 390px phone. Base drops to --t-2xl on mobile. */
+    --statband-base: var(--t-2xl);
+    padding-right: 0;
   }
 }
 

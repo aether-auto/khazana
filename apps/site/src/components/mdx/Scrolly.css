@@ -1,11 +1,35 @@
 /* apps/site/src/components/mdx/Scrolly.css */
 .scrolly-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-6); align-items: start; }
-.scrolly-sticky { position: sticky; top: 12vh; height: 76vh; display: flex; align-items: center; }
-.scrolly-graphic { width: 100%; padding: var(--s-4); }
-.scrolly-steps { display: flex; flex-direction: column; gap: 40vh; padding: 30vh 0; }
+
+/* Sticky graphic FILLS its column and is vertically centered in the viewport so
+   the active prose (triggered at the centered line) sits beside it. */
+.scrolly-sticky {
+  position: sticky;
+  top: 8vh;
+  height: 84vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.scrolly-graphic {
+  width: 100%;
+  padding: var(--s-4);
+}
+/* Let the chart grow to the sticky pane instead of pinning small upper-left. */
+.scrolly-graphic > .mdx-figure { width: 100%; margin: 0; }
+.scrolly-graphic .chart-host { min-height: 50vh; }
+
+/* Each step OWNS roughly one viewport of scroll, with its prose vertically
+   centered — so the step crossing the centered trigger line is the one visually
+   beside the sticky graphic (chart + prose move together). */
+.scrolly-steps { display: flex; flex-direction: column; padding: 12vh 0; }
 .scrolly-step {
+  min-height: 78vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   font-family: var(--font-read); font-size: var(--t-md); line-height: var(--lh-read);
-  color: var(--ink-faint); transition: color 200ms ease, opacity 200ms ease; opacity: 0.45;
+  color: var(--ink-faint); transition: color 200ms ease, opacity 200ms ease; opacity: 0.4;
 }
 .scrolly-step--active { color: var(--ink); opacity: 1; }
 .scrolly-step--active::before {
@@ -22,6 +46,9 @@
 }
 .scrolly-cite:hover { color: var(--accent); }
 
+/* Keep the figure's own caption clear of the last step / next figure's caption. */
+.scrolly > .mdx-caption { margin-top: var(--s-6); }
+
 /* stacked fallback */
 .scrolly--stacked .scrolly-stacked-step { margin-bottom: var(--s-8); }
 .scrolly--stacked .scrolly-graphic { margin-bottom: var(--s-4); }
@@ -31,8 +58,9 @@
 @media (max-width: 720px) {
   .scrolly-grid { grid-template-columns: 1fr; }
   .scrolly-sticky { position: static; height: auto; }
-  .scrolly-steps { gap: var(--s-6); padding: var(--s-6) 0; }
-  .scrolly-step { opacity: 1; color: var(--ink); }
+  .scrolly-graphic .chart-host { min-height: 0; }
+  .scrolly-steps { padding: var(--s-6) 0; }
+  .scrolly-step { min-height: 0; display: block; opacity: 1; color: var(--ink); }
 }
 @media (prefers-reduced-motion: reduce) {
   .scrolly-step { transition: none; }

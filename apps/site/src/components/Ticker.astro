@@ -124,4 +124,17 @@ const run = [...items, ...items];
       overflow-x: auto;
     }
   }
+  /* Mobile: tighten the bezel padding so the LIVE label + the first marquee
+     phrase sit comfortably at 390px (the strip already clips/scrolls inside its
+     own masked viewport, so it never widens the page — this is purely breathing
+     room, folded into the topbar responsive language). */
+  @media (max-width: 640px) {
+    .ticker {
+      padding: var(--s-2) var(--s-3);
+      gap: var(--s-2);
+    }
+    .ticker-label {
+      letter-spacing: 0.06em;
+    }
+  }
 </style>

@@ -19,6 +19,12 @@
   --read: #d4cbc0; /* LONG-FORM BODY — the sacred reading color (~9.5:1) */
   --ink-dim: #a6a193; /* secondary chrome */
   --ink-faint: #8a8070; /* captions, lowered hierarchy */
+  /* ESSENTIAL micro-labels (chart axis ticks/labels, live filter status, chip
+     counts): the "telemetry-quiet" voice but still load-bearing INFO, so it must
+     clear WCAG AA on every surface — unlike --ink-faint which is reserved for
+     genuinely decorative text and dips below AA on the light ground. ~6.9:1 on
+     the dark ladder. See global.css contrast block. */
+  --ink-label: #a39884;
 
   --rule: #272620;
   --rule-bright: #3b3a30;
@@ -130,6 +136,7 @@
     --read: #2a2823;
     --ink-dim: #52504a;
     --ink-faint: #8a877e;
+    --ink-label: #605e56; /* essential labels — ~5.8:1 on the light ground (AA) */
     --rule: #dcd9cf;
     --rule-bright: #c4c0b4;
     --accent: #b8851d;

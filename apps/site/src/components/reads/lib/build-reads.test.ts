@@ -86,40 +86,49 @@ describe("buildReadsIndex — read-time", () => {
   });
 });
 
-describe("buildReadsIndex — facets (gallery-scoped: a chip's count = cards it reveals)", () => {
-  test("formatFacet honors the canonical FORMAT_NAMES order, over the gallery only", () => {
+describe("buildReadsIndex — facets (whole-collection: a chip's count = reads it reveals, hero + gallery)", () => {
+  test("formatFacet honors the canonical FORMAT_NAMES order, over the WHOLE collection", () => {
     const { formatFacet } = buildReadsIndex(reads, { formatOrder: FORMAT_NAMES });
-    // Gallery = benford(primer), bloom(teardown), ruin(dispatch). carrington
-    // (chronicle) is FEATURED, so chronicle must NOT appear in the facet.
+    // All 4 reads count: carrington(chronicle, the FEATURED read) is a filter
+    // target too (the hero dims/hides), so chronicle MUST appear with count 1.
     expect(formatFacet).toEqual([
+      { value: "chronicle", count: 1 },
       { value: "dispatch", count: 1 },
       { value: "teardown", count: 1 },
       { value: "primer", count: 1 },
     ]);
-    expect(formatFacet.find((f) => f.value === "chronicle")).toBeUndefined();
   });
 
-  test("channelFacet counts channels across the GALLERY, count desc then value asc", () => {
+  test("channelFacet counts channels across the WHOLE collection, count desc then value asc", () => {
     const { channelFacet } = buildReadsIndex(reads);
-    // Gallery channels: benford[ds,sci] + bloom[tech,ds] + ruin[finance,ds] →
-    // data-science×3, then science/tech/finance ×1 alpha-sorted. (carrington's
-    // science/history are featured-only and excluded.)
+    // All reads: benford[ds,sci] + bloom[tech,ds] + ruin[finance,ds] +
+    // carrington[sci,history] → data-science×3, science×2, then finance/history/tech ×1.
     expect(channelFacet[0]).toEqual({ value: "data-science", count: 3 });
-    const rest = channelFacet.slice(1);
+    expect(channelFacet[1]).toEqual({ value: "science", count: 2 });
+    const rest = channelFacet.slice(2);
     expect(rest).toEqual([
       { value: "finance", count: 1 },
-      { value: "science", count: 1 },
+      { value: "history", count: 1 },
       { value: "tech", count: 1 },
     ]);
   });
 
-  test("each facet count equals the number of gallery cards that match it", () => {
-    const { gallery, formatFacet, channelFacet } = buildReadsIndex(reads, { formatOrder: FORMAT_NAMES });
+  test("each facet count equals the number of reads (featured + gallery) that match it", () => {
+    const { featured, gallery, formatFacet, channelFacet } = buildReadsIndex(reads, { formatOrder: FORMAT_NAMES });
+    const all = [featured!, ...gallery];
     for (const f of formatFacet) {
-      expect(f.count).toBe(gallery.filter((c) => c.format === f.value).length);
+      expect(f.count).toBe(all.filter((c) => c.format === f.value).length);
     }
     for (const c of channelFacet) {
-      expect(c.count).toBe(gallery.filter((g) => g.channels.includes(c.value)).length);
+      expect(c.count).toBe(all.filter((g) => g.channels.includes(c.value)).length);
+    }
+  });
+
+  test("the featured read's format/channels ARE represented in the facets", () => {
+    const { featured, formatFacet, channelFacet } = buildReadsIndex(reads, { formatOrder: FORMAT_NAMES });
+    expect(formatFacet.some((f) => f.value === featured!.format)).toBe(true);
+    for (const ch of featured!.channels) {
+      expect(channelFacet.some((c) => c.value === ch)).toBe(true);
     }
   });
 });

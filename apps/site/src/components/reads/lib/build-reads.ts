@@ -63,13 +63,13 @@ export interface ReadsIndexData {
   /** Every read EXCEPT the featured one, newest-first. */
   gallery: ReadCardData[];
   /**
-   * Format facet, canonical FORMAT_NAMES order. Counts are over the GALLERY only
-   * (the filterable set) — the featured read is never a filter target, so its
-   * format/channels must not inflate the chip counts (the count must equal the
-   * number of cards a chip actually reveals).
+   * Format facet, canonical FORMAT_NAMES order. Counts span the WHOLE collection
+   * (featured + gallery): the featured hero IS a filter target (it dims/hides when
+   * a specific chip doesn't match it), so a chip's count must equal the number of
+   * reads it reveals across the hero AND the gallery.
    */
   formatFacet: FacetCount[];
-  /** Channel facet, count desc then value asc, over the GALLERY only. */
+  /** Channel facet, count desc then value asc, over the WHOLE collection. */
   channelFacet: FacetCount[];
   /** Editorial telemetry — spans the WHOLE collection (featured included). */
   stats: ReadsStats;
@@ -153,14 +153,16 @@ export function buildReadsIndex(
   const featured = cards[0] ?? null;
   const gallery = cards.slice(1);
 
-  // Facet counts are over the GALLERY (the filterable set) so a chip's count
-  // equals the number of cards it reveals; the featured read is excluded since
-  // it is never a filter target. Stats below span the WHOLE collection.
+  // Facet counts span the WHOLE collection (featured + gallery). The featured
+  // read IS a filter target: when a specific chip is active, the hero dims/hides
+  // if it doesn't match, so a chip's count must equal the number of reads it
+  // reveals ACROSS the hero and the gallery — not the gallery alone. (e.g. the
+  // chronicle chip reveals only the featured Carrington read → count 1.)
   const formatFacet = tallyOrdered(
-    gallery.map((c) => c.format),
+    cards.map((c) => c.format),
     formatOrder,
   );
-  const channelFacet = tally(gallery.flatMap((c) => c.channels));
+  const channelFacet = tally(cards.flatMap((c) => c.channels));
 
   const stats: ReadsStats = {
     total: cards.length,

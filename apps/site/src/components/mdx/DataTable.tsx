@@ -44,10 +44,12 @@ export default function DataTable({ columns, rows, caption, filterable = true }:
             className="dt-input"
             type="text"
             value={query}
-            placeholder="…"
+            placeholder="Filter rows…"
             onChange={(e) => setQuery(e.target.value)}
           />
-          <span className="dt-count">{view.length}/{rows.length}</span>
+          <span className="dt-count">
+            {view.length === rows.length ? `${rows.length} rows` : `${view.length} of ${rows.length} rows`}
+          </span>
         </div>
       ) : null}
       <div className="mdx-panel dt-scroll">

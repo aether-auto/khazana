@@ -30,3 +30,46 @@ export function buildChoropleth(values: Readonly<Record<string, number>>): Choro
 
   return { domain: [min, max], fill };
 }
+
+export interface LatitudeLine {
+  /** Latitude in degrees, positive north. */
+  lat: number;
+  /** Human label, e.g. "Equator", "30° N". */
+  label: string;
+  /** Equator (and other emphasis lines) draw heavier than the rest. */
+  major: boolean;
+}
+
+/**
+ * The latitude graticule for <Map>: an equator plus a symmetric set of parallels
+ * north and south. Returned north-to-south so the order matches top-to-bottom in
+ * the rendered SVG. Kept just inside |lat| < 90 so the projection stays drawable.
+ */
+export function graticuleLatitudes(): LatitudeLine[] {
+  const parallels = [60, 30]; // degrees from the equator, both hemispheres
+  const lines: LatitudeLine[] = [];
+  for (const lat of parallels) {
+    lines.push({ lat, label: `${lat}° N`, major: false });
+  }
+  lines.push({ lat: 0, label: "Equator", major: true });
+  for (const lat of [...parallels].reverse()) {
+    lines.push({ lat: -lat, label: `${lat}° S`, major: false });
+  }
+  return lines; // already north-to-south
+}
+
+/**
+ * Readout text for the hovered/focused country. Returns null when nothing is
+ * active OR when the country carries no data — so the map never surfaces a raw
+ * ISO3 code for an undocumented country, and the default state shows no value.
+ */
+export function formatReadout(
+  iso3: string | null,
+  values: Readonly<Record<string, number>>,
+  labels: Readonly<Record<string, string>>,
+): string | null {
+  if (!iso3) return null;
+  const v = values[iso3];
+  if (v === undefined) return null; // not in the dataset → suppress
+  return `${labels[iso3] ?? iso3}: ${v}`;
+}

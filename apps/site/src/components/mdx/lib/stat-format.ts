@@ -17,10 +17,29 @@ export interface FormatOptions {
 }
 
 /**
+ * Pick a sensible number of fractional digits for a value when the author did
+ * not specify `decimals`. This is the DEFENSIVE rule that keeps a raw unrounded
+ * float (e.g. an interpolated count-up frame, or an authored `1533.4509…`) from
+ * ever printing full precision and smearing/overflowing the cell:
+ *   |v| ≥ 100 → 0   (big numbers read as integers: 1,533 nT)
+ *   |v| ≥ 1   → 1   (17.6, 2.6)
+ *   |v| < 1   → 2   (0.82)
+ * Auto-derived decimals are later trimmed of trailing zeros, so 40 → "40".
+ */
+export function resolveDecimals(value: number): number {
+  const a = Math.abs(Number.isFinite(value) ? value : 0);
+  if (a >= 100) return 0;
+  if (a >= 1) return 1;
+  return 2;
+}
+
+/**
  * Format a numeric value into the displayed string. Integers get thousands
  * grouping by default (20000000 → "20,000,000"); explicit `decimals` fixes the
- * precision (and still groups the integer part). Set `group: false` to suppress
- * grouping (e.g. a year). prefix/suffix bracket the number.
+ * precision (and still groups the integer part). When `decimals` is omitted the
+ * value is DEFENSIVELY rounded (see resolveDecimals) and trailing zeros trimmed,
+ * so no caller can smear the cell with a full-precision float. Set
+ * `group: false` to suppress grouping (e.g. a year). prefix/suffix bracket it.
  */
 export function format(value: number, opts: FormatOptions = {}): string {
   const { prefix = "", suffix = "", decimals, group = true } = opts;
@@ -29,9 +48,11 @@ export function format(value: number, opts: FormatOptions = {}): string {
 
   let body: string;
   if (decimals === undefined) {
-    // No fixed precision: group integers (unless disabled); floats stay as-is.
-    if (Number.isInteger(v)) body = group ? groupThousands(v) : String(v);
-    else body = String(v);
+    // Auto: round to a magnitude-appropriate precision, then trim trailing
+    // zeros so tidy values stay clean (40 → "40", 0.8 → "0.8", 1,533 → "1,533").
+    const fixed = v.toFixed(resolveDecimals(v));
+    const trimmed = fixed.includes(".") ? fixed.replace(/\.?0+$/, "") : fixed;
+    body = group ? groupFixed(trimmed) : trimmed;
   } else {
     const d = Math.max(0, Math.min(20, Math.trunc(decimals)));
     const fixed = v.toFixed(d);
@@ -57,6 +78,34 @@ function groupThousands(v: number): string {
 }
 
 /**
+ * Lowest scale a figure may shrink to before we stop (it stays legible rather
+ * than collapsing to a sliver). At this floor a value would overflow, but the
+ * cell's `overflow:hidden` backstop catches it — only an absurdly long value at
+ * an absurdly narrow cell could hit this.
+ */
+export const MIN_FIT_SCALE = 0.35;
+
+/**
+ * Fit-to-cell scale for a figure: how much to multiply the base font-size by so
+ * a `contentPx`-wide value fits within `availPx` of cell. Returns 1 when it
+ * already fits (never enlarges), shrinks proportionally when it overflows, and
+ * floors at MIN_FIT_SCALE. Degenerate inputs (zero/negative/non-finite) → 1, so
+ * a not-yet-measured / SSR cell renders at full size rather than collapsing.
+ */
+export function fitScale(contentPx: number, availPx: number): number {
+  if (
+    !Number.isFinite(contentPx) ||
+    !Number.isFinite(availPx) ||
+    contentPx <= 0 ||
+    availPx <= 0
+  ) {
+    return 1;
+  }
+  if (contentPx <= availPx) return 1;
+  return Math.max(MIN_FIT_SCALE, availPx / contentPx);
+}
+
+/**
  * cubic ease-out, matching the snappy --ease-out feel: fast start, gentle
  * settle. t is the clamped [0,1] progress; returns eased [0,1].
  */
@@ -73,5 +122,11 @@ export function easeOutCubic(t: number): number {
 export function frameValue(target: number, elapsedMs: number, durationMs: number): number {
   if (durationMs <= 0 || elapsedMs >= durationMs) return target;
   if (elapsedMs <= 0) return 0;
-  return target * easeOutCubic(elapsedMs / durationMs);
+  const raw = target * easeOutCubic(elapsedMs / durationMs);
+  // Clamp into [0, target] (or [target, 0] for a negative target) so a frame can
+  // never overshoot the final magnitude — belt-and-braces against the count-up
+  // ever rendering a number wider than the reserved cell.
+  const lo = Math.min(0, target);
+  const hi = Math.max(0, target);
+  return raw < lo ? lo : raw > hi ? hi : raw;
 }

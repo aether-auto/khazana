@@ -101,19 +101,27 @@ export default function RunnableCode({ code, timeoutMs = 2000, caption }: Runnab
         <noscript>
           <pre className="rc-fallback">{code}</pre>
         </noscript>
-        <div className="rc-output" aria-live="polite">
-          {output === null ? (
-            <span className="rc-hint">output appears here</span>
-          ) : (
-            <>
-              {output.logs.map((l, i) => (
-                <div className="rc-line" key={i}>{l}</div>
-              ))}
-              {output.value !== null ? <div className="rc-line rc-value">⮑ {output.value}</div> : null}
-              {output.error !== null ? <div className="rc-line rc-error">{output.error}</div> : null}
-              <div className="rc-meta">{output.ms} ms</div>
-            </>
-          )}
+        <div className="rc-output">
+          <div className="rc-output-bar">
+            <span className="mdx-label">output</span>
+            {output !== null ? <span className="rc-meta">{output.ms} ms</span> : null}
+          </div>
+          <div className="rc-output-body" aria-live="polite">
+            {output === null ? (
+              <span className="rc-hint">Run the code to see its output here.</span>
+            ) : (
+              <>
+                {output.logs.map((l, i) => (
+                  <div className="rc-line" key={i}>{l}</div>
+                ))}
+                {output.value !== null ? <div className="rc-line rc-value">⮑ {output.value}</div> : null}
+                {output.error !== null ? <div className="rc-line rc-error">{output.error}</div> : null}
+                {output.logs.length === 0 && output.value === null && output.error === null ? (
+                  <span className="rc-hint">No output.</span>
+                ) : null}
+              </>
+            )}
+          </div>
         </div>
       </div>
       {caption ? <figcaption className="mdx-caption">{caption}</figcaption> : null}

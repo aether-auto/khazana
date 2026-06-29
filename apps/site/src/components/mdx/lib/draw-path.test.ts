@@ -1,11 +1,14 @@
 import { describe, it, expect } from "vitest";
 import {
   makeScales,
+  makeScalesMulti,
   linePath,
   areaPath,
   dashOffset,
   pathLength,
+  axisTicks,
   type Box,
+  type Series,
 } from "./draw-path.js";
 import type { Point } from "./model-curve.js";
 
@@ -86,5 +89,69 @@ describe("pathLength", () => {
   it("is 0 for a single point", () => {
     const s = makeScales(pts, box);
     expect(pathLength([{ x: 0, y: 0 }], s)).toBe(0);
+  });
+});
+
+// ── multi-series (DrawChart divergence support) ──────────────────────────────
+
+describe("makeScalesMulti", () => {
+  const climbing: Point[] = [
+    { x: 0, y: 1 },
+    { x: 10, y: 8 },
+  ];
+  const collapsing: Point[] = [
+    { x: 0, y: 1 },
+    { x: 10, y: 0 }, // round-trips to nothing
+  ];
+  const series: Series[] = [
+    { id: "kelly", label: "Kelly", points: climbing },
+    { id: "double", label: "Double-Kelly", points: collapsing },
+  ];
+
+  it("spans the union of every series' extent", () => {
+    const s = makeScalesMulti(series, box);
+    // x union is [0,10]; y union is [0,8]
+    expect(s.x(0)).toBeCloseTo(0, 5);
+    expect(s.x(10)).toBeCloseTo(100, 5);
+    expect(s.y(8)).toBeCloseTo(0, 5); // max -> top
+    expect(s.y(0)).toBeCloseTo(100, 5); // min -> bottom
+  });
+
+  it("places a series that collapses to the union floor at the bottom", () => {
+    const s = makeScalesMulti(series, box);
+    // the collapsing series ends at y=0 which is the union min -> pixel bottom
+    expect(s.y(collapsing[1].y)).toBeCloseTo(100, 5);
+  });
+
+  it("uses a SHARED scale so divergence is visible across series", () => {
+    const s = makeScalesMulti(series, box);
+    // both series share the same y(1) for their common start point
+    expect(s.y(1)).toBeCloseTo(s.y(1), 5);
+    // and the two endpoints map to clearly different pixel-y (divergence)
+    expect(Math.abs(s.y(8) - s.y(0))).toBeGreaterThan(50);
+  });
+
+  it("survives an empty series list (finite degenerate scale)", () => {
+    const s = makeScalesMulti([], box);
+    expect(Number.isFinite(s.x(0))).toBe(true);
+    expect(Number.isFinite(s.y(0))).toBe(true);
+  });
+});
+
+describe("axisTicks", () => {
+  it("returns evenly spaced ticks across [min,max] with pixel positions", () => {
+    const ticks = axisTicks(0, 10, 3, (v) => v * 10);
+    expect(ticks).toHaveLength(3);
+    expect(ticks[0]).toEqual({ value: 0, pos: 0 });
+    expect(ticks[2]).toEqual({ value: 10, pos: 100 });
+    expect(ticks[1].value).toBeCloseTo(5, 5);
+  });
+  it("collapses to a single tick for a degenerate range", () => {
+    const ticks = axisTicks(4, 4, 4, (v) => v);
+    expect(ticks).toHaveLength(1);
+    expect(ticks[0].value).toBe(4);
+  });
+  it("clamps the count to at least 2 for a real range", () => {
+    expect(axisTicks(0, 10, 1, (v) => v)).toHaveLength(2);
   });
 });

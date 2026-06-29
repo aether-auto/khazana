@@ -6,12 +6,42 @@
   border: var(--hair) solid var(--rule); border-radius: var(--r-sm);
   padding: var(--s-1) var(--s-3); width: 14rem; max-width: 50%;
 }
-.dt-input:focus-visible { border-color: var(--accent); outline: none; }
-.dt-count { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--ink-faint); margin-left: auto; }
-.dt-scroll { overflow-x: auto; }
+.dt-input:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+/* count badge — a small styled pill, not a bare fraction */
+.dt-count {
+  font-family: var(--font-mono); font-size: var(--t-xs); color: var(--ink-faint);
+  margin-left: auto; white-space: nowrap;
+  padding: var(--s-1) var(--s-2); border: var(--hair) solid var(--rule); border-radius: var(--r-sm);
+  background: var(--bg-inset);
+}
+/* scroll container — let the table overflow horizontally on narrow screens and
+   hint the hidden width with a right-edge fade. */
+.dt-scroll {
+  overflow-x: auto;
+  position: relative;
+  background:
+    linear-gradient(to right, var(--bg-raised) 30%, transparent),
+    linear-gradient(to right, transparent, var(--bg-raised) 70%) 100% 0,
+    radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--ink) 18%, transparent), transparent) 100% 0;
+  background-repeat: no-repeat;
+  background-size: 2.4rem 100%, 2.4rem 100%, 1rem 100%;
+  background-attachment: local, local, scroll;
+}
 .dt-table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: var(--t-sm); }
-.dt-caption { text-align: left; padding: var(--s-3) var(--s-4) 0; }
-.dt-th { text-align: left; border-bottom: var(--hair) solid var(--rule-bright); padding: 0; }
+/* caption pins to the left edge so it stays readable while the table scrolls
+   horizontally, and wraps within the visible width rather than clipping. */
+.dt-caption {
+  position: sticky;
+  left: 0;
+  text-align: left; padding: var(--s-3) var(--s-4) 0;
+  white-space: normal; overflow-wrap: anywhere;
+  width: min(100%, calc(100vw - 2 * var(--s-4)));
+}
+.dt-th { text-align: left; border-bottom: var(--hair) solid var(--rule-bright); padding: 0; vertical-align: bottom; }
 .dt-th--right { text-align: right; }
 .dt-sortbtn {
   width: 100%; text-align: inherit; background: none; border: none; cursor: pointer;
@@ -20,7 +50,10 @@
 }
 .dt-th--right .dt-sortbtn { justify-content: flex-end; }
 .dt-sortbtn:hover { color: var(--accent); }
-.dt-arrow { color: var(--editorial); font-size: 0.75em; }
-.dt-td { padding: var(--s-2) var(--s-4); border-bottom: var(--hair) solid var(--rule); color: var(--ink-dim); }
+.dt-sortbtn:hover .dt-arrow { color: inherit; }
+/* the sort icon shares the header's ink so it reads as one unit, brightening
+   to the accent on hover with the label. */
+.dt-arrow { color: inherit; opacity: 0.6; font-size: 0.75em; }
+.dt-td { padding: var(--s-2) var(--s-4); border-bottom: var(--hair) solid var(--rule); color: var(--ink-dim); height: 2.4em; }
 .dt-td--right { text-align: right; font-variant-numeric: tabular-nums; }
 .dt-table tbody tr:hover .dt-td { color: var(--ink); background: color-mix(in oklab, var(--accent) 5%, transparent); }

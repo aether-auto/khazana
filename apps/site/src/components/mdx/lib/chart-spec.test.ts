@@ -7,6 +7,7 @@ import {
   shouldRotateXLabels,
   rotatedMarginBottom,
   coerceNumericX,
+  humanizeLabel,
 } from "./chart-spec.js";
 
 const data = [
@@ -193,6 +194,70 @@ test("normalizeChartSpec: line with numeric x → xCategorical false, no rotatio
   expect(spec.xMarginBottom).toBeUndefined();
 });
 
+// ── fill / stroke behavior per mark type ─────────────────────────────────────
+
+test("line mark: fill is 'none' (no flood-fill)", () => {
+  const spec = normalizeChartSpec({ data, mark: "line", x: "year", y: "value" });
+  expect(spec.marks[1].options.fill).toBe("none");
+});
+
+test("dot mark: fill is 'none' (hollow dots use stroke only)", () => {
+  const spec = normalizeChartSpec({ data, mark: "dot", x: "year", y: "value" });
+  expect(spec.marks[1].options.fill).toBe("none");
+});
+
+test("area mark: fill is the series/accent color (low opacity applied in Chart.tsx)", () => {
+  const spec = normalizeChartSpec({ data, mark: "area", x: "year", y: "value" });
+  // fill must be a color string, not 'none'
+  expect(spec.marks[1].options.fill).not.toBe("none");
+  expect(typeof spec.marks[1].options.fill).toBe("string");
+});
+
+test("bar mark: fill is the series/accent color (bars are filled)", () => {
+  const spec = normalizeChartSpec({ data, mark: "bar", x: "year", y: "value" });
+  expect(spec.marks[1].options.fill).not.toBe("none");
+});
+
+test("line mark with series: stroke = series field name, fill = 'none'", () => {
+  const spec = normalizeChartSpec({ data, mark: "line", x: "year", y: "value", series: "series" });
+  expect(spec.marks[1].options.stroke).toBe("series");
+  expect(spec.marks[1].options.fill).toBe("none");
+});
+
+// ── axis labels ───────────────────────────────────────────────────────────────
+
+test("humanizeLabel: 'f' → 'f', 'growth_rate' → 'growth rate', 'fpRate' → 'fp rate'", () => {
+  expect(humanizeLabel("f")).toBe("f");
+  expect(humanizeLabel("growth_rate")).toBe("growth rate");
+  expect(humanizeLabel("fpRate")).toBe("fp rate");
+  expect(humanizeLabel("fp_rate")).toBe("fp rate");
+});
+
+test("normalizeChartSpec: xLabel/yLabel props pass through", () => {
+  const spec = normalizeChartSpec({ data, mark: "line", x: "year", y: "value", xLabel: "Year", yLabel: "Count" });
+  expect(spec.xLabel).toBe("Year");
+  expect(spec.yLabel).toBe("Count");
+});
+
+test("normalizeChartSpec: auto-derives xLabel/yLabel from field names when not provided", () => {
+  const spec = normalizeChartSpec({ data, mark: "line", x: "year", y: "value" });
+  expect(typeof spec.xLabel).toBe("string");
+  expect(spec.xLabel!.length).toBeGreaterThan(0);
+  expect(typeof spec.yLabel).toBe("string");
+});
+
+test("normalizeChartSpec: yZero defaults to true for bar, false for line/area", () => {
+  const barSpec = normalizeChartSpec({ data, mark: "bar", x: "year", y: "value" });
+  expect(barSpec.yZero).toBe(true);
+  const lineSpec = normalizeChartSpec({ data, mark: "line", x: "year", y: "value" });
+  expect(lineSpec.yZero).toBe(false);
+});
+
+test("normalizeChartSpec: explicit yZero prop overrides the default", () => {
+  const spec = normalizeChartSpec({ data, mark: "line", x: "year", y: "value", yZero: true });
+  expect(spec.yZero).toBe(true);
+});
+
 // ── coerceNumericX ────────────────────────────────────────────────────────────
 
 test("coerceNumericX: numeric-string x values are coerced to Number", () => {
@@ -251,4 +316,55 @@ test("coerceNumericX: does NOT mutate the original array", () => {
   // Original rows are unmodified
   expect(raw[0]!.digit).toBe("1");
   expect(raw[0]).toEqual(original0);
+});
+
+// ── distinctSorted: numeric-aware categorical ordering (M9) ──────────────────
+
+test("distinctSorted: numeric-prefix strings like '10%','100%','25%','50%' sort numerically", () => {
+  // Benford-style bar: x values are percent strings that arrive out of order
+  const rows = [
+    { label: "10%", value: 30 },
+    { label: "100%", value: 5 },
+    { label: "25%", value: 18 },
+    { label: "50%", value: 10 },
+  ];
+  const spec = normalizeChartSpec({ data: rows, mark: "bar", x: "label", y: "value" });
+  // The x domain (order) should be numeric-ascending: 10, 25, 50, 100
+  expect(spec.xDomain).toEqual(["10%", "25%", "50%", "100%"]);
+});
+
+test("distinctSorted: pure word labels keep stable insertion order", () => {
+  const rows = [
+    { strategy: "bet max (all-in)", ruin: 100 },
+    { strategy: "bet min (timid)", ruin: 0 },
+    { strategy: "kelly", ruin: 12 },
+  ];
+  const spec = normalizeChartSpec({ data: rows, mark: "bar", x: "strategy", y: "ruin" });
+  // Words sort lexicographically (locale); order should be stable
+  expect(spec.xDomain).toEqual(["bet max (all-in)", "bet min (timid)", "kelly"]);
+});
+
+test("distinctSorted: ordinal labels with numeric prefixes sort numerically", () => {
+  // Scenario: labels like "1st", "2nd", "10th" — numeric prefix, word suffix
+  const rows = [
+    { rank: "9th", v: 1 },
+    { rank: "2nd", v: 2 },
+    { rank: "10th", v: 3 },
+    { rank: "1st", v: 4 },
+  ];
+  const spec = normalizeChartSpec({ data: rows, mark: "bar", x: "rank", y: "v" });
+  expect(spec.xDomain).toEqual(["1st", "2nd", "9th", "10th"]);
+});
+
+test("distinctSorted: mixed numeric-prefix and pure-word labels handled sanely (locale numeric)", () => {
+  // When mixed, localeCompare numeric:true still handles it gracefully
+  const rows = [
+    { label: "25%", value: 18 },
+    { label: "alpha", value: 5 },
+    { label: "10%", value: 30 },
+  ];
+  const spec = normalizeChartSpec({ data: rows, mark: "bar", x: "label", y: "value" });
+  // '10%' < '25%' numerically, 'alpha' comes after digits in locale order
+  const domain = spec.xDomain!;
+  expect(domain.indexOf("10%")).toBeLessThan(domain.indexOf("25%"));
 });

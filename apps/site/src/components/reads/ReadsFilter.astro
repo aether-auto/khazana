@@ -2,19 +2,20 @@
 // The /reads facet filter — a small client-enhanced island. Two facet rows:
 // FORMAT (canonical order) and CHANNEL (count desc), each chip showing a live
 // count. Progressive enhancement: with JS off it's a static, intentional-looking
-// legend of what the collection contains; JS wires live filtering of the gallery
-// cards by toggling [hidden], with a FLIP/opacity reflow so cards animate in/out.
-// "all" is the default for each facet. The featured hero is NOT filtered — it is
-// always the latest read; the chips act on the gallery grid below.
+// legend of what the collection contains; JS wires live filtering by toggling
+// [hidden] on the gallery cards (FLIP/opacity reflow) AND dimming the featured
+// hero when a specific chip doesn't match it. The featured read IS a filter
+// target: it dims out when filtered away and returns on "all", so chip counts
+// span the WHOLE collection (hero + gallery). "all" is the default for each facet.
 import type { FacetCount } from "./lib/build-reads.js";
 
 interface Props {
   formatFacet: FacetCount[];
   channelFacet: FacetCount[];
-  /** total reads in the gallery (excludes featured) — the count for "all". */
-  galleryCount: number;
+  /** total reads in the WHOLE collection (featured + gallery) — the "all" count. */
+  collectionCount: number;
 }
-const { formatFacet, channelFacet, galleryCount } = Astro.props;
+const { formatFacet, channelFacet, collectionCount } = Astro.props;
 ---
 
 <form class="rfilter" data-reads-filter aria-label="Filter reads">
@@ -28,7 +29,7 @@ const { formatFacet, channelFacet, galleryCount } = Astro.props;
         data-value=""
         aria-pressed="true"
       >
-        all<span class="rchip-n tnum">{galleryCount}</span>
+        all<span class="rchip-n tnum">{collectionCount}</span>
       </button>
       {
         formatFacet.map((f) => (
@@ -57,7 +58,7 @@ const { formatFacet, channelFacet, galleryCount } = Astro.props;
         data-value=""
         aria-pressed="true"
       >
-        all<span class="rchip-n tnum">{galleryCount}</span>
+        all<span class="rchip-n tnum">{collectionCount}</span>
       </button>
       {
         channelFacet.map((c) => (
@@ -110,13 +111,62 @@ const { formatFacet, channelFacet, galleryCount } = Astro.props;
 
     const cards = Array.from(grid.querySelectorAll<HTMLElement>("[data-read]"));
 
-    function matches(card: HTMLElement): boolean {
-      const fmt = card.dataset.format ?? "";
-      const chans = (card.dataset.channels ?? "").split(",").filter(Boolean);
-      const fmtOk = active.format === "" || fmt === active.format;
-      const chanOk = active.channel === "" || chans.includes(active.channel);
+    // The FEATURED hero lives OUTSIDE the grid (it owns the view-transition name
+    // and is always the latest read), but it IS a filter target: when a specific
+    // chip doesn't match it, we DIM it (not [hidden] — keep it in the DOM so its
+    // transition:name element persists and the layout doesn't jump). It returns
+    // on "all". It's matched + counted with the exact same predicate as the cards.
+    const hero = document.querySelector<HTMLElement>("[data-reads-featured]");
+    // The full filterable set: every read on the page (hero first, then gallery).
+    const allTargets = hero ? [hero, ...cards] : cards;
+
+    // Read a card's facet values. A card is "tagged" only if it carries BOTH
+    // data-format and data-channels; an untagged card must NEVER satisfy a
+    // specific (non-empty) filter — otherwise a card with missing metadata would
+    // leak under every chip and make the counts disagree with what renders.
+    function facetsOf(card: HTMLElement): { format: string; channels: string[]; tagged: boolean } {
+      const hasFmt = card.hasAttribute("data-format");
+      const hasCh = card.hasAttribute("data-channels");
+      return {
+        format: card.dataset.format ?? "",
+        channels: (card.dataset.channels ?? "").split(",").filter(Boolean),
+        tagged: hasFmt && hasCh,
+      };
+    }
+
+    // Does a card match a given (format, channel) selection? "" = any. An untagged
+    // card matches ONLY the all/all selection — it can never appear under a chip.
+    function cardMatches(card: HTMLElement, fmtSel: string, chanSel: string): boolean {
+      const { format, channels, tagged } = facetsOf(card);
+      if (!tagged) return fmtSel === "" && chanSel === "";
+      const fmtOk = fmtSel === "" || format === fmtSel;
+      const chanOk = chanSel === "" || channels.includes(chanSel);
       return fmtOk && chanOk;
     }
+
+    function matches(card: HTMLElement): boolean {
+      return cardMatches(card, active.format, active.channel);
+    }
+
+    // ── Chip counts derived from the EXACT predicate the filter applies ───────
+    // Each chip's count = the number of reads (hero + gallery cards) that the
+    // chip's selection would reveal (with the OTHER facet held at "all"), so the
+    // printed count can never disagree with what clicking the chip actually shows.
+    // Computed over `allTargets` (the hero is a filter target too) and over the
+    // live DOM, so the rendered count set is authoritative even if upstream drifts.
+    function refreshCounts(): void {
+      form.querySelectorAll<HTMLButtonElement>(".rchip").forEach((chip) => {
+        const facet = chip.dataset.facet as Facet | undefined;
+        if (facet !== "format" && facet !== "channel") return;
+        const value = chip.dataset.value ?? "";
+        const count = allTargets.filter((card) =>
+          facet === "format" ? cardMatches(card, value, "") : cardMatches(card, "", value),
+        ).length;
+        const n = chip.querySelector<HTMLElement>(".rchip-n");
+        if (n) n.textContent = String(count);
+      });
+    }
+    refreshCounts();
 
     // Empty-state node — shown when no card matches, so the grid is never a void.
     let empty = grid.querySelector<HTMLElement>("[data-reads-empty]");
@@ -138,14 +188,39 @@ const { formatFacet, channelFacet, galleryCount } = Astro.props;
         }
       }
 
-      // Toggle visibility per the intersection of active facets.
-      let shown = 0;
+      // The featured hero: DIM (not hide) when it doesn't match the active
+      // selection, and make it non-interactive + aria-hidden so it reads as
+      // filtered-out. On "all" (or when it matches) it returns to full presence.
+      // It counts toward `shown` only when it matches.
+      let heroShown = 0;
+      if (hero) {
+        const heroMatch = matches(hero);
+        hero.classList.toggle("is-filtered-out", !heroMatch);
+        const heroLink = hero.querySelector<HTMLElement>(".featured-link");
+        if (heroLink) {
+          if (heroMatch) {
+            heroLink.removeAttribute("aria-hidden");
+            heroLink.removeAttribute("tabindex");
+          } else {
+            heroLink.setAttribute("aria-hidden", "true");
+            heroLink.setAttribute("tabindex", "-1");
+          }
+        }
+        if (heroMatch) heroShown += 1;
+      }
+
+      // Gallery cards: toggle [hidden] per the intersection of active facets.
+      let gridShown = 0;
       for (const card of cards) {
         const show = matches(card);
         card.hidden = !show;
-        if (show) shown += 1;
+        if (show) gridShown += 1;
       }
-      if (empty) empty.hidden = shown !== 0;
+      // The empty-state belongs to the GRID — show it only when no gallery card
+      // matches (the dimmed hero is its own affordance and doesn't fill the grid).
+      if (empty) empty.hidden = gridShown !== 0;
+
+      const shown = heroShown + gridShown;
       if (status) status.textContent = `Showing ${shown} read${shown === 1 ? "" : "s"}.`;
 
       if (reduce) return;
@@ -199,8 +274,9 @@ const { formatFacet, channelFacet, galleryCount } = Astro.props;
       apply();
     });
 
-    // initial status (silent first paint already shows all)
-    if (status) status.textContent = `Showing ${cards.length} read${cards.length === 1 ? "" : "s"}.`;
+    // initial status (silent first paint already shows all reads — hero + gallery)
+    if (status)
+      status.textContent = `Showing ${allTargets.length} read${allTargets.length === 1 ? "" : "s"}.`;
   }
 
   initReadsFilter();

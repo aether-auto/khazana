@@ -62,8 +62,23 @@
 @media (max-width: 1279px) {
   .sidenote-body {
     display: block;
+    /* the note flows in the reading column — clamp it to the column width and
+       break long citation tokens (URLs/DOIs) so it can NEVER push past the
+       viewport edge (the .sidenote-text overflow seen on first-digit). */
+    max-width: 100%;
     margin: var(--s-2) 0 var(--s-3);
     padding-left: var(--s-3);
     border-left: var(--hair) solid var(--rule);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .sidenote-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .sidenote-src {
+    /* a bare URL/DOI as link text must wrap, not stretch the column */
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 }

@@ -77,9 +77,19 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 860px) {
+  /* Inside the shell's horizontally-scrollable .nav strip (tablet + mobile):
+     stay a single non-wrapping row, sit left, and never collapse — the strip
+     scrolls. The trailing pad keeps the last link ("taste") clear of the mask
+     fade. */
   .navrail {
     margin-left: 0;
-    gap: var(--s-3);
+    gap: var(--s-4);
+    flex-wrap: nowrap;
+    width: max-content;
+    padding-right: var(--s-5);
+  }
+  .navrail-link {
+    white-space: nowrap;
   }
 }

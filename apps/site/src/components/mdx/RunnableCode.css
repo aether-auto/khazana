@@ -15,17 +15,53 @@
   text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 50%, transparent);
 }
 .rc-run:disabled { color: var(--ink-faint); cursor: progress; }
-.rc-editor { font-family: var(--font-mono); font-size: var(--t-sm); }
-.rc-editor :global(.cm-editor) { background: var(--bg-inset); color: var(--ink); }
+/* the editor must track its column, never grow to its content width. CodeMirror's
+   .cm-content defaults to width:max-content, so without these clamps a long line
+   (≈697px) widens the editor box and forces the whole page to scroll/zoom on a
+   390px screen. Clamp every layer to 100% and let long lines scroll INSIDE. */
+.rc-editor {
+  font-family: var(--font-mono); font-size: var(--t-sm);
+  max-width: 100%; overflow: hidden;
+}
+.rc-editor :global(.cm-editor) { background: var(--bg-inset); color: var(--ink); max-width: 100%; }
+/* cap very long source — scroll past ~24 lines rather than letting the figure
+   run the length of the page, and scroll long lines horizontally within the box. */
+.rc-editor :global(.cm-scroller) { max-width: 100%; max-height: 30rem; overflow: auto; }
 .rc-editor :global(.cm-gutters) { background: var(--bg-inset); color: var(--ink-faint); border: none; }
 .rc-editor :global(.cm-activeLine) { background: color-mix(in oklab, var(--accent) 6%, transparent); }
 .rc-editor :global(.cm-cursor) { border-left-color: var(--accent); }
-.rc-fallback, .rc-output {
+/* keyboard focus ring — the inner contenteditable shows nothing on Tab without
+   this. CodeMirror injects its own baseTheme `.cm-editor.cm-focused{outline:1px
+   dotted #212121}` at runtime with equal 2-class specificity, so we add the
+   `.rc-panel` ancestor to win deterministically (3 classes vs 2), not on source
+   order. */
+.rc-panel .rc-editor :global(.cm-editor.cm-focused) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.rc-fallback {
   font-family: var(--font-mono); font-size: var(--t-sm); line-height: 1.5;
   background: var(--bg-inset); padding: var(--s-3) var(--s-4);
 }
-.rc-output { border-top: var(--hair) solid var(--rule); min-height: 2.4em; color: var(--ink-dim); }
-.rc-hint { color: var(--ink-faint); }
+
+/* OUTPUT — a distinct panel below the editor, not console spillover. */
+.rc-output {
+  border-top: var(--hair) solid var(--rule-bright);
+  background: var(--bg);
+}
+.rc-output-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--s-2) var(--s-4);
+  border-bottom: var(--hair) solid var(--rule);
+  background: var(--bg-inset);
+}
+.rc-output-body {
+  font-family: var(--font-mono); font-size: var(--t-sm); line-height: 1.5;
+  padding: var(--s-3) var(--s-4); min-height: 2.4em; color: var(--ink-dim);
+  max-height: 18rem; overflow: auto;
+}
+.rc-hint { color: var(--ink-faint); font-style: italic; }
 .rc-line { white-space: pre-wrap; }
 .rc-value { color: var(--good); }
 .rc-error { color: var(--editorial); }

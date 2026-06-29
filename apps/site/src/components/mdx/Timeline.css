@@ -1,17 +1,39 @@
-/* apps/site/src/components/mdx/Timeline.css */
+/* apps/site/src/components/mdx/Timeline.css
+   The Observatory timeline: an instrument tape. Amber = signal (event nodes),
+   mono = the instrument voice (labels, dates, elapsed gaps), hairline rules =
+   the axis. Everything is sized to content by layoutTimeline — no fixed void. */
 
-/* Panel padding — gives the SVG room to breathe */
-.tl-panel { padding: var(--s-5) var(--s-4) var(--s-6); }
-
-.tl-svg { width: 100%; height: auto; display: block; overflow: visible; }
-
-/* Axis: hairline ink rule, fully legible (was var(--rule) ≈ invisible) */
-.tl-axis {
-  stroke: var(--ink-dim);
-  stroke-width: 1;
+.tl-panel {
+  /* local axis colors so the gradient stops can reference tokens */
+  --tl-axis: var(--rule-bright);
+  --tl-axis-fade: color-mix(in oklab, var(--rule-bright) 0%, transparent);
+  padding: var(--s-5) var(--s-5) var(--s-4);
 }
 
-/* Year ticks — the short serifs on the axis */
+.tl-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* ── axis: a hairline tape that fades at both ends ──────────────────────── */
+.tl-axis {
+  stroke: url(#tl-axis-grad);
+  stroke-width: 1.25;
+}
+
+/* ── broken-axis mark (a compressed dead span) ──────────────────────────── */
+.tl-break-mask {
+  fill: var(--bg-raised);
+}
+.tl-break-slash {
+  stroke: var(--ink-faint);
+  stroke-width: 1.25;
+  stroke-linecap: round;
+}
+
+/* ── year ticks (proportional mode) ─────────────────────────────────────── */
 .tl-tick line {
   stroke: var(--ink-faint);
   stroke-width: 1;
@@ -19,68 +41,126 @@
 .tl-tick-label {
   font-family: var(--font-mono);
   font-size: 11px;
+  letter-spacing: 0.04em;
   fill: var(--ink-faint);
 }
 
-/* Event stems — visible connecting lines from label to axis */
-.tl-stem {
-  stroke: var(--ink-faint);
-  stroke-width: 1;
-  stroke-dasharray: 2 2;
+/* ── elapsed-gap chips (sequence mode) ──────────────────────────────────── */
+.tl-gap-rule {
+  stroke: var(--editorial);
+  stroke-width: 1.25;
+  opacity: 0.7;
+}
+.tl-gap-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  fill: var(--editorial);
 }
 
-/* Amber event dots — the primary visual signal */
+/* ── compact date stamp under each node (sequence mode) ─────────────────── */
+.tl-date {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  fill: var(--ink-faint);
+}
+
+/* ── nodes: leader stem, marker, label ──────────────────────────────────── */
+.tl-node {
+  cursor: pointer;
+}
+.tl-node:focus {
+  outline: none;
+}
+.tl-hit {
+  fill: transparent;
+}
+
+.tl-stem {
+  stroke: var(--rule-bright);
+  stroke-width: 1;
+}
+
+.tl-dot-halo {
+  fill: color-mix(in oklab, var(--accent) 14%, transparent);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
 .tl-dot {
   fill: var(--bg-raised);
   stroke: var(--accent);
   stroke-width: 2;
   transition: r var(--dur-fast) var(--ease-out);
-  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--accent) 40%, transparent));
+  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--accent) 35%, transparent));
 }
 
-/* Event labels: elevated ink (was ink-faint, hard to read at 11px) */
 .tl-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
+  letter-spacing: 0.01em;
   fill: var(--ink-dim);
+  transition: fill var(--dur-fast) var(--ease-out);
 }
 
-/* Detail text on active event: amber, sits below the axis */
-.tl-detail {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-anchor: middle;
+/* ── active state (hover / focus): fill the dot, glow, lift the label ────── */
+.tl-node--active .tl-dot {
   fill: var(--accent);
+  filter: drop-shadow(0 0 7px color-mix(in oklab, var(--accent) 60%, transparent));
 }
-
-/* Point interaction */
-.tl-pt { cursor: pointer; }
-.tl-pt:focus { outline: none; }
-
-/* Active state: filled amber dot, elevated label, glow */
-.tl-pt--active .tl-dot {
-  fill: var(--accent);
-  stroke: var(--accent);
-  r: 7;
-  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--accent) 55%, transparent));
+.tl-node--active .tl-dot-halo {
+  opacity: 1;
 }
-.tl-pt--active .tl-label {
+.tl-node--active .tl-label {
   fill: var(--ink);
   font-weight: 600;
 }
-.tl-pt--active .tl-stem {
+.tl-node--active .tl-stem {
   stroke: var(--accent);
-  stroke-dasharray: none;
-  opacity: 0.6;
+  opacity: 0.85;
 }
 
-/* Focus ring via stroke (keyboard nav) */
-.tl-pt:focus-visible .tl-dot {
+/* ── keyboard focus ring: a clearly visible amber halo around the marker ── */
+.tl-node:focus-visible .tl-dot-halo {
+  opacity: 1;
+  fill: transparent;
   stroke: var(--focus);
-  stroke-width: 3;
+  stroke-width: 2;
+  stroke-dasharray: 2 2.5;
+}
+.tl-node:focus-visible .tl-dot {
+  fill: var(--accent);
+}
+.tl-node:focus-visible .tl-label {
+  fill: var(--ink);
+  font-weight: 600;
 }
 
-/* SSR / no-JS fallback list — shown when SVG/JS absent */
+/* ── stable detail readout strip ────────────────────────────────────────── */
+.tl-readout {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.01em;
+}
+.tl-readout-date {
+  fill: var(--accent);
+  font-weight: 600;
+}
+.tl-readout-sep {
+  fill: var(--ink-faint);
+}
+.tl-readout-text {
+  fill: var(--read);
+}
+.tl-readout--hint {
+  fill: var(--ink-faint);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── SSR / no-JS fallback list ──────────────────────────────────────────── */
 .tl-fallback {
   display: none;
   list-style: none;
@@ -90,11 +170,25 @@
   font-size: var(--t-sm);
   color: var(--ink-dim);
 }
-.tl-fallback li { padding: var(--s-1) 0; }
-.tl-fallback-detail { color: var(--ink-faint); }
+.tl-fallback li {
+  padding: var(--s-1) 0;
+}
+.tl-fallback-detail {
+  color: var(--ink-faint);
+}
 
-/* Accessibility: no animation on stems/dots for prefers-reduced-motion */
+/* ── reduced motion: kill the transitions, keep the legibility ──────────── */
 @media (prefers-reduced-motion: reduce) {
-  .tl-dot { transition: none; filter: none; }
-  .tl-pt--active .tl-dot { filter: none; }
+  .tl-dot,
+  .tl-dot-halo,
+  .tl-label,
+  .tl-stem {
+    transition: none;
+  }
+  .tl-dot {
+    filter: none;
+  }
+  .tl-node--active .tl-dot {
+    filter: none;
+  }
 }

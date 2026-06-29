@@ -16,16 +16,27 @@ export interface Box {
 export interface Scales {
   x: (v: number) => number;
   y: (v: number) => number;
+  /** the data extents these scales were built from (for axis ticks). */
+  domain: { xMin: number; xMax: number; yMin: number; yMax: number };
 }
 
-/** Build linear pixel scales mapping data extents into the padded box. */
-export function makeScales(points: Point[], box: Box): Scales {
-  const xs = points.map((p) => p.x);
-  const ys = points.map((p) => p.y);
-  const xMin = Math.min(...xs);
-  const xMax = Math.max(...xs);
-  const yMin = Math.min(...ys);
-  const yMax = Math.max(...ys);
+/** One named trajectory drawn as its own animated stroke in DrawChart. */
+export interface Series {
+  /** stable key (drives the per-series CSS hue + dash timing). */
+  id: string;
+  /** legend label. */
+  label: string;
+  points: Point[];
+}
+
+/** Build padded linear pixel scales for the given data extents. */
+function scalesForExtent(
+  xMin: number,
+  xMax: number,
+  yMin: number,
+  yMax: number,
+  box: Box,
+): Scales {
   const innerW = Math.max(1, box.width - box.padX * 2);
   const innerH = Math.max(1, box.height - box.padY * 2);
   const spanX = xMax - xMin || 1;
@@ -34,7 +45,41 @@ export function makeScales(points: Point[], box: Box): Scales {
     x: (v) => box.padX + ((v - xMin) / spanX) * innerW,
     // y is flipped: larger data values sit higher (smaller pixel y).
     y: (v) => box.padY + (1 - (v - yMin) / spanY) * innerH,
+    domain: { xMin, xMax, yMin, yMax },
   };
+}
+
+/** Build linear pixel scales mapping a single series' data extents into the box. */
+export function makeScales(points: Point[], box: Box): Scales {
+  const xs = points.map((p) => p.x);
+  const ys = points.map((p) => p.y);
+  return scalesForExtent(
+    Math.min(...xs),
+    Math.max(...xs),
+    Math.min(...ys),
+    Math.max(...ys),
+    box,
+  );
+}
+
+/**
+ * Build ONE shared scale spanning the union of every series' extent, so the
+ * series are plotted on the same axes and their divergence (one path climbing,
+ * another round-tripping to the floor) is visible. Empty input yields a finite
+ * degenerate [0,1] scale rather than NaN.
+ */
+export function makeScalesMulti(series: Series[], box: Box): Scales {
+  const pts = series.flatMap((s) => s.points);
+  if (pts.length === 0) return scalesForExtent(0, 1, 0, 1, box);
+  const xs = pts.map((p) => p.x);
+  const ys = pts.map((p) => p.y);
+  return scalesForExtent(
+    Math.min(...xs),
+    Math.max(...xs),
+    Math.min(...ys),
+    Math.max(...ys),
+    box,
+  );
 }
 
 /** A polyline `d` string ("M x y L x y …"). Empty for <2 points. */
@@ -78,6 +123,34 @@ export function pathLength(points: Point[], s: Scales): number {
     len += Math.hypot(dx, dy);
   }
   return round2(len);
+}
+
+export interface AxisTick {
+  /** the data value at this tick. */
+  value: number;
+  /** the pixel position (from the supplied scale fn). */
+  pos: number;
+}
+
+/**
+ * Evenly spaced axis ticks across [min, max]. For a real range, `count` is
+ * clamped to at least 2 (the two endpoints); a degenerate range (min === max)
+ * collapses to a single tick. `scale` maps a data value to its pixel position.
+ */
+export function axisTicks(
+  min: number,
+  max: number,
+  count: number,
+  scale: (v: number) => number,
+): AxisTick[] {
+  if (max === min) return [{ value: min, pos: round2(scale(min)) }];
+  const n = Math.max(2, Math.floor(count));
+  const out: AxisTick[] = [];
+  for (let i = 0; i < n; i++) {
+    const value = min + ((max - min) * i) / (n - 1);
+    out.push({ value: round2(value), pos: round2(scale(value)) });
+  }
+  return out;
 }
 
 function round2(v: number): number {

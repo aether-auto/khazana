@@ -59,7 +59,7 @@ The intuitive answer to "how much should I bet?" is to maximize how much money y
           { bet: "10%", expected: 2 },
           { bet: "25%", expected: 5 },
           { bet: "50%", expected: 10 },
-          { bet: "100%", expected: 20 }
+          { bet: "all-in", expected: 20 }
         ]
       },
       prose: "<p><strong>Expected value loves a big bet.</strong> On a 60/40 even-money flip your edge is twenty cents on the dollar. Expected gain scales linearly with stake, so if all you want is to maximize expected dollars on the next flip, the answer is to bet <em>everything</em>. Bet the whole $100, expect to walk away with $120 on average. Do it again, expect $144. The arithmetic is impeccable.</p>"
@@ -169,21 +169,63 @@ For an even-money bet, the growth rate returns all the way to zero at exactly tw
 
 <DrawChart
   client:visible
-  unit="× bankroll (log)"
-  duration={1600}
-  caption="A single 500-flip path of a 60/40 coin, replayed at three stakes. At the Kelly 20% the bankroll climbs; at double-Kelly 40% it round-trips to nothing. Illustrative path; growth rates are Thorp's g(f)."
-  data={[
-    { x: 0, y: 1 },
-    { x: 50, y: 1.6 },
-    { x: 100, y: 2.4 },
-    { x: 150, y: 3.0 },
-    { x: 200, y: 4.4 },
-    { x: 250, y: 5.1 },
-    { x: 300, y: 7.2 },
-    { x: 350, y: 9.0 },
-    { x: 400, y: 11.5 },
-    { x: 450, y: 14.0 },
-    { x: 500, y: 18.0 }
+  logY={true}
+  xLabel="flips"
+  yLabel="bankroll"
+  duration={1800}
+  caption="Expected bankroll trajectory for a 60/40 coin over 500 flips, at three stakes. Kelly 20% compounds to ~23,600×; half-Kelly 10% to ~1,850×; double-Kelly 40% slowly bleeds to ~0.29× — a winning game that reliably loses. Log y-scale. Growth rates are Thorp's g(f) = p·ln(1+bf) + q·ln(1−f)."
+  series={[
+    {
+      id: "kelly",
+      label: "Kelly 20%",
+      points: [
+        { x: 0,   y: 1.00 },
+        { x: 50,  y: 2.74 },
+        { x: 100, y: 7.51 },
+        { x: 150, y: 20.6 },
+        { x: 200, y: 56.4 },
+        { x: 250, y: 154  },
+        { x: 300, y: 423  },
+        { x: 350, y: 1160 },
+        { x: 400, y: 3180 },
+        { x: 450, y: 8720 },
+        { x: 500, y: 23900 }
+      ]
+    },
+    {
+      id: "half-kelly",
+      label: "Half-Kelly 10%",
+      points: [
+        { x: 0,   y: 1.00 },
+        { x: 50,  y: 2.12 },
+        { x: 100, y: 4.49 },
+        { x: 150, y: 9.53 },
+        { x: 200, y: 20.2 },
+        { x: 250, y: 42.9 },
+        { x: 300, y: 91.0 },
+        { x: 350, y: 193  },
+        { x: 400, y: 409  },
+        { x: 450, y: 868  },
+        { x: 500, y: 1840 }
+      ]
+    },
+    {
+      id: "double-kelly",
+      label: "Double-Kelly 40%",
+      points: [
+        { x: 0,   y: 1.000 },
+        { x: 50,  y: 0.885 },
+        { x: 100, y: 0.783 },
+        { x: 150, y: 0.693 },
+        { x: 200, y: 0.613 },
+        { x: 250, y: 0.542 },
+        { x: 300, y: 0.480 },
+        { x: 350, y: 0.425 },
+        { x: 400, y: 0.376 },
+        { x: 450, y: 0.333 },
+        { x: 500, y: 0.294 }
+      ]
+    }
   ]}
 />
 
@@ -291,4 +333,4 @@ The arithmetic of ruin, then, is really the arithmetic of restraint. The math ha
 
 ---
 
-**Methodology.** Every formula and headline figure traces to one of two primary sources: Kelly's 1956 *Bell System Technical Journal* paper (the original growth-rate argument) and Thorp's 2006 survey (the working formulas, the $p = .53$ and S&P worked examples, the drawdown law $P(V \le x V_0) = x$, the fractional-Kelly identity $g(c f^*)/g(f^*) = c(2 - c)$, and all DataTable figures). The interactive growth-rate curves are computed live from $g(f) = p\ln(1 + bf) + q\ln(1 - f)$ — Thorp's exact expression — in tested, open math. The bankroll path in the draw-on-scroll chart is illustrative: it shows the *shape* of a winning vs. over-bet trajectory, not a specific simulated run; the growth rates that govern those shapes are Thorp's. Drawdown percentages in the DataTable apply Thorp's continuous-approximation law and its c-scaled generalization. The S&P figures use Thorp's own rough historical estimates (m = .11, s = .15, r = .06) and inherit their caveats — no transaction costs, taxes, or fat tails; real markets jump, and the formula's continuous-time assumptions are an approximation, not a guarantee. The inline fractional-Kelly charts plot $c(2-c)$ and $c$ directly from Thorp §7.3 — no fitting. The Bernoulli section and Pullquote cite the Stanford Encyclopedia of Philosophy's entry on the St. Petersburg Paradox, which quotes the Kelly criterion–Bernoulli equivalence directly; the underlying 1738 paper (*Specimen Theoriae Novae de Mensura Sortis*) is attributed in frontmatter. The StatBand figures: $f^* = 20\%$ from $p - q = 0.6 - 0.4$; $75\%$ growth at half-Kelly from $c(2-c)$ at $c = 0.5$; $P(\text{ever halving}) = 50\%$ from Thorp's drawdown law at $x = 0.5$; $2.2\times$ S&P leverage from $(m - r)/s^2 = 0.05/0.0225$. Princeton Newport performance figure (approximately 20% annualized, no down years, 1969–late 1980s) from Wikipedia citing the *Wall Street Journal*, March 2008.
+**Methodology.** Every formula and headline figure traces to one of two primary sources: Kelly's 1956 *Bell System Technical Journal* paper (the original growth-rate argument) and Thorp's 2006 survey (the working formulas, the $p = .53$ and S&P worked examples, the drawdown law $P(V \le x V_0) = x$, the fractional-Kelly identity $g(c f^*)/g(f^*) = c(2 - c)$, and all DataTable figures). The interactive growth-rate curves are computed live from $g(f) = p\ln(1 + bf) + q\ln(1 - f)$ — Thorp's exact expression — in tested, open math. The three bankroll paths in the draw-on-scroll chart are illustrative: each series is the *expected* trajectory $V_0 \cdot e^{g(f) \cdot n}$ at the given fraction, not a specific simulated run. The per-flip growth rates $g(f) = p\ln(1+f) + q\ln(1-f)$ are Thorp's exact formula ($p = 0.6$, even money): Kelly 20% → $g \approx +0.02014$; half-Kelly 10% → $g \approx +0.01504$; double-Kelly 40% → $g \approx -0.00245$ (negative — the expected path falls monotonically from 1× to ~0.29× over 500 flips). The log y-scale shows all three on the same axes despite their four-order-of-magnitude spread (Kelly 20% reaches ~23,600× at flip 500; double-Kelly 40% falls to ~0.29×). Drawdown percentages in the DataTable apply Thorp's continuous-approximation law and its c-scaled generalization. The S&P figures use Thorp's own rough historical estimates (m = .11, s = .15, r = .06) and inherit their caveats — no transaction costs, taxes, or fat tails; real markets jump, and the formula's continuous-time assumptions are an approximation, not a guarantee. The inline fractional-Kelly charts plot $c(2-c)$ and $c$ directly from Thorp §7.3 — no fitting. The Bernoulli section and Pullquote cite the Stanford Encyclopedia of Philosophy's entry on the St. Petersburg Paradox, which quotes the Kelly criterion–Bernoulli equivalence directly; the underlying 1738 paper (*Specimen Theoriae Novae de Mensura Sortis*) is attributed in frontmatter. The StatBand figures: $f^* = 20\%$ from $p - q = 0.6 - 0.4$; $75\%$ growth at half-Kelly from $c(2-c)$ at $c = 0.5$; $P(\text{ever halving}) = 50\%$ from Thorp's drawdown law at $x = 0.5$; $2.2\times$ S&P leverage from $(m - r)/s^2 = 0.05/0.0225$. Princeton Newport performance figure (approximately 20% annualized, no down years, 1969–late 1980s) from Wikipedia citing the *Wall Street Journal*, March 2008.

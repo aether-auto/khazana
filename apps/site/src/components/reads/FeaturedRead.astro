@@ -1,9 +1,11 @@
 ---
 // The FEATURED hero for the /reads index — the most recent read, presented large.
-// CRITICAL View-Transition contract: this hero's <h1> owns `read-title-${slug}`
-// for the featured read, so the morph runs into the read page's title. Exactly
-// ONE element per page may carry a given transition:name, so the featured read is
-// EXCLUDED from the gallery grid (buildReadsIndex enforces the disjoint split).
+// CRITICAL View-Transition contract: this hero's title (an <h2> — content under
+// the page <h1>, see a11y heading order) owns `read-title-${slug}` for the
+// featured read, so the morph runs into the read page's title. The transition:name
+// is carried on the tag regardless of level. Exactly ONE element per page may carry
+// a given transition:name, so the featured read is EXCLUDED from the gallery grid
+// (buildReadsIndex enforces the disjoint split).
 //
 // Atmosphere: a restrained, format-keyed amber/clay glow that drifts slowly behind
 // the masthead (transform/opacity only, GPU-cheap, 60fps; stilled under
@@ -30,7 +32,17 @@ const issueNo = (Array.from(slug).reduce((a, c) => (a + c.charCodeAt(0)) % 999, 
 const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
 ---
 
-<section class="featured" data-reveal aria-labelledby="featured-title">
+<!-- The featured read carries its facet metadata for completeness/consistency
+     with the gallery cards, but it lives OUTSIDE [data-reads-grid] and is never a
+     filter target (it is always the latest read, shown regardless of filter). -->
+<section
+  class="featured"
+  data-reveal
+  data-reads-featured
+  data-format={format}
+  data-channels={channels.join(",")}
+  aria-labelledby="featured-title"
+>
   <a class="featured-link" href={href}>
     <!-- the living atmosphere: two slow-drifting amber/clay glows behind the
          masthead. Pure transform/opacity, paused under reduced-motion. -->
@@ -49,9 +61,12 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
         <time class="tnum" datetime={dateLabel}>{dateLabel}</time>
       </p>
 
-      <h1 class="featured-title display" id="featured-title" transition:name={`read-title-${slug}`}>
+      <!-- This is content UNDER the page <h1>, not a second document title, so it
+           is an <h2> (a11y heading order). The view-transition name is carried on
+           the tag regardless of level, so the morph into the read is unaffected. -->
+      <h2 class="featured-title display" id="featured-title" transition:name={`read-title-${slug}`}>
         {title}
-      </h1>
+      </h2>
 
       <p class="featured-standfirst">{summary}</p>
 
@@ -77,6 +92,33 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
   .featured {
     position: relative;
     margin-bottom: var(--s-10);
+    /* the hero is a filter target: when the active chip doesn't match it, the
+       ReadsFilter island adds .is-filtered-out and we dim it back (opacity +
+       grayscale) and shrink it slightly — "this read is filtered away", while
+       keeping it in the DOM so its view-transition title persists. */
+    transition:
+      opacity var(--dur) var(--ease-out),
+      filter var(--dur) var(--ease-out),
+      transform var(--dur) var(--ease-out);
+  }
+  .featured.is-filtered-out {
+    opacity: 0.32;
+    filter: grayscale(0.6);
+    transform: scale(0.992);
+    pointer-events: none;
+  }
+  /* stop the living atmosphere from drifting while dimmed — it's "asleep" */
+  .featured.is-filtered-out .atmos-glow {
+    animation-play-state: paused;
+    opacity: 0.25;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .featured {
+      transition: opacity var(--dur) var(--ease-out);
+    }
+    .featured.is-filtered-out {
+      transform: none;
+    }
   }
   .featured-link {
     position: relative;

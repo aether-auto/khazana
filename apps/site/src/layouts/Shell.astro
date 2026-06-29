@@ -716,6 +716,18 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
       display: none;
     }
   }
+  /* TABLET (≤820px): the ⌘K trigger + nav both want the row, but the readout is
+     already gone (≤880px) — pull the ⌘K back to just its icon+keys so the topbar
+     row never exceeds the viewport and overflows the right edge at the 768px range
+     (the icon-only button stays a real, tappable affordance until ≤640 hides it). */
+  @media (max-width: 820px) {
+    .cmdk {
+      padding: var(--s-2);
+    }
+    .cmdk-keys {
+      display: none;
+    }
+  }
 
   /* ── Shared non-feed channel row (reads/sources/etc.) ─────────────────── */
   .channels {
@@ -922,16 +934,56 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
     color: var(--ink-dim);
   }
 
-  @media (max-width: 640px) {
+  /* TABLET + MOBILE (≤860px): below the full desktop bar, the 6-link nav rail
+     (~452px, non-wrapping, non-shrinking) no longer fits the row alongside the
+     wordmark + ⌘K — at ~768px it pushed ⌘K past the right edge. So from the
+     tablet range DOWN, the topbar wraps and the nav drops to its OWN full-width
+     line as a horizontally-scrollable instrument strip (masked edges = "more,
+     keep going", matching the LIVE ticker mask). This single treatment unifies
+     index AND article pages and removes the ⌘K tablet overflow — the first row
+     is just wordmark + ⌘K, which always fits. On-brand telemetry strip, not a
+     hamburger. */
+  @media (max-width: 860px) {
     .topbar-inner {
       flex-wrap: wrap;
       gap: var(--s-3);
+      padding: var(--s-3) var(--s-4);
     }
     .nav {
+      order: 3;
+      flex: 1 0 100%;
       margin-left: 0;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; /* Firefox — the masked edge is the affordance */
+      -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent);
+      mask-image: linear-gradient(90deg, #000 92%, transparent);
     }
+    .nav::-webkit-scrollbar {
+      display: none; /* Safari/Chrome — keep the strip clean */
+    }
+    /* ⌘K hugs the far right of the first row; it stays a real, tappable control
+       (icon-only via the ≤820 rules) and no longer needs hiding. */
     .cmdk {
-      display: none;
+      margin-left: auto;
+    }
+  }
+
+  /* COARSE POINTER (touch): bump interactive chrome to a ≥44px tappable target.
+     The visual size is preserved — we expand the hit area via padding (nav links)
+     or a min-height so thumbs land reliably. */
+  @media (pointer: coarse) {
+    .nav :global(.navrail-link) {
+      padding-block: 0.55em;
+    }
+    .ch,
+    .filter-group-tab,
+    .filter-sub-ch {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
     }
   }
 </style>

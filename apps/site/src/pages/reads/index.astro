@@ -43,7 +43,7 @@ const { featured, gallery, formatFacet, channelFacet, stats } = buildReadsIndex(
         <dl class="reads-stats tnum" aria-label="collection telemetry">
           <div class="rstat">
             <dt>reads</dt>
-            <dd>{String(stats.total).padStart(2, "0")}</dd>
+            <dd>{stats.total}</dd>
           </div>
           <div class="rstat">
             <dt>minutes</dt>
@@ -84,16 +84,18 @@ const { featured, gallery, formatFacet, channelFacet, stats } = buildReadsIndex(
 
   {
     gallery.length > 0 && (
-      <section class="reads-collection" aria-label="The collection">
+      <section class="reads-collection" aria-labelledby="collection-heading">
         <div class="collection-head" data-reveal>
-          <p class="eyebrow">the collection</p>
+          {/* a real <h2> section header (was an aria-label-only div) so the
+              heading order is page h1 → hero h2 → this h2 → card h3, no skips. */}
+          <h2 id="collection-heading" class="eyebrow collection-heading">the collection</h2>
           <span class="collection-rule" aria-hidden="true" />
         </div>
 
         <ReadsFilter
           formatFacet={formatFacet}
           channelFacet={channelFacet}
-          galleryCount={gallery.length}
+          collectionCount={stats.total}
         />
 
         <div class="reads-grid" data-reads-grid>
@@ -187,6 +189,11 @@ const { featured, gallery, formatFacet, channelFacet, stats } = buildReadsIndex(
   .collection-head .eyebrow {
     margin: 0;
     flex: none;
+  }
+  /* the <h2> wears the mono eyebrow voice — reset the UA heading weight/size so
+     it reads as chrome, not a big title (the eyebrow class drives its look). */
+  .collection-heading {
+    font-weight: 400;
   }
   .collection-rule {
     flex: 1;

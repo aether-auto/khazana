@@ -221,43 +221,64 @@ Before going to the forensic mechanics, here is a sandbox to build intuition on 
 
 <RunnableCode
   client:load
-  caption="Paste any comma-separated list of positive numbers and compute the leading-digit distribution vs. Benford. The diff column shows how far each digit deviates from the prediction."
-  code={`// Replace with any dataset — the more numbers and the wider the range, the better the fit
+  caption="Default: all 217 World Bank 2024 country populations — the same dataset as the chart above. Replace the numbers array with any real data that spans a wide range (invoice amounts, stock prices, city populations). The more entries and the wider the order-of-magnitude span, the better the fit."
+  code={`// Default: World Bank SP.POP.TOTL 2024 — all 217 countries and territories.
+// Replace with any dataset spanning multiple orders of magnitude.
 const numbers = [
-  1450935791, 1408975000, 340110988, 283487931, 251269164,
-  232679478, 211998573, 173562364, 143533851, 132059767,
-  130861007, 123975371, 116538258, 115843670, 109276265,
-  100987686, 91567738, 85518661, 83516593, 71668011,
-  69226000, 68560157, 68551653, 64007187, 58952704,
-  56432944, 52886363, 51751065, 50448963, 50015092,
-  48848840, 46814308, 46042015, 45696159, 42647492,
-  41288599, 40583164, 37885849, 37860221, 36559233,
-  36361859, 35557673, 35300280, 34631766, 34427414
+  42647492,2377128,46814308,46765,81938,37885849,93772,45696159,3033500,107995,
+  27196812,9177982,10202830,401283,1588670,173562364,282467,9132629,11858610,417072,
+  14462724,64636,791524,12413315,3164253,2521139,211998573,39471,462721,6441421,
+  23548781,14047786,524877,17638801,29123744,41288599,74457,5330690,20299123,168126,
+  19764771,1408975000,52886363,866628,109276265,6332961,5129910,31934230,3866200,
+  10979783,155967,1358282,10905028,5976992,1168722,66205,11427557,18135478,116538258,
+  6338193,1892516,3535603,1372341,1242822,132059767,54681,928784,5619911,68551653,
+  281807,2538952,2759988,3699557,83516593,34427414,39329,10405134,56836,117207,
+  167777,18406359,14754785,2201352,831087,11772557,10825703,7524100,9562065,386506,
+  1450935791,283487931,91567738,46042015,5395790,84160,9974400,58952704,2839175,
+  123975371,11552876,20592571,56432944,134518,26498823,51751065,1594353,4897263,
+  7221868,7769819,1866124,5805962,2337423,5612817,7381023,40450,2888278,677012,
+  687000,31964956,21655286,35557673,527799,24478595,568847,37548,5169395,1245779,
+  130861007,113160,2402306,38631,3524788,623525,38081173,34631766,54500091,3030131,
+  11947,29651054,17993485,292639,5287500,6916140,27032412,232679478,1824359,44278,
+  5572279,5281538,251269164,17695,4515577,10576502,6929153,34217848,115843670,
+  36559233,10694681,3203295,2857822,19051804,143533851,14256567,218019,33977,235536,
+  35300280,18501984,6586476,121354,8642022,6036860,43350,5422069,2127400,819198,
+  19009151,64007187,11943408,48848840,21916000,46843,179744,26129,100616,50448963,
+  634431,10569709,9005582,24672760,10590927,68560157,71668011,1400638,9515236,
+  104175,1368333,12277109,85518661,7494498,46535,9646,50015092,37860221,10986400,
+  69226000,340110988,3386588,36361859,327777,28405543,100987686,104377,5289152,
+  40583164,21314956,16634373
 ];
 
 const benford = [0, 30.103, 17.609, 12.494, 9.691, 7.918, 6.695, 5.799, 5.115, 4.576];
 const counts = new Array(10).fill(0);
-for (const n of numbers) {
-  if (n > 0) counts[parseInt(String(Math.abs(n))[0])]++;
+for (const x of numbers) {
+  if (x > 0) counts[parseInt(String(Math.abs(x))[0])]++;
 }
-const total = numbers.length;
+const total = numbers.filter(x => x > 0).length;
 console.log(\`n = \${total} numbers\`);
 console.log("Digit | Observed% | Benford%  | Diff");
 for (let d = 1; d <= 9; d++) {
-  const obs = (counts[d] / total * 100);
+  const obs = counts[d] / total * 100;
   const diff = (obs - benford[d]).toFixed(1);
   const sign = parseFloat(diff) >= 0 ? "+" : "";
   console.log(\`  \${d}   |  \${obs.toFixed(1).padStart(6)}   |  \${String(benford[d]).padStart(7)}   | \${sign}\${diff}\`);
 }
 
-// Compute MAD
+// MAD
 let mad = 0;
 for (let d = 1; d <= 9; d++) {
   mad += Math.abs(counts[d] / total * 100 - benford[d]);
 }
 mad /= 9;
-const conformity = mad/100 < 0.006 ? "close" : mad/100 < 0.012 ? "acceptable" : mad/100 < 0.015 ? "marginal" : "nonconforming";
-console.log(\`\\nMAD = \${(mad/100).toFixed(4)} → \${conformity} (Nigrini thresholds: close <0.006, acceptable <0.012)\`);`}
+const madFrac = mad / 100;
+const conformity = madFrac < 0.006 ? "close" : madFrac < 0.012 ? "acceptable" : madFrac < 0.015 ? "marginal" : "nonconforming";
+console.log(\`\\nMAD = \${madFrac.toFixed(4)} → \${conformity}\`);
+if (total < 500) {
+  console.log(\`Note: n=\${total} is below Nigrini's calibration range (designed for n≫1,000 transactions).\`);
+  console.log("MAD is inflated by sampling variance at small n — not evidence of non-conformity.");
+  console.log("The gross shape (digit-1 near 30%, descent to digit-9) is what matters here.");
+}`}
 />
 
 ## Forensic mechanics: the MAD test

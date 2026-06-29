@@ -1,8 +1,30 @@
 /* apps/site/src/components/mdx/Map.css */
 .map-panel { padding: var(--s-3); }
 .map-readout { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--ink-dim); padding: var(--s-2) var(--s-2) var(--s-3); }
+.map-readout .mdx-label { color: var(--ink-dim); }
+.map-readout-value { color: var(--ink); }
 .map-svg { width: 100%; height: auto; display: block; background: var(--bg-inset); border-radius: var(--r-sm); }
+
+/* single focusable group — the keyboard entry point for the whole map */
+.map-group { outline: none; }
+.map-group:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--r-sm); }
+
 .map-country { stroke: var(--rule); stroke-width: 0.4; transition: fill 120ms ease; outline: none; }
-.map-country--hover { stroke: var(--accent); stroke-width: 0.8; }
-.map-country:focus-visible { stroke: var(--focus); stroke-width: 1; }
+/* active = hovered OR keyboard-selected; bump stroke hard so even tiny islands read */
+.map-country--active { stroke: var(--accent); stroke-width: 2; }
+
+/* latitude graticule — lets the map show how far south the aurora burned */
+.map-lat { stroke: color-mix(in oklab, var(--ink-faint) 55%, transparent); stroke-width: 0.5; stroke-dasharray: 3 4; }
+.map-lat--major { stroke: color-mix(in oklab, var(--accent) 60%, var(--ink-dim)); stroke-width: 1; stroke-dasharray: none; }
+.map-lat-label { font-family: var(--font-mono); font-size: 9px; fill: var(--ink-dim); }
+
+/* keyboard focus halo at the active country's centroid (visible at any size) */
+.map-focus-halo {
+  fill: none;
+  stroke: var(--focus);
+  stroke-width: 2;
+  paint-order: stroke;
+  filter: drop-shadow(0 0 4px color-mix(in oklab, var(--focus) 70%, transparent));
+}
+
 @media (prefers-reduced-motion: reduce) { .map-country { transition: none; } }

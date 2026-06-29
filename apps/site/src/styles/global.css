@@ -150,10 +150,74 @@ img {
   display: block;
 }
 
+/* ── KaTeX overflow guard (GLOBAL, not .prose-scoped) ──────────────────────
+   A wide equation (KaTeX renders the MAD sum ~620px) was widening the layout
+   viewport on phones — the whole page zoomed out to fit it. Two cases must be
+   caught, because the overflowing node is the bare `.katex` box (its parent —
+   `.katex-display` for `$$…$$`, or the inline run for `$…$` — is overflow:visible):
+
+   1. DISPLAY math (`$$…$$` → `.katex-display > .katex`): the wrapper scrolls.
+   2. The `.katex` box ITSELF is clamped to the viewport and made an
+      inline-block so `max-width`/`overflow` actually take effect (they are
+      inert on a raw inline box). This stops EVEN inline `$…$` math from
+      stretching the page; short inline math is far under 100% so the clamp is
+      a no-op for it, and `vertical-align:-0.05em` keeps it on the text baseline.
+
+   The narrow `.mdx-annot__math .katex` (annotation terms) is left to its own
+   rule in code.css. */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-width: 0;
+  max-width: 100%;
+  padding-bottom: 0.35rem;
+}
+/* inline math (NOT inside a display wrapper): the bare `.katex` box can itself
+   exceed the viewport (its inline parent is overflow:visible). Make it an
+   inline-block so max-width/overflow take effect, clamp to the viewport, and
+   scroll internally. `vertical-align` keeps it on the text baseline. Display
+   math (`.katex-display > .katex`) is excluded — its wrapper already scrolls. */
+:not(.katex-display) > .katex {
+  display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  vertical-align: -0.05em;
+}
+
 .shell-main {
   max-width: var(--maxw);
   margin-inline: auto;
   padding: var(--s-6) var(--s-5) var(--s-12);
+  /* DEFENSIVE BACKSTOP against mobile horizontal page-widening. `clip` (NOT
+     `hidden`) contains any residual element that would otherwise push the layout
+     viewport wider than the screen, WITHOUT creating a scroll container — so it
+     does not break `position:sticky`, and it does not suppress the legitimate
+     INNER scrollers (CodeMirror `.cm-scroller`, DataTable `.dt-scroll`, KaTeX
+     display, the nav strip) which scroll inside their own boxes. Vertical flow
+     is untouched (`clip` only on the x-axis). Margin sidenotes reflow INLINE in
+     the column on mobile (Sidenote.css ≤1279 / Annotation.css ≤900), so nothing
+     legitimate lives in the clipped region. This is the safety net behind the
+     per-element clamps, not a substitute for them. */
+  overflow-x: clip;
+}
+
+/* ── Mobile overflow containment for data-viz islands ──────────────────────
+   Wide SVG charts (Observable Plot / visx) can carry an intrinsic pixel width
+   that exceeds a 360px viewport. Clamp every chart SVG to its host so it scales
+   down instead of widening the page; the DataTable scroll wrapper is pinned to
+   the column so the 560px table scrolls INSIDE it (never the page) at 360 too. */
+.chart-host svg {
+  max-width: 100%;
+  height: auto; /* Observable Plot emits a viewBox → aspect ratio preserved */
+}
+.cc-svg,
+.cc-svg svg {
+  max-width: 100%; /* visx SVG is responsively sized by the island; just cap it */
+}
+.dt-scroll {
+  width: 100%;
+  max-width: 100%;
 }
 
 /* mono section label: [ FEED ] */
@@ -261,6 +325,51 @@ img {
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* ── Essential-label contrast lift (a11y, WCAG AA) ─────────────────────────
+   Several recurring mono micro-labels were set in --ink-faint, which is reserved
+   for decorative text and dips below AA on the light ground (and is borderline
+   on dark). These specific labels carry actual information — chart axis ticks &
+   labels, the live filter status, chip counts — so they move to --ink-label,
+   which clears AA on every surface. --ink-faint stays for genuinely decorative
+   text. Targets the rendered DOM (Observable Plot tick labels, visx axis labels)
+   directly so it holds regardless of component-CSS load order. */
+.chart-host svg [aria-label="x-axis tick label"],
+.chart-host svg [aria-label="y-axis tick label"],
+.cc-axis-label,
+.cc-svg .cc-tick text,
+.cc-tick text {
+  fill: var(--ink-label);
+}
+.rfilter-status,
+.rchip-n {
+  color: var(--ink-label);
+}
+
+/* ── Coarse-pointer (touch) hit-target sizing for runnable controls ────────
+   On touch devices the range slider's 3px-tall track and the table filter input's
+   25px box are below the 44px tappable minimum. Expand the HIT area without
+   changing the visual: the slider keeps its thin 3px track (centered, non-repeat
+   background) but becomes 44px tall so a thumb lands reliably; the input grows to
+   a 44px min-height. Components own their resting look (left untouched); this is
+   the shared touch-affordance layer. */
+@media (pointer: coarse) {
+  /* NOTE specificity: ControlledChart.css / DataTable.css are imported INSIDE the
+     React components, so they bundle AFTER this global sheet and a bare
+     `.cc-slider { height:3px }` would win on source order. Qualify with the
+     element type (`input.cc-slider` = 0,1,1 > 0,1,0) so the touch sizing holds
+     without `!important`. */
+  input.cc-slider {
+    height: 44px;
+    /* keep the visible groove thin & centered while the element is 44px tall */
+    background:
+      linear-gradient(90deg, var(--accent), var(--rule)) center / 100% 3px no-repeat !important;
+    border-radius: 0;
+  }
+  input.dt-input {
+    min-height: 44px;
+  }
 }
 
 /* ── Scroll-reveal system ──────────────────────────────────────────────

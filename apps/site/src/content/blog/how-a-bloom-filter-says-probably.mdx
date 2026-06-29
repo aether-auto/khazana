@@ -57,12 +57,12 @@ Here is the full insert-and-query loop in runnable JavaScript. A `Uint8Array` ba
 
 <RunnableCode
   client:load
-  caption="A working Bloom filter in ~60 lines. Adjust n (elements inserted), m (bit count), and k (hash functions) to observe how the false-positive rate shifts. The formula predicts it — here you measure it."
+  caption="A working Bloom filter in ~60 lines. Adjust n (elements inserted), m (bit count), and k (hash functions) to observe how the false-positive rate shifts. The measured FP rate will run above the idealized formula — a known consequence of hash correlation in the toy double-hash; production filters using stronger, independent hashes track the formula closely."
   code={`// Bloom filter — tune these:
-const m = 1000;    // bit-array size (bits)
-const k = 7;       // number of hash functions
-const n = 100;     // elements to insert
-const probe = 500; // non-member queries to measure FP rate
+const m = 1000;     // bit-array size (bits)
+const k = 7;        // number of hash functions
+const n = 100;      // elements to insert
+const probe = 5000; // non-member queries — deterministic; same output every run
 
 // Bit array backed by Uint8Array
 const bits = new Uint8Array(Math.ceil(m / 8));
@@ -111,8 +111,14 @@ const measured = (fp / probe * 100).toFixed(2);
 
 // Theoretical FP rate: (1 - e^(-kn/m))^k
 const theory = Math.pow(1 - Math.exp(-k * n / m), k);
+const theorPct = (theory * 100).toFixed(2);
 console.log('Measured FP rate:    ' + measured + '%');
-console.log('Theoretical FP rate: ' + (theory * 100).toFixed(2) + '%');
+console.log('Theoretical FP rate: ' + theorPct + '%');
+// The gap (~2.84% vs 0.82%) is deterministic — not sample noise. It comes from
+// hash *correlation*: FNV-1a and DJB2 over short sequential keys ('probe-0',
+// 'probe-1', …) produce h1/h2 pairs that are not truly independent, so the k
+// positions cluster more than the formula assumes. Production filters use
+// MurmurHash3 or xxHash (near-uniform avalanche) and track the formula closely.
 
 // Count set bits
 function popcount(b) { let c = 0; while (b) { c += b & 1; b >>= 1; } return c; }
@@ -122,7 +128,7 @@ console.log('Optimal fill: ~50% (at k* = (m/n) ln 2 = ' + ((m/n)*Math.LN2).toFix
 `}
 />
 
-Run it. False negatives will be exactly zero. The measured false-positive rate will track the theoretical prediction. Notice the final line: at the default parameters ($m=1000, n=100, k=7$) the filter is close to 50% full — that is not a coincidence, it is the optimum.
+Run it. False negatives will be exactly zero — structurally guaranteed. The measured false-positive rate (~2.84%) will run above the idealized formula (0.82%): the toy double-hash uses FNV-1a and DJB2 over sequential keys, which correlate more than the formula's independence assumption allows. Production filters use near-uniform hashes like MurmurHash3 or xxHash and track the formula closely. The fill percentage in the final line confirms the filter is close to the 50% optimum — change $k$ and watch it shift.
 
 ## The false-positive probability
 

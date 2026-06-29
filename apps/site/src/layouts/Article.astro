@@ -209,6 +209,20 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
       inset 0 var(--hair) 0 color-mix(in oklab, var(--accent) 16%, transparent),
       inset 0 0 0 var(--hair) var(--rule);
   }
+  /* The header bleeds out of the column by --s-6 (2rem) for the panel effect, but
+     .shell-main only pads the page by --s-5 (1.5rem) — so at narrow widths, where
+     the column is pinned against that padding, the 2rem bleed overruns the
+     viewport by 0.5rem (8px) on EACH side (the residual ~8px page-widener seen on
+     every article at 390/360). Below the breakpoint where the column still has
+     spare centering room, cap the bleed to exactly the shell padding so the header
+     sits flush to the page edge (clean full-bleed, intentional) and never widens
+     the page; trim the side padding to keep content off the very edge. */
+  @media (max-width: 900px) {
+    .article-head {
+      margin-inline: calc(-1 * var(--s-5));
+      padding-inline: var(--s-5);
+    }
+  }
   .article-kicker {
     position: relative;
     z-index: 1;

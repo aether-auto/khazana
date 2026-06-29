@@ -39,3 +39,11 @@
   font-size: 11px;
   letter-spacing: 0.04em;
 }
+
+/* the ⓘ on P(ever −50%) — a quiet hint that the value is invariant at full
+   Kelly (full note in the stat's title tooltip). */
+.kc-note {
+  color: var(--ink-faint);
+  cursor: help;
+  font-size: 0.85em;
+}

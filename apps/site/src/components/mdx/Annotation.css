@@ -41,3 +41,26 @@
 @media (prefers-reduced-motion: reduce) {
   .mdx-annot__note { transition: none; }
 }
+/* TABLET + MOBILE (≤900px): the note is absolutely positioned with `left:0`
+   relative to the INLINE term, so when the term sits mid-line the fixed-width
+   popover starts at the term's x-offset and runs off the right edge — widening
+   the whole page (the page-zoom regression). On narrow screens we stop anchoring
+   to the term: the note drops OUT of absolute positioning into normal block flow
+   in the reading column (full available width, never past the viewport), and
+   collapses to zero space (`display:none`) when closed so it doesn't reserve a
+   gap. This is the inline-collapsed marginalia pattern — it can never widen the
+   page because it has no fixed width and no term-relative offset. */
+@media (max-width: 900px) {
+  .mdx-annot__note {
+    position: static;
+    display: none;
+    width: auto;
+    max-width: 100%;
+    margin: var(--s-2) 0;
+    /* static flow means opacity/transform reveal is unnecessary; show instantly */
+    transform: none;
+  }
+  .mdx-annot__note--open {
+    display: block;
+  }
+}
