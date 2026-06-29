@@ -1,6 +1,6 @@
 ---
 name: writers/build-log
-description: This skill should be used to author a BUILD LOG post for khazana — a DIY/project walkthrough a maker can reproduce, with a parts list, numbered steps, runnable code, and an honest "what went wrong" section. Trigger when a brief's "Format:" line is `build-log`, or when asked to "write a build log", "walk through building X", or produce a reproducible project-build MDX post. Produces one MDX file (RunnableCode/DataTable/Annotation/StatBand/Pullquote) targeting ~15-min rendered depth that builds in apps/site and passes validateDraft.
+description: This skill should be used to author a BUILD LOG post for khazana — a DIY/project walkthrough a maker can reproduce, with a parts list, numbered steps, runnable code, and an honest "what went wrong" section. Trigger when a brief's "Format:" line is `build-log`, or when asked to "write a build log", "walk through building X", or produce a reproducible project-build MDX post. Produces one MDX file (RunnableCode/DataTable/Annotation; optionally StatBand/Pullquote where earned) targeting ~15-min rendered depth that builds in apps/site and passes validateDraft.
 version: 1.0.0
 ---
 
@@ -51,32 +51,30 @@ Full detail: **`references/craft.md`**.
 Aim for ~2500–4000 words + code. Reach depth through more detail in build steps, a
 thorough failures section, a richer reproduce-this checklist — never padding.
 
-Opening `<StatBand>` with the key project stats (total cost, build time, measured
-output — cited with `href`) → what we're building (100–150w) → optionally a
-`<Pullquote>` of a striking spec line or vendor warning → parts + tools as a
-`<DataTable>` (with cited source links) → step-by-step (900–1500w, numbered; each
-step: action → expected result → code block or `<RunnableCode>`; gotcha callouts)
-→ what went wrong (300–500w: real errors, real fixes) → results (150–200w: does it
-work? measurements) → "Reproduce this" checklist. Annotated skeleton:
-**`references/template.mdx`**. Worked excerpts: **`references/exemplars.md`**.
+What we're building (100–150w) → parts + tools as a `<DataTable>` (with cited source
+links) → optional `<StatBand>` if key project stats (total cost, build time, measured
+output) set expectations before the build begins (earn it: only when those numbers frame
+the whole project) → step-by-step (900–1500w, numbered; each step: action → expected
+result → code block or `<RunnableCode>`; gotcha callouts) → optional `<Pullquote>` of a
+spec line or vendor warning if verbatim is more powerful than paraphrase → what went
+wrong (300–500w: real errors, real fixes) → results (150–200w: does it work? measurements)
+→ "Reproduce this" checklist. Annotated skeleton: **`references/template.mdx`**. Worked
+excerpts: **`references/exemplars.md`**.
 
 ## Components (this format's kit only)
 
 `RunnableCode`, `DataTable`, `Annotation`, `StatBand`, `Pullquote` — nothing else.
-(`NarrativeScene` is not natural for step-by-step walkthroughs; omit it.)
 
-`<DataTable>` is the parts list (and any measurements table); `<RunnableCode>` for
-runnable JS logic the reader can try; `<Annotation>` cites part sources, datasheet
-values, and commands inline. Non-JS commands (shell, YAML, C) go in plain fenced
-code blocks, not `<RunnableCode>`.
+**Every component must be earned.** The parts table and exact commands ARE the argument.
+Reproducibility is the craft. Reach depth through more step detail, a thorough failures
+section — not by adding components. A build log with only `DataTable`, `RunnableCode`,
+and `Annotation` is often the strongest.
 
-New narrative components — use where they deepen the build story:
-- **`StatBand` (`client:visible`)**: project stats at the top — cost, time, output.
-  Props: `stats=[{ value, prefix?, suffix?, decimals?, group?, label, sub?, href? }]`,
-  `caption?`. Every `href` cites a source.
-- **`Pullquote` (static `.astro`, NO `client:` directive)**: a spec line, datasheet
-  excerpt, or vendor warning worth dramatizing. Props: `cite?`, `href?`, `kind?` (try
-  `kind="document"` for datasheets, `kind="headline"` for a project reveal).
+- **`<DataTable client:load>`** — parts list (and measurements table); cited source links per row.
+- **`<RunnableCode client:visible>`** — runnable JS logic the reader can try. Non-JS commands (shell, YAML, C) go in plain fenced code blocks.
+- **`<Annotation client:load>`** — cites part sources, datasheet values, and commands inline.
+- **`<StatBand client:visible>`** — earn it when key project stats set expectations before the build begins. Props: `stats=[{ value, prefix?, suffix?, decimals?, group?, label, sub?, href? }]`, `caption?`.
+- **`<Pullquote>` (static `.astro`, NO `client:` directive)** — earn it when a verbatim spec line or vendor warning is more powerful than a paraphrase. Props: `cite?`, `href?`, `kind?` (try `kind="document"` for datasheets, `kind="headline"` for a project reveal).
 
 Exact props: **`references/mdx-contract.md`**.
 
@@ -100,8 +98,8 @@ Anything unsourced → `[UNSUPPORTED]`. Do not write prose yet.
 Section-by-section against the template: the `<DataTable>` parts list, the numbered
 steps (each one completable), the failures section, the reproduce-this checklist.
 Confirm target ~2500–4000 words (~15-min rendered read), every command is exact,
-every cited source is used, and only kit components appear. Note placement of
-`<StatBand>` and `<Pullquote>` if used.
+every cited source is used, and only kit components appear. For each `<StatBand>` or
+`<Pullquote>`, state in one sentence why it earns its place — if you can't, cut it.
 
 ### `<phase>Draft</phase>`
 Write the parts `<DataTable>` first (cited sources). Write numbered steps with exact

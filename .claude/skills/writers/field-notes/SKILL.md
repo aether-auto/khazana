@@ -54,14 +54,16 @@ links). Annotated skeleton: **`references/template.mdx`**. Worked excerpts:
 figure and inline citations; `<DataTable>` is used *only* if a small comparison
 (2–4 rows) sharpens the story. Most of the piece is prose.
 
-Sparingly, if they earn their place in a tight briefing:
-- **`StatBand` (`client:visible`)**: one crystallizing figure, if the number is the story.
+Sparingly, if — and only if — they earn their place in a tight briefing:
+- **`StatBand` (`client:visible`)**: one crystallizing figure, if the number IS the whole
+  story. Use at most one; omit if `<Annotation>` or `<DataTable>` already carries it.
   Props: `stats=[{ value, prefix?, suffix?, decimals?, group?, label, sub?, href? }]`.
-  Use at most one StatBand; omit if Annotation/DataTable already carries the number.
 - **`Pullquote` (static `.astro`, NO `client:` directive)**: one striking primary-source
-  line if it anchors the lede. Props: `cite?`, `href?`, `kind?`. Keep it to one, short.
+  line if it anchors the lede and is more powerful verbatim than paraphrased. At most one.
+  Props: `cite?`, `href?`, `kind?`.
 
-Never add components just to fill space. The word limit (300–500w) is the ceiling, not the floor.
+**Default: use neither.** The prose, one Annotation, and a source link are almost always
+enough. Components must be earned; brevity is this format's whole craft.
 Exact props: **`references/mdx-contract.md`**.
 
 ## Reading-comfort & voice
@@ -83,8 +85,9 @@ briefing). Do not write prose yet.
 ### `<phase>Outline</phase>`
 Confirm the four beats (lede / why-it-matters / number / watch-for) each map to a
 source, the piece will land at ~300–500 words, and only `Annotation`/`DataTable`
-appear (and `<DataTable>` only if it earns its place). Confirm every cited source is
-used.
+appear by default (`<DataTable>` only if it earns its place; `<StatBand>`/`<Pullquote>`
+only if you can state in one sentence why prose + Annotation isn't enough). Confirm
+every cited source is used.
 
 ### `<phase>Draft</phase>`
 Write the MDX: lede first (no preamble), channel-specific stakes, the crystallizing

@@ -1,6 +1,6 @@
 ---
 name: writers/chronicle
-description: This skill should be used to author a CHRONICLE post for khazana — an immersive, present-tense historical-fiction narrative grounded in real cited sources. Trigger when a brief's "Format:" line is `chronicle`, or when asked to "write a chronicle", "narrate this history as a scene", or produce immersive narrative history MDX for the site. Produces one MDX file (Scrolly/Annotation/Timeline/Map/NarrativeScene/Pullquote/StatBand) targeting ~15-min rendered depth that builds in apps/site and passes validateDraft.
+description: This skill should be used to author a CHRONICLE post for khazana — an immersive, present-tense historical-fiction narrative grounded in real cited sources. Trigger when a brief's "Format:" line is `chronicle`, or when asked to "write a chronicle", "narrate this history as a scene", or produce immersive narrative history MDX for the site. Produces one MDX file (Scrolly/Annotation/Timeline/Map/Pullquote/StatBand) targeting ~15-min rendered depth that builds in apps/site and passes validateDraft.
 version: 1.0.0
 ---
 
@@ -53,36 +53,33 @@ Aim for ~3500–4500 words when source depth supports it. Reach the length throu
 more cited detail, a deeper consequence arc — never padding. The scoring Gaussian peaks at
 15 min; a 1800-word piece scores half as well as one that earns the full depth.
 
-Hook scene (200–300w, present tense, anchor with `<Map>` or `<NarrativeScene>` scene-panel) →
-opening `<StatBand>` with the key figures of the story (casualties, date, distance, cost —
-each cited with `href`) → context beat 1 (150–200w) → core scene (400–600w, `<Scrolly>` or
-`<NarrativeScene>` reveals the sequence) → `<Pullquote>` of a period primary source
-(`kind="telegram"`, `"document"`, `"headline"`, or `"quote"`) → context beat 2 (100–150w) →
-aftermath scene (400–600w) → consequence (300–400w, `<Timeline>` of legacy).
+Hook scene (200–300w, present tense, anchor with `<Map>`) → optional `<StatBand>` with the key
+figures of the story (casualties, date, distance, cost — each cited with `href`; earn it: only
+if those numbers set up the stakes) → context beat 1 (150–200w) → core scene (400–600w,
+`<Scrolly>` reveals the sequence, every named fact an `<Annotation>`) → optional `<Pullquote>`
+of a period primary source if one exists (`kind="telegram"`, `"document"`, `"headline"`, or
+`"quote"`; earn it: only if the verbatim source is more powerful than paraphrase) → context beat
+2 (100–150w) → aftermath scene (400–600w) → consequence (300–400w, `<Timeline>` of legacy).
 Annotated skeleton: **`references/template.mdx`**. Worked excerpts:
 **`references/exemplars.md`**.
 
 ## Components (this format's kit only)
 
-`Scrolly` / `ScrollyStep`, `Annotation`, `Timeline`, `Map`,
-`NarrativeScene`, `Pullquote`, `StatBand` — and nothing else.
+`Scrolly` / `ScrollyStep`, `Annotation`, `Timeline`, `Map`, `Pullquote`, `StatBand`
+— and nothing else. (A richer scrollytelling component is pending a rebuild — do not use yet.)
 
-`<Annotation>` carries every citation (renders as marginalia, never breaking prose).
-`<Map>` anchors geography early; `<Timeline>` anchors chronology or shows the long-arc
-legacy at the end; `<Scrolly>` drives a peak sequence one beat per step.
+**Every component must be earned.** Don't add a component because it seems dramatic; add it
+because the story is poorer without it. Narrative reads: Map anchors geography, Timeline anchors
+chronology, Scrolly drives the peak sequence, Pullquote surfaces the primary source, StatBand
+makes the scale visceral. A Chronicle with only Annotation, Map, and Timeline is often stronger
+than one cluttered with every available component.
 
-New narrative components — use where they deepen the story:
-- **`NarrativeScene` (`client:visible`)**: true scrollytelling — a pinned visual (map, chart,
-  or scene card) that cross-fades as prose steps. Props: `steps=[{ panel, prose:"<html>" }]`,
-  `caption?`. Panel union: `{kind:"scene", kicker?, headline, sub?}` |
-  `{kind:"map", regions:[iso3…], weights?, caption?}` | `{kind:"chart", ...ChartProps}`.
-  Prefer over `<Scrolly>` when the visual itself is geographic or typographic (not just a chart).
-- **`Pullquote` (static `.astro`, NO `client:` directive)**: dramatic primary-source block.
-  Props: `cite?`, `href?`, `kind?: "quote"|"document"|"telegram"|"headline"`. Children = quote.
-  Use for period dispatches, treaty lines, newspaper headlines — the raw primary source.
-- **`StatBand` (`client:visible`)**: row of big figures counting up on scroll-in. Props:
-  `stats=[{ value, prefix?, suffix?, decimals?, group?(default true), label, sub?, href? }]`,
-  `caption?`, `duration?`. `href` cites a source. Place near the top after the hook scene.
+- **`<Annotation>`** — carries every citation (renders as marginalia, never breaking prose).
+- **`<Map client:visible>`** — anchors geography early. Props: `values` (iso3 → number), `labels` (iso3 → name), `caption?`.
+- **`<Timeline client:load>`** — anchors chronology or shows the long-arc legacy at the end.
+- **`<Scrolly client:visible>` / `<ScrollyStep>`** — drives the peak sequence one beat per step; `graphic` prop takes a pinned `<Chart>`, `<Map>`, or `<Timeline>`.
+- **`<Pullquote>` (static `.astro`, NO `client:` directive)**: period primary-source block — a wire dispatch, treaty line, newspaper headline. Props: `cite?`, `href?`, `kind?: "quote"|"document"|"telegram"|"headline"`. Children = the quote text. Earn it: only when the verbatim original is more powerful than a paraphrase.
+- **`<StatBand client:visible>`**: row of big figures counting up on scroll-in. Props: `stats=[{ value, prefix?, suffix?, decimals?, group?(default true), label, sub?, href? }]`, `caption?`, `duration?`. `href` cites a source. Earn it: only when the numbers genuinely set the stakes.
 
 Exact props: **`references/mdx-contract.md`**.
 
@@ -109,8 +106,8 @@ sources can't support real scenes, stop and plan a `FAIL`. Do not write prose ye
 Section-by-section against the template: heading/beat + 1-line intent + component
 placement + which source(s) each beat draws on. Confirm target ~3500–4500 words
 (~15-min rendered read) and that every cited source appears at least once. Confirm
-only kit components are used. Note placement of `<StatBand>`, `<Pullquote>`, and
-`<NarrativeScene>` if used.
+only kit components are used. For each `<StatBand>` or `<Pullquote>`, state why it
+earns its place — if you can't say why in one sentence, cut it.
 
 ### `<phase>Draft</phase>`
 Write the full MDX. The anchoring `<Map>`/`<Timeline>` arrives before the prose it

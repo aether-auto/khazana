@@ -49,7 +49,7 @@ this allow-list:
 
 ```
 Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  RunnableCode  Map
-StatBand  Pullquote  NarrativeScene
+StatBand  Pullquote
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -176,32 +176,7 @@ hairline frame), `"telegram"` (perforated-tape top, amber routing header, upperc
 `"headline"` (Fraunces, ruled top & bottom, centered attribution). Children = the quote text.
 **No `client:` directive** — this is a static Astro component.
 
-### `<NarrativeScene>` — scrollytelling with pinned evolving visual (`client:visible`)
-```jsx
-<NarrativeScene client:visible caption="The storm moves across the globe"
-  steps={[
-    {
-      panel: { kind: "scene", kicker: "1 SEPTEMBER 1859, 17:00 UTC", headline: "First Light", sub: "Carrington's telescope catches the flare" },
-      prose: "<p>Richard Carrington is watching sunspots when the sky <strong>erupts</strong>.</p>"
-    },
-    {
-      panel: { kind: "map", regions: ["USA", "CAN", "GBR", "FRA"], caption: "Telegraph systems affected" },
-      prose: "<p>Twelve hours later, telegraph operators across North America and Europe report spontaneous currents.</p>"
-    },
-    {
-      panel: { kind: "map", regions: ["USA", "CAN", "GBR", "FRA", "RUS", "JPN", "AUS"], weights: { RUS: 0.4, JPN: 0.3, AUS: 0.2 } },
-      prose: "<p>The storm reaches every meridian. The aurora is visible from Cuba.</p>"
-    }
-  ]} />
-```
-`steps` is a non-empty array of `{ panel: PanelSpec, prose: string }`. `prose` is an HTML string.
-Panel union — pick one `kind` per step:
-- `{ kind: "scene", headline: string, sub?: string, kicker?: string }` — typographic moment
-- `{ kind: "map", regions: string[], weights?: Record<string, number>, caption?: string }` — `regions` = iso3 codes to highlight; `weights` = optional 0..1 graded highlight per iso3
-- `{ kind: "chart", ...ChartProps }` — any `<Chart>` spec with `kind: "chart"` prepended
-
-`caption?` is a caption below the whole component. Prefer `NarrativeScene` over `Scrolly` when
-the visual is geographic or typographic rather than purely chart-based.
+> **Note:** A richer scrollytelling component (`NarrativeScene`) is pending a rebuild — it is not in the allow-list and must not be used until reinstated.
 
 ## 4. Body conventions
 

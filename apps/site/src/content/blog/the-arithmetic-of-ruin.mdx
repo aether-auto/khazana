@@ -18,7 +18,7 @@ sources:
 draft: false
 ---
 
-import { KellyChart, Chart, DataTable, Scrolly, DrawChart, Sidenote, Annotation, StatBand, NarrativeScene } from "../../components/mdx";
+import { KellyChart, Chart, DataTable, Scrolly, DrawChart, Sidenote, Annotation, StatBand } from "../../components/mdx";
 import Pullquote from "../../components/mdx/Pullquote.astro";
 
 Give two gamblers the same loaded coin — heads pays even money, and it lands heads 60% of the time. Same edge, same bankroll, same thousand flips. One of them turns \$100 into a small fortune. The other goes broke. The only thing that differs between them is *how much of the bankroll they stake on each flip*, and that single number decides everything. Bet too little and you leave almost all the growth on the table. Bet too much and a favorable game still grinds you to zero. Somewhere in between sits one fraction that compounds money faster than any other strategy — and there is a formula for it.
@@ -195,80 +195,61 @@ There is a catch the formula's elegance hides, and the people who run real money
 
 Thorp gives a startlingly simple result: for a full-Kelly bettor, the probability that the bankroll *ever* falls to some fraction $x$ of its starting value is just $x$ itself.<Sidenote n={6} href="https://gwern.net/doc/statistics/decision/2006-thorp.pdf" source="Thorp §3.2">In the continuous approximation, "for the Kelly optimal fraction $f^*$, $P(V \text{ ever} \le x V_0) = x$." So there is a 50% chance of ever halving, a 10% chance of ever falling to a tenth. Thorp adds that "most cautious gamblers or investors who use Kelly find the frequency of substantial bankroll reduction to be uncomfortably large."</Sidenote> A coin-flip chance of ever halving. A one-in-ten chance of ever losing 90% of everything. Those are not tail risks; those are the advertised terms. And so almost nobody serious bets full Kelly. They bet a fixed fraction of it — *fractional* Kelly — and the trade they get is one of the most favorable in all of finance.
 
-<NarrativeScene
+The simplest generalization of Kelly is *fractional Kelly*: instead of staking $f^*$, stake $c \times f^*$ for some $c \in (0, 1]$. Full Kelly is $c = 1$; half Kelly is $c = 0.5$; quarter Kelly is $c = 0.25$. Thorp proves that the long-run growth rate under fractional Kelly scales as $c(2 - c)$ times the full-Kelly growth rate — a clean quadratic in $c$. The risk (measured by the standard deviation of the growth rate) scales as just $c$. These two facts together are the entire case for fractional Kelly.
+
+The growth curve is concave and front-loaded. Plot $c(2 - c)$ and you see growth rise steeply from zero but flatten sharply as $c \to 1$. At $c = 0.5$ you already have 75% of the full-Kelly growth rate. At $c = 0.75$ you have 93.75%. The last 25% of stake buys only 25% more growth — and it is the most volatile 25%.
+
+<Chart
   client:visible
-  caption="Scroll through the fractional-Kelly tradeoff. Each step reveals one face of the c(2−c) identity — the relationship between growth, risk, and stake fraction c × f*."
-  steps={[
-    {
-      panel: {
-        kind: "scene",
-        kicker: "fractional kelly",
-        headline: "One dial. Three consequences.",
-        sub: "Dialing back from full Kelly (c = 1) to half Kelly (c = 0.5) changes growth, volatility, and drawdown risk simultaneously — and not equally."
-      },
-      prose: "<p><strong>The simplest generalization of Kelly is fractional Kelly</strong>: instead of staking <em>f*</em>, stake <em>c × f*</em> for some fraction <em>c ∈ (0, 1]</em>. Full Kelly is <em>c = 1</em>; half Kelly is <em>c = 0.5</em>; quarter Kelly is <em>c = 0.25</em>. Thorp proves that the long-run growth rate under fractional Kelly scales as <em>c(2 − c)</em> times the full-Kelly growth rate — a clean quadratic in <em>c</em>. The risk (measured by the standard deviation of the growth rate) scales as just <em>c</em>. These two facts together are the entire case for fractional Kelly. <a class='scrolly-cite' href='https://gwern.net/doc/statistics/decision/2006-thorp.pdf'>Thorp §7.3</a>.</p>"
-    },
-    {
-      panel: {
-        kind: "chart",
-        mark: "line",
-        x: "c",
-        y: "relGrowth",
-        height: 280,
-        data: [
-          { c: 0.0,  relGrowth: 0.00 },
-          { c: 0.1,  relGrowth: 0.19 },
-          { c: 0.2,  relGrowth: 0.36 },
-          { c: 0.25, relGrowth: 0.4375 },
-          { c: 0.3,  relGrowth: 0.51 },
-          { c: 0.4,  relGrowth: 0.64 },
-          { c: 0.5,  relGrowth: 0.75 },
-          { c: 0.6,  relGrowth: 0.84 },
-          { c: 0.7,  relGrowth: 0.91 },
-          { c: 0.75, relGrowth: 0.9375 },
-          { c: 0.8,  relGrowth: 0.96 },
-          { c: 0.9,  relGrowth: 0.99 },
-          { c: 1.0,  relGrowth: 1.00 }
-        ]
-      },
-      prose: "<p><strong>The growth curve is concave and front-loaded.</strong> The relative growth rate <em>c(2 − c)</em> rises steeply from zero but flattens as <em>c → 1</em>. At <em>c = 0.5</em> you already have 75% of the full-Kelly growth rate. At <em>c = 0.75</em> you have 93.75%. The last 25% of stake (going from half-Kelly to full-Kelly) buys you only 25% more growth — and it is the most volatile 25%. The curve bends so aggressively that cutting your bet in half costs you only a quarter of your expected growth rate. <a class='scrolly-cite' href='https://gwern.net/doc/statistics/decision/2006-thorp.pdf'>Thorp §7.3, relative-growth identity g(cf*)/g(f*) = c(2−c)</a>.</p>"
-    },
-    {
-      panel: {
-        kind: "chart",
-        mark: "line",
-        x: "c",
-        y: "relRisk",
-        height: 280,
-        data: [
-          { c: 0.0,  relRisk: 0.00 },
-          { c: 0.1,  relRisk: 0.10 },
-          { c: 0.2,  relRisk: 0.20 },
-          { c: 0.25, relRisk: 0.25 },
-          { c: 0.3,  relRisk: 0.30 },
-          { c: 0.4,  relRisk: 0.40 },
-          { c: 0.5,  relRisk: 0.50 },
-          { c: 0.6,  relRisk: 0.60 },
-          { c: 0.7,  relRisk: 0.70 },
-          { c: 0.75, relRisk: 0.75 },
-          { c: 0.8,  relRisk: 0.80 },
-          { c: 0.9,  relRisk: 0.90 },
-          { c: 1.0,  relRisk: 1.00 }
-        ]
-      },
-      prose: "<p><strong>Risk scales linearly.</strong> The relative risk — the standard deviation of the growth rate — scales as exactly <em>c</em>. Halve your stake, halve your volatility, no concavity, no discount. This is the punchline of the whole tradeoff: growth follows a concave curve (front-loaded), risk follows a straight line (uniform). The consequence is that every reduction from full Kelly is a better-than-fair trade: you give up less growth than you reduce risk. At half-Kelly you pay 25 percentage points of growth to buy 50 percentage points of risk reduction. The exchange rate favors the cautious bettor. <a class='scrolly-cite' href='https://gwern.net/doc/statistics/decision/2006-thorp.pdf'>Thorp §7.3</a>.</p>"
-    },
-    {
-      panel: {
-        kind: "scene",
-        kicker: "the verdict",
-        headline: "Half Kelly: 75% growth, 50% risk.",
-        sub: "Three-quarters of the compound growth rate, at half the volatility. That exchange rate is why almost every serious practitioner runs fractional Kelly."
-      },
-      prose: "<p><strong>The half-Kelly number is the most important in the table.</strong> Betting half the Kelly fraction keeps 75% of the long-run growth rate while cutting volatility in half and dropping the chance of ever halving the bankroll from 50% to about 12.5%. Giving up a quarter of your compound growth rate to halve your risk is, as Thorp writes, a bargain. The formula tells you where the summit is; wisdom tells you to camp a little below it. <a class='scrolly-cite' href='https://gwern.net/doc/statistics/decision/2006-thorp.pdf'>Thorp §7.3: \"most cautious gamblers or investors who use Kelly find the frequency of substantial bankroll reduction to be uncomfortably large.\"</a></p>"
-    }
+  mark="line"
+  x="c"
+  y="relGrowth"
+  height={260}
+  caption="Relative growth rate c(2−c) vs fractional-Kelly multiplier c. Computed directly from Thorp §7.3. The curve bends: cutting your bet in half costs only a quarter of your compound growth rate."
+  data={[
+    { c: 0.0,  relGrowth: 0.00 },
+    { c: 0.1,  relGrowth: 0.19 },
+    { c: 0.2,  relGrowth: 0.36 },
+    { c: 0.25, relGrowth: 0.4375 },
+    { c: 0.3,  relGrowth: 0.51 },
+    { c: 0.4,  relGrowth: 0.64 },
+    { c: 0.5,  relGrowth: 0.75 },
+    { c: 0.6,  relGrowth: 0.84 },
+    { c: 0.7,  relGrowth: 0.91 },
+    { c: 0.75, relGrowth: 0.9375 },
+    { c: 0.8,  relGrowth: 0.96 },
+    { c: 0.9,  relGrowth: 0.99 },
+    { c: 1.0,  relGrowth: 1.00 }
   ]}
 />
+
+Risk, by contrast, is brutally fair. The relative risk — the standard deviation of the growth rate — scales as exactly $c$. Halve your stake, halve your volatility, with no concavity and no discount. Growth follows a concave curve (front-loaded), risk follows a straight line (uniform).
+
+<Chart
+  client:visible
+  mark="line"
+  x="c"
+  y="relRisk"
+  height={260}
+  caption="Relative risk vs fractional-Kelly multiplier c. Risk is perfectly linear in c — halving your stake halves your volatility exactly. Contrast with the concave growth curve above: the exchange rate always favors the cautious bettor."
+  data={[
+    { c: 0.0,  relRisk: 0.00 },
+    { c: 0.1,  relRisk: 0.10 },
+    { c: 0.2,  relRisk: 0.20 },
+    { c: 0.25, relRisk: 0.25 },
+    { c: 0.3,  relRisk: 0.30 },
+    { c: 0.4,  relRisk: 0.40 },
+    { c: 0.5,  relRisk: 0.50 },
+    { c: 0.6,  relRisk: 0.60 },
+    { c: 0.7,  relRisk: 0.70 },
+    { c: 0.75, relRisk: 0.75 },
+    { c: 0.8,  relRisk: 0.80 },
+    { c: 0.9,  relRisk: 0.90 },
+    { c: 1.0,  relRisk: 1.00 }
+  ]}
+/>
+
+The consequence of that asymmetry is that every reduction from full Kelly is a better-than-fair trade: you give up less growth than you reduce risk. At half-Kelly you pay 25 percentage points of growth to buy 50 percentage points of risk reduction. The exchange rate always favors the cautious bettor.
 
 <DataTable
   client:load
@@ -310,4 +291,4 @@ The arithmetic of ruin, then, is really the arithmetic of restraint. The math ha
 
 ---
 
-**Methodology.** Every formula and headline figure traces to one of two primary sources: Kelly's 1956 *Bell System Technical Journal* paper (the original growth-rate argument) and Thorp's 2006 survey (the working formulas, the $p = .53$ and S&P worked examples, the drawdown law $P(V \le x V_0) = x$, the fractional-Kelly identity $g(c f^*)/g(f^*) = c(2 - c)$, and all DataTable figures). The interactive growth-rate curves are computed live from $g(f) = p\ln(1 + bf) + q\ln(1 - f)$ — Thorp's exact expression — in tested, open math. The bankroll path in the draw-on-scroll chart is illustrative: it shows the *shape* of a winning vs. over-bet trajectory, not a specific simulated run; the growth rates that govern those shapes are Thorp's. Drawdown percentages in the DataTable apply Thorp's continuous-approximation law and its c-scaled generalization. The S&P figures use Thorp's own rough historical estimates (m = .11, s = .15, r = .06) and inherit their caveats — no transaction costs, taxes, or fat tails; real markets jump, and the formula's continuous-time assumptions are an approximation, not a guarantee. The NarrativeScene fractional-Kelly charts plot $c(2-c)$ and $c$ directly from Thorp §7.3 — no fitting. The Bernoulli section and Pullquote cite the Stanford Encyclopedia of Philosophy's entry on the St. Petersburg Paradox, which quotes the Kelly criterion–Bernoulli equivalence directly; the underlying 1738 paper (*Specimen Theoriae Novae de Mensura Sortis*) is attributed in frontmatter. The StatBand figures: $f^* = 20\%$ from $p - q = 0.6 - 0.4$; $75\%$ growth at half-Kelly from $c(2-c)$ at $c = 0.5$; $P(\text{ever halving}) = 50\%$ from Thorp's drawdown law at $x = 0.5$; $2.2\times$ S&P leverage from $(m - r)/s^2 = 0.05/0.0225$. Princeton Newport performance figure (approximately 20% annualized, no down years, 1969–late 1980s) from Wikipedia citing the *Wall Street Journal*, March 2008.
+**Methodology.** Every formula and headline figure traces to one of two primary sources: Kelly's 1956 *Bell System Technical Journal* paper (the original growth-rate argument) and Thorp's 2006 survey (the working formulas, the $p = .53$ and S&P worked examples, the drawdown law $P(V \le x V_0) = x$, the fractional-Kelly identity $g(c f^*)/g(f^*) = c(2 - c)$, and all DataTable figures). The interactive growth-rate curves are computed live from $g(f) = p\ln(1 + bf) + q\ln(1 - f)$ — Thorp's exact expression — in tested, open math. The bankroll path in the draw-on-scroll chart is illustrative: it shows the *shape* of a winning vs. over-bet trajectory, not a specific simulated run; the growth rates that govern those shapes are Thorp's. Drawdown percentages in the DataTable apply Thorp's continuous-approximation law and its c-scaled generalization. The S&P figures use Thorp's own rough historical estimates (m = .11, s = .15, r = .06) and inherit their caveats — no transaction costs, taxes, or fat tails; real markets jump, and the formula's continuous-time assumptions are an approximation, not a guarantee. The inline fractional-Kelly charts plot $c(2-c)$ and $c$ directly from Thorp §7.3 — no fitting. The Bernoulli section and Pullquote cite the Stanford Encyclopedia of Philosophy's entry on the St. Petersburg Paradox, which quotes the Kelly criterion–Bernoulli equivalence directly; the underlying 1738 paper (*Specimen Theoriae Novae de Mensura Sortis*) is attributed in frontmatter. The StatBand figures: $f^* = 20\%$ from $p - q = 0.6 - 0.4$; $75\%$ growth at half-Kelly from $c(2-c)$ at $c = 0.5$; $P(\text{ever halving}) = 50\%$ from Thorp's drawdown law at $x = 0.5$; $2.2\times$ S&P leverage from $(m - r)/s^2 = 0.05/0.0225$. Princeton Newport performance figure (approximately 20% annualized, no down years, 1969–late 1980s) from Wikipedia citing the *Wall Street Journal*, March 2008.

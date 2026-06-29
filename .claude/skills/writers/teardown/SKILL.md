@@ -1,6 +1,6 @@
 ---
 name: writers/teardown
-description: This skill should be used to author a TEARDOWN post for khazana — a deep "how X actually works" technical deconstruction with runnable code and interactive diagrams, for a sophisticated reader. Trigger when a brief's "Format:" line is `teardown`, or when asked to "write a teardown", "deconstruct how X works", or produce a deep technical explainer MDX post. Produces one MDX file (RunnableCode/Chart/Annotation/StatBand/Pullquote/NarrativeScene) targeting ~15-min rendered depth that builds in apps/site and passes validateDraft.
+description: This skill should be used to author a TEARDOWN post for khazana — a deep "how X actually works" technical deconstruction with runnable code and interactive diagrams, for a sophisticated reader. Trigger when a brief's "Format:" line is `teardown`, or when asked to "write a teardown", "deconstruct how X works", or produce a deep technical explainer MDX post. Produces one MDX file (RunnableCode/Chart/Annotation/StatBand/Pullquote) targeting ~15-min rendered depth that builds in apps/site and passes validateDraft.
 version: 1.0.0
 ---
 
@@ -55,35 +55,31 @@ Full detail: **`references/craft.md`**.
 Aim for ~3000–4000 words + runnable code. Reach depth through deeper mechanism coverage,
 more runnable examples, more failure modes — never padding.
 
-Opening `<StatBand>` with the key performance constants or design numbers that frame why
-the mechanism matters → the problem (150–200w) + a `<Chart>` of the cliff/failure →
-`<Pullquote>` of a key spec line or design-doc excerpt → intuition layer (400–600w) with
-the simplest `<RunnableCode>` → the actual mechanism (600–900w), going line-by-line,
-`<RunnableCode>` of a real example, `<Annotation>` for each design decision, optionally
-`<NarrativeScene>` if the performance boundary unfolds in steps → failure modes +
-trade-offs (400–600w) with a `<Chart>` of boundary conditions → practical takeaway
-(200–300w). Annotated skeleton: **`references/template.mdx`**. Worked excerpts:
+The problem (150–200w) + a `<Chart>` of the cliff/failure that motivates X → optional
+`<StatBand>` if the key constants frame why the mechanism matters (earn it: only if those
+numbers set up everything that follows) → intuition layer (400–600w) with the simplest
+`<RunnableCode>` → optional `<Pullquote>` of a key spec line or design-doc excerpt (earn it:
+only when the verbatim primary source is essential) → the actual mechanism (600–900w), going
+line-by-line, `<RunnableCode>` of a real example, `<Annotation>` for each design decision →
+failure modes + trade-offs (400–600w) with a `<Chart>` of boundary conditions → practical
+takeaway (200–300w). Annotated skeleton: **`references/template.mdx`**. Worked excerpts:
 **`references/exemplars.md`**.
 
 ## Components (this format's kit only)
 
-`RunnableCode`, `Chart`, `Annotation`, `StatBand`, `Pullquote`, `NarrativeScene`
-— nothing else.
+`RunnableCode`, `Chart`, `Annotation`, `StatBand`, `Pullquote` — nothing else.
+(A richer scrollytelling component is pending a rebuild — do not use yet.)
 
-`<RunnableCode>` carries the live JS examples (use `console.log` for traces, `return`
-for the result); `<Chart>` shows performance/boundary data; `<Annotation>` cites every
-design decision and number inline.
+**Every component must be earned.** Technical reads: the runnable code and interactive
+chart ARE the argument. Reach depth through more runnable examples, deeper mechanism
+coverage, more failure modes — not by adding components. A teardown with only
+`RunnableCode`, `Chart`, and `Annotation` is often the strongest.
 
-New narrative components — use where they deepen the technical story:
-- **`StatBand` (`client:visible`)**: key performance constants or design figures up front
-  — the numbers that frame why the mechanism matters before the teardown begins. Props:
-  `stats=[{ value, prefix?, suffix?, decimals?, group?, label, sub?, href? }]`, `caption?`.
-- **`Pullquote` (static `.astro`, NO `client:` directive)**: a spec line, design-doc excerpt,
-  or memorable failure-mode quote. Props: `cite?`, `href?`, `kind?` (try `kind="document"`
-  for spec excerpts).
-- **`NarrativeScene` (`client:visible`)**: when the performance boundary or failure cliff
-  unfolds in stages — each step adds a variable to a pinned chart. Props:
-  `steps=[{ panel, prose:"<html>" }]`, `caption?`. Panel: `{kind:"chart", ...ChartProps}`.
+- **`<RunnableCode client:visible>`** — live JS examples; `console.log` for traces, `return` for result. Mentally execute each one before writing it.
+- **`<Chart client:visible>`** — performance/boundary data. Vary mark by intent.
+- **`<Annotation client:load>`** — cites every design decision and number inline.
+- **`<StatBand client:visible>`** — earn it when key constants frame the stakes. Props: `stats=[{ value, prefix?, suffix?, decimals?, group?, label, sub?, href? }]`, `caption?`.
+- **`<Pullquote>` (static `.astro`, NO `client:` directive)** — earn it when a verbatim spec line or failure-mode quote is essential. Props: `cite?`, `href?`, `kind?` (try `kind="document"` for spec excerpts).
 
 Exact props: **`references/mdx-contract.md`**.
 
@@ -108,8 +104,8 @@ claim, number, and constant you intend to use with its source. Anything unsource
 Section-by-section against the template: heading + intent + which component + which
 source. Confirm target ~3000–4000 words (~15-min rendered read), that the *hard part*
 gets the most space, and that every cited source appears at least once. Confirm only
-kit components. Note placement of `<StatBand>`, `<Pullquote>`, and `<NarrativeScene>`
-if used.
+kit components. For each `<StatBand>` or `<Pullquote>`, state in one sentence why it
+earns its place — if you can't, cut it.
 
 ### `<phase>Draft</phase>`
 Write each `<RunnableCode>` first and mentally execute it — it must run and produce

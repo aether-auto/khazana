@@ -74,11 +74,17 @@ prohibition on filler is absolute: every sentence earns its place.
 **Field Notes is the deliberate exception.** It is a short, sharp briefing format by design; the
 peak-read-time target does not apply. Brevity is its craft.
 
-**Use the full component palette.** Three narrative storytelling components — `NarrativeScene`,
-`Pullquote`, and `StatBand` — join the existing kit. Use them where they deepen the story, not
-decoratively. A `<StatBand>` whose numbers don't tell a story is clutter; a `<NarrativeScene>`
-that wraps a single step is overhead. But in the formats built for drama (Chronicle, Dispatch,
-Teardown), their absence is almost always a missed opportunity.
+**Components must be earned.** Never add a component to hit a quota, to look busy, or to "use
+the palette." Prefer fewer, well-chosen components that each serve the narrative. A component
+that doesn't sharpen the story is clutter; removing it is an edit. Match the component to the
+read's nature: DATA/technical reads (Dispatch, Teardown, Primer) lead with interactive charts,
+runnable demos, and tables — the data IS the argument. NARRATIVE reads (Chronicle,
+history/politics) use Map, Timeline, and inline Pullquotes for primary sources — the scene is
+the argument. Hitting the ~15-min peak comes from genuine grounded depth — more scenes, richer
+data layers, deeper mechanism coverage — not from stacking components or padding.
+
+**New components available:** `Pullquote` and `StatBand` join the existing kit. A scrollytelling
+component with a richer panel model is pending a rebuild — do not use yet.
 
 ---
 
@@ -94,14 +100,15 @@ Length target: target the reading-time peak — ~15 min rendered (`GAUSSIAN_DEFA
 aim for ~3500–4500 words when source depth supports it. Reach it through more scenes, more
 cited detail, a deeper consequence arc — never padding.
 
-Component kit: Scrolly, Annotation, Timeline, Map, **NarrativeScene, Pullquote, StatBand**.
-— `NarrativeScene`: the marquee addition for Chronicle. Pin a geographic or typographic scene
-  as a visual anchor while stepped prose advances — ideal for multi-act narratives where the
-  visual (a region, a timeline card, a title frame) changes per beat.
+Component kit: Scrolly, Annotation, Timeline, Map, **Pullquote, StatBand**.
 — `Pullquote`: period primary sources — a wire dispatch, a treaty line, a headline — rendered
   dramatically (`kind="telegram"`, `kind="document"`, `kind="headline"`, `kind="quote"`).
 — `StatBand`: a row of big dramatic figures for the key numbers of the story (casualties,
   distances, durations, dates). Count-up animation on scroll; cites sources via `href`.
+Each component must earn its place: `<Map>` anchors geography, `<Timeline>` anchors
+chronology, `<Scrolly>` drives the peak sequence, `<Pullquote>` surfaces a primary source,
+`<StatBand>` makes the scale visceral. Don't add one because it seems dramatic — add it
+because the story is poorer without it.
 
 ### Dispatch (explain / feature)
 Data-driven explainer in the style of The Pudding or Distill.pub. The chart arrives before the
@@ -113,12 +120,12 @@ Length target: target the reading-time peak — ~15 min rendered (`GAUSSIAN_DEFA
 aim for ~3000–4000 words + interactive charts. Reach it through deeper data layers, more
 causal cuts, a richer methodology note — never padding.
 
-Component kit: Chart, Scrolly, DataTable, Annotation, **StatBand, Pullquote, NarrativeScene**.
-— `StatBand`: leads the piece — the key figures of the story, big and dramatic, counting up.
-  Immediately shows the reader the scale before the charts explain it.
-— `Pullquote`: a striking data finding or expert statement pulled out for visual weight.
-— `NarrativeScene` (with `kind:"chart"` or `kind:"map"` panels): when the story moves
-  geographically or needs a visual anchor that changes per scroll step.
+Component kit: Chart, Scrolly, DataTable, Annotation, **StatBand, Pullquote**.
+— `StatBand`: the key figures of the story up front, big and dramatic, counting up. Immediately
+  shows the reader the scale before the charts explain it. Earned when the numbers ARE the lede.
+— `Pullquote`: a striking data finding or expert statement pulled out for visual weight. Earned
+  when it reframes what the reader just saw in a chart — not decorative emphasis.
+Data reads: the chart or table is the argument. Lead with it; let the prose explain what to see.
 
 ### Field Notes (synthesize / brief)
 Short, sharp briefing for fast-moving news clusters. Structure: what happened (2–3 sentences),
@@ -142,12 +149,12 @@ Length target: target the reading-time peak — ~15 min rendered (`GAUSSIAN_DEFA
 aim for ~3000–4000 words + runnable code. Reach it by going deeper on the mechanism, covering
 more failure modes, adding more runnable examples — never padding.
 
-Component kit: RunnableCode, Chart, Annotation, **StatBand, Pullquote, NarrativeScene**.
-— `StatBand`: the key performance numbers or design constants up front — the figures that
-  frame why the mechanism matters before the teardown begins.
-— `Pullquote`: a key spec line, a design-doc excerpt, or a memorable failure-mode quote.
-— `NarrativeScene` (with `kind:"chart"` panels): when the performance boundary or failure
-  cliff unfolds in stages — each scroll step adds a new variable to the chart.
+Component kit: RunnableCode, Chart, Annotation, **StatBand, Pullquote**.
+— `StatBand`: key performance constants or design numbers up front — the figures that frame why
+  the mechanism matters. Earned when the numbers set the stage for everything that follows.
+— `Pullquote`: a spec line, design-doc excerpt, or memorable failure-mode quote. Earned when
+  the verbatim primary source says it better than a paraphrase ever could.
+Technical reads: the runnable code and interactive chart are the argument. Lead with them.
 
 ### Primer (explain / feature)
 Evergreen foundational explainer. This is the piece a smart generalist will still find valuable
@@ -158,11 +165,12 @@ Length target: target the reading-time peak — ~15 min rendered (`GAUSSIAN_DEFA
 aim for ~3000–4000 words + interactive sandboxes. Reach it through more scaffold layers, more
 worked examples, a richer "where to go next" — never padding.
 
-Component kit: RunnableCode, Chart, Annotation, **StatBand, Pullquote, NarrativeScene**.
-— `StatBand`: the striking numbers that motivate the concept — why this matters, at scale.
-— `Pullquote`: a crisp foundational definition or a memorable framing from the literature.
-— `NarrativeScene` (with `kind:"chart"` or `kind:"scene"` panels): when progressive concept
-  scaffolding benefits from a pinned visual that evolves per step.
+Component kit: RunnableCode, Chart, Annotation, **StatBand, Pullquote**.
+— `StatBand`: the striking numbers that motivate the concept — why this matters at scale.
+  Earned when those numbers genuinely reframe the question the primer answers.
+— `Pullquote`: a crisp foundational definition or memorable framing from the literature.
+  Earned when the verbatim original is more powerful than a paraphrase.
+The sandbox and chart are the argument. Lead with intuition, let readers play, then explain.
 
 ### Build Log (build / feature)
 DIY/project walkthrough. Parts list, step-by-step process, runnable code where applicable.
@@ -176,9 +184,10 @@ failures section, a richer reproduce-this checklist — never padding.
 
 Component kit: RunnableCode, DataTable, Annotation, **StatBand, Pullquote**.
 — `StatBand`: key project stats — total cost, build time, measured output — at the top.
-— `Pullquote`: a striking spec line, a datasheet excerpt, or a vendor warning worth
-  dramatizing. Use `kind="document"` for datasheets, `kind="headline"` for a project reveal.
-  (NarrativeScene is not natural for step-by-step walkthroughs; omit it in Build Log.)
+  Earned when those figures set the reader's expectations before the build begins.
+— `Pullquote`: a spec line, datasheet excerpt, or vendor warning worth dramatizing.
+  Use `kind="document"` for datasheets, `kind="headline"` for a project reveal.
+The parts table and exact commands are the argument. Reproducibility is the craft.
 
 ---
 

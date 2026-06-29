@@ -49,7 +49,7 @@ this allow-list:
 
 ```
 Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  RunnableCode  Map
-StatBand  Pullquote  NarrativeScene
+StatBand  Pullquote
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -176,31 +176,8 @@ hairline frame), `"telegram"` (perforated-tape top, amber routing header, upperc
 `"headline"` (Fraunces, ruled top & bottom, centered attribution). Children = the quote text.
 **No `client:` directive** — this is a static Astro component.
 
-### `<NarrativeScene>` — scrollytelling with pinned evolving visual (`client:visible`)
-```jsx
-<NarrativeScene client:visible caption="Caption for the whole scene"
-  steps={[
-    {
-      panel: { kind: "scene", kicker: "DATE / PLACE", headline: "Title Card", sub: "subtitle" },
-      prose: "<p>Step prose as an HTML string. One beat per step.</p>"
-    },
-    {
-      panel: { kind: "map", regions: ["USA", "GBR", "FRA"], caption: "Affected regions" },
-      prose: "<p>Second step prose.</p>"
-    },
-    {
-      panel: { kind: "chart", mark: "line", x: "year", y: "value", data: [{ year: "1990", value: 1 }] },
-      prose: "<p>Third step — chart panel.</p>"
-    }
-  ]} />
-```
-`steps` is a non-empty array of `{ panel: PanelSpec, prose: string }`. `prose` is an HTML string.
-Panel union — pick one `kind` per step:
-- `{ kind: "scene", headline: string, sub?: string, kicker?: string }` — typographic moment
-- `{ kind: "map", regions: string[], weights?: Record<string, number>, caption?: string }` — `regions` = iso3 codes to highlight; `weights` = optional 0..1 graded highlight per iso3
-- `{ kind: "chart", ...ChartProps }` — any `<Chart>` spec with `kind: "chart"` prepended
 
-`caption?` is a caption below the whole component.
+> **Note:** A richer scrollytelling component (`NarrativeScene`) is pending a rebuild — it is not in the allow-list and must not be used until reinstated.
 
 ## 4. Body conventions
 

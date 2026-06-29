@@ -24,24 +24,11 @@ sources:
 draft: false
 ---
 
-import { RunnableCode, Chart, Annotation, Sidenote, StatBand, NarrativeScene } from "../../components/mdx";
-import Pullquote from "../../components/mdx/Pullquote.astro";
+import { RunnableCode, Chart, Annotation, Sidenote, StatBand } from "../../components/mdx";
 
 You have a set of a billion URLs — Google's list of known-malware sites — and you need to check every page load against it in milliseconds, in a browser, with no round-trip to a server. A hash table of a billion strings would consume gigabytes. A sorted array requires a binary search and still consumes gigabytes. What you want is a structure that fits in a few megabytes and answers "is this URL in the list?" in constant time, with one asymmetry: it can occasionally say "yes" when the answer is "no," but it must *never* say "no" when the answer is "yes."
 
-That asymmetry is not a bug. It is the entire design.
-
-Burton Bloom published the idea in 1970, framing it exactly as a trade-off:
-
-<Pullquote
-  kind="document"
-  cite="Bloom, B.H. (1970). Space/Time Trade-offs in Hash Coding with Allowable Errors. CACM 13(7)."
-  href="https://cacm.acm.org/research/space-time-trade-offs-in-hash-coding-with-allowable-errors/"
->
-Trade-offs among certain computational factors in hash coding are discussed. The paradigm problem considered is that of testing a series of messages one-by-one for membership in a given set of messages. The factors considered are the size of the hash area (space), the time required to identify a message as a nonmember of the given set (reject time), and an allowable error frequency.
-</Pullquote>
-
-The key phrase is *allowable error frequency*. By permitting the filter to say "probably yes" instead of a guaranteed "yes," Bloom showed you could compress membership information into a bit array orders of magnitude smaller than the data itself. The false-positive rate is tunable. The false-negative rate is zero — structurally, permanently, provably.
+That asymmetry is not a bug. It is the entire design. Burton Bloom published it in 1970 as a deliberate trade: by permitting the filter to say "probably yes" instead of a guaranteed "yes," you can compress membership information into a bit array orders of magnitude smaller than the data itself.<Sidenote n={1} href="https://cacm.acm.org/research/space-time-trade-offs-in-hash-coding-with-allowable-errors/" source="Bloom 1970">B.H. Bloom, "Space/Time Trade-offs in Hash Coding with Allowable Errors," *Communications of the ACM* 13, no. 7 (1970): 422–426. Bloom framed the paper around "allowable error frequency" — the key phrase that separates a filter from a dictionary.</Sidenote> The false-positive rate is tunable. The false-negative rate is zero — structurally, permanently, provably.
 
 <StatBand
   client:visible
@@ -62,7 +49,7 @@ The asymmetry comes directly from the insert operation. When you add an element 
 
 False positives happen for the opposite reason. Hash collisions are inevitable: many elements, each hashing to their own $k$ positions, collectively light up many bits. A new element whose hash positions happen to coincide with already-lit bits looks like a member even though it was never inserted. The chance of this collision is the false-positive probability, and it depends on how full the bit array is.
 
-What the filter cannot do is *miss* an insertion it actually received. A false negative would require a bit to flip back from 1 to 0 spontaneously. Bit arrays do not do that.<Sidenote n={1} href="https://en.wikipedia.org/wiki/Bloom_filter" source="Wikipedia: Bloom filter">The zero-false-negative guarantee holds exactly for the basic Bloom filter. Counting filters and deletable filters exist and trade this guarantee for deletion support — more on those below.</Sidenote> This is the property that makes the structure useful: you can safely skip every "definitely absent" answer, confident you have missed nothing.
+What the filter cannot do is *miss* an insertion it actually received. A false negative would require a bit to flip back from 1 to 0 spontaneously. Bit arrays do not do that.<Sidenote n={2} href="https://en.wikipedia.org/wiki/Bloom_filter" source="Wikipedia: Bloom filter">The zero-false-negative guarantee holds exactly for the basic Bloom filter. Counting filters and deletable filters exist and trade this guarantee for deletion support — more on those below.</Sidenote> This is the property that makes the structure useful: you can safely skip every "definitely absent" answer, confident you have missed nothing.
 
 ## The machinery: k hash functions over an m-bit array
 
@@ -143,7 +130,7 @@ When you insert one element, each of the $k$ hash positions gets set to 1. After
 
 $$\Pr[\text{bit} = 0] = \left(1 - \frac{1}{m}\right)^{kn} \approx e^{-kn/m}$$
 
-The approximation uses $(1 - 1/x)^x \to e^{-1}$ for large $x$.<Sidenote n={2} href="https://www.eecs.harvard.edu/~michaelm/postscripts/im2005b.pdf" source="Broder & Mitzenmacher 2004">The exact expression is $(1 - 1/m)^{kn}$; the $e^{-kn/m}$ approximation is accurate for $m \gg kn$. Broder and Mitzenmacher (2004) present both forms.</Sidenote> A false positive requires all $k$ of a new element's hash positions to already be set. Assuming independence, the false-positive rate is:
+The approximation uses $(1 - 1/x)^x \to e^{-1}$ for large $x$.<Sidenote n={3} href="https://www.eecs.harvard.edu/~michaelm/postscripts/im2005b.pdf" source="Broder & Mitzenmacher 2004">The exact expression is $(1 - 1/m)^{kn}$; the $e^{-kn/m}$ approximation is accurate for $m \gg kn$. Broder and Mitzenmacher (2004) present both forms.</Sidenote> A false positive requires all $k$ of a new element's hash positions to already be set. Assuming independence, the false-positive rate is:
 
 <Annotation client:load math term="p \approx \left(1 - e^{-kn/m}\right)^k" note="False-positive probability as a function of m (bit-array size), k (hash functions), and n (elements inserted). Source: Broder & Mitzenmacher (2004), Theorem 1." />
 
@@ -151,78 +138,42 @@ This is the central result. Everything you tune about a Bloom filter — bits to
 
 ## Deriving the optimum: why the filter should be half full
 
-The scrollytelling below steps through the derivation: how the false-positive rate varies with $k$ for a fixed filter load, why there is exactly one minimum, and what that minimum implies about the fill fraction.
+Two forces compete inside the false-positive formula $(1 - e^{-kn/m})^k$. The exponent $k$ outside the bracket wants $k$ large: checking more positions means a false positive requires *all* of them to be set by chance. But the factor inside the bracket wants $k$ small: each insert sets more bits, filling the array faster and raising the probability that any given position is already 1. The formula is the product of these two pressures, and it has exactly one minimum.
 
-<NarrativeScene
+For a filter with 10 bits per element ($m/n = 10$), the false-positive rate as a function of $k$ forms a valley. The minimum sits near $k = 7$ — not an approximation, but exactly where the derivative of $\ln p$ with respect to $k$ equals zero.
+
+<Chart
   client:visible
-  caption="Scroll through the derivation of optimal k. Each step fixes one variable and shows the formula's shape — the minimum emerges from the tension between two competing pressures."
-  steps={[
-    {
-      panel: {
-        kind: "scene",
-        kicker: "step 1 — fix m and n",
-        headline: "More hash functions ≠ better",
-        sub: "More k sets more bits. The fill fraction rises, so each check is more likely to hit an already-set bit."
-      },
-      prose: "<p><strong>Two competing pressures.</strong> Increasing <em>k</em> helps because you check more positions — a false positive requires <em>all k</em> to be set. But increasing <em>k</em> hurts because each insert now sets more bits, filling the array faster and raising the probability that any given position is already 1. The false-positive formula <code>(1 − e^(−kn/m))^k</code> is a product of these two forces: the exponent <em>k</em> outside the bracket wants <em>k</em> large; the factor inside the bracket wants <em>k</em> small. <a class='scrolly-cite' href='https://www.eecs.harvard.edu/~michaelm/postscripts/im2005b.pdf'>Broder &amp; Mitzenmacher (2004), §2</a>.</p>"
-    },
-    {
-      panel: {
-        kind: "chart",
-        mark: "line",
-        x: "k",
-        y: "fp",
-        height: 280,
-        data: [
-          { k: 1,  fp: 9.52  },
-          { k: 2,  fp: 3.29  },
-          { k: 3,  fp: 1.74  },
-          { k: 4,  fp: 1.18  },
-          { k: 5,  fp: 0.94  },
-          { k: 6,  fp: 0.84  },
-          { k: 7,  fp: 0.82  },
-          { k: 8,  fp: 0.85  },
-          { k: 9,  fp: 0.91  },
-          { k: 10, fp: 1.02  },
-          { k: 12, fp: 1.36  },
-          { k: 14, fp: 1.90  }
-        ]
-      },
-      prose: "<p><strong>The curve has one minimum.</strong> For a filter with 10 bits per element (<em>m/n = 10</em>), the false-positive rate as a function of <em>k</em> forms a valley. Too few hash functions: each query checks too few positions, so collisions are common. Too many: the array fills up so fast that nearly every position is already set. The minimum near <em>k = 7</em> is not an approximation — it is where the derivative of ln <em>p</em> with respect to <em>k</em> equals zero. Formula: <em>p = (1 − e^(−k·n/m))^k</em> with <em>m/n = 10</em>.</p>"
-    },
-    {
-      panel: {
-        kind: "chart",
-        mark: "line",
-        x: "bpe",
-        y: "kopt",
-        height: 280,
-        data: [
-          { bpe: 4,  kopt: 2.77 },
-          { bpe: 6,  kopt: 4.16 },
-          { bpe: 8,  kopt: 5.55 },
-          { bpe: 10, kopt: 6.93 },
-          { bpe: 12, kopt: 8.32 },
-          { bpe: 14, kopt: 9.70 },
-          { bpe: 16, kopt: 11.09 },
-          { bpe: 20, kopt: 13.86 }
-        ]
-      },
-      prose: "<p><strong>The optimal k is linear in bits-per-element.</strong> Setting the derivative to zero yields <em>k* = (m/n) ln 2</em>. For 10 bits/element that is ≈ 6.93, rounds to 7 in practice. The formula says: allocate your hash-function budget proportionally to your space budget. Double the space, use twice as many hash functions. <a class='scrolly-cite' href='https://www.eecs.harvard.edu/~michaelm/postscripts/im2005b.pdf'>Broder &amp; Mitzenmacher (2004)</a>.</p>"
-    },
-    {
-      panel: {
-        kind: "scene",
-        kicker: "the insight",
-        headline: "Optimal = half full",
-        sub: "At k*, each bit has exactly 50% probability of being set. The filter is maximally uncertain — and that uncertainty is the point."
-      },
-      prose: "<p><strong>Why half-full is the sweet spot.</strong> At optimal <em>k</em>, each bit is set with probability exactly 1/2. This is not a coincidence — it falls directly out of the derivative condition. A filter less than half full has spare capacity: more hash functions would catch more false-positive collisions. A filter more than half full is overloaded: fewer hash functions would leave more zeros to catch impostors. The balance point is 50%. Run the RunnableCode demo above and watch the \"Bits set\" percentage approach 50% at <em>k = 7, m = 1000, n = 100</em>. <a class='scrolly-cite' href='https://www.eecs.harvard.edu/~michaelm/postscripts/im2005b.pdf'>Broder &amp; Mitzenmacher (2004), Theorem 1</a>.</p>"
-    }
+  mark="line"
+  x="k"
+  y="fp"
+  height={260}
+  caption="False-positive rate (%) vs number of hash functions k, for m/n = 10 bits per element. Computed from p = (1 − e^(−kn/m))^k. The valley bottoms at k = 7 (0.82%), matching the formula k* = (m/n) ln 2 ≈ 6.93."
+  data={[
+    { k: 1,  fp: 9.52  },
+    { k: 2,  fp: 3.29  },
+    { k: 3,  fp: 1.74  },
+    { k: 4,  fp: 1.18  },
+    { k: 5,  fp: 0.94  },
+    { k: 6,  fp: 0.84  },
+    { k: 7,  fp: 0.82  },
+    { k: 8,  fp: 0.85  },
+    { k: 9,  fp: 0.91  },
+    { k: 10, fp: 1.02  },
+    { k: 12, fp: 1.36  },
+    { k: 14, fp: 1.90  }
   ]}
 />
 
-Substituting $k^*$ back into the false-positive formula gives the best achievable rate for a given bits-per-element ratio $b = m/n$:
+Setting the derivative to zero yields the optimal hash function count:
+
+<Annotation client:load math term="k^* = \frac{m}{n} \ln 2" note="Optimal number of hash functions for a given m/n ratio. At this k, the filter is exactly half full on average — each bit has equal probability of being 0 or 1. Source: Broder & Mitzenmacher (2004)." />
+
+The elegance is worth pausing on: the optimal filter is one where exactly half the bits are set to 1 on average. At $k^*$, each bit is set with probability exactly $\frac{1}{2}$ — not a coincidence, but the direct consequence of the derivative condition. A filter less than half full has spare capacity; more hash functions would catch more false-positive collisions. A filter more than half full is overloaded; fewer hash functions would leave more zeros to serve as sentinels. The balance point is 50%. Run the demo above and watch the "Bits set" percentage settle near 50% at the default parameters — that is the optimum working in real time.
+
+The optimal $k$ grows linearly with bits-per-element: double the space budget, use twice as many hash functions. For 10 bits/element, $k^* = 10 \cdot \ln 2 \approx 6.93$, which rounds to 7 in practice.<Sidenote n={4} href="https://www.eecs.harvard.edu/~michaelm/postscripts/im2005b.pdf" source="Broder & Mitzenmacher 2004">Broder and Mitzenmacher (2004) derive both the optimal-$k$ formula and the substituted false-positive expression from first principles in §2. The linear relationship between optimal $k$ and $m/n$ means that sizing a filter is a single formula, not an optimization search.</Sidenote>
+
+Substituting $k^*$ back gives the best achievable rate for a given bits-per-element ratio $b = m/n$:
 
 $$p_{\text{opt}} = \left(\frac{1}{2}\right)^{b \ln 2} = e^{-b \cdot (\ln 2)^2}$$
 
@@ -230,7 +181,7 @@ Inverted: to hit a target false-positive rate $p$, you need at least:
 
 <Annotation client:load math term="\frac{m}{n} = \frac{-\ln p}{(\ln 2)^2} \approx -1.44 \log_2 p" note="Minimum bits per element for false-positive rate p at optimal k. At p = 1%: m/n ≈ 9.58. At p = 0.1%: m/n ≈ 14.38. Source: Broder & Mitzenmacher (2004)." />
 
-Each decade of improvement in FP rate costs roughly 4.8 additional bits per element.<Sidenote n={3} href="https://www.eecs.harvard.edu/~michaelm/postscripts/im2005b.pdf" source="Broder & Mitzenmacher 2004">The 4.8 bits/decade figure: from $p = 0.01$ to $p = 0.001$, the formula gives $14.38 - 9.58 = 4.80$ additional bits per element. Exact from $\Delta(m/n) = -\log_{10}(10) / (\log_{10} e \cdot (\ln 2)^2) \approx 4.80$.</Sidenote>
+Each decade of improvement in FP rate costs roughly 4.8 additional bits per element.<Sidenote n={5} href="https://www.eecs.harvard.edu/~michaelm/postscripts/im2005b.pdf" source="Broder & Mitzenmacher 2004">The 4.8 bits/decade figure: from $p = 0.01$ to $p = 0.001$, the formula gives $14.38 - 9.58 = 4.80$ additional bits per element. Exact from $\Delta(m/n) = -\log_{10}(10) / (\log_{10} e \cdot (\ln 2)^2) \approx 4.80$.</Sidenote>
 
 ## Space vs. false-positive rate: the trade-off curve
 
@@ -257,7 +208,7 @@ Each decade of improvement in FP rate costs roughly 4.8 additional bits per elem
   ]}
 />
 
-The curve drops steeply in the 6–12 range. Two extra bits per element take you from ~14% false-positive rate to ~1%. Beyond 12 bits you are buying marginal improvement at rising cost. Cassandra's `bloom_filter_fp_chance` defaults to 0.01 (1% FP) for most compaction strategies and 0.1 (10% FP) for LeveledCompactionStrategy — both landing in this steepest part of the curve, where the space cost is lowest for the improvement delivered.<Sidenote n={4} href="https://cassandra.apache.org/doc/latest/cassandra/managing/operating/bloom_filters.html" source="Cassandra docs">Apache Cassandra documentation: the default `bloom_filter_fp_chance` is 0.01 for Size-Tiered Compaction and 0.1 for Leveled Compaction. The documentation notes that a filter at 0.01 requires roughly three times the memory of one at 0.1. Bloom filters are stored off-heap in Cassandra to avoid GC pressure.</Sidenote>
+The curve drops steeply in the 6–12 range. Two extra bits per element take you from ~14% false-positive rate to ~1%. Beyond 12 bits you are buying marginal improvement at rising cost. Cassandra's `bloom_filter_fp_chance` defaults to 0.01 (1% FP) for most compaction strategies and 0.1 (10% FP) for LeveledCompactionStrategy — both landing in this steepest part of the curve, where the space cost is lowest for the improvement delivered.<Sidenote n={6} href="https://cassandra.apache.org/doc/latest/cassandra/managing/operating/bloom_filters.html" source="Cassandra docs">Apache Cassandra documentation: the default `bloom_filter_fp_chance` is 0.01 for Size-Tiered Compaction and 0.1 for Leveled Compaction. The documentation notes that a filter at 0.01 requires roughly three times the memory of one at 0.1. Bloom filters are stored off-heap in Cassandra to avoid GC pressure.</Sidenote>
 
 ## Inside an LSM tree: why Cassandra needs this
 
@@ -267,7 +218,7 @@ A Log-Structured Merge tree never updates data in-place. Every write appends to 
 
 Reading a single key in this structure requires checking every SSTable that might contain it. In the worst case — a key that was written once and never compacted — a read must probe every SSTable on disk before concluding the key does not exist. Each probe is a disk seek. On spinning disks, that is 5–10 ms per SSTable. With 50 SSTables, an unlucky read can take hundreds of milliseconds, all because of a key that is not there.
 
-Bloom filters short-circuit this entirely.<Sidenote n={5} href="https://www.scylladb.com/glossary/bloom-filter/" source="ScyllaDB: Bloom Filters">ScyllaDB (a Cassandra-compatible database) stores one Bloom filter per SSTable, checked before any disk read. A "definitely absent" answer skips the SSTable entirely. False positives are non-fatal: they cause one unnecessary disk read, which is discovered immediately when the SSTable's index does not contain the key.</Sidenote> Cassandra and Bigtable attach one Bloom filter to each SSTable, stored in RAM (off-heap). A point-read first checks every SSTable's Bloom filter — an operation that costs a handful of memory accesses per filter, all in RAM. Any SSTable whose filter says "definitely absent" is skipped. Only the SSTables that say "probably present" get a disk read.
+Bloom filters short-circuit this entirely.<Sidenote n={7} href="https://www.scylladb.com/glossary/bloom-filter/" source="ScyllaDB: Bloom Filters">ScyllaDB (a Cassandra-compatible database) stores one Bloom filter per SSTable, checked before any disk read. A "definitely absent" answer skips the SSTable entirely. False positives are non-fatal: they cause one unnecessary disk read, which is discovered immediately when the SSTable's index does not contain the key.</Sidenote> Cassandra and Bigtable attach one Bloom filter to each SSTable, stored in RAM (off-heap). A point-read first checks every SSTable's Bloom filter — an operation that costs a handful of memory accesses per filter, all in RAM. Any SSTable whose filter says "definitely absent" is skipped. Only the SSTables that say "probably present" get a disk read.
 
 At a 1% false-positive rate, 99% of unnecessary disk reads vanish. The cost: roughly 9.6 bits per key per SSTable, held in off-heap memory. For a table with one million keys spread across ten SSTables, total Bloom filter memory is about 12 MB — a fraction of any practical heap. The asymmetry is perfectly matched to the use case: false positives cause one wasted disk read; false negatives would silently lose data. Only one of those is tolerable.
 
@@ -277,15 +228,15 @@ Google Bigtable, HBase, RocksDB, LevelDB — every major LSM-tree storage engine
 
 The same asymmetry appears wherever the cost of a false negative is catastrophic and the cost of a false positive is merely inconvenient.
 
-**Chrome safe browsing.** Chrome maintains an in-memory filter of known-malware URL prefixes.<Sidenote n={6} href="https://www.chromium.org/developers/design-documents/safebrowsing/" source="Chromium: Safe Browsing">Chrome synchronously checks each URL against the in-memory prefix list. No match: safe, no network request. A match triggers an asynchronous server check that verifies the full hash. The common case — a legitimate URL — costs one in-memory lookup. A false positive adds a round-trip verification; a false negative would silently serve malware.</Sidenote> Every page load checks the filter locally, in memory, synchronously. A false positive costs one server round-trip. A false negative would mean loading malware. The zero-false-negative guarantee is the entire value proposition.
+**Chrome safe browsing.** Chrome maintains an in-memory filter of known-malware URL prefixes.<Sidenote n={8} href="https://www.chromium.org/developers/design-documents/safebrowsing/" source="Chromium: Safe Browsing">Chrome synchronously checks each URL against the in-memory prefix list. No match: safe, no network request. A match triggers an asynchronous server check that verifies the full hash. The common case — a legitimate URL — costs one in-memory lookup. A false positive adds a round-trip verification; a false negative would silently serve malware.</Sidenote> Every page load checks the filter locally, in memory, synchronously. A false positive costs one server round-trip. A false negative would mean loading malware. The zero-false-negative guarantee is the entire value proposition.
 
-**Akamai CDN one-hit-wonder filtering.** Akamai applied Bloom filters to cache admission: objects requested only once should never enter the disk cache (they waste space and will never be requested again). A Bloom filter tracks prior requests; only objects that test "probably seen before" get cached. This cut disk write workload by roughly 50%.<Sidenote n={7} href="https://en.wikipedia.org/wiki/Bloom_filter" source="Wikipedia: Bloom filter">The Akamai one-hit-wonder case study is documented in Broder and Mitzenmacher (2004) and Wikipedia's Bloom filter article. A false positive in this context caches a one-hit-wonder — a small wasted cache entry, not a failure.</Sidenote>
+**Akamai CDN one-hit-wonder filtering.** Akamai applied Bloom filters to cache admission: objects requested only once should never enter the disk cache (they waste space and will never be requested again). A Bloom filter tracks prior requests; only objects that test "probably seen before" get cached. This cut disk write workload by roughly 50%.<Sidenote n={9} href="https://en.wikipedia.org/wiki/Bloom_filter" source="Wikipedia: Bloom filter">The Akamai one-hit-wonder case study is documented in Broder and Mitzenmacher (2004) and Wikipedia's Bloom filter article. A false positive in this context caches a one-hit-wonder — a small wasted cache entry, not a failure.</Sidenote>
 
 ## Why you cannot delete from a Bloom filter
 
 The zero-false-negative guarantee comes with a hard constraint: you cannot remove elements. Set a bit to 0 and you might invalidate every other element that hashed to that position. There is no way to know.
 
-The canonical fix is a **counting Bloom filter**: replace each bit with a small integer counter (typically 4 bits). Insert increments the $k$ counters; delete decrements them. A position's effective "bit" is whether its counter is nonzero. This works, and it restores deletion — at a cost of 4× the space (4 bits per position instead of 1), and with a new failure mode: counter overflow. If a counter reaches its maximum value (15 for a 4-bit counter) and wraps, you get phantom false negatives. In practice, counters rarely overflow with 4 bits and modest load, but the guarantee is gone.<Sidenote n={8} href="https://www.eecs.harvard.edu/~michaelm/postscripts/im2005b.pdf" source="Broder & Mitzenmacher 2004">Counting Bloom filters were originally proposed by Fan et al. (2000) for scalable web caching. Broder and Mitzenmacher (2004) §4 cover the space overhead and counter-overflow analysis. The 4× space penalty and overflow risk are the primary reasons most systems prefer immutable filters plus periodic rebuild over counting variants.</Sidenote>
+The canonical fix is a **counting Bloom filter**: replace each bit with a small integer counter (typically 4 bits). Insert increments the $k$ counters; delete decrements them. A position's effective "bit" is whether its counter is nonzero. This works, and it restores deletion — at a cost of 4× the space (4 bits per position instead of 1), and with a new failure mode: counter overflow. If a counter reaches its maximum value (15 for a 4-bit counter) and wraps, you get phantom false negatives. In practice, counters rarely overflow with 4 bits and modest load, but the guarantee is gone.<Sidenote n={10} href="https://www.eecs.harvard.edu/~michaelm/postscripts/im2005b.pdf" source="Broder & Mitzenmacher 2004">Counting Bloom filters were originally proposed by Fan et al. (2000) for scalable web caching. Broder and Mitzenmacher (2004) §4 cover the space overhead and counter-overflow analysis. The 4× space penalty and overflow risk are the primary reasons most systems prefer immutable filters plus periodic rebuild over counting variants.</Sidenote>
 
 The practical lesson: if your application needs deletion, the right answer is usually not a counting Bloom filter. It is a different data structure entirely — or a design that avoids deletion by rebuilding the filter periodically (which Cassandra does at compaction time).
 
@@ -293,7 +244,7 @@ The practical lesson: if your application needs deletion, the right answer is us
 
 The Bloom filter is 55 years old. The field has not stood still.
 
-**Cuckoo filters** (Fan, Andersen, Kaminsky, Mitzenmacher, 2014) store short *fingerprints* (hash digests of elements) in a cuckoo hash table rather than setting bits in an array.<Sidenote n={9} href="https://dl.acm.org/doi/10.1145/2674005.2674994" source="Fan et al. 2014">B. Fan, D.G. Andersen, M. Kaminsky, M. Mitzenmacher, "Cuckoo Filter: Practically Better Than Bloom," CoNEXT '14. The paper shows space advantages over Bloom at false-positive rates below ~3%, and supports deletion natively without the counting-filter overhead.</Sidenote> The structural advantage: deletion is native (remove a fingerprint from its bucket), and space efficiency beats the Bloom filter at false-positive rates below roughly 3%. At 1% FP, a cuckoo filter needs about 8 bits per element vs. 9.58 for an optimal Bloom filter. The trade-offs: insertion can fail if the table is too full (Bloom insertion never fails), and worst-case lookup is slightly higher constant time due to cuckoo displacement.
+**Cuckoo filters** (Fan, Andersen, Kaminsky, Mitzenmacher, 2014) store short *fingerprints* (hash digests of elements) in a cuckoo hash table rather than setting bits in an array.<Sidenote n={11} href="https://dl.acm.org/doi/10.1145/2674005.2674994" source="Fan et al. 2014">B. Fan, D.G. Andersen, M. Kaminsky, M. Mitzenmacher, "Cuckoo Filter: Practically Better Than Bloom," CoNEXT '14. The paper shows space advantages over Bloom at false-positive rates below ~3%, and supports deletion natively without the counting-filter overhead.</Sidenote> The structural advantage: deletion is native (remove a fingerprint from its bucket), and space efficiency beats the Bloom filter at false-positive rates below roughly 3%. At 1% FP, a cuckoo filter needs about 8 bits per element vs. 9.58 for an optimal Bloom filter. The trade-offs: insertion can fail if the table is too full (Bloom insertion never fails), and worst-case lookup is slightly higher constant time due to cuckoo displacement.
 
 **Quotient filters** achieve similar goals with better cache locality. Instead of $k$ random bit positions (which scatter across memory), a quotient filter stores fingerprints in a contiguous hash table. The spatial coherence means a typical lookup fits in one or two cache lines rather than $k$ scattered accesses — a meaningful throughput advantage on large filters.
 
@@ -303,7 +254,7 @@ Neither is a universal replacement. The standard Bloom filter remains the defaul
 
 The theoretical $O(k)$ lookup time for a Bloom filter omits an engineering reality that dominates in production: each of those $k$ accesses is to a *random bit position* in the array, and random accesses to a large array almost never hit the cache.
 
-A 64 MB Bloom filter — reasonable for a billion elements at 10 bits each — does not fit in L1 or L2 cache. Each of the $k$ bit checks requires fetching a different cache line from L3 or DRAM. An L3 miss costs roughly 40 cycles; DRAM costs 200+. With $k = 7$ hash functions, that is potentially 7 independent memory stalls per lookup. The constant in $O(k)$ is not "a few nanoseconds" — it is hundreds of nanoseconds.<Sidenote n={10} href="http://tfk.mit.edu/pdf/bloom.pdf" source="Kaler (MIT): Cache Efficient Bloom Filters">Kaler's analysis of cache-efficient Bloom filters quantifies the cache-miss problem directly: for filters larger than L2 cache, each bit access is likely a separate cache miss, making throughput proportional to memory bandwidth rather than CPU speed. The blocked Bloom filter addresses this by confining all k probes to a single cache line per lookup.</Sidenote>
+A 64 MB Bloom filter — reasonable for a billion elements at 10 bits each — does not fit in L1 or L2 cache. Each of the $k$ bit checks requires fetching a different cache line from L3 or DRAM. An L3 miss costs roughly 40 cycles; DRAM costs 200+. With $k = 7$ hash functions, that is potentially 7 independent memory stalls per lookup. The constant in $O(k)$ is not "a few nanoseconds" — it is hundreds of nanoseconds.<Sidenote n={12} href="http://tfk.mit.edu/pdf/bloom.pdf" source="Kaler (MIT): Cache Efficient Bloom Filters">Kaler's analysis of cache-efficient Bloom filters quantifies the cache-miss problem directly: for filters larger than L2 cache, each bit access is likely a separate cache miss, making throughput proportional to memory bandwidth rather than CPU speed. The blocked Bloom filter addresses this by confining all k probes to a single cache line per lookup.</Sidenote>
 
 The fix is a **blocked Bloom filter**: partition the $m$-bit array into blocks equal to one cache line (typically 512 bits = 64 bytes). Each element hashes to *one block* (one cache miss to fetch), then $k$ positions are checked within that block. The cost is a slight increase in false-positive rate — the independence assumption breaks when all $k$ probes are in the same 64-byte window — but the throughput improvement is dramatic. Production Bloom filter libraries (including those in RocksDB and Apache Arrow) use blocked variants by default.
 
@@ -319,8 +270,8 @@ How good is the Bloom filter compared to the naive alternatives? A million URLs:
 
 Scale to a billion elements: 256 GB vs. 8 GB vs. 1.25 GB. The filter wins on space *and* lookup time, paying only in accuracy.
 
-The information-theoretic lower bound for representing a set of $n$ elements with false-positive rate $p$ is $n \log_2(1/p)$ bits.<Sidenote n={11} href="https://www.eecs.harvard.edu/~michaelm/postscripts/im2005b.pdf" source="Broder & Mitzenmacher 2004">The lower bound follows from counting distinct sets of size $n$. The Bloom filter uses $m = -n \ln p / (\ln 2)^2$ bits — a factor of $1/\ln 2 = \log_2 e \approx 1.44$ above the information-theoretic minimum. It is within a factor of 1.44× of theoretically optimal.</Sidenote> The Bloom filter's overhead above that bound is exactly $\log_2 e \approx 1.44\times$ — not "within a factor of two," but within a factor of 1.44. The StatBand at the top of this piece shows that number directly: 9.58 bits at 1% FP vs. the information-theoretic minimum of $\log_2(100) \approx 6.64$ bits.
+The information-theoretic lower bound for representing a set of $n$ elements with false-positive rate $p$ is $n \log_2(1/p)$ bits.<Sidenote n={13} href="https://www.eecs.harvard.edu/~michaelm/postscripts/im2005b.pdf" source="Broder & Mitzenmacher 2004">The lower bound follows from counting distinct sets of size $n$. The Bloom filter uses $m = -n \ln p / (\ln 2)^2$ bits — a factor of $1/\ln 2 = \log_2 e \approx 1.44$ above the information-theoretic minimum. It is within a factor of 1.44× of theoretically optimal.</Sidenote> The Bloom filter's overhead above that bound is exactly $\log_2 e \approx 1.44\times$ — not "within a factor of two," but within a factor of 1.44. The StatBand at the top of this piece shows that number directly: 9.58 bits at 1% FP vs. the information-theoretic minimum of $\log_2(100) \approx 6.64$ bits.
 
 ---
 
-**Methodology.** The false-positive formula $p \approx (1 - e^{-kn/m})^k$, the optimal-$k$ formula $k^* = (m/n)\ln 2$, the bits-per-element formula $m/n = -\ln(p)/(\ln 2)^2 \approx -1.44\log_2 p$, and the information-theoretic overhead factor $\log_2 e \approx 1.44\times$ all trace to Broder and Mitzenmacher (2004), which derives them from first principles. The NarrativeScene chart data (FP rate vs $k$ at $m/n = 10$) is computed from the exact formula $p = (1 - e^{-kn/m})^k$ — no fitting. The false-positive-rate-vs-bits-per-element chart data is computed from $p = e^{-b(\ln 2)^2}$ — no fitting or smoothing. Cassandra default FP rates (`bloom_filter_fp_chance = 0.01` for STCS, `0.1` for LCS) are from official Apache Cassandra documentation. The Pullquote is drawn verbatim from the abstract of Bloom (1970) as summarized in Semantic Scholar's record of the paper; exact phrasing confirmed against multiple secondary sources. The RunnableCode demo uses double-hashing (FNV-1a + DJB2) to approximate $k$ independent hash functions, analyzed in Kirsch and Mitzenmacher (2008) and closely tracking the theoretical FP rate for practical $k$ and $m$. The counting Bloom filter counter-overflow analysis and 4× space overhead are from Broder and Mitzenmacher (2004) §4. Cache-miss analysis for large filters is from Kaler (MIT, 2013). Cuckoo filter space and deletion claims are from Fan et al., CoNEXT 2014. The model assumes independent uniform hashing; real hash functions have correlations, real hardware has cache lines, and correlated insertions may raise the actual FP rate above the formula's prediction — production deployments should verify empirically and leave headroom.
+**Methodology.** The false-positive formula $p \approx (1 - e^{-kn/m})^k$, the optimal-$k$ formula $k^* = (m/n)\ln 2$, the bits-per-element formula $m/n = -\ln(p)/(\ln 2)^2 \approx -1.44\log_2 p$, and the information-theoretic overhead factor $\log_2 e \approx 1.44\times$ all trace to Broder and Mitzenmacher (2004), which derives them from first principles. The FP-rate-vs-$k$ chart data is computed from the exact formula $p = (1 - e^{-kn/m})^k$ with $m/n = 10$ — no fitting. The false-positive-rate-vs-bits-per-element chart data is computed from $p = e^{-b(\ln 2)^2}$ — no fitting or smoothing. Cassandra default FP rates (`bloom_filter_fp_chance = 0.01` for STCS, `0.1` for LCS) are from official Apache Cassandra documentation. The RunnableCode demo uses double-hashing (FNV-1a + DJB2) to approximate $k$ independent hash functions, analyzed in Kirsch and Mitzenmacher (2008) and closely tracking the theoretical FP rate for practical $k$ and $m$. The counting Bloom filter counter-overflow analysis and 4× space overhead are from Broder and Mitzenmacher (2004) §4. Cache-miss analysis for large filters is from Kaler (MIT, 2013). Cuckoo filter space and deletion claims are from Fan et al., CoNEXT 2014. The model assumes independent uniform hashing; real hash functions have correlations, real hardware has cache lines, and correlated insertions may raise the actual FP rate above the formula's prediction — production deployments should verify empirically and leave headroom.

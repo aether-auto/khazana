@@ -24,7 +24,7 @@ sources:
 draft: false
 ---
 
-import { Chart, RunnableCode, Annotation, Sidenote, DataTable, StatBand, Pullquote, NarrativeScene } from "../../components/mdx";
+import { Chart, RunnableCode, Annotation, Sidenote, DataTable, StatBand, Pullquote } from "../../components/mdx";
 
 Pick any collection of real-world numbers — the populations of every country on Earth, the GDP of every nation, the lengths of rivers, the physical constants in your textbook. Count how often the first digit is a 1. You expect roughly one in nine, about 11%. Instead you get about 30%. Count the 9s: you expect 11%, you get 4.6%. The distribution is not flat. It never is, for naturally occurring numbers. And the shape of that skew is always the same.
 
@@ -93,89 +93,75 @@ The uniform baseline hovers near 11% for every digit. Now look at what real-worl
 
 ## Two real datasets: populations and GDP
 
-The World Bank publishes population and GDP figures for every country and territory. Both datasets span roughly six orders of magnitude — from Tuvalu's 9,646 people (or Nauru's $162 million GDP) up to India's 1.45 billion population and the United States' $29.2 trillion GDP. That span is exactly the condition Benford's Law requires.
+The World Bank publishes population and GDP figures for every country and territory. Both span roughly six orders of magnitude — from Tuvalu's 9,646 people (and Nauru's $163 million GDP) up to India's 1.45 billion population and the United States' $29.2 trillion output. That range is exactly the condition Benford's Law requires.
 
-<NarrativeScene
+Here is the leading-digit distribution of 217 country populations, World Bank 2024 vintage, overlaid on the Benford prediction.<Sidenote n={3} href="https://data.worldbank.org/indicator/SP.POP.TOTL" source="World Bank 2024">World Bank, World Development Indicators, SP.POP.TOTL, 2024 vintage. Retrieved via the World Bank public API (api.worldbank.org/v2/country/all/indicator/SP.POP.TOTL) on 2026-06-26. 217 country and territory entries. Leading-digit frequencies computed from raw figures: 67 of 217 begin with 1 (30.9%), 10 begin with 9 (4.6%).</Sidenote>
+
+<Chart
   client:visible
-  caption="Scroll through each step to see the Benford prediction materialize from two independent real-world datasets."
-  steps={[
-    {
-      panel: {
-        kind: "scene",
-        kicker: "step 1 of 3",
-        headline: "The prediction",
-        sub: "P(d) = log₁₀(1 + 1/d)"
-      },
-      prose: "<p><strong>The law makes a precise prediction.</strong> Before looking at any data, the formula tells us exactly what fraction of leading digits should be 1s, 2s, ... 9s in any dataset spanning many orders of magnitude. Digit 1 should lead 30.1% of the time. Digit 9 should appear only 4.6% of the time. The curve is not arbitrary — it is a geometric consequence of equal intervals on a logarithmic scale, as we'll see. The question is whether reality agrees.</p>"
-    },
-    {
-      panel: {
-        kind: "chart",
-        mark: "line",
-        x: "digit",
-        y: "pct",
-        series: "series",
-        height: 300,
-        caption: "World Bank 2024 country populations (217 entries) vs. Benford prediction.",
-        data: [
-          { digit: 1, pct: 30.9, series: "Observed: populations" },
-          { digit: 2, pct: 16.1, series: "Observed: populations" },
-          { digit: 3, pct: 13.4, series: "Observed: populations" },
-          { digit: 4, pct: 8.3,  series: "Observed: populations" },
-          { digit: 5, pct: 11.5, series: "Observed: populations" },
-          { digit: 6, pct: 7.8,  series: "Observed: populations" },
-          { digit: 7, pct: 3.7,  series: "Observed: populations" },
-          { digit: 8, pct: 3.7,  series: "Observed: populations" },
-          { digit: 9, pct: 4.6,  series: "Observed: populations" },
-          { digit: 1, pct: 30.1, series: "Benford prediction" },
-          { digit: 2, pct: 17.6, series: "Benford prediction" },
-          { digit: 3, pct: 12.5, series: "Benford prediction" },
-          { digit: 4, pct: 9.7,  series: "Benford prediction" },
-          { digit: 5, pct: 7.9,  series: "Benford prediction" },
-          { digit: 6, pct: 6.7,  series: "Benford prediction" },
-          { digit: 7, pct: 5.8,  series: "Benford prediction" },
-          { digit: 8, pct: 5.1,  series: "Benford prediction" },
-          { digit: 9, pct: 4.6,  series: "Benford prediction" }
-        ]
-      },
-      prose: "<p><strong>Population data: close conformity.</strong> World Bank SP.POP.TOTL, 2024 vintage — 217 country and territory entries, from Tuvalu (9,646) to India (1.45 billion). Digit 1 leads 30.9% of real countries vs. the predicted 30.1%. Digit 9 appears 4.6% in both observed and predicted. The fit is not perfect — 217 is a modest sample — but the dominant downward shape is unmistakably the Benford curve. <a class='scrolly-cite' href='https://data.worldbank.org/indicator/SP.POP.TOTL'>World Bank SP.POP.TOTL, 2024</a>."
-    },
-    {
-      panel: {
-        kind: "chart",
-        mark: "line",
-        x: "digit",
-        y: "pct",
-        series: "series",
-        height: 300,
-        caption: "World Bank 2024 country GDPs (206 entries) vs. Benford prediction.",
-        data: [
-          { digit: 1, pct: 31.6, series: "Observed: GDP" },
-          { digit: 2, pct: 20.9, series: "Observed: GDP" },
-          { digit: 3, pct: 10.2, series: "Observed: GDP" },
-          { digit: 4, pct: 14.6, series: "Observed: GDP" },
-          { digit: 5, pct: 5.8,  series: "Observed: GDP" },
-          { digit: 6, pct: 4.4,  series: "Observed: GDP" },
-          { digit: 7, pct: 4.4,  series: "Observed: GDP" },
-          { digit: 8, pct: 3.9,  series: "Observed: GDP" },
-          { digit: 9, pct: 4.4,  series: "Observed: GDP" },
-          { digit: 1, pct: 30.1, series: "Benford prediction" },
-          { digit: 2, pct: 17.6, series: "Benford prediction" },
-          { digit: 3, pct: 12.5, series: "Benford prediction" },
-          { digit: 4, pct: 9.7,  series: "Benford prediction" },
-          { digit: 5, pct: 7.9,  series: "Benford prediction" },
-          { digit: 6, pct: 6.7,  series: "Benford prediction" },
-          { digit: 7, pct: 5.8,  series: "Benford prediction" },
-          { digit: 8, pct: 5.1,  series: "Benford prediction" },
-          { digit: 9, pct: 4.6,  series: "Benford prediction" }
-        ]
-      },
-      prose: "<p><strong>GDP data: the shape holds, with more scatter.</strong> World Bank NY.GDP.MKTP.CD, 2024 vintage — 206 country-level GDP figures in current USD, from Nauru ($163 million) to the United States ($29.2 trillion). Digit 1 again leads at 31.6% (predicted: 30.1%). The scatter around the curve is larger here — GDP distributions have more structure than populations, and n=206 is still small. But digit 1 dominates in both datasets, and the descent toward digit 9 is clear. Two completely different quantities; one shared shape. <a class='scrolly-cite' href='https://data.worldbank.org/indicator/NY.GDP.MKTP.CD'>World Bank NY.GDP.MKTP.CD, 2024</a>."
-    }
+  mark="line"
+  x="digit"
+  y="pct"
+  series="series"
+  height={300}
+  caption="Leading-digit frequencies in 217 country populations (World Bank SP.POP.TOTL, 2024) vs. the Benford prediction. Digit 1 leads 30.9% of real countries vs. 30.1% predicted. Digit 9 appears 4.6% in both."
+  data={[
+    { digit: 1, pct: 30.9, series: "Observed: populations" },
+    { digit: 2, pct: 16.1, series: "Observed: populations" },
+    { digit: 3, pct: 13.4, series: "Observed: populations" },
+    { digit: 4, pct: 8.3,  series: "Observed: populations" },
+    { digit: 5, pct: 11.5, series: "Observed: populations" },
+    { digit: 6, pct: 7.8,  series: "Observed: populations" },
+    { digit: 7, pct: 3.7,  series: "Observed: populations" },
+    { digit: 8, pct: 3.7,  series: "Observed: populations" },
+    { digit: 9, pct: 4.6,  series: "Observed: populations" },
+    { digit: 1, pct: 30.1, series: "Benford prediction" },
+    { digit: 2, pct: 17.6, series: "Benford prediction" },
+    { digit: 3, pct: 12.5, series: "Benford prediction" },
+    { digit: 4, pct: 9.7,  series: "Benford prediction" },
+    { digit: 5, pct: 7.9,  series: "Benford prediction" },
+    { digit: 6, pct: 6.7,  series: "Benford prediction" },
+    { digit: 7, pct: 5.8,  series: "Benford prediction" },
+    { digit: 8, pct: 5.1,  series: "Benford prediction" },
+    { digit: 9, pct: 4.6,  series: "Benford prediction" },
   ]}
 />
 
-The pattern is not a coincidence of these two datasets. It holds for river lengths, stock prices, physical constants, earthquake magnitudes, and the transaction amounts in a legitimate company's accounts payable ledger. Benford assembled evidence from 20 disparate sources in 1938 and found it each time. The question worth sitting with is *why*.
+The fit is not perfect — 217 is a modest sample, and population data has its own clustering structure — but the dominant shape is unmistakably the Benford curve. Digit 1 leads at 30.9%; digit 9 lands at 4.6%, exactly on prediction.
+
+Now the same test on a completely different quantity: country GDP.<Sidenote n={4} href="https://data.worldbank.org/indicator/NY.GDP.MKTP.CD" source="World Bank 2024">World Bank, World Development Indicators, NY.GDP.MKTP.CD, 2024 vintage. Retrieved via the same API on 2026-06-26. 206 country-level entries in current USD (regional and income-group aggregates excluded by iso3-code filter). Leading-digit frequencies: 65 of 206 begin with 1 (31.6%), 9 begin with 9 (4.4%).</Sidenote>
+
+<Chart
+  client:visible
+  mark="line"
+  x="digit"
+  y="pct"
+  series="series"
+  height={300}
+  caption="Leading-digit frequencies in 206 country GDPs (World Bank NY.GDP.MKTP.CD, 2024) vs. the Benford prediction. Digit 1 leads 31.6% vs. 30.1% predicted. More scatter than populations — GDP distributions have more structure — but the descent from digit 1 to digit 9 is clear."
+  data={[
+    { digit: 1, pct: 31.6, series: "Observed: GDP" },
+    { digit: 2, pct: 20.9, series: "Observed: GDP" },
+    { digit: 3, pct: 10.2, series: "Observed: GDP" },
+    { digit: 4, pct: 14.6, series: "Observed: GDP" },
+    { digit: 5, pct: 5.8,  series: "Observed: GDP" },
+    { digit: 6, pct: 4.4,  series: "Observed: GDP" },
+    { digit: 7, pct: 4.4,  series: "Observed: GDP" },
+    { digit: 8, pct: 3.9,  series: "Observed: GDP" },
+    { digit: 9, pct: 4.4,  series: "Observed: GDP" },
+    { digit: 1, pct: 30.1, series: "Benford prediction" },
+    { digit: 2, pct: 17.6, series: "Benford prediction" },
+    { digit: 3, pct: 12.5, series: "Benford prediction" },
+    { digit: 4, pct: 9.7,  series: "Benford prediction" },
+    { digit: 5, pct: 7.9,  series: "Benford prediction" },
+    { digit: 6, pct: 6.7,  series: "Benford prediction" },
+    { digit: 7, pct: 5.8,  series: "Benford prediction" },
+    { digit: 8, pct: 5.1,  series: "Benford prediction" },
+    { digit: 9, pct: 4.6,  series: "Benford prediction" },
+  ]}
+/>
+
+Two completely different quantities — people and dollars — one shared shape. The pattern holds for river lengths, stock prices, physical constants, earthquake magnitudes, and the transaction amounts in a legitimate company's accounts payable ledger. Benford assembled evidence from 20 disparate sources in 1938 and found it each time. The question worth sitting with is *why*.
 
 ## Why? The logarithmic number line
 
@@ -215,7 +201,7 @@ The most illuminating answer comes from a symmetry argument. Ask: what property 
 
 Measure river lengths in kilometers. Convert to miles. If the dataset truly has no preferred scale — no natural unit that makes it "special" — then multiplying all values by any constant $c$ should leave the leading-digit histogram unchanged. This is *scale invariance*.
 
-On the log scale, multiplying all values by $c$ means adding $\log_{10}(c)$ to every value — a rigid translation. The only distribution that is invariant under all such translations is the *uniform* one. And uniform on the log scale gives exactly Benford's distribution.<Sidenote n={3} href="https://projecteuclid.org/journals/statistical-science/volume-10/issue-4/A-Statistical-Derivation-of-the-Significant-Digit-Law/10.1214/ss/1177009869.full" source="Hill 1995">T. P. Hill, "A Statistical Derivation of the Significant-Digit Law," *Statistical Science* 10, no. 4 (1995), 354–363. Hill proves scale invariance as a necessary and sufficient characterization of Benford's Law: a distribution obeys Benford if and only if it is scale-invariant in the sense of being invariant under multiplication by any positive constant.</Sidenote>
+On the log scale, multiplying all values by $c$ means adding $\log_{10}(c)$ to every value — a rigid translation. The only distribution that is invariant under all such translations is the *uniform* one. And uniform on the log scale gives exactly Benford's distribution.<Sidenote n={5} href="https://projecteuclid.org/journals/statistical-science/volume-10/issue-4/A-Statistical-Derivation-of-the-Significant-Digit-Law/10.1214/ss/1177009869.full" source="Hill 1995">T. P. Hill, "A Statistical Derivation of the Significant-Digit Law," *Statistical Science* 10, no. 4 (1995), 354–363. Hill proves scale invariance as a necessary and sufficient characterization of Benford's Law: a distribution obeys Benford if and only if it is scale-invariant in the sense of being invariant under multiplication by any positive constant.</Sidenote>
 
 This is why river lengths obey Benford whether you measure in meters, feet, or furlongs. It is why stock prices obey it across bull and bear markets separated by factors of ten. Data that genuinely has no preferred scale must be log-uniform — and log-uniform means Benford.
 
@@ -223,7 +209,7 @@ This is why river lengths obey Benford whether you measure in meters, feet, or f
 
 There is a second, complementary reason that explains why even data that doesn't perfectly obey Benford in isolation tends to conform when mixed.
 
-Theodore Hill's 1995 theorem — a central-limit-theorem analogue for significant digits — states: if you randomly select distributions (in any unbiased way), then draw random samples from each, the combined sample's leading digits converge to the Benford distribution, regardless of what the individual source distributions were.<Sidenote n={4} href="https://projecteuclid.org/journals/statistical-science/volume-10/issue-4/A-Statistical-Derivation-of-the-Significant-Digit-Law/10.1214/ss/1177009869.full" source="Hill 1995">Hill's main theorem: if $F_1, F_2, \ldots$ are chosen randomly from the space of all probability distributions (under any non-atomic measure), and $X_k \sim F_k$ independently, then the significant digits of $X_1, X_2, \ldots$ converge in distribution to Benford's Law. The key insight is that the *mixing* of heterogeneous sources washes out the idiosyncrasies of each individual distribution.</Sidenote>
+Theodore Hill's 1995 theorem — a central-limit-theorem analogue for significant digits — states: if you randomly select distributions (in any unbiased way), then draw random samples from each, the combined sample's leading digits converge to the Benford distribution, regardless of what the individual source distributions were.<Sidenote n={6} href="https://projecteuclid.org/journals/statistical-science/volume-10/issue-4/A-Statistical-Derivation-of-the-Significant-Digit-Law/10.1214/ss/1177009869.full" source="Hill 1995">Hill's main theorem: if $F_1, F_2, \ldots$ are chosen randomly from the space of all probability distributions (under any non-atomic measure), and $X_k \sim F_k$ independently, then the significant digits of $X_1, X_2, \ldots$ converge in distribution to Benford's Law. The key insight is that the *mixing* of heterogeneous sources washes out the idiosyncrasies of each individual distribution.</Sidenote>
 
 This explains something practically important: a company's accounts payable ledger mixes invoices from hundreds of vendors, across dozens of expense categories, spanning orders of magnitude in dollar value. The individual vendor datasets might not each obey Benford. But their *mixture* — the aggregate ledger — converges toward it. That convergence is what makes Benford analysis useful for auditing: legitimate financial data, by virtue of its heterogeneity, earns its Benford conformity. Fabricated data typically does not.
 
@@ -276,13 +262,13 @@ console.log(\`\\nMAD = \${(mad/100).toFixed(4)} → \${conformity} (Nigrini thre
 
 ## Forensic mechanics: the MAD test
 
-Mark Nigrini, an accounting professor, recognized in the 1990s that an auditor armed with Benford's Law has an unexpected advantage: the expected distribution of first digits in legitimate financial data is known in advance, and departures from it are quantifiable.<Sidenote n={5} href="https://onlinelibrary.wiley.com/doi/book/10.1002/9781119203094" source="Nigrini 2012">M. J. Nigrini, *Benford's Law: Applications for Forensic Accounting, Auditing, and Fraud Detection* (Wiley, 2012). The book documents ten fraud case studies including Enron and AIG. The MAD thresholds were developed empirically by Nigrini across large samples of legitimate financial data.</Sidenote>
+Mark Nigrini, an accounting professor, recognized in the 1990s that an auditor armed with Benford's Law has an unexpected advantage: the expected distribution of first digits in legitimate financial data is known in advance, and departures from it are quantifiable.<Sidenote n={7} href="https://onlinelibrary.wiley.com/doi/book/10.1002/9781119203094" source="Nigrini 2012">M. J. Nigrini, *Benford's Law: Applications for Forensic Accounting, Auditing, and Fraud Detection* (Wiley, 2012). The book documents ten fraud case studies including Enron and AIG. The MAD thresholds were developed empirically by Nigrini across large samples of legitimate financial data.</Sidenote>
 
 The workhorse statistic is the **Mean Absolute Deviation (MAD)**:
 
 $$\text{MAD} = \frac{1}{9} \sum_{d=1}^{9} |p_d^{\text{obs}} - p_d^{\text{Benford}}|$$
 
-where $p_d^{\text{obs}}$ is the observed fraction of leading digit $d$ and $p_d^{\text{Benford}} = \log_{10}(1 + 1/d)$. Nigrini's empirically-calibrated thresholds for first-digit analysis:<Sidenote n={6} href="https://www.acfe.com/fraud-magazine/all-issues/issue/article?s=2000-septoct-get-mad-with-the-numbers" source="Nigrini 2000">M. J. Nigrini, "Get M.A.D. with the Numbers," *Fraud Magazine*, Sept/Oct 2000. Nigrini explicitly notes: "the thresholds of acceptability or conformity may vary with sample size and with the nature of the sample population." The thresholds are calibrated for large transaction datasets (thousands of records), not the small country-level samples here.</Sidenote>
+where $p_d^{\text{obs}}$ is the observed fraction of leading digit $d$ and $p_d^{\text{Benford}} = \log_{10}(1 + 1/d)$. Nigrini's empirically-calibrated thresholds for first-digit analysis:<Sidenote n={8} href="https://www.acfe.com/fraud-magazine/all-issues/issue/article?s=2000-septoct-get-mad-with-the-numbers" source="Nigrini 2000">M. J. Nigrini, "Get M.A.D. with the Numbers," *Fraud Magazine*, Sept/Oct 2000. Nigrini explicitly notes: "the thresholds of acceptability or conformity may vary with sample size and with the nature of the sample population." The thresholds are calibrated for large transaction datasets (thousands of records), not the small country-level samples here.</Sidenote>
 
 <DataTable
   client:load
@@ -332,7 +318,7 @@ The ratio column tells the story. Humans under-represent 1s by a factor of nearl
 
 The most visible — and most contested — application of Benford's Law is to election data. After Iran's disputed 2009 presidential election, several analysts applied Benford analysis to precinct-level vote counts and found anomalies. The story spread fast: a mathematical law had detected fraud.
 
-The political science community pushed back hard, and the critique is worth understanding in full. Deckert, Myagkov, and Ordeshook published a careful analysis in *Political Analysis* in 2011 arguing that Benford's Law is essentially useless for detecting election fraud.<Sidenote n={7} href="https://authors.library.caltech.edu/records/5jbtk-8wn05" source="Deckert et al. 2011">J. Deckert, M. Myagkov, and P. C. Ordeshook, "Benford's Law and the Detection of Election Fraud," *Political Analysis* 19, no. 3 (2011), 245–268. The authors examined data from Ohio, Massachusetts, and Ukraine, plus simulated elections, and concluded that deviations from Benford's Law "can arise regardless of whether an election is free and fair" — and, crucially, that fraud can be *designed* to satisfy the law.</Sidenote> Their argument has three prongs:
+The political science community pushed back hard, and the critique is worth understanding in full. Deckert, Myagkov, and Ordeshook published a careful analysis in *Political Analysis* in 2011 arguing that Benford's Law is essentially useless for detecting election fraud.<Sidenote n={9} href="https://authors.library.caltech.edu/records/5jbtk-8wn05" source="Deckert et al. 2011">J. Deckert, M. Myagkov, and P. C. Ordeshook, "Benford's Law and the Detection of Election Fraud," *Political Analysis* 19, no. 3 (2011), 245–268. The authors examined data from Ohio, Massachusetts, and Ukraine, plus simulated elections, and concluded that deviations from Benford's Law "can arise regardless of whether an election is free and fair" — and, crucially, that fraud can be *designed* to satisfy the law.</Sidenote> Their argument has three prongs:
 
 **First, election data rarely spans multiple orders of magnitude.** A typical national election has precinct-level vote counts that might range from a few dozen to a few thousand votes — that is one or two decades at most, not the five-or-six that financial data spans. The convergence result Hill proved requires heterogeneous mixing across many scales. Precinct vote counts often have a structural scale imposed by precinct size.
 
@@ -354,15 +340,15 @@ The distribution must be *heterogeneous across sources*. A single vendor's invoi
 
 When these conditions hold, a nonconforming MAD is a valid signal to investigate further. What it cannot do, in any dataset, is prove fraud. It raises a question; it does not answer one.
 
-None of that diminishes the elegance of the underlying mathematics. The count-up in the StatBand at the top of this piece — 30.1%, 17.6%, 4.6% — is not an empirical accident. It is a theorem about the log-scale geometry of the number line, confirmed independently by a 19th-century astronomer noticing worn pages and a 20th-century physicist collecting 20,229 numbers from 20 different worlds. That the same mathematical truth turns out to make fabricated numbers detectable — in some datasets, under some conditions — is one of the rarer gifts in applied statistics.
+None of that diminishes the elegance of the underlying mathematics. The numbers at the top of this piece — 30.1%, 17.6%, 4.6% — are not empirical accidents. They are a theorem about the log-scale geometry of the number line, confirmed independently by a 19th-century astronomer noticing worn pages and a 20th-century physicist collecting 20,229 numbers from 20 different worlds. That the same mathematical truth turns out to make fabricated numbers detectable — in some datasets, under some conditions — is one of the rarer gifts in applied statistics.
 
 ---
 
-**Methodology.** All Benford probabilities are computed from $P(d) = \log_{10}(1 + 1/d)$; specific digit values (P(1) = 30.1%, P(9) = 4.6%) are exact to one decimal place, matching both Newcomb (1881) and Benford (1938). The StatBand count-up "20,229 numbers" is Benford's stated sample size from his 1938 paper. The Newcomb quote ("That the ten digits do not occur with equal frequency...") is drawn verbatim from his 1881 paper via archive at math.stonybrook.edu.
+**Methodology.** All Benford probabilities are computed from $P(d) = \log_{10}(1 + 1/d)$; specific digit values (P(1) = 30.1%, P(9) = 4.6%) are exact to one decimal place, matching both Newcomb (1881) and Benford (1938). The StatBand figure "20,229 numbers" is Benford's stated sample size from his 1938 paper. The Newcomb quote ("That the ten digits do not occur with equal frequency...") is drawn verbatim from his 1881 paper via archive at math.stonybrook.edu.
 
-**Population dataset (NarrativeScene step 2):** World Bank SP.POP.TOTL, 2024 vintage, 217 country and territory entries, retrieved via the World Bank public API (api.worldbank.org/v2/country/all/indicator/SP.POP.TOTL) on 2026-06-26. Leading-digit frequencies computed from raw figures: 67 of 217 begin with 1 (30.9%), 10 begin with 9 (4.6%). MAD vs. Benford = 0.0142 — marginal conformity under Nigrini's thresholds. This is expected: MAD thresholds are calibrated for large (n ≫ 1,000) financial transaction datasets; n = 217 introduces sampling variance that inflates MAD independent of any conformity issue.
+**Population dataset (first Chart):** World Bank SP.POP.TOTL, 2024 vintage, 217 country and territory entries, retrieved via the World Bank public API (api.worldbank.org/v2/country/all/indicator/SP.POP.TOTL) on 2026-06-26. Leading-digit frequencies computed from raw figures: 67 of 217 begin with 1 (30.9%), 10 begin with 9 (4.6%). MAD vs. Benford = 0.0142 — marginal conformity under Nigrini's thresholds. This is expected: MAD thresholds are calibrated for large (n ≫ 1,000) financial transaction datasets; n = 217 introduces sampling variance that inflates MAD independent of any conformity issue.
 
-**GDP dataset (NarrativeScene step 3):** World Bank NY.GDP.MKTP.CD, 2024 vintage, 206 country-level entries in current USD (aggregates excluded by iso3-code filter), retrieved via the same API on 2026-06-26. Leading-digit frequencies: 65 of 206 begin with 1 (31.6%), 9 begin with 9 (4.4%). MAD = 0.0213 — formally nonconforming, again due to small-n sampling variance. Both real datasets show the correct gross shape (monotone descent, digit-1 near 30%) and are cited as illustrative demonstrations, not as Benford-test verdicts.
+**GDP dataset (second Chart):** World Bank NY.GDP.MKTP.CD, 2024 vintage, 206 country-level entries in current USD (aggregates excluded by iso3-code filter), retrieved via the same API on 2026-06-26. Leading-digit frequencies: 65 of 206 begin with 1 (31.6%), 9 begin with 9 (4.4%). MAD = 0.0213 — formally nonconforming, again due to small-n sampling variance. Both real datasets show the correct gross shape (monotone descent, digit-1 near 30%) and are cited as illustrative demonstrations, not as Benford-test verdicts.
 
 **Log-span chart:** shows exact $\log_{10}(1 + 1/d)$ values — the Benford predictions themselves displayed geometrically, not separately collected data.
 
