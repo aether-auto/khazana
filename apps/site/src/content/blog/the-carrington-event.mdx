@@ -30,7 +30,7 @@ sources:
 draft: false
 ---
 
-import { Annotation, Timeline, Map, Sidenote, StatBand, Pullquote } from "../../components/mdx";
+import { Annotation, Timeline, Map, Sidenote, StatBand, Pullquote, ScrollyTimeline } from "../../components/mdx";
 
 It is a little before noon on Thursday, 1 September 1859, and Richard Carrington is alone in the observatory dome behind his house at Redhill, south of London, doing the patient thing he does every clear morning: projecting the Sun's image through his telescope onto a screen and tracing the sunspots in pencil. He has been watching one enormous group of spots for days. At eleven hours, eighteen minutes Greenwich mean time — a moment he will fix afterward to "not 15 seconds" — <Annotation client:load term="two patches of intensely bright and white light" note="Carrington's exact words. He marked their positions A and B on his diagram and recorded 11h 23m as the time of disappearance — a flare lasting roughly five minutes. MNRAS 20, 13–15 (1859)." /> erupt across the dark lane of one spot. They are so bright he thinks, for an instant, that a beam of unfiltered sunlight has broken through a crack in his apparatus and is about to ruin the projection.<Sidenote n={1} href="https://ui.adsabs.harvard.edu/abs/1859MNRAS..20...13C/abstract" source="Carrington 1859">Carrington's own account, read to the Royal Astronomical Society: the patches "broke out" on the spot, brightened, drifted, and were gone by 11h 23m. He ran to fetch a witness and returned to find them already fading — the first solar flare ever recorded by human eyes.</Sidenote> It is not a flaw in the glass. It is the largest explosion he or anyone else has ever seen, ninety-three million miles away, and it is pointed directly at the Earth.
 
@@ -162,18 +162,60 @@ The honest answer is: warning, and not much else. The one real defense the moder
 
 This is the inheritance of that quiet Thursday morning. A solar storm is not a freak; it is weather, and like weather it recurs. The Sun has thrown Carrington-class storms before and will throw them again, and Riley's twelve percent is not a prophecy of doom but a statement of standing odds — odds we re-roll every decade, against a target we keep building larger.
 
-<Timeline
-  client:load
-  caption="The long arc: from the first recorded flare to the modern accounting of its return."
+Scroll the rail below and the playhead walks that long arc — from a five-minute flash one Thursday morning to the modern machinery built to see the next one coming. Drag it, or click any date, to jump.
+
+<ScrollyTimeline
+  client:visible
+  caption="The long arc: from the first recorded flare to the modern accounting of its return. Scroll to advance the playhead; drag the rail or click a date to jump."
   events={[
-    { date: "1859-09-01", label: "Carrington sees the flare", detail: "The first solar flare ever observed — five minutes of white light at 11:18 GMT." },
-    { date: "1859-09-02", label: "The storm hits", detail: "Telegraphs throw sparks and run on auroral current; aurora burns to the equator." },
-    { date: "2003-07-01", label: "Tsurutani reconstruction", detail: "Peak Dst estimated near −1,760 nT from the surviving magnetograms." },
-    { date: "2008-01-01", label: "National Academies warning", detail: "Severe space weather framed as a systemic risk to modern infrastructure." },
-    { date: "2012-02-23", label: "Riley: ~12% per decade", detail: "Power-law recurrence estimate for a Carrington-class event." },
-    { date: "2012-07-23", label: "The near-miss", detail: "A Carrington-class CME crosses Earth's orbit; the planet had left the spot nine days earlier." },
-    { date: "2013-05-01", label: "Lloyd's risk model", detail: "$0.6–2.6 trillion; 20–40 million people; 1–2 year restoration." },
-    { date: "2015-02-11", label: "DSCOVR at L1", detail: "Solar-wind sentinel buys 15–60 minutes of warning before a storm arrives." }
+    {
+      date: "1859-09-01",
+      label: "Carrington sees the flare",
+      detail: "11:18 GMT — the first solar flare ever observed.",
+      prose: "<p>At 11:18 GMT on a clear Thursday, Richard Carrington is tracing sunspots at Redhill when two patches of brilliant white light erupt across one spot. He fixes the time to within fifteen seconds; by 11:23 the light is gone — a flare lasting roughly five minutes.</p><p>It is the first solar flare ever recorded by human eyes, and Carrington has no theory for what he has seen. <a class='scrolly-cite' href='https://ui.adsabs.harvard.edu/abs/1859MNRAS..20...13C/abstract'>(Carrington, MNRAS 20, 1859)</a></p>"
+    },
+    {
+      date: "1859-09-02",
+      label: "The storm hits",
+      detail: "~17.6 hours later, the CME reaches Earth.",
+      prose: "<p>A coronal mass ejection — a billion tons of magnetized plasma — crosses the 150-million-km gap in about 17.6 hours, roughly four times a normal storm's speed, because an earlier eruption had swept its path clear. Telegraph lines throw sparks, shock their operators, and then run on the storm's own current alone.</p><p>Overhead, the aurora burns south past the United States and Europe to Cuba, Mexico, and Colombia — within a few degrees of the equator. <a class='scrolly-cite' href='https://ui.adsabs.harvard.edu/abs/2003JGRA..108.1268T/abstract'>(Tsurutani et al. 2003)</a></p>"
+    },
+    {
+      date: "2003-07-01",
+      label: "Tsurutani reconstruction",
+      detail: "Peak Dst estimated near −1,760 nT.",
+      prose: "<p>More than a century later, Tsurutani and colleagues reduce the surviving magnetograms — chiefly the Colaba (Bombay) record, which plunged about −1,600 nT — and infer a peak Dst near −1,760 nT, driven by an interplanetary field of roughly 90 nT pointing south.</p><p>For comparison, a severe modern storm reaches −250 nT and May 2024's superstorm bottomed near −412 nT. The 1859 storm remains the benchmark against which every great storm is still measured. <a class='scrolly-cite' href='https://ui.adsabs.harvard.edu/abs/2003JGRA..108.1268T/abstract'>(Tsurutani et al. 2003)</a></p>"
+    },
+    {
+      date: "2008-01-01",
+      label: "National Academies warning",
+      detail: "Severe space weather framed as a systemic risk.",
+      prose: "<p>The U.S. National Academies study reframes space weather as an infrastructure-level hazard. The danger is not the blackout but the cascade: lose the grid and you lose, in sequence, water pumping, fuel distribution, refrigeration, and the financial system.</p><p>The single point of failure it identifies is the large extra-high-voltage transformer — custom-built, weighing hundreds of tons, with no domestic stockpile and lead times of a year or more. <a class='scrolly-cite' href='https://www.nationalacademies.org/read/12507'>(National Academies 2008)</a></p>"
+    },
+    {
+      date: "2012-02-23",
+      label: "Riley: ~12% per decade",
+      detail: "Power-law recurrence estimate.",
+      prose: "<p>Pete Riley fits a power law to the historical distribution of storm intensities and extrapolates to the Carrington threshold (Dst below about −850 nT). The result: roughly a 12% probability of a Carrington-class event in any given decade.</p><p>Not in a lifetime — in a decade. It is the most-cited figure in the field, and an admittedly uncertain extreme-value extrapolation, but it is not small. <a class='scrolly-cite' href='https://ui.adsabs.harvard.edu/abs/2012SpWea..10.2012R/abstract'>(Riley 2012)</a></p>"
+    },
+    {
+      date: "2012-07-23",
+      label: "The near-miss",
+      detail: "A Carrington-class CME crosses Earth's orbit.",
+      prose: "<p>Five months after Riley's paper, the Sun fires a Carrington-magnitude CME straight across Earth's orbit — and misses, because the planet had left that spot nine days earlier. The cloud strikes NASA's STEREO-A spacecraft instead, which happened to be in its path and equipped to record it.</p><p>Had it arrived a week earlier, analysts estimate the storm would have reached a Dst near −1,200 nT. \"If the eruption had occurred only one week earlier,\" said the study's lead, Daniel Baker, \"Earth would have been in the line of fire.\" <a class='scrolly-cite' href='https://science.nasa.gov/science-research/planetary-science/23jul_superstorm/'>(NASA 2014)</a></p>"
+    },
+    {
+      date: "2013-05-01",
+      label: "Lloyd's risk model",
+      detail: "$0.6–2.6 trillion; 20–40 million people.",
+      prose: "<p>Lloyd's of London, modelling the scenario as an insurer, puts numbers on the worst case: 20 to 40 million people in the U.S. without power, for durations from sixteen days to one or two years, at a total economic cost of $0.6–2.6 trillion.</p><p>The duration tail hinges on the transformers — weeks if the grid only trips, years if the largest units are destroyed and must be rebuilt and shipped. That tail, measured in years, is what makes the risk uniquely dangerous. <a class='scrolly-cite' href='https://assets.lloyds.com/assets/pdf-solar-storm-risk-to-the-north-american-electric-grid/1/pdf-Solar-Storm-Risk-to-the-North-American-Electric-Grid.pdf'>(Lloyd's / AER 2013)</a></p>"
+    },
+    {
+      date: "2015-02-11",
+      label: "DSCOVR at L1",
+      detail: "A solar-wind sentinel buys 15–60 minutes of warning.",
+      prose: "<p>The Deep Space Climate Observatory launches toward the L1 Lagrange point, a million miles sunward, where it samples the solar wind — and the all-important direction of its magnetic field — before it reaches us. That gives NOAA's forecasters 15 to 60 minutes of warning before a storm strikes the magnetosphere.</p><p>It is not much, but it is enough for a grid operator to shed load and protect transformers — if the warning is believed and acted on. That hour is the whole of our advantage over the Boston operators of 1859. <a class='scrolly-cite' href='https://www.spaceweather.gov/noaa-scales-explanation'>(NOAA SWPC)</a></p>"
+    }
   ]}
 />
 
