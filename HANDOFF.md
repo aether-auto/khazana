@@ -4,12 +4,22 @@
 > read the MUST-READ files in §5, then do §8 "Do this first." This doc is the
 > single source of truth for picking up cold. **Your next focus is the FEED
 > personalization pass ("for you" ordering, now that the live affinity layer
-> exists), then P9 (Publish + full ingest / deploy).** Everything else on the
+> exists), then P9 (Publish + full ingest / deploy).** Everything on the
 > page-by-page roadmap is DONE: Feed, Workshop, Graph→**Observatory**, **Sources**,
-> **Taste → the Calibration Bench**, plus this-session additions — **code/math
-> typography (KaTeX + themed Shiki)**, **quiet navigation**, **build-time TTS
-> narration**, an ingest **mirror-dedup**, a **retention** prune utility, **17 GitHub
-> sources**, and a **node_modules dedupe (4.2G→1.2G)**. See §4.
+> **Taste → the Calibration Bench**.
+>
+> **The 2026-06-29/30 sessions were a deep rebuild + polish of the Reads surface (§4a) —**
+> the whole `/reads` experience was rebuilt and hardened: **4 deep, source-grounded
+> Reads** (Carrington Chronicle, Benford Primer, Bloom Teardown, Kelly Dispatch) all
+> at the ~15-min read-time peak; a redesigned **`/reads` index** (featured hero +
+> facet filter + gallery); a new **interactive `ScrollyTimeline`** (scroll/scrub
+> narrative timeline) + **StatBand** + **Pullquote** components; a full **MDX-chart
+> bug/quality pass**; a **bilingual liquid-glass-gold wordmark** (खज़ाना / khazana);
+> a **curate full-text hard gate** (`readTime` weight → 2); and an **authoring-policy
+> rewrite** (target the peak, components must be EARNED). Driven by a **4-persona
+> review → fix → re-verify** loop and **interaction-QA** (real pointer/scroll/touch on
+> mobile). See §4a. Earlier 2026-06-28 work (code/math typography, nav, TTS narration,
+> dedup, retention, 17 GitHub sources, node_modules dedupe) is in §4.
 
 ---
 
@@ -36,11 +46,21 @@ Operating rules (the founder has stated these repeatedly — honor them):
 - **UI / feel is PARAMOUNT.** Award-level (Awwwards / Pudding / Distill / NYT-
   graphics), distinctive, *alive*, not "vibecoded AI-template." Dramatic but
   genuinely usable and comfortable to read.
-- **Verify in a REAL BROWSER, always.** Tests + `astro build` passing is NOT proof.
-  Load actual pages headless (see §6), assert **0 console errors in BOTH motion
-  modes**, and LOOK at screenshots. **After ANY code change, rebuild + restart the
-  preview** or the founder sees a stale page (this bit us — he thought the redesign
-  wasn't done when it was just an unrebuilt preview).
+- **Verify by USING it, not just by checking it (the hardest-won lesson — 2026-06-30).**
+  Tests + `astro build` + "0 console errors" + a static screenshot are NOT proof — they
+  miss the bugs the founder actually hits. You MUST drive REAL interactions on a headless
+  browser: scroll slowly and watch frame-by-frame, DRAG sliders/scrubbers, click/tap every
+  control, **and test at MOBILE widths (390/360) where most bugs live** (and in both motion
+  modes). The reliable pattern that worked: dispatch **persona interaction-QA agents** (an
+  art-director, a skeptical engineer, a mobile reader, an a11y/keyboard user) that drive
+  real pointer/scroll/keyboard sequences, capture frame strips, and report bugs — then FIX
+  → RE-VERIFY with the same panel. Beware: automated DOM probes mislead (wrong selectors;
+  `client:visible` islands aren't hydrated pre-scroll; whitespace-stripped text checks give
+  false positives). Hard-won mobile gotchas this session: a shared `.mdx-figure` view-timeline
+  entrance can trap TALL panels near opacity:0 on short viewports; a hidden nav row left a
+  316px phantom-height box; KaTeX spans swallow taps so hover/focus-only reveals are dead on
+  touch. **After ANY code change, rebuild + restart the preview** (a stale preview once made
+  the founder think a finished redesign wasn't done).
 - **$0 / offline / no paywall.** Static + serverless only; no paid APIs, no runtime
   CDN libs, no paywalled sources, no paywall-bypass tooling. (Free-tier accounts the
   founder opts into — e.g. Groq for transcription — are OK behind env vars.)
@@ -85,15 +105,17 @@ Full vision spec: `docs/superpowers/specs/2026-06-23-khazana-design.md`.
 ```
 packages/core      @khazana/core    — contracts: FeedItem, Source, Format, registry, vocab (zod = source of truth)
 packages/ingest    @khazana/ingest  — fetch → normalize → FeedItem; full-text extraction; podcast Whisper transcripts; YouTube transcripts (proxy/Actions); bounded-parallel + per-host rate limiting (concurrency.ts)
-packages/curate    @khazana/curate  — enrich → cluster/dedup → rank (read-time-peak-15 heavy + <5min reject) → diversity floor
+packages/curate    @khazana/curate  — enrich → cluster/dedup → HARD-GATE full-text reads (drop teasers/snippets/abstracts/bare-links/transcript-less media) → rank (read-time Gaussian peak 15; readTime weight 2) → diversity floor
 packages/generate  @khazana/generate— assignment → grounded brief → validate draft (AI-author harness)
 packages/scout     @khazana/scout   — source discovery/eval/prune
 apps/site          @khazana/site    — Astro static site (the product UI)
 apps/worker        @khazana/worker  — Cloudflare Worker + KV (POST /event · GET /events auth'd · GET /summary public per-device — powers the Taste live layer)
 packages/ingest/src/tts/            — build-time Kokoro TTS (kokoro/chunk/render/voices); render via `packages/ingest/scripts/render-audio.mts` → apps/site/public/audio/reads (gitignored)
 packages/core/src/{scoring,taste-model,dedupe,retention}.ts — shared pure cores (ranking parity · taste aggregation · mirror-dedup · 3-day retention via scripts/prune-history.mts)
-apps/site/src/components/{taste,reads,nav}/ — Calibration Bench islands · ReadPlayer narration · SiteNav
-.claude/skills/writers/*            — per-format writer SKILLS
+apps/site/src/components/{taste,reads,nav}/ — Calibration Bench islands · reads index (FeaturedRead/ReadGalleryCard/ReadsFilter + lib/build-reads.ts) · ReadPlayer narration · SiteNav
+apps/site/src/components/mdx/        — the interactive Reads component kit (MDX islands): Chart, Scrolly, DataTable, Timeline, ScrollyTimeline (NEW — scroll/scrub narrative timeline), Map (choropleth + latitude graticule), KellyChart/ControlledChart, DrawChart (multi-series), RunnableCode, Annotation (tap-toggle), Sidenote, StatBand (NEW — count-up figures), Pullquote (NEW — primary-source block). NarrativeScene was built then RETIRED (broken/forced — see §4a; file may remain unused, do NOT use). Pure logic lives in `lib/*.ts` (all TDD'd).
+apps/site/src/components/Wordmark.astro — bilingual liquid-glass-gold title (खज़ाना / khazana), self-hosted Rozha One (OFL) in src/styles/fonts/
+.claude/skills/writers/*            — per-format writer SKILLS (kits + length targets rewritten: target the ~15-min peak; "components must be EARNED, never forced"; NarrativeScene marked do-not-use)
 data/sources.seed.json              — source registry (722 sources incl. +17 GitHub this session, tracked). data/sources.json = live cache (gitignored; DELETE it to pick up new seed sources)
 data/feed/{raw,curated}.json        — GENERATED (gitignored; produced by ingest+curate)
 scripts/real-ingest.mts             — the ingest runner (see §6)
@@ -102,10 +124,12 @@ docs/superpowers/{specs,plans}/     — spec + per-phase plans
 .superpowers/sdd/*-report.md        — each subagent's report (gitignored, on disk)
 ```
 
-Surfaces: `/` Feed ✅ · `/reads` + `/reads/[slug]` · `/item/[id]` (in-app reader) ·
-`/workshop` ✅ (directed maker board) · `/graph` ✅ (the **Observatory** — analytics
-dashboard, NOT the old node-graph) · `/sources` ✅ (faceted source explorer) ·
-**`/taste`** (personalization/affinity surface — YOUR NEXT TASK).
+Surfaces: `/` Feed ✅ · `/reads` ✅ (redesigned: featured hero + facet filter + gallery)
++ `/reads/[slug]` ✅ (4 deep grounded Reads, ~15-min peak, rich interactive components) ·
+`/item/[id]` (in-app reader) · `/workshop` ✅ (directed maker board) · `/graph` ✅ (the
+**Observatory** — analytics dashboard, NOT the old node-graph) · `/sources` ✅ (faceted
+source explorer) · `/taste` ✅ (the **Calibration Bench**). **NEXT: Feed "for you"
+personalization, then P9 deploy (§8).**
 
 ### Canonical vocab (single source of truth in `@khazana/core`)
 **Channels:** history, geopolitics, politics, geography, science, tech, ai, quantum,
@@ -116,6 +140,61 @@ youtube, podcast · **FeedItem.kind:** link, discussion, paper, idea, video, aud
 ---
 
 ## 4. Current state (branch `p1-foundation`, never deployed, no git remote)
+
+### §4a — Sessions 2026-06-29/30: READS surface deep rebuild + polish (committed; 1116 tests green; interaction-QA verified)
+Commits (newest first): `38f1b68` wordmark + interaction-QA fixes · `568fbe5` curate full-text gate +
+readTime→2 · `4332ab3` ScrollyTimeline + Carrington wiring · `12d0986` flagship→peak · `93c3b2f` 4-persona
+review→fix pass · `242111c` retire NarrativeScene · earlier reads commits (`98bb5af` etc).
+
+- **Four deep, source-grounded Reads, all at the ~15-min read-time peak** (`apps/site/src/content/blog/`):
+  `the-carrington-event` (Chronicle, 1859 solar superstorm — Map + ScrollyTimeline + StatBands + period
+  Pullquotes + Timelines), `the-first-digit-law` (Primer, Benford — real World Bank data, RunnableCode
+  sandboxes, Charts), `how-a-bloom-filter-says-probably` (Teardown — runnable Bloom demo, FP-rate charts),
+  `the-arithmetic-of-ruin` (Dispatch, Kelly — KellyChart, DrawChart, Scrolly, DataTable). EVERY claim is
+  grounded in cited real sources (the HARD authoring rule); content was fact-checked (a real Bloom error,
+  2.08→1.44=log₂e, was caught & fixed; AGU links that started bot-403'ing were swapped to NASA ADS/NTRS).
+- **`/reads` index redesigned**: featured hero (owns its read's View-Transition name, excluded from the
+  grid) + a format/channel facet filter (live counts; the hero dims when it doesn't match) + a refined
+  gallery + an editorial stats readout. Pure TDD `components/reads/lib/build-reads.ts`.
+- **New interactive components** (in `components/mdx/`, all TDD libs):
+  - **ScrollyTimeline** — the marquee: a pinned timeline rail + amber playhead; scroll advances the
+    playhead AND the active event's prose in lockstep (POSITION-BASED active resolution recomputed every
+    frame — NOT scrollama crossing-events, which froze under `client:visible` late hydration); drag/scrub
+    the rail or click a tick to jump (two-way). Reduced-motion/no-JS → stacked ordered list. Wired into
+    the Carrington long-arc (8 grounded events). Authoring = serializable `events=[{date,label,prose}]`.
+  - **StatBand** — count-up figures (measured fit-to-cell so no overflow/clip at any width; rounds any
+    value; instant under reduced-motion). **Pullquote** — primary-source block (quote/document/telegram/
+    headline kinds; tap-reveal). **Annotation** now has a real tap/click toggle + Escape/outside-close
+    (math terms were dead on touch).
+- **MDX-chart bug/quality pass** (Chart): replaced an opaque flood-fill that buried data with per-series
+  strokes + axis titles + `zero:true` y (a `domain:[0,undefined]` had silently dropped all marks → bars
+  vanished); numeric-aware categorical x order; robust hydration (eager measure + ResizeObserver +
+  IntersectionObserver). **Timeline** rebuilt (adaptive ticks, label de-collision, content-sized). **Map**
+  gained an equator + latitude graticule + shade-by-latitude + a single focusable group (no 177-Tab
+  trap). **DrawChart** multi-series + legend + logY. **DataTable** mobile scroll-wrap + labels + focus.
+- **Bilingual liquid-glass-gold wordmark** (`Wordmark.astro`): खज़ाना (Rozha One, self-hosted OFL
+  Devanagari+Latin) leading + "› khazana" beneath + the amber gem; two `background-clip:text` gold
+  gradients + a slow specular sheen (freezes under reduced-motion); deeper struck-gold in light theme;
+  compact (gem + Devanagari) on mobile. $0/offline (woff2 bundled).
+- **Curate full-text HARD GATE** (`@khazana/core` scoring + `@khazana/curate`): the feed now keeps ONLY
+  genuine full-text reads — teasers/snippets/abstracts/bare-links/transcript-less media are FILTERED OUT
+  (`isFullTextRead` + `!isTranscriptlessMedia`), not just down-weighted. `RANK_WEIGHTS.readTime 3→2`,
+  `fullText 1.5→1.25` (now inert under the gate). Browser re-ranker reads `RANK_WEIGHTS` → parity holds.
+  Re-curate → **337 items** (gate is a ~no-op on today's data, confirming the feed was already clean;
+  the gate is a forward-looking invariant). Full-content RSS (long body == summary) is KEPT.
+- **Authoring policy rewritten** (`STYLE.md` + all 6 `.claude/skills/writers/*/SKILL.md` + mdx-contract
+  refs): every format targets the ~15-min reading-time peak (Field Notes exempt); **components must be
+  EARNED by the content, never forced** (the founder rejected forced/decorative components twice);
+  NarrativeScene marked "do not use — pending rebuild".
+- **NarrativeScene RETIRED**: a scrollytelling component built then rejected as "stupid, incomplete and
+  forced" (broken empty-void layout + placeholder text-cards + bolted onto data reads). Removed from all
+  reads + the kits. If a scrollytelling device is wanted, ScrollyTimeline is the good one; rebuild
+  NarrativeScene properly or leave it unused.
+- **Verification discipline (the big process lesson):** all of the above was verified by a 4-persona
+  review + interaction-QA loop (real pointer/scroll/touch on desktop AND mobile), not by automated
+  checks alone. Reports under `.superpowers/sdd/`: `review2-*.md`, `qa-scrollytimeline.md`,
+  `qa-interactions.md`, `reads-review-master.md`, `fix-*-report.md`, `scrolly-timeline-report.md`,
+  `curate-fulltext-gate-report.md`, the read reports, and the ledger.
 
 ### Session 2026-06-28 additions (all committed, browser-verified by the orchestrator, 916 tests green)
 - **TASTE → "The Calibration Bench"** (`/taste`): the flat affinity bars are gone — `/taste`
@@ -308,7 +387,12 @@ strong concept + real interactivity wins. Keep the "Observatory/first light" ide
    `operating-mode-subagents`, `feed-quality-bars`, `khazana-page-by-page-roadmap`).
 4. `docs/superpowers/specs/2026-06-23-khazana-design.md` (vision), `CLAUDE.md`, `STYLE.md`.
 5. Recent reports in `.superpowers/sdd/` (newest work first) —
-   **this session:** `taste-design-report.md` (the Calibration Bench design),
+   **2026-06-29/30 Reads rebuild (§4a):** `reads-review-master.md` (the consolidated 4-persona issue
+   list), `review2-{artdirector,engineer,mobile,a11y}.md` (re-verification verdicts), `qa-scrollytimeline.md`
+   + `qa-interactions.md` (interaction-QA bug hunts), `scrolly-timeline-report.md`, `curate-fulltext-gate-report.md`,
+   `narrative-components-report.md`, the read reports (`read-carrington/-benford/-bloom`), `reads-index-redesign-report.md`,
+   `authoring-policy-update-report.md`, and the `fix-*-report.md` set (chart/statband/timeline/map/responsive/interactives/drawscrolly).
+   **2026-06-28:** `taste-design-report.md` (the Calibration Bench design),
    `taste-foundation-report.md` (core scoring/taste extraction), `taste-worker-summary-report.md`,
    `taste-libs-report.md`, `taste-bench-ui-report.md` (incl. the #418 hydration fix);
    `code-math-revamp-report.md`; `tts-research-report.md`, `tts-pipeline-report.md`,
@@ -367,6 +451,13 @@ re-curate after a curate-logic change WITHOUT re-fetching, use `scripts/recurate
 ---
 
 ## 7. Known issues / carry-forwards (none blocking)
+- **Reads — deferred MINORS (all non-blocking, 2026-06-30 QA):** StatBand animates only its numeric
+  stats (string-formatted ones jump to final); Sidenote shows inline on mobile (no `<details>` collapse —
+  readable, just long); DataTable sort has no "none"/unsorted state (asc↔desc only — design choice); the
+  ScrollyTimeline storm-progression is a 2-point timeline (earns it with a "+1 DAY" marker). The shared
+  `.mdx-figure` view-timeline entrance can trap TALL figures near opacity:0 on short viewports — patched
+  for `.cc` (KellyChart); if another tall figure ever ghosts on mobile, fix the root in `mdx.css`.
+- **NarrativeScene is retired but its file may still exist** — do NOT use it; it's out of the writer kits.
 - **The committed `curated.json` does NOT yet reflect the reddit/arxiv/youtube fetcher fixes** —
   they're verified at the fetcher level (harnesses, §6) but a feed-level re-ingest is deferred to
   the P9 enriched run (a local re-ingest without an LLM key degrades the feed — §6). So locally:
@@ -392,8 +483,10 @@ re-curate after a curate-logic change WITHOUT re-fetching, use `scripts/recurate
 ## 8. Do this FIRST — the FEED personalization pass, then P9
 
 > **Boot:** read §5, `pnpm install`, `pnpm --filter @khazana/site build`, preview on :4321,
-> LOOK at the live site (`/taste` Calibration Bench, the narrated Read at
-> `/reads/the-arithmetic-of-ruin/`, `/graph`, `/sources`). Restart preview after any change.
+> then USE the live site — desktop AND a 390px mobile width (§1 verify rule): the redesigned
+> `/reads` index, the 4 Reads (esp. `/reads/the-carrington-event/` — scroll + drag the
+> **ScrollyTimeline**), the bilingual gold **wordmark**, `/taste`, `/graph`, `/sources`.
+> Restart the preview after any change.
 > Re-render narration audio if missing (it's gitignored): `pnpm --filter @khazana/ingest exec
 > tsx scripts/render-audio.mts`.
 
