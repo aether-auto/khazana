@@ -16,6 +16,30 @@
 @import "katex/dist/katex.min.css";
 @import "./code.css";
 
+/* ── WORDMARK voice — Rozha One ($0/OFL, self-hosted woff2, bundled by Vite,
+   NO runtime CDN). A high-contrast Didone Devanagari + Latin face used ONLY by
+   the bilingual liquid-glass-gold wordmark (खज़ाना / khazana). Two subsets, one
+   family, split by unicode-range so the browser loads only what each script
+   needs. The Devanagari subset carries the nukta + matra marks (ज़ ा) the mark
+   relies on. `display:swap` → the mark never blocks first paint. */
+@font-face {
+  font-family: "Rozha One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/rozha-one-devanagari-400.woff2") format("woff2");
+  /* Devanagari + Devanagari Extended + the ZWJ/ZWNJ joiners */
+  unicode-range: U+0900-097F, U+1CD0-1CFF, U+200C-200D, U+20A8, U+20B9, U+25CC, U+A8E0-A8FF;
+}
+@font-face {
+  font-family: "Rozha One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/rozha-one-latin-400.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2018-2019, U+201C-201D, U+2026, U+2122;
+}
+
 *,
 *::before,
 *::after {

@@ -1,4 +1,25 @@
 ---
+/**
+ * Wordmark — khazana's bilingual liquid-glass-gold lockup.
+ *
+ * A single crafted jewel, not two words side by side:
+ *   • Devanagari खज़ाना (Rozha One, high-contrast Didone) leads as the large
+ *     specular-gold display glyph-row — "treasure/treasury", nukta form to
+ *     match the 'z'.
+ *   • Latin "khazana" sits beneath as the refined romanization, bound to the
+ *     Devanagari by a hairline gold rule and the quiet terminal prompt tick.
+ *
+ * The gold is "liquid glass": a layered, multi-stop gold gradient clipped to
+ * the type (cool edge → warm highlight → deep amber → cool edge) with a soft
+ * specular sheen that sweeps across on a GPU-cheap background-position loop and
+ * an inner top-light. Under prefers-reduced-motion the sheen freezes to a rich
+ * static gold. The whole mark is the link + accessible name; every gold/sheen
+ * layer is decorative and aria-hidden.
+ *
+ * Fonts are self-hosted woff2 (OFL) under /public/fonts — no runtime CDN.
+ * @font-face for Rozha One Devanagari is declared in global.css; the Latin lead
+ * reuses the site's already-loaded Fraunces.
+ */
 import MarkLogo from "./MarkLogo.astro";
 
 interface Props {
@@ -10,36 +31,221 @@ const { href = Astro.url.pathname, showMark = true } = Astro.props;
 const base = import.meta.env.BASE_URL;
 ---
 
-<a class="wordmark" href={href === Astro.url.pathname ? base : href} aria-label="khazana — home">
-  {showMark && <MarkLogo size={22} ariaHidden={true} />}
-  <span class="prompt" aria-hidden="true">›</span><span class="name">khazana</span>
+<a
+  class="wordmark"
+  href={href === Astro.url.pathname ? base : href}
+  aria-label="khazana — home"
+>
+  {showMark && <MarkLogo size={26} ariaHidden={true} />}
+  <span class="lockup" aria-hidden="true">
+    <span class="deva gold">खज़ाना</span>
+    <span class="latin-row">
+      <span class="prompt">›</span><span class="latin gold">khazana</span>
+    </span>
+  </span>
 </a>
 
 <style>
   .wordmark {
     display: inline-flex;
     align-items: center;
-    gap: 0.45em;
-    font-family: var(--font-mono);
-    font-size: var(--t-lg);
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    color: var(--ink);
+    gap: 0.55em;
     text-decoration: none;
+    color: var(--ink);
+    /* an isolation context so the sheen blend stays local to the mark */
+    isolation: isolate;
   }
   .wordmark:hover {
     text-decoration: none;
     text-shadow: none;
   }
-  /* Subtle hover shimmer on the mark: amplitude scaleX pulse — GPU only */
+
+  /* the gem lifts + warms with the type on hover (GPU drop-shadow only) */
   .wordmark:hover :global(.mark-logo) {
-    filter: drop-shadow(0 0 6px color-mix(in oklab, var(--accent) 45%, transparent));
-    transition: filter var(--dur-fast) var(--ease-out);
+    filter: drop-shadow(0 0 7px color-mix(in oklab, var(--accent) 55%, transparent));
+    transition: filter var(--dur) var(--ease-out);
+  }
+
+  /* ── The lockup: Devanagari lead, Latin romanization beneath ──────────── */
+  .lockup {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.04em;
+    line-height: 1;
+  }
+
+  .deva {
+    font-family: "Rozha One", var(--font-display);
+    font-weight: 400;
+    font-size: 1.7rem;
+    line-height: 0.92;
+    letter-spacing: 0.005em;
+    /* Rozha One renders the nukta conjunct (ज़) natively; keep mark/ligature
+       positioning on so the matra + nukta stack correctly. */
+    font-feature-settings: "calt" 1, "liga" 1;
+    /* the deep specular drop under the jewel — felt, not seen */
+    filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.55))
+      drop-shadow(0 0 14px color-mix(in oklab, var(--accent) 18%, transparent));
+  }
+
+  .latin-row {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.18em;
+    /* a hairline gold rule binds the romanization to the Devanagari above */
+    padding-top: 0.14em;
+    border-top: 1px solid transparent;
+    border-image: linear-gradient(
+        90deg,
+        color-mix(in oklab, var(--accent) 60%, transparent),
+        color-mix(in oklab, var(--accent) 12%, transparent) 70%,
+        transparent
+      )
+      1;
+    width: 100%;
   }
   .prompt {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1;
     color: var(--accent);
+    opacity: 0.85;
+    transform: translateY(0.02em);
   }
-  .name {
-    color: var(--ink);
+  .latin {
+    font-family: var(--font-mono);
+    font-size: 0.86rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1;
+  }
+
+  /* ── LIQUID-GLASS GOLD ─────────────────────────────────────────────────
+     Two stacked gradients clipped to the glyphs:
+       1) the body gold — cool gold edge → warm highlight → deep amber → cool
+          edge (the rounded, lit metal),
+       2) a narrow specular sheen band that sweeps via background-position.
+     Both ride on background-clip:text; the element's own color is transparent.
+     The mark is one isolated jewel so this never bleeds into the chrome. */
+  .gold {
+    /* layer 1 = sheen (animated), layer 2 = body gold (static) */
+    background-image:
+      linear-gradient(
+        100deg,
+        transparent 30%,
+        color-mix(in oklab, #fff7e0 92%, var(--accent)) 47%,
+        #fffaf0 50%,
+        color-mix(in oklab, #fff7e0 92%, var(--accent)) 53%,
+        transparent 70%
+      ),
+      linear-gradient(
+        178deg,
+        #ffe9a8 0%,
+        #ffcf5e 22%,
+        var(--accent) 46%,
+        #c9851a 72%,
+        #ffd980 100%
+      );
+    background-size:
+      260% 100%,
+      100% 100%;
+    background-position:
+      -60% 0,
+      0 0;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    /* soft top inner-light + a hairline base shadow give the glass its volume */
+    text-shadow:
+      0 1px 0 rgba(0, 0, 0, 0.35),
+      0 0 18px color-mix(in oklab, var(--accent) 22%, transparent);
+    will-change: background-position;
+    animation: gold-sheen 6.5s var(--ease-out) infinite;
+  }
+  /* the sheen sweeps left→right then rests; the body gold layer never moves */
+  @keyframes gold-sheen {
+    0% {
+      background-position: -60% 0, 0 0;
+    }
+    /* sweep completes by ~38%, then a long calm rest before repeating */
+    38%,
+    100% {
+      background-position: 160% 0, 0 0;
+    }
+  }
+
+  /* the Latin caption gets a quieter, cooler gold so the Devanagari stays lead */
+  .latin.gold {
+    text-shadow: 0 0 10px color-mix(in oklab, var(--accent) 16%, transparent);
+    opacity: 0.96;
+  }
+
+  /* hover: the whole jewel brightens — a brief, faster sheen pass + lifted glow */
+  .wordmark:hover .deva.gold {
+    animation-duration: 2.6s;
+    text-shadow:
+      0 1px 0 rgba(0, 0, 0, 0.35),
+      0 0 26px color-mix(in oklab, var(--accent) 34%, transparent);
+  }
+
+  /* ── Light theme: deepen the gold so it reads as struck metal on warm paper
+     (the bright-highlight glass would otherwise wash out on the light ground) */
+  @media (prefers-color-scheme: light) {
+    .deva.gold,
+    .latin.gold {
+      background-image:
+        linear-gradient(
+          100deg,
+          transparent 32%,
+          #fff3cf 48%,
+          #fffaf0 50%,
+          #fff3cf 52%,
+          transparent 68%
+        ),
+        linear-gradient(
+          178deg,
+          #d9a534 0%,
+          var(--accent) 28%,
+          #9a6b16 70%,
+          #c08a22 100%
+        );
+      text-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.4),
+        0 0 1px rgba(120, 80, 10, 0.25);
+    }
+    .deva {
+      filter: drop-shadow(0 1px 0 rgba(120, 90, 30, 0.18));
+    }
+  }
+
+  /* ── Reduced motion: freeze to a rich static gold (no sheen sweep) ─────── */
+  @media (prefers-reduced-motion: reduce) {
+    .gold {
+      animation: none;
+      /* park the sheen as a fixed soft highlight band, not mid-sweep */
+      background-position: 38% 0, 0 0;
+    }
+    .wordmark:hover .deva.gold {
+      animation: none;
+    }
+  }
+
+  /* ── Compact form for the tight mobile top bar (≤480px) ────────────────
+     The Latin caption row is dropped; the Devanagari jewel + prompt tick stay.
+     Still legible, still the gold jewel — just the romanization sheds. */
+  @media (max-width: 480px) {
+    .wordmark {
+      gap: 0.42em;
+    }
+    .deva {
+      font-size: 1.5rem;
+    }
+    .latin-row {
+      display: none;
+    }
   }
 </style>

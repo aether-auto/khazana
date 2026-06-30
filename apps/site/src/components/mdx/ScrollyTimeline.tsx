@@ -27,6 +27,7 @@ import {
   nearestIndexByX,
   indexToScrollY,
   clampIndex,
+  reachedScrollTarget,
 } from "./lib/scrolly-timeline.js";
 import "./mdx.css";
 import "./ScrollyTimeline.css";
@@ -66,6 +67,12 @@ export default function ScrollyTimeline({ events, caption }: ScrollyTimelineProp
   // Live drag flag read by the pointer-move handler — a `dragging` state closure
   // would be stale for the moves that arrive in the same tick as pointerdown.
   const draggingRef = useRef(false);
+  // While a SMOOTH programmatic jump (tick click / keyboard) is in flight, this
+  // holds { idx, y } — the target index and the (clamped) target scrollY. The
+  // scroll handler suppresses its position-based setActive until scrollY reaches
+  // y, so the in-transit position can't overwrite `active` one event short
+  // (bug #2). Cleared on arrival or on `scrollend`.
+  const jumpRef = useRef<{ idx: number; y: number } | null>(null);
 
   const [headerOffset, setHeaderOffset] = useState(0);
 
@@ -102,28 +109,47 @@ export default function ScrollyTimeline({ events, caption }: ScrollyTimelineProp
     let frame = 0;
     const recompute = () => {
       frame = 0;
-      const panels = root.querySelectorAll<HTMLElement>(".sctl-panel");
-      const tops = Array.from(panels, (n) => n.getBoundingClientRect().top);
-      const next = activeIndexFromScroll(tops, window.innerHeight, TRIGGER_OFFSET);
-      setActive((cur) => (cur === next ? cur : next));
-      // Section progress for the smooth playhead glide.
+      // Always glide the playhead from the live scroll position…
       const stack = root.querySelector<HTMLElement>(".sctl-stack");
       if (stack) {
         const r = stack.getBoundingClientRect();
         const p = sectionProgress(r.top, r.height, window.innerHeight);
         setProgress((cur) => (Math.abs(cur - p) < 0.0005 ? cur : p));
       }
+      // …but while a smooth jump is in flight, DON'T let the in-transit scroll
+      // position drag `active` one event short (bug #2). Hold the target until
+      // the scroll arrives, then resume position-based tracking.
+      const jump = jumpRef.current;
+      if (jump) {
+        if (reachedScrollTarget(window.scrollY, jump.y)) {
+          jumpRef.current = null;
+        } else {
+          return;
+        }
+      }
+      const panels = root.querySelectorAll<HTMLElement>(".sctl-panel");
+      const tops = Array.from(panels, (n) => n.getBoundingClientRect().top);
+      const next = activeIndexFromScroll(tops, window.innerHeight, TRIGGER_OFFSET);
+      setActive((cur) => (cur === next ? cur : next));
     };
     const onScroll = () => {
       if (frame) return; // one recompute per frame
       frame = requestAnimationFrame(recompute);
     };
+    // `scrollend` (where supported) is the authoritative "jump finished" signal;
+    // clear any in-flight jump and reconcile immediately.
+    const onScrollEnd = () => {
+      jumpRef.current = null;
+      if (!frame) frame = requestAnimationFrame(recompute);
+    };
     recompute(); // seed for the current scroll position at (late) hydration
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scrollend", onScrollEnd, { passive: true });
     window.addEventListener("resize", onScroll, { passive: true });
     return () => {
       if (frame) cancelAnimationFrame(frame);
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scrollend", onScrollEnd);
       window.removeEventListener("resize", onScroll);
     };
   }, [reduced, safeEvents.length]);
@@ -143,9 +169,23 @@ export default function ScrollyTimeline({ events, caption }: ScrollyTimelineProp
       // +8px overshoot so the target panel lands just PAST the trigger line
       // rather than exactly on it — otherwise sub-pixel rounding can leave it a
       // hair short and the active resolver (top <= line) won't promote it.
-      const targetY = indexToScrollY(top, window.scrollY, window.innerHeight, TRIGGER_OFFSET) + 8;
+      const wanted = indexToScrollY(top, window.scrollY, window.innerHeight, TRIGGER_OFFSET) + 8;
+      // Clamp to the real scrollable range so the "arrived" check can resolve
+      // even when the last event's target is beyond document max.
+      const maxY = document.documentElement.scrollHeight - window.innerHeight;
+      const targetY = Math.max(0, Math.min(wanted, maxY));
+      if (instant || reachedScrollTarget(window.scrollY, targetY)) {
+        // Drag (synchronous), or a jump that needs no real scroll: no suppression
+        // — and clear any stale guard so tracking can't freeze (a no-op scrollTo
+        // fires neither `scroll` nor `scrollend`).
+        jumpRef.current = null;
+      } else {
+        // Smooth jump: suppress position-based setActive until we ARRIVE, so the
+        // in-transit scroll position can't pin `active` one event short (bug #2).
+        jumpRef.current = { idx: i, y: targetY };
+      }
       window.scrollTo({ top: targetY, behavior: instant ? "auto" : "smooth" });
-      setActive(i); // optimistic; the scroll handler reconciles
+      setActive(i); // optimistic; the scroll handler reconciles on arrival
     },
     [safeEvents.length],
   );

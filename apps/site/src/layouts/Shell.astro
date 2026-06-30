@@ -584,12 +584,33 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
     opacity: 0;
     transform: translateY(-4px);
     pointer-events: none;
+    /* COLLAPSE the layout box, don't just fade it. Previously the condensed
+       channel row kept `display:flex` + its full height (≈316px when the taxonomy
+       wraps on mobile), so the sticky `.topbar` still measured ~420px even though
+       only the ~100px header band was visible — a phantom band that pushed
+       topbar-height-anchored UI (e.g. the ScrollyTimeline sticky spine) far down
+       the screen, and wasted mobile layout. The fade is still the perceived
+       motion; the box then collapses to zero height (height not transitioned, per
+       the row's existing "set instantly" approach) so the topbar measures only its
+       visible band. Reduced-motion keeps the row fully present (below). */
+    height: 0;
+    padding-block: 0;
+    margin-block: 0;
+    border: 0;
+    overflow: hidden;
   }
   @media (prefers-reduced-motion: reduce) {
     :global(html.is-scrolled) .channels {
       opacity: 1;
       transform: none;
       pointer-events: auto;
+      /* reduced-motion keeps the row fully present — undo the collapse entirely,
+         restoring the base box (.channels / .feed-filter pad bottom by --s-3,
+         no top pad, no border, auto-centred margins). */
+      height: auto;
+      overflow: visible;
+      padding-block: 0 var(--s-3);
+      margin-block: 0;
     }
     :global(html.is-scrolled) .topbar-inner {
       transform: none;

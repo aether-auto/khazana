@@ -66,7 +66,10 @@
   height: auto;
   overflow: visible;
   cursor: pointer;
-  touch-action: pan-y; /* allow vertical scroll, capture horizontal drags */
+  /* the rail is a scrubber: claim ALL touch gestures on it so a finger drag with
+     vertical wobble reliably scrubs instead of being stolen by page scroll. The
+     rest of the section stays vertically scrollable. */
+  touch-action: none;
 }
 .sctl-rail:focus {
   outline: none;

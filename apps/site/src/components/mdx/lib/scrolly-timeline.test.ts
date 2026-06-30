@@ -8,6 +8,7 @@ import {
   indexToScrollY,
   nearestIndexByX,
   clampIndex,
+  reachedScrollTarget,
 } from "./scrolly-timeline.js";
 
 // ── activeIndexFromScroll ───────────────────────────────────────────────────────
@@ -158,4 +159,32 @@ test("clampIndex: keeps an index inside [0, count-1]", () => {
 
 test("clampIndex: empty count → 0", () => {
   expect(clampIndex(2, 0)).toBe(0);
+});
+
+// ── reachedScrollTarget (programmatic smooth-jump settle test) ─────────────────────
+// While a smooth jump is in flight, the scroll handler must NOT overwrite `active`
+// with the still-in-transit position (it would land one event short until the
+// animation settles — bug #2). The component suppresses setActive until the scroll
+// reaches the target within a tolerance; this is that predicate.
+
+test("reachedScrollTarget: true once scrollY is within tolerance of the target", () => {
+  expect(reachedScrollTarget(2300, 2300, 2)).toBe(true);
+  expect(reachedScrollTarget(2299, 2300, 2)).toBe(true); // within ±2
+  expect(reachedScrollTarget(2301, 2300, 2)).toBe(true);
+});
+
+test("reachedScrollTarget: false while still mid-flight (outside tolerance)", () => {
+  // smooth scroll still climbing toward 2300 — one event short until it arrives
+  expect(reachedScrollTarget(1800, 2300, 2)).toBe(false);
+  expect(reachedScrollTarget(2290, 2300, 2)).toBe(false);
+});
+
+test("reachedScrollTarget: clamps to document max — target beyond max still resolves", () => {
+  // The browser can't scroll past maxScrollY, so a target beyond it is reached
+  // once scrollY sits at max (passed in as the effective target by the caller).
+  expect(reachedScrollTarget(4885, 4885, 2)).toBe(true);
+});
+
+test("reachedScrollTarget: default tolerance is forgiving of sub-pixel rounding", () => {
+  expect(reachedScrollTarget(2300.4, 2300, undefined)).toBe(true);
 });

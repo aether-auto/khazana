@@ -130,6 +130,23 @@ export function indexToScrollY(
   return Math.max(0, target);
 }
 
+/**
+ * Whether a programmatic smooth scroll has reached its target `scrollY` within
+ * `tolerance` px. While a smooth jump is in flight the component suppresses the
+ * rAF scroll handler's `setActive` (which would otherwise read the in-transit
+ * position and land one event short until the animation settles — bug #2); this
+ * predicate tells the component when the jump has arrived so it can resume
+ * position-based tracking. Callers pass an already-clamped target (e.g. the
+ * document max) when the requested target exceeds the scrollable range.
+ */
+export function reachedScrollTarget(
+  scrollY: number,
+  targetY: number,
+  tolerance: number = 2,
+): boolean {
+  return Math.abs(scrollY - targetY) <= tolerance;
+}
+
 /** Clamp an index into [0, count-1]; empty count → 0. */
 export function clampIndex(index: number, count: number): number {
   if (count <= 0) return 0;

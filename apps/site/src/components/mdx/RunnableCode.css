@@ -32,11 +32,12 @@
 .rc-editor :global(.cm-cursor) { border-left-color: var(--accent); }
 /* keyboard focus ring — the inner contenteditable shows nothing on Tab without
    this. CodeMirror injects its own baseTheme `.cm-editor.cm-focused{outline:1px
-   dotted #212121}` at runtime with equal 2-class specificity, so we add the
-   `.rc-panel` ancestor to win deterministically (3 classes vs 2), not on source
-   order. */
+   dotted #212121}` into a runtime <style> via StyleModule; that injection wins
+   over our scoped rule regardless of source order, and bumping specificity wasn't
+   enough (the dotted #212121 outline kept computing). CM's rule is not !important,
+   so `!important` here beats it deterministically — the only reliable lever. */
 .rc-panel .rc-editor :global(.cm-editor.cm-focused) {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--focus) !important;
   outline-offset: 2px;
 }
 

@@ -7,6 +7,32 @@
   padding: var(--s-4) var(--s-4) var(--s-5);
 }
 
+/* The shared .mdx-figure scroll-entrance (mdx.css) ramps opacity 0→1 across
+   `entry 0%..40%` on a view() timeline. These interactive panels are TALL, so on
+   a short mobile viewport the figure's leading edge can sit at ~0% progress while
+   most of the panel is already on-screen — leaving the curve + readout + top
+   slider stuck near opacity:0 (the "ghost curve / blank chart" mobile bug). An
+   interactive figure must be FULLY VISIBLE the moment any of it is on-screen.
+   Rather than kill the motion, we swap in a transform-only entrance (the fade-up
+   feel survives on desktop) that never gates visibility on scroll progress.
+   Scoped here, not in shared mdx.css. */
+.cc {
+  opacity: 1 !important;
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .cc {
+      animation: cc-figure-in linear both !important;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+    @keyframes cc-figure-in {
+      from { transform: translateY(10px); }
+      to { transform: none; }
+    }
+  }
+}
+
 /* live readout strip — the founder's numbers, set in mono, updating on drag */
 .cc-readout {
   position: relative;
@@ -58,6 +84,10 @@
   display: block;
   width: 100%;
   height: auto;
+  /* lock the height to the viewBox aspect so the SVG can never collapse to ~0 on
+     mobile (a flex/grid parent occasionally zeroes an `height:auto` SVG). */
+  aspect-ratio: 640 / 320;
+  overflow: visible;
 }
 
 /* the signal line — amber, the instrument's light catching the trend */
