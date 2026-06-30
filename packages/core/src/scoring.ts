@@ -20,10 +20,16 @@ export interface RankWeights {
 }
 
 /**
- * Default ranking weights. Tuned so read time is the dominant ordering signal
- * (heavy `readTime`) and a ready taste profile can dominate everything (heavy
- * `affinity`). `media` < `fullText`: a transcript-less video gets partial
- * content credit but never leapfrogs a genuine full-text article.
+ * Default ranking weights. A ready taste profile can dominate everything (heavy
+ * `affinity`); read time is a strong-but-not-overwhelming length signal.
+ *
+ * NOTE on `fullText`/`media`: full text is now a HARD GATE in the curate floor
+ * (`isFullTextRead`) — every item that survives into the feed already carries
+ * real full text, so the `fullText` content credit is effectively constant
+ * across all ranked items and the `media` credit never applies (transcript-less
+ * media is filtered out entirely). These weights are therefore largely INERT for
+ * ordering today; they are kept for the math's completeness and for any future
+ * relaxation of the gate. They still drive the bench preview's content column.
  */
 export const RANK_WEIGHTS: Readonly<RankWeights> = Object.freeze({
   recency: 1,
@@ -31,9 +37,9 @@ export const RANK_WEIGHTS: Readonly<RankWeights> = Object.freeze({
   metrics: 1,
   cluster: 0.5,
   affinity: 6,
-  fullText: 1.5,
+  fullText: 1.25,
   media: 0.9,
-  readTime: 3,
+  readTime: 2,
 });
 
 export interface GaussianParams {
@@ -114,6 +120,21 @@ export function readTimeScore(
 /** Whether an item carries real full text rather than a summary / bare link. */
 export function hasFullText(item: FeedItem): boolean {
   return bodyTextLength(item.body) > MIN_FULLTEXT_CHARS;
+}
+
+/**
+ * The full-text invariant for the feed: an item is a genuine full-text read iff
+ * it carries a real extracted body (> MIN_FULLTEXT_CHARS of plain text), NOT a
+ * teaser, snippet, abstract, or bare link. This is the predicate the curate
+ * floor uses as a HARD GATE — anything failing it is dropped before ranking, so
+ * the feed can never contain teasers even if a teaser-prone source is added
+ * later. Note a full-content RSS item (a long body that happens to equal its
+ * summary) passes: it IS full text. Currently an alias of `hasFullText`, named
+ * separately so the gate's intent reads at the call site and can evolve
+ * independently of the per-item content-credit check.
+ */
+export function isFullTextRead(item: FeedItem): boolean {
+  return hasFullText(item);
 }
 
 /** Whether an item is a media-only video or audio item (no transcript/full text). */

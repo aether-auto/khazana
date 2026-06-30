@@ -9,6 +9,7 @@ import {
   readTimeMinutes,
   readTimeScore,
   hasFullText,
+  isFullTextRead,
   isTranscriptlessMedia,
   scoreContributions,
   type RankProfile,
@@ -52,17 +53,23 @@ function ctx(over: Partial<ScoringContext> = {}): ScoringContext {
 // ── Constants ────────────────────────────────────────────────────────────────
 
 test("RANK_WEIGHTS has the 8 documented default weights and is frozen", () => {
+  // readTime lowered 3→2 (founder directive); fullText lowered 1.5→1.25 for
+  // consistency now that full text is a hard gate (content credit is inert).
   expect(RANK_WEIGHTS).toEqual({
     recency: 1,
     trust: 1,
     metrics: 1,
     cluster: 0.5,
     affinity: 6,
-    fullText: 1.5,
+    fullText: 1.25,
     media: 0.9,
-    readTime: 3,
+    readTime: 2,
   });
   expect(Object.isFrozen(RANK_WEIGHTS)).toBe(true);
+});
+
+test("readTime weight is 2 (founder directive: down from 3)", () => {
+  expect(RANK_WEIGHTS.readTime).toBe(2);
 });
 
 test("GAUSSIAN_DEFAULTS reproduce the current curve (peak 15, sigma 10)", () => {
@@ -88,6 +95,23 @@ test("hasFullText distinguishes real bodies from summaries / bare links", () => 
   expect(hasFullText(makeItem({ id: "full", body: FULL_BODY }))).toBe(true);
   expect(hasFullText(makeItem({ id: "summary", body: "short summary" }))).toBe(false);
   expect(hasFullText(makeItem({ id: "none" }))).toBe(false);
+});
+
+test("isFullTextRead is the full-text gate: real body kept, teaser/bare-link rejected", () => {
+  // Genuine full-text article → kept.
+  expect(isFullTextRead(makeItem({ id: "full", body: FULL_BODY }))).toBe(true);
+  // Short summary / teaser → rejected.
+  expect(isFullTextRead(makeItem({ id: "teaser", body: "A short teaser sentence." }))).toBe(false);
+  // Bare link (no body) → rejected.
+  expect(isFullTextRead(makeItem({ id: "bare" }))).toBe(false);
+});
+
+test("isFullTextRead keeps a full-content-RSS item (long body that equals its summary)", () => {
+  // The key data finding: full-content RSS feeds emit body === summary. As long
+  // as that body is genuinely long, it IS full text and must be kept.
+  const longText = "Genuine full article text rendered in the body for the reader. ".repeat(40);
+  const item = makeItem({ id: "rss-full", body: longText, summary: longText });
+  expect(isFullTextRead(item)).toBe(true);
 });
 
 test("isTranscriptlessMedia is true only for text-less video/audio", () => {

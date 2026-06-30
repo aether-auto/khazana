@@ -201,6 +201,84 @@ test("runCurate rejects a 1-min MAKER item (below the relaxed maker floor)", asy
   expect(result.items.map((it) => it.id)).not.toContain("maker-tiny");
 });
 
+// ── Full-text HARD GATE (founder invariant: feed = genuine full-text reads only) ──
+
+test("runCurate KEEPS a genuine full-text article", async () => {
+  const items = [
+    { ...makeItem("full-read", "A genuine full-text article", ["tech"]), body: makeBody(10) },
+  ];
+  const result = await runCurate(items, [], null, { now: NOW });
+  expect(result.items.map((it) => it.id)).toContain("full-read");
+});
+
+test("runCurate KEEPS a full-content-RSS item (long body that equals its summary)", async () => {
+  // The key data finding: full-content RSS feeds emit body === summary. As long
+  // as the body is genuinely long, it IS full text and must NOT be dropped.
+  const long = makeBody(10);
+  const items = [
+    { ...makeItem("rss-full", "Full-content RSS item", ["tech"]), body: long, summary: long },
+  ];
+  const result = await runCurate(items, [], null, { now: NOW });
+  expect(result.items.map((it) => it.id)).toContain("rss-full");
+});
+
+test("runCurate REJECTS a teaser/snippet (short body, not full text)", async () => {
+  const items = [
+    // A short snippet that is NOT a genuine full-text read (< MIN_FULLTEXT_CHARS).
+    { ...makeItem("teaser", "Read more on our site…", ["tech"]), body: "A brief teaser." },
+    { ...makeItem("full-read", "A genuine full-text article", ["tech"]), body: makeBody(10) },
+  ];
+  const result = await runCurate(items, [], null, { now: NOW });
+  const ids = result.items.map((it) => it.id);
+  expect(ids).not.toContain("teaser");
+  expect(ids).toContain("full-read");
+});
+
+test("runCurate REJECTS a bare link (no body) as not full text", async () => {
+  const items = [
+    { ...makeItem("bare", "A bare link", ["tech"]), body: undefined },
+    { ...makeItem("full-read", "A genuine full-text article", ["tech"]), body: makeBody(10) },
+  ];
+  const result = await runCurate(items, [], null, { now: NOW });
+  const ids = result.items.map((it) => it.id);
+  expect(ids).not.toContain("bare");
+  expect(ids).toContain("full-read");
+});
+
+test("runCurate REJECTS an abstract-only item (short body, paper kind)", async () => {
+  const items = [
+    // An arXiv-style item carrying only its abstract — not the full paper text.
+    { ...makeItem("abstract", "A paper with only its abstract", ["ai"]), body: "We present a method that improves results. See the PDF for details." },
+    { ...makeItem("full-read", "A genuine full-text article", ["tech"]), body: makeBody(10) },
+  ];
+  const result = await runCurate(items, [], null, { now: NOW });
+  const ids = result.items.map((it) => it.id);
+  expect(ids).not.toContain("abstract");
+  expect(ids).toContain("full-read");
+});
+
+test("runCurate REJECTS transcript-less media even with a long-enough title (no body)", async () => {
+  const items = [
+    { ...makeItem("video", "A video with no transcript", ["tech"]), kind: "video" as const, body: undefined },
+    { ...makeItem("audio", "A podcast with no transcript", ["tech"]), kind: "audio" as const, body: undefined },
+    { ...makeItem("full-read", "A genuine full-text article", ["tech"]), body: makeBody(10) },
+  ];
+  const result = await runCurate(items, [], null, { now: NOW });
+  const ids = result.items.map((it) => it.id);
+  expect(ids).not.toContain("video");
+  expect(ids).not.toContain("audio");
+  expect(ids).toContain("full-read");
+});
+
+test("runCurate KEEPS a video that carries a genuine full-text transcript", async () => {
+  // A media item WITH a real transcript body is a genuine full-text read → kept.
+  const items = [
+    { ...makeItem("video-transcript", "A talk with a full transcript", ["tech"]), kind: "video" as const, body: makeBody(12) },
+  ];
+  const result = await runCurate(items, [], null, { now: NOW });
+  expect(result.items.map((it) => it.id)).toContain("video-transcript");
+});
+
 test("runCurate emits no sub-5-min items in the output (curated.json guarantee)", async () => {
   // Mix of short, boundary, and long items.
   const items = [

@@ -16,15 +16,18 @@ const NOW = "2026-06-23T00:00:00.000Z";
 const MS_PER_DAY = 86_400_000;
 const HALF_LIFE = 7;
 
-// Original constants (pre-refactor) — intentionally hard-coded here, not imported.
+// Reference constants — intentionally hard-coded here, not imported, so the
+// independent reimplementation actually guards the shared core math. These must
+// track RANK_WEIGHTS in @khazana/core (readTime 3→2, fullText 1.5→1.25 after the
+// full-text-gate change).
 const O_W_RECENCY = 1;
 const O_W_TRUST = 1;
 const O_W_METRICS = 1;
 const O_W_CLUSTER = 0.5;
 const O_W_AFFINITY = 6;
-const O_W_FULLTEXT = 1.5;
+const O_W_FULLTEXT = 1.25;
 const O_W_MEDIA = 0.9;
-const O_W_READTIME = 3;
+const O_W_READTIME = 2;
 const O_PEAK = 15;
 const O_SIGMA = 10;
 const O_WPM = 225;

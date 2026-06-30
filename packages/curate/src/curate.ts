@@ -1,4 +1,12 @@
-import { dedupeItems, isMakerCandidate, MAKER_MIN_READ_MINUTES, type DedupeOpts, type FeedItem } from "@khazana/core";
+import {
+  dedupeItems,
+  isMakerCandidate,
+  isFullTextRead,
+  isTranscriptlessMedia,
+  MAKER_MIN_READ_MINUTES,
+  type DedupeOpts,
+  type FeedItem,
+} from "@khazana/core";
 import { enrichItems, type LlmClient } from "./enrich.js";
 import { clusterItems, type ClusterOpts } from "./cluster.js";
 import { computeTasteProfile, type TasteOpts } from "./taste.js";
@@ -38,17 +46,28 @@ export async function runCurate(
 
   const clustered = clusterItems(deduped, opts.cluster);
 
-  // TWO-TIER read-time floor (drop short items before ranking so counts are correct):
-  //   • Default floor MIN_READ_MINUTES (5) for everything — the Feed's sacred bar.
-  //     Removes bare-link items (no body → 0 min), short summaries, and
-  //     transcript-less videos/audio (0 min).
-  //   • RELAXED floor MAKER_MIN_READ_MINUTES (3) for MAKER candidates only
-  //     (source ∈ PURE_MAKER_ALLOWLIST or a HARD maker channel tag — the
-  //     registry-free `isMakerCandidate` signal). The founder lowered the bar for
-  //     the Workshop ("mostly signal"); short 3–5 min maker tutorials are kept so
-  //     they can reach curated.json → the Workshop. The Feed re-applies its ≥5-min
-  //     floor on the site side, so these short makers never leak into the Feed.
+  // FULL-TEXT INVARIANT + two-tier read-time floor. The feed contains ONLY
+  // genuine full-text reads — this is a HARD GATE, not a down-weight. An item is
+  // kept iff:
+  //   1. It is a genuine full-text read (`isFullTextRead`): a real extracted body
+  //      (> MIN_FULLTEXT_CHARS), not a teaser / snippet / abstract / bare link.
+  //      Full-content RSS items (long body that equals its summary) ARE full text
+  //      and pass. Transcript-less video/audio (`isTranscriptlessMedia`) fails
+  //      this gate (no body) and is explicitly excluded — so teaser-prone or
+  //      media-only sources can never leak into the feed even if added later.
+  //   AND
+  //   2. It clears the read-time floor:
+  //      • Default floor MIN_READ_MINUTES (5) for everything — the Feed's bar.
+  //      • RELAXED floor MAKER_MIN_READ_MINUTES (3) for MAKER candidates only
+  //        (source ∈ PURE_MAKER_ALLOWLIST or a HARD maker channel tag — the
+  //        registry-free `isMakerCandidate` signal). The founder lowered the bar
+  //        for the Workshop ("mostly signal"); short 3–5 min maker tutorials reach
+  //        curated.json → the Workshop. The Feed re-applies its ≥5-min floor on
+  //        the site side, so these short makers never leak into the Feed. Makers
+  //        must ALSO be full text — the gate is not relaxed for them.
   const substantial = clustered.filter((it) => {
+    if (isTranscriptlessMedia(it)) return false;
+    if (!isFullTextRead(it)) return false;
     const minutes = readTimeMinutes(it);
     if (minutes >= MIN_READ_MINUTES) return true;
     return isMakerCandidate(it) && minutes >= MAKER_MIN_READ_MINUTES;

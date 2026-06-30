@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { hasFullText, rankItems, applyDiversityFloor, readTimeMinutes, readTimeScore, W_MEDIA, W_READTIME, READ_TIME_PEAK_MIN, FEATURED_SIZE, DIVERSITY_WINDOW, DIVERSITY_MIN_VIDEO, DIVERSITY_MIN_AUDIO } from "./rank.js";
+import { hasFullText, rankItems, applyDiversityFloor, readTimeMinutes, readTimeScore, W_FULLTEXT, W_MEDIA, W_READTIME, READ_TIME_PEAK_MIN, FEATURED_SIZE, DIVERSITY_WINDOW, DIVERSITY_MIN_VIDEO, DIVERSITY_MIN_AUDIO } from "./rank.js";
 import type { TasteProfile } from "./taste.js";
 import type { FeedItem } from "@khazana/core";
 
@@ -85,7 +85,7 @@ test("is deterministic for the same now", () => {
 test("W_MEDIA is exported and in a reasonable range (0 < W_MEDIA < W_FULLTEXT)", () => {
   // Sanity: partial credit is strictly between 0 and the full-text bonus.
   expect(W_MEDIA).toBeGreaterThan(0);
-  expect(W_MEDIA).toBeLessThan(1.5); // 1.5 == W_FULLTEXT
+  expect(W_MEDIA).toBeLessThan(W_FULLTEXT);
 });
 
 test("a transcript-less video item scores higher than an equivalent link-only item", () => {
@@ -120,7 +120,7 @@ test("a video item WITH a transcript receives full-text credit, not media credit
   const withoutScore = ranked[1]!.tasteScore!;
   expect(withScore).toBeGreaterThan(withoutScore);
   // No double-counting: the delta exceeds W_FULLTEXT - W_MEDIA (not less than it).
-  expect(withScore - withoutScore).toBeGreaterThan(1.5 - W_MEDIA);
+  expect(withScore - withoutScore).toBeGreaterThan(W_FULLTEXT - W_MEDIA);
 });
 
 test("a fresh trusted video item without a transcript ranks well above stale full-text articles", () => {
@@ -275,8 +275,9 @@ test("READ_TIME_PEAK_MIN is exported and equals 15", () => {
   expect(READ_TIME_PEAK_MIN).toBe(15);
 });
 
-test("W_READTIME is exported and is a heavy weight (≥2)", () => {
-  // The founder wants read time to be a dominant factor.
+test("W_READTIME is exported and is a meaningful weight (≥2)", () => {
+  // Read time is a strong length signal (founder lowered it 3→2; affinity now
+  // dominates, and full text is enforced as a hard gate rather than a weight).
   expect(W_READTIME).toBeGreaterThanOrEqual(2);
 });
 
