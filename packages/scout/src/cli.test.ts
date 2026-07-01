@@ -30,6 +30,65 @@ test("discoverMain writes a brief naming under-served channels", () => {
   expect(brief).toContain("data/scout/candidates.json");
 });
 
+test("discoverMain GENERATES candidates from curated/raw into the pending queue + candidate brief", () => {
+  mkdirSync(join(dir, "feed"), { recursive: true });
+  writeFileSync(
+    join(dir, "feed", "curated.json"),
+    JSON.stringify([
+      {
+        id: "c1", source: "s", sourceType: "rss", url: "https://foreignpolicy.com/x", title: "Deep Read",
+        publishedAt: now, fetchedAt: now, topics: [], entities: [], summary: "", media: [], kind: "link",
+        tasteScore: 4, body: `<a href="https://simonwillison.net/a">x</a>`,
+      },
+    ]),
+  );
+  writeFileSync(
+    join(dir, "feed", "raw.json"),
+    JSON.stringify([
+      { id: "r1", source: "hn", sourceType: "hn", url: "https://simonwillison.net/b", title: "t", publishedAt: now, fetchedAt: now, topics: [], entities: [], summary: "", media: [], kind: "link" },
+      { id: "r2", source: "hn", sourceType: "hn", url: "https://simonwillison.net/c", title: "t", publishedAt: now, fetchedAt: now, topics: [], entities: [], summary: "", media: [], kind: "link" },
+    ]),
+  );
+
+  discoverMain(dir, now);
+
+  const pending = JSON.parse(readFileSync(join(dir, "sources.pending.json"), "utf8"));
+  expect(pending.some((c: { url: string }) => new URL(c.url).hostname === "simonwillison.net")).toBe(true);
+  const cbrief = readFileSync(join(dir, "scout", "candidate-brief.md"), "utf8");
+  expect(cbrief).toContain("simonwillison.net");
+  expect(cbrief.toLowerCase()).toContain("credibility");
+});
+
+test("applyMain consumes an appraisal over the pending queue → auto-adds + queues", async () => {
+  // pending queue (from a prior discover run)
+  writeFileSync(
+    join(dir, "sources.pending.json"),
+    JSON.stringify([
+      { url: "https://goodblog.example.com", discoveredVia: "link-mine", evidence: ["cited by A"], seenCount: 3 },
+      { url: "https://maybe.example.com", discoveredVia: "domain-frequency", evidence: ["recurs"], seenCount: 2 },
+    ]),
+  );
+  mkdirSync(join(dir, "scout"), { recursive: true });
+  writeFileSync(
+    join(dir, "scout", "appraisal.json"),
+    JSON.stringify([
+      { url: "https://goodblog.example.com", channels: ["ai"], trust: 0.9 },   // → add
+      { url: "https://maybe.example.com", channels: ["tech"], trust: 0.45 },    // → queue
+    ]),
+  );
+  const fetchFn: FetchFn = async () => ({ ok: true, status: 200, text: async () => HTML_WITH_FEED, json: async () => ({}) });
+
+  await applyMain(dir, now, fetchFn);
+
+  const reg = JSON.parse(readFileSync(join(dir, "sources.json"), "utf8"));
+  const added = reg.sources.find((s: { addedBy?: string }) => s.addedBy === "scout");
+  expect(added.url).toBe("https://goodblog.example.com/feed.xml");
+  expect(added.channels).toEqual(["ai"]);
+
+  const review = JSON.parse(readFileSync(join(dir, "scout", "review.json"), "utf8"));
+  expect(review.map((p: { candidate: { url: string } }) => p.candidate.url)).toEqual(["https://maybe.example.com"]);
+});
+
 const HTML_WITH_FEED = `<html><head><link rel="alternate" type="application/rss+xml" href="/feed.xml"></head></html>`;
 
 test("applyMain autodiscovers, adds high-trust, queues borderline, disables dead, writes outputs", async () => {
@@ -55,8 +114,8 @@ test("applyMain autodiscovers, adds high-trust, queues borderline, disables dead
   expect(added.url).toBe("https://goodblog.example.com/feed.xml");
   expect(added.channels).toEqual(["ai"]);
 
-  const pending = JSON.parse(readFileSync(join(dir, "sources.pending.json"), "utf8"));
-  expect(pending.map((p: { candidate: { url: string } }) => p.candidate.url)).toEqual(["https://maybe.example.com"]);
+  const review = JSON.parse(readFileSync(join(dir, "scout", "review.json"), "utf8"));
+  expect(review.map((p: { candidate: { url: string } }) => p.candidate.url)).toEqual(["https://maybe.example.com"]);
 
   const report = JSON.parse(readFileSync(join(dir, "scout", "report.json"), "utf8"));
   expect(report.added).toHaveLength(1);

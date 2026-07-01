@@ -15,6 +15,7 @@ dist/
 .superpowers/
 data/sources.json
 data/sources.pending.json
+data/scout/
 data/feed/
 data/taste.json
 screenshots/

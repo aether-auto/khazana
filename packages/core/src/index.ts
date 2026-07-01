@@ -4,6 +4,7 @@ export * from "./feed-item.js";
 export * from "./citation-ledger.js";
 export * from "./source.js";
 export * from "./registry.js";
+export * from "./candidate-source.js";
 export * from "./source-verify.js";
 export * from "./format.js";
 export * from "./events.js";

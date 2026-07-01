@@ -3,13 +3,17 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, test } from "vitest";
 import {
+  loadAppraisals,
   loadCandidates,
   loadCurated,
   loadEvents,
+  loadPendingCandidates,
   loadRegistry,
   saveRegistry,
   writeBrief,
+  writeCandidateBrief,
   writePending,
+  writePendingCandidates,
   writeReport,
 } from "./io.js";
 
@@ -64,10 +68,32 @@ test("writeBrief / writePending / writeReport create files and return paths", ()
   const pp = writePending(dir, [
     { candidate: { url: "https://q.com", title: "Q", channels: ["ai"] }, feedUrl: null, trust: 0.5, reason: "queue" },
   ]);
-  expect(pp).toContain("sources.pending.json");
+  expect(pp).toContain(join("scout", "review.json"));
   expect(JSON.parse(readFileSync(pp, "utf8"))).toHaveLength(1);
 
   const rp = writeReport(dir, { added: 1 });
   expect(rp).toContain(join("scout", "report.json"));
   expect(JSON.parse(readFileSync(rp, "utf8")).added).toBe(1);
+});
+
+test("pending-candidate queue round-trips (validated CandidateSource[])", () => {
+  const path = writePendingCandidates(dir, [
+    { url: "https://new.example.com", discoveredVia: "link-mine", evidence: ["cited by X"], seenCount: 2 },
+  ]);
+  expect(path).toContain("sources.pending.json");
+  const loaded = loadPendingCandidates(dir);
+  expect(loaded).toHaveLength(1);
+  expect(loaded[0]!.url).toBe("https://new.example.com");
+  expect(loaded[0]!.seenCount).toBe(2);
+});
+
+test("loadPendingCandidates / loadAppraisals return [] when absent", () => {
+  expect(loadPendingCandidates(dir)).toEqual([]);
+  expect(loadAppraisals(dir)).toEqual([]);
+});
+
+test("writeCandidateBrief writes scout/candidate-brief.md", () => {
+  const p = writeCandidateBrief(dir, "# candidate brief\n");
+  expect(p).toContain(join("scout", "candidate-brief.md"));
+  expect(readFileSync(p, "utf8")).toContain("candidate brief");
 });
