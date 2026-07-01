@@ -155,6 +155,7 @@ const { formatFacet, channelFacet, collectionCount } = Astro.props;
     // Computed over `allTargets` (the hero is a filter target too) and over the
     // live DOM, so the rendered count set is authoritative even if upstream drifts.
     function refreshCounts(): void {
+      if (!form) return;
       form.querySelectorAll<HTMLButtonElement>(".rchip").forEach((chip) => {
         const facet = chip.dataset.facet as Facet | undefined;
         if (facet !== "format" && facet !== "channel") return;
