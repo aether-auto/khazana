@@ -1,7 +1,7 @@
 /**
  * Data-retention prune. Keeps the current build day plus `RETENTION_DAYS-1`
- * prior days of generated Reads + their narration audio; removes anything
- * older so the repo / deployed site / audio never grow unbounded.
+ * prior days of generated Reads; removes anything older so the repo / deployed
+ * site never grow unbounded.
  *
  * Usage (from repo root):
  *   pnpm exec tsx scripts/prune-history.mts            # DRY RUN (prints only)
@@ -14,7 +14,6 @@
  * Source of truth for an entry's AGE:
  *   1. data/feed/history.json (the build ledger) when present — authoritative;
  *   2. otherwise fall back to scanning blog MDX frontmatter `publishedAt`.
- * Audio for a pruned Read is every apps/site/public/audio/reads/<slug>.* file.
  *
  * Safe by construction: dry-run is the default, every file op is guarded, and
  * the pure age math (selectExpired) clamps RETENTION_DAYS so today is never
@@ -24,12 +23,11 @@ import { readdirSync, readFileSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DEFAULT_RETENTION_DAYS, selectExpired, type DatedEntry } from "../packages/core/src/retention.ts";
-import { readLedger, dayStamp, type BuildDay } from "./lib/history.mts";
+import { readLedger, dayStamp } from "./lib/history.mts";
 
 const repoRoot = fileURLToPath(new URL("../", import.meta.url));
 const ledgerPath = join(repoRoot, "data/feed/history.json");
 const blogDir = join(repoRoot, "apps/site/src/content/blog");
-const audioDir = join(repoRoot, "apps/site/public/audio/reads");
 
 const apply = process.argv.includes("--apply");
 const today = process.env.TODAY?.trim() || dayStamp();
@@ -52,37 +50,21 @@ function frontmatterPublishedAt(mdx: string): string {
   return line?.[1]?.trim().replace(/^["']|["']$/g, "") ?? "";
 }
 
-/** All audio files belonging to a Read slug (mp3 tracks + manifest). */
-function audioFilesFor(slug: string): string[] {
-  if (!existsSync(audioDir)) return [];
-  let names: string[];
-  try {
-    names = readdirSync(audioDir);
-  } catch {
-    return [];
-  }
-  return names
-    .filter((n) => n === `${slug}.manifest.json` || n.startsWith(`${slug}.`))
-    .map((n) => join(audioDir, n));
-}
-
 /**
  * Build the dated-entry list from the ledger when present, else by scanning
  * blog frontmatter. Each entry's `id` is the Read slug.
  */
-function gatherEntries(): { entries: DatedEntry[]; bySlug: Map<string, BuildDay | null>; source: string } {
+function gatherEntries(): { entries: DatedEntry[]; source: string } {
   const ledger = readLedger(ledgerPath);
-  const bySlug = new Map<string, BuildDay | null>();
 
   if (ledger.days.length > 0) {
     const entries: DatedEntry[] = [];
     for (const d of ledger.days) {
       for (const slug of d.slugs) {
         entries.push({ id: slug, day: d.day });
-        bySlug.set(slug, d);
       }
     }
-    return { entries, bySlug, source: `ledger (${ledgerPath})` };
+    return { entries, source: `ledger (${ledgerPath})` };
   }
 
   // Fallback: scan blog MDX frontmatter publishedAt.
@@ -97,13 +79,12 @@ function gatherEntries(): { entries: DatedEntry[]; bySlug: Map<string, BuildDay 
     const slug = f.replace(/\.(mdx?|md)$/i, "");
     const day = frontmatterPublishedAt(readSafe(join(blogDir, f)));
     entries.push({ id: slug, day });
-    bySlug.set(slug, null);
   }
-  return { entries, bySlug, source: `frontmatter scan (${blogDir})` };
+  return { entries, source: `frontmatter scan (${blogDir})` };
 }
 
 function main(): void {
-  const { entries, bySlug, source } = gatherEntries();
+  const { entries, source } = gatherEntries();
   const expiredSlugs = selectExpired(entries, today, retentionDays);
 
   console.log(`[prune] today=${today} retentionDays=${retentionDays} mode=${apply ? "APPLY" : "DRY-RUN"}`);
@@ -115,18 +96,13 @@ function main(): void {
     return;
   }
 
-  // Resolve every file each expired Read owns: its MDX + its audio.
+  // Resolve every file each expired Read owns: its MDX.
   const toRemove: string[] = [];
   for (const slug of expiredSlugs) {
     const mdx = join(blogDir, `${slug}.mdx`);
     if (existsSync(mdx)) toRemove.push(mdx);
     const md = join(blogDir, `${slug}.md`);
     if (existsSync(md)) toRemove.push(md);
-    // Prefer the ledger's recorded audio paths; fall back to scanning the dir.
-    const record = bySlug.get(slug);
-    const ledgerAudio = (record?.audioFiles ?? []).map((p) => join(repoRoot, p)).filter(existsSync);
-    const audio = ledgerAudio.length > 0 ? ledgerAudio : audioFilesFor(slug);
-    toRemove.push(...audio);
   }
 
   for (const path of toRemove) {

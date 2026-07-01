@@ -5,7 +5,6 @@ import mdx from "@astrojs/mdx";
 import react from "@astrojs/react";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
-import rehypeNarrationIndex from "./src/lib/rehype-narration-index.mjs";
 
 // $0 GitHub Pages project pages: site + base are env-configurable with safe defaults.
 // PUBLIC_SITE_URL e.g. "https://arnavmarda.github.io"; PUBLIC_BASE_PATH e.g. "/khazana".
@@ -34,11 +33,8 @@ export default defineConfig({
     // renders it to KaTeX HTML at BUILD time (zero runtime JS). KaTeX CSS +
     // fonts are bundled offline (imported in global.css) — never a CDN.
     remarkPlugins: [remarkMath],
-    // rehype-katex first (typeset math), THEN narration-index. The narration
-    // matcher reads the raw prose text and drops `.katex` sub-trees, so its order
-    // vs katex doesn't change the match — but we keep it last so it never sees a
-    // tree katex hasn't finished with.
-    rehypePlugins: [rehypeKatex, rehypeNarrationIndex],
+    // rehype-katex renders typeset math to KaTeX HTML at build time.
+    rehypePlugins: [rehypeKatex],
     // Brand-themed code highlighting. `css-variables` makes Shiki emit
     // `--astro-code-*` custom properties instead of hard-coded colors; we map
     // those to the Observatory palette in code.css, so highlighting matches the

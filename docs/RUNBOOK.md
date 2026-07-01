@@ -224,8 +224,8 @@ bundle at build time and used by the events fetch.
   workflow. `pipeline` accepts an optional `limit` input (per-source item cap).
 - **Change source registry:** edit `data/sources.seed.json` (validated by
   `RegistrySchema`) or let `scout-discover.yml` grow it weekly.
-- **Retention:** the pipeline keeps `RETENTION_DAYS` (default 3) days of Reads +
-  audio; older ones are pruned and the removal is committed back.
+- **Retention:** the pipeline keeps `RETENTION_DAYS` (default 3) days of Reads;
+  older ones are pruned and the removal is committed back.
 - **Costs stay $0:** public-repo Actions minutes are free; Pages + Worker + KV
   are free tier; Claude runs on your subscription; enrichment/transcription use
   free LLM tiers.

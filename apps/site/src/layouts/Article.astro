@@ -81,14 +81,6 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
 
       <div class="article-rule" aria-hidden="true"></div>
 
-      <!-- THE NARRATION DECK. A dramatically-narrated reading of this Read, with a
-           paragraph-synced highlight in the column below. Slotted by the page only
-           when a rendered narration manifest exists; otherwise this is empty and
-           the masthead closes straight into the prose. -->
-      <div class="article-listen">
-        <slot name="player" />
-      </div>
-
       <!-- THE SACRED READING COLUMN. Zero animation inside the prose. The right
            gutter holds marginalia (<Sidenote>) on wide screens. -->
       <div class="prose" data-prose>
@@ -306,16 +298,6 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
     margin: var(--s-6) 0;
   }
 
-  /* ── the narration deck slot ─────────────────────────────────────────────
-     The ReadPlayer sits in the masthead's quiet zone — after the title rule,
-     before the first prose line — so "listen to this" reads as an offer made
-     before the read begins, not a control bolted onto the body. A breath of
-     space above and below keeps it native to the header, never crowding the
-     drop-cap. Empty (no slotted player) → collapses to nothing. */
-  .article-listen:not(:empty) {
-    margin: 0 0 var(--s-6);
-  }
-
   /* ── editorial reading typography — the SACRED reading column (art-
      direction §5, §8). Newsreader 18px / 1.62, warm #D4CBC0 (~9.5:1, never pure
      white), +0.012em tracking + optical-sizing. ZERO animation inside. ─────── */
@@ -379,52 +361,6 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
     color: var(--ink);
   }
 
-  /* ── narration highlight + click-to-seek affordance ──────────────────────
-     The ReadPlayer adds `.is-narrating` (+ aria-current) to the prose block it
-     is currently speaking, and any `[data-para-index]` block is click-to-seek.
-     The highlight stays OUT of the reading flow: no layout shift, no text color
-     change to the sacred --read ink — only a warm amber edge-tick and the faintest
-     inset wash. Both are inset box-shadow / background-color, which paint inside
-     the block's own box: toggling them never changes the layout or reflows the
-     text, so the reading column stays dead-still as the highlight advances. */
-  .prose :global([data-para-index]) {
-    position: relative;
-    border-radius: var(--r-sm);
-    /* a transparent edge-tick reserved now so the active state only changes its
-       color, never the box geometry. */
-    box-shadow: inset 2px 0 0 transparent;
-    transition:
-      background-color var(--dur) var(--ease-out),
-      box-shadow var(--dur) var(--ease-out);
-  }
-  /* click-to-seek hint: a barely-there warm wash on hover, and the cursor tells
-     the rest of the story. Skipped for links/buttons (they keep their own cursor). */
-  @media (hover: hover) {
-    .prose :global([data-para-index]:hover) {
-      cursor: pointer;
-      background-color: color-mix(in oklab, var(--accent) 4%, transparent);
-    }
-    .prose :global([data-para-index] a:hover),
-    .prose :global([data-para-index] button:hover) {
-      cursor: pointer;
-    }
-  }
-  /* the active, currently-spoken paragraph: an amber edge-tick + a faint inset
-     wash — the same amber-is-the-playing-signal language as the deck. */
-  .prose :global([data-para-index].is-narrating) {
-    background-color: color-mix(in oklab, var(--accent) 7%, transparent);
-    box-shadow: inset 2px 0 0 var(--accent);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .prose :global([data-para-index]) {
-      transition: none;
-    }
-  }
-  /* headings carry the marker too (they are narratable); keep their ::before tick
-     clear of the wash so the section rhythm reads unchanged. */
-  .prose :global(h2[data-para-index].is-narrating) {
-    background-color: color-mix(in oklab, var(--accent) 6%, transparent);
-  }
   /* animated underline on prose links — background-size only (no layout thrash);
      this is on a non-prose target (a link affordance), not the reading flow. */
   .prose :global(a) {

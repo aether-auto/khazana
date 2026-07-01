@@ -1,7 +1,7 @@
 name: pipeline
 
 # The main daily cron: fetch behavior → ingest+curate → author Reads (Claude) →
-# verify → render narration → record build ledger → prune → commit MDX →
+# verify → record build ledger → prune → commit MDX →
 # build → deploy to GitHub Pages. All steps are also runnable by hand
 # (workflow_dispatch). Everything is $0: public-repo Actions minutes + Pages.
 #
@@ -44,8 +44,6 @@ jobs:
       REDDIT_MIN_GAP_MS: "1500"
       YT_DLP_MIN_GAP_MS: "2000"
       ARXIV_HOST_MIN_GAP_MS: "3000"
-      # ---- narration: MP3 (universal browser compat) ----
-      NARRATION_CODEC: "mp3"
       # ---- build-time public origin (Variable, not secret) ----
       PUBLIC_WORKER_URL: ${{ vars.PUBLIC_WORKER_URL }}
       PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
@@ -67,7 +65,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
 
-      # ffmpeg is mandatory for render-audio (Kokoro TTS encode).
+      # ffmpeg is required to decode podcast audio for local Whisper transcription;
+      # yt-dlp fetches media for the YouTube/podcast sources.
       - name: Install ffmpeg + yt-dlp
         run: |
           sudo apt-get update
@@ -75,7 +74,7 @@ jobs:
           sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
             -o /usr/local/bin/yt-dlp && sudo chmod a+rx /usr/local/bin/yt-dlp
 
-      # Transformers model cache: Kokoro (~82M ONNX) + local Whisper. Static key —
+      # Transformers model cache: local Whisper (podcast STT fallback). Static key —
       # models change rarely; restore-keys lets a bumped key still reuse the prior.
       - name: Cache transformers models
         uses: actions/cache@v4
@@ -141,19 +140,15 @@ jobs:
       - name: Verify drafts
         run: pnpm --filter @khazana/generate generate verify
 
-      # ---- 6. render narration (one MP3 + manifest per Read) ----
-      - name: Render narration audio
-        run: pnpm --filter @khazana/ingest render-audio
-
-      # ---- 7. record build ledger so prune uses authoritative ages ----
+      # ---- 6. record build ledger so prune uses authoritative ages ----
       - name: Record build day
         run: pnpm exec tsx scripts/record-build-day.mts
 
-      # ---- 8. prune: drop Reads + audio older than the retention window ----
+      # ---- 7. prune: drop Reads older than the retention window ----
       - name: Prune expired history
         run: pnpm exec tsx scripts/prune-history.mts --apply
 
-      # ---- 9. commit back generated / removed MDX ([skip ci]) ----
+      # ---- 8. commit back generated / removed MDX ([skip ci]) ----
       - name: Commit generated Reads
         run: |
           git config user.name "khazana-bot"
@@ -166,7 +161,7 @@ jobs:
             git push
           fi
 
-      # ---- 10. build the static site (Pagefind index inside build) ----
+      # ---- 9. build the static site (Pagefind index inside build) ----
       - name: Build site
         run: pnpm --filter @khazana/site build
 

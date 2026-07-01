@@ -1,9 +1,7 @@
 ---
 import { getCollection, render } from "astro:content";
 import Article from "../../layouts/Article.astro";
-import ReadPlayer from "../../components/reads/ReadPlayer.tsx";
 import { countWords } from "../../lib/read-time.js";
-import { loadNarration } from "../../lib/narration-manifest.js";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog", ({ data }) => !data.draft);
@@ -22,13 +20,6 @@ const prose = (post.body ?? "")
   .replace(/<[^>]+>/g, " ")
   .replace(/\{[^}]*\}/g, " ");
 const words = countWords(prose);
-
-// Pre-rendered narration, if this Read has a manifest on disk. The player only
-// mounts when a manifest exists; its paragraph marks line up with the
-// `data-para-index` attributes the narration-index rehype plugin stamps on the
-// prose. `track.src` is base-prefixed here so the deployed (project-page) base
-// resolves correctly. Absent manifest → no player, prose renders as before.
-const narration = loadNarration(post.id, import.meta.env.BASE_URL);
 ---
 
 <Article
@@ -41,16 +32,5 @@ const narration = loadNarration(post.id, import.meta.env.BASE_URL);
   sources={sources}
   words={words}
 >
-  {
-    narration && (
-      <ReadPlayer
-        slot="player"
-        client:visible
-        tracks={narration.tracks}
-        paragraphs={narration.paragraphs}
-        title={title}
-      />
-    )
-  }
   <Content />
 </Article>

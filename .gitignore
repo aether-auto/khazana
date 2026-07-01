@@ -20,5 +20,3 @@ data/feed/
 data/taste.json
 screenshots/
 videos/
-# Generated narration audio (deploy-not-commit; rendered by render-audio.mts)
-apps/site/public/audio/reads/
