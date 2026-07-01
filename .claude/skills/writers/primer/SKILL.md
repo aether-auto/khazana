@@ -13,19 +13,28 @@ It opens with the underlying *question*, not this week's news; it scaffolds
 progressively; it surfaces and breaks the common misconception before teaching the
 right model; and it lets the reader test intuition in interactive sandboxes.
 
-Input is an authoring brief on stdin: title, slug, channel, founder voice, and a
-**Source items** block — the real article(s)/references that are the verifiable
-source of truth. Output is one MDX file at the brief's path.
+Input is an authoring brief on stdin: title, slug, channel, founder voice, and the
+**curated cluster** — the real seed article(s)/references. The verifiable source of
+truth is the **citation ledger** the research phase builds out from that cluster.
+Output is one MDX file at the brief's path.
 
 ## Grounding mandate (non-negotiable)
 
 Evergreen does not mean ungrounded. Every factual claim, definition, parameter, and
-worked-example result traces to a brief source item and is cited inline with
-`<Annotation>`. Even foundational claims ("entropy is the log of the number of
-microstates") have a source — cite it. If a claim cannot be grounded in the brief's
-sources, cut it. Every cited source URL goes in `sources[]` and is cited inline.
-Worked examples in `<RunnableCode>` must be correct, self-contained JavaScript that
-actually runs — a primer's whole job is to be trustworthy bedrock.
+worked-example result traces to a **citation-ledger source** (see `writers/researcher`)
+and is cited inline with `<Annotation>`. Even foundational claims ("entropy is the log
+of the number of microstates") have a source — cite it, and prefer the **primary /
+peer-reviewed / canonical text** the research surfaced over a secondary explainer.
+**Load-bearing claims** — the core definition, the concept the scaffold builds to —
+should rest on a **High-tier** source and be **corroborated by ≥2 independent ledger
+sources**. Where authorities frame a concept differently, note it honestly rather than
+asserting one framing as the only one. If a claim cannot be grounded in a ledger source,
+cut it. Every cited source URL goes in `sources[]` and is cited inline — and every such
+URL is in the ledger. Worked examples in `<RunnableCode>` must be correct, self-contained
+JavaScript that actually runs — a primer's whole job is to be trustworthy bedrock.
+
+Shared tier rubric, triangulation rules, and gate definitions live once in
+**`writers/researcher/SKILL.md`** — referenced here, not restated.
 
 ## Craft rubric (6 imperatives)
 
@@ -88,12 +97,23 @@ understanding, don't show off. End each section on an earned insight, not a prev
 
 ## Authoring chain — run in strict order, tag each phase
 
+### `<phase>Research</phase>`
+**Run before Internalize. Do not draft without a populated citation ledger + claims
+table.** Invoke the `writers/researcher` methodology: plan 5–8 research questions,
+search out from the curated seeds to the **canonical / primary sources** for the
+concept (the original text, the peer-reviewed definition, the authoritative reference),
+appraise each into the ledger with its tier, and triangulate every load-bearing
+definition or claim to ≥2 independent sources, noting where authorities frame it
+differently. Output the research dossier, the citation ledger, and the claims table.
+If the gates can't be met at budget, take the `RESEARCH THIN` handoff and scope down.
+
 ### `<phase>Internalize</phase>`
-Read the brief. Output 5–10 lines: (a) the single underlying question the primer
-answers; (b) the common misconception to break and the 2–3 concepts that scaffold
-to the "aha", with source ids; (c) which sandbox/chart carries which concept. List
-every definition/number with its source. Anything unsourced → `[UNSUPPORTED]`. Do
-not write prose yet.
+Read the brief and the research dossier. Output 5–10 lines: (a) the single underlying
+question the primer answers; (b) the common misconception to break and the 2–3 concepts
+that scaffold to the "aha", with their ledger URLs (prefer High-tier / canonical);
+(c) which sandbox/chart carries which concept. Confirm every definition/number is a
+claims-table row citing a ledger URL — load-bearing ones corroborated. Anything not in
+the table → `[UNSUPPORTED]` (research or cut). Do not write prose yet.
 
 ### `<phase>Outline</phase>`
 Section-by-section against the template: heading + intent + component placement +
@@ -109,13 +129,18 @@ concept 1 → 2 → 3 (each concrete-example-first) → synthesis. Cite every de
 with `<Annotation>`. Use only timeless examples. Match voice.
 
 ### `<phase>Verify + Emit</phase>`
-Self-check against `references/mdx-contract.md` §5: every `sources[].url` verbatim +
-non-empty; every claim cited; sandboxes are valid self-contained JS; no
-current-events hooks; only kit components; frontmatter valid. Run
+Self-check against `references/mdx-contract.md` §5 **and the fact-check gates**: every
+`sources[].url` is a **verbatim ledger URL** + non-empty; **≥90% of claims cite a ledger
+source** or are cut; **≥60% of load-bearing definitions/claims corroborated by ≥2
+independent ledger sources** (check the claims table); differing framings noted, not
+flattened; sandboxes are valid self-contained JS; no current-events hooks; only kit
+components; frontmatter valid. Run
 `python3 scripts/check-links.py <file>.mdx`. If all pass, write and print
 `DONE: <slug>`. Else `FAIL: <slug> — <reason>` and do not write.
 
 ## Resources
+- `writers/researcher/SKILL.md` — the research phase: literature search, tier rubric,
+  triangulation, the ledger + claims-table shapes, and the fact-check gates (shared).
 - `references/craft.md` — deep craft rubric (Feynman / scaffolding pedagogy).
 - `references/template.mdx` — annotated structural skeleton.
 - `references/exemplars.md` — worked exemplars and annotated patterns.

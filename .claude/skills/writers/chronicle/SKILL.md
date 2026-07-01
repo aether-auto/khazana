@@ -13,23 +13,37 @@ craft tension that defines the format: it reads like fiction but **every named
 detail is real and cited.** The spell never breaks, and it never fabricates.
 
 Input is an authoring brief on stdin (from `buildBrief()`): title, slug, channel,
-the founder voice guide, and a **Source items** block — the real article(s) that
-are the verifiable source of truth. Output is one MDX file at the brief's path.
+the founder voice guide, and the **curated cluster** — the real seed article(s) plus
+the assignment. The verifiable source of truth is the **citation ledger** the
+research phase builds *out* from that cluster. Output is one MDX file at the brief's path.
 
 ## Grounding mandate (non-negotiable)
 
 Every scene detail — a date, a place, a name, a number, a decision, a quote — must
-trace to a brief source item. Chronicle is the *hardest* format to ground because
-invented detail feels native to narrative. So the discipline is strictest here:
+trace to a **citation-ledger source** (see `writers/researcher`). Chronicle is the
+*hardest* format to ground because invented detail feels native to narrative. So the
+discipline is strictest here:
 
-- If a detail is not supported by a source item, **cut it or mark it
+- If a detail is not supported by a ledger source, **cut it or mark it
   `[UNSUPPORTED]`** for the verify pass. Never invent a name, figure, or quote to
   make a scene vivid.
-- If the source items lack enough body detail to build real scenes, say so in the
-  Internalize phase and emit a thinner, honestly-scoped piece rather than
+- **Load-bearing detail** — the decisive date, the central figure, the turning-point
+  fact the scene pivots on — must be corroborated by **≥2 independent ledger sources**
+  and should rest on a **High-tier** source (peer-reviewed / primary document /
+  first-hand account) where one exists. Incidental colour needs one ledger source; the
+  spine of the story needs corroboration. A first-hand primary account, attributed in
+  the prose, may carry a load-bearing detail alone — but prefer a second record.
+- Where the research surfaced **conflicting accounts** (disputed dates, contested
+  figures), do not smooth them over: present the range or attribute the positions
+  honestly, exactly as the claims table flags them.
+- If the ledger lacks enough grounded detail to build real scenes (a `RESEARCH THIN`
+  handoff), say so in Internalize and emit a thinner, honestly-scoped piece rather than
   hallucinating. Flag with `FAIL: <slug> — insufficient source detail for chronicle`.
 - Every cited source URL goes in `sources[]` **and** is cited inline as an
-  `<Annotation>` at the point its fact is used.
+  `<Annotation>` at the point its fact is used — and every such URL is in the ledger.
+
+Shared tier rubric, triangulation rules, and the gate definitions live once in
+**`writers/researcher/SKILL.md`** — this skill references them, never restates them.
 
 ## Craft rubric (5 imperatives)
 
@@ -94,13 +108,25 @@ prose itself stays clean and readable — no animation gimmicks in the text.
 
 ## Authoring chain — run in strict order, tag each phase
 
+### `<phase>Research</phase>`
+**Run before Internalize. Do not draft without a populated citation ledger + claims
+table.** Invoke the `writers/researcher` methodology on this brief: plan 5–8 research
+questions, search *out* from the curated seeds to primary sources (papers, dated
+first-hand accounts, official records), appraise each into the ledger with its tier,
+and triangulate every load-bearing narrative fact to ≥2 independent sources. Chronicle
+depends on **dated, named, first-hand primary detail** — bias the search toward
+period documents, archival transcriptions, and the original record, not modern
+retellings. Output the research dossier, the citation ledger, and the claims table.
+If the gates can't be met at budget, take the `RESEARCH THIN` handoff and scope down.
+
 ### `<phase>Internalize</phase>`
-Read the brief fully. Output 5–10 lines: (a) the single narrative spine (whose
+Read the brief and the research dossier fully. Output 5–10 lines: (a) the single narrative spine (whose
 story, what turning point); (b) the 2–3 strongest *citeable* scene details and
-their source ids; (c) which component anchors which beat (`<Map>`/`<Timeline>`
-early, `<Scrolly>` at the peak). Then list **every** fact you intend to dramatize
-with its source id. Any fact without a source → mark `[UNSUPPORTED]` now. If
-sources can't support real scenes, stop and plan a `FAIL`. Do not write prose yet.
+their ledger URLs (prefer High-tier / primary); (c) which component anchors which beat
+(`<Map>`/`<Timeline>` early, `<Scrolly>` at the peak). Then confirm **every** fact you
+intend to dramatize is a row in the claims table with a ledger URL — load-bearing spine
+facts corroborated. Any fact not in the table → mark `[UNSUPPORTED]` now (research it or
+cut it). If the ledger can't support real scenes, stop and plan a `FAIL`. Do not write prose yet.
 
 ### `<phase>Outline</phase>`
 Section-by-section against the template: heading/beat + 1-line intent + component
@@ -115,14 +141,20 @@ grounds. Every named fact gets an inline `<Annotation term=... note=... />`. Hol
 present tense in scenes. Match founder voice. Cut any detail you cannot cite.
 
 ### `<phase>Verify + Emit</phase>`
-Self-check against `references/mdx-contract.md` §5: (1) every `sources[].url` is a
-verbatim brief URL and the list is non-empty; (2) every named fact has an inline
-citation; (3) only kit components appear; (4) frontmatter matches the schema.
+Self-check against `references/mdx-contract.md` §5 **and the fact-check gates**:
+(1) every `sources[].url` is a **verbatim ledger URL** (curated ∪ researched) and the
+list is non-empty; (2) **≥90% of factual claims cite a ledger source** — every named
+fact carries an inline `<Annotation>` tracing to the ledger, or it is cut; (3) **≥60%
+of load-bearing claims are corroborated by ≥2 independent ledger sources** (check
+against the claims table); (4) no fabricated or uncited detail; conflicts surfaced, not
+smoothed; (5) only kit components appear; (6) frontmatter matches the schema.
 Then run `python3 scripts/check-links.py <file>.mdx`. If all pass, write the file
-and print `DONE: <slug>`. If any fail, print `FAIL: <slug> — <reason>` and do not
+and print `DONE: <slug>`. If any gate fails, print `FAIL: <slug> — <reason>` and do not
 write.
 
 ## Resources
+- `writers/researcher/SKILL.md` — the research phase: literature search, tier rubric,
+  triangulation, the ledger + claims-table shapes, and the fact-check gates (shared).
 - `references/craft.md` — deep craft rubric and narrative-nonfiction technique.
 - `references/template.mdx` — annotated structural skeleton.
 - `references/exemplars.md` — worked exemplars and annotated patterns.

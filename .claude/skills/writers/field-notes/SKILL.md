@@ -11,19 +11,27 @@ of Stratechery's Daily Update, The Browser, and Axios. No preamble. What happene
 why it matters to *this reader specifically* → the one crystallizing number → what
 to watch. Every word justified; links to sources are the product, not decoration.
 
-Input is an authoring brief on stdin: title, slug, channel, founder voice, and a
-**Source items** block — the real article(s) that are the verifiable source of
-truth. Output is one MDX file at the brief's path. This is the only **brief**-length
-format (~300–500 words). Field Notes is the deliberate exception to the reading-time
-peak target — brevity is its craft; do not pad to 15 minutes.
+Input is an authoring brief on stdin: title, slug, channel, founder voice, and the
+**curated cluster** — the real seed article(s). The verifiable source of truth is the
+**citation ledger** the (light) research pass builds from that cluster. Output is one
+MDX file at the brief's path. This is the only **brief**-length format (~300–500 words).
+Field Notes is the deliberate exception to the reading-time peak target — brevity is its
+craft; do not pad to 15 minutes.
 
 ## Grounding mandate (non-negotiable)
 
 A briefing's entire value is that it's *accurate and current*. Every fact — what
-happened, who did it, when, the number — traces to a brief source item and is cited
-inline with `<Annotation>` or a Markdown link. No fact, figure, or attribution that
-isn't in a source. Every cited source URL goes in `sources[]`. With so few words,
-there is nowhere to hide an unsupported claim — cut anything you can't cite.
+happened, who did it, when, the number — traces to a **citation-ledger source** (see
+`writers/researcher`) and is cited inline with `<Annotation>` or a Markdown link. No
+fact, figure, or attribution that isn't in the ledger. The **crystallizing number and
+the core "what happened"** are load-bearing — corroborate them against a **≥2
+independent, reputable (Med+) sources**, since a briefing that gets the headline fact
+wrong is worse than no briefing. Every cited source URL goes in `sources[]` and is in
+the ledger. With so few words, there is nowhere to hide an unsupported claim — cut
+anything you can't cite.
+
+Shared tier rubric, triangulation rules, and gate definitions live once in
+**`writers/researcher/SKILL.md`** — referenced here, not restated.
 
 ## Craft rubric (4 imperatives)
 
@@ -75,11 +83,21 @@ The brevity *is* the craft — do not pad a 350-word piece to 500.
 
 ## Authoring chain — run in strict order, tag each phase
 
+### `<phase>Research</phase>`
+**Run before Internalize — a light, currency-focused pass** (this format is short; the
+research is proportionate). Invoke the `writers/researcher` methodology at reduced scope:
+2–4 questions, a hard cap of ~4–6 sources, prioritising **currency and a second
+independent confirmation** of the core fact and the crystallizing number over deep
+literature search. Appraise each source into the ledger with its tier; corroborate the
+load-bearing facts. Output a short dossier, the citation ledger, and a compact claims
+table. Do not over-research a briefing — get the facts confirmed and move.
+
 ### `<phase>Internalize</phase>`
-Read the brief. Output 4–6 lines: (a) the single lede — what happened, in one
-sentence; (b) the channel-specific reason it matters to the founder; (c) the one
-crystallizing number and its source id; (d) the watch-for indicator. List every fact
-with its source. Anything unsourced → cut it (no room for `[UNSUPPORTED]` in a
+Read the brief and the short dossier. Output 4–6 lines: (a) the single lede — what
+happened, in one sentence; (b) the channel-specific reason it matters to the founder;
+(c) the one crystallizing number and its ledger URL; (d) the watch-for indicator.
+Confirm every fact is a claims-table row citing a ledger URL — the lede and the number
+corroborated. Anything not in the table → cut it (no room for `[UNSUPPORTED]` in a
 briefing). Do not write prose yet.
 
 ### `<phase>Outline</phase>`
@@ -95,13 +113,18 @@ number cited with `<Annotation>` (or a tight `<DataTable>`), the "Watch for:" li
 then the source links. Cut every word that isn't load-bearing. Match voice.
 
 ### `<phase>Verify + Emit</phase>`
-Self-check against `references/mdx-contract.md` §5: every `sources[].url` verbatim +
-non-empty; every fact cited; only `Annotation`/`DataTable` used; word count in
-range; no preamble or closing flourish; frontmatter valid. Run
+Self-check against `references/mdx-contract.md` §5 **and the fact-check gates**: every
+`sources[].url` is a **verbatim ledger URL** + non-empty; **every fact cites a ledger
+source** (in a briefing the coverage bar is effectively 100% — there are too few words
+to hide an uncited claim); the **lede and crystallizing number corroborated by ≥2
+independent sources**; only `Annotation`/`DataTable` used (StatBand/Pullquote only where
+earned); word count in range; no preamble or closing flourish; frontmatter valid. Run
 `python3 scripts/check-links.py <file>.mdx`. If all pass, write and print
 `DONE: <slug>`. Else `FAIL: <slug> — <reason>` and do not write.
 
 ## Resources
+- `writers/researcher/SKILL.md` — the research phase: literature search, tier rubric,
+  triangulation, the ledger + claims-table shapes, and the fact-check gates (shared).
 - `references/craft.md` — deep craft rubric (Stratechery/Axios technique).
 - `references/template.mdx` — annotated structural skeleton.
 - `references/exemplars.md` — worked exemplars and annotated patterns.

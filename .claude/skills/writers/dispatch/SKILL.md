@@ -11,24 +11,37 @@ Pudding and Distill.pub. **The chart arrives before the prose that explains it.*
 The story *is* the pattern in the data; the reader discovers it through scroll-
 driven reveals, then understands it. Every number has a baseline.
 
-Input is an authoring brief on stdin: title, slug, channel, founder voice, and a
-**Source items** block — the real article(s) that are the verifiable source of
-truth. Output is one MDX file at the brief's path.
+Input is an authoring brief on stdin: title, slug, channel, founder voice, and the
+**curated cluster** — the real seed article(s). The verifiable source of truth is the
+**citation ledger** the research phase builds out from that cluster. Output is one MDX
+file at the brief's path.
 
 ## Grounding mandate (non-negotiable)
 
 Numbers are the highest-risk hallucination vector, and dispatch is all numbers, so
-the discipline is: **every chart shows real, sourced data.**
+the discipline is: **every chart shows real, sourced data traced to the citation
+ledger** (see `writers/researcher`).
 
 - Prefer real data fetched by **`scripts/fetch-data.py`** (FRED, World Bank, Our
   World in Data — free, no API key). Cite the dataset; the script prints the
-  citation line to stderr.
-- If a number comes from a brief source item rather than a public dataset, use it
-  verbatim and cite it inline with an `<Annotation>`.
+  citation line to stderr, and the dataset URL goes in the ledger.
+- If a number comes from a ledger source (a paper, report, or dataset the research
+  surfaced) rather than a public series, use it verbatim and cite it inline with an
+  `<Annotation>` to the ledger URL.
+- **Load-bearing numbers** — the headline stat, the figure the whole argument turns on
+  — must be **corroborated by ≥2 independent ledger sources** and should rest on a
+  **High-tier** source (dataset / peer-reviewed / primary report). Where the research
+  found a **range or a conflict** (two credible sources disagree), show the range and
+  attribute it — never invent a false-precision midpoint. The methodology note names the
+  vintage and the disagreement.
 - **If a fetch fails or no real series exists, fall back to a `<DataTable>` of
-  numbers cited directly from the brief — never fabricate chart data.** A made-up
+  numbers cited directly from the ledger — never fabricate chart data.** A made-up
   data point fails grounding and must not ship.
-- Every cited source URL goes in `sources[]` and is cited inline.
+- Every cited source URL goes in `sources[]` and is cited inline — and every such URL
+  is in the ledger.
+
+Shared tier rubric, triangulation rules, and gate definitions live once in
+**`writers/researcher/SKILL.md`** — referenced here, not restated.
 
 ## Craft rubric (6 imperatives)
 
@@ -91,12 +104,24 @@ chart resolving on scroll, never the text moving).
 
 ## Authoring chain — run in strict order, tag each phase
 
+### `<phase>Research</phase>`
+**Run before Internalize. Do not draft without a populated citation ledger + claims
+table.** Invoke the `writers/researcher` methodology: plan 5–8 research questions,
+search out from the curated seeds to the **primary data behind the coverage** (the
+dataset, the paper's table, the official series — not a blog's paraphrase of a number),
+appraise each source into the ledger with its tier, and triangulate every load-bearing
+number to ≥2 independent sources, surfacing ranges/conflicts. Run `fetch-data.py` for
+any chartable public series so the numbers are real and cited. Output the research
+dossier, the citation ledger, and the claims table. If the gates can't be met at
+budget, take the `RESEARCH THIN` handoff and scope down.
+
 ### `<phase>Internalize</phase>`
-Read the brief. Output 5–10 lines: (a) the single quantifiable question and its
-one-line answer; (b) the 2–3 strongest data points and where each comes from
-(a `fetch-data.py` source, or a specific brief source item) — list source ids;
-(c) which chart type carries which idea. List every number you intend to use and
-its source. Any number without a source → `[UNSUPPORTED]`. Do not write prose yet.
+Read the brief and the research dossier. Output 5–10 lines: (a) the single quantifiable
+question and its one-line answer; (b) the 2–3 strongest data points and each one's
+ledger URL + tier (a `fetch-data.py` dataset, or a High-tier report/paper);
+(c) which chart type carries which idea. Confirm every number you intend to use is a
+claims-table row citing a ledger URL — load-bearing numbers corroborated. Any number not
+in the table → `[UNSUPPORTED]` (research or cut). Do not write prose yet.
 
 ### `<phase>Outline</phase>`
 Section-by-section against the template: heading + intent + which chart/component
@@ -113,13 +138,18 @@ items, cite inline. If a fetch fails, drop to a cited `<DataTable>`. Then write
 the MDX with each chart *before* its explanation. Vary mark types. Match voice.
 
 ### `<phase>Verify + Emit</phase>`
-Self-check against `references/mdx-contract.md` §5: every `sources[].url` is a
-verbatim brief URL (non-empty list); every number/claim cited; only kit
-components; frontmatter valid; methodology note present. Run
+Self-check against `references/mdx-contract.md` §5 **and the fact-check gates**: every
+`sources[].url` is a **verbatim ledger URL** (non-empty list); **≥90% of claims/numbers
+cite a ledger source** or are cut; **≥60% of load-bearing numbers corroborated by ≥2
+independent ledger sources** (check the claims table); no fabricated chart data; ranges
+shown where sources disagree; only kit components; frontmatter valid; methodology note
+present (naming vintage + any disagreement). Run
 `python3 scripts/check-links.py <file>.mdx`. If all pass, write the file and print
 `DONE: <slug>`. Else print `FAIL: <slug> — <reason>` and do not write.
 
 ## Resources
+- `writers/researcher/SKILL.md` — the research phase: literature search, tier rubric,
+  triangulation, the ledger + claims-table shapes, and the fact-check gates (shared).
 - `references/craft.md` — deep craft rubric (Pudding/Distill technique).
 - `references/template.mdx` — annotated structural skeleton.
 - `references/exemplars.md` — worked exemplars and annotated patterns.
