@@ -95,6 +95,8 @@ function initRegister(): void {
   } catch {
     all = [];
   }
+  // The pristine SSR/quality order — kept so the "for you" toggle can revert.
+  const ssrOrder = all.slice();
 
   const base = (root.dataset.base ?? "").replace(/\/$/, "");
   const now = Date.now();
@@ -303,6 +305,39 @@ function initRegister(): void {
     const btn = (ev.target as HTMLElement | null)?.closest<HTMLElement>("[data-view]");
     if (btn?.dataset.view) setView(btn.dataset.view as View);
   });
+
+  // Reorder `all` so the ids in `order` lead (in that order); ids absent from
+  // `order` keep their relative SSR position after. Composes with the channel
+  // filter because filterByChannels re-derives `filtered` from the reordered
+  // `all`. Reset (order = null) restores the pristine SSR/quality order.
+  function applyForYouOrder(order: string[] | null): void {
+    if (!order) {
+      all = ssrOrder.slice();
+    } else {
+      const rank = new Map<string, number>();
+      order.forEach((id, i) => rank.set(id, i));
+      // Stable partition: ordered ids first (by rank), then the rest in SSR order.
+      const lead: RegisterItem[] = [];
+      const tail: RegisterItem[] = [];
+      for (const it of ssrOrder) (rank.has(it.id) ? lead : tail).push(it);
+      lead.sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
+      all = [...lead, ...tail];
+    }
+    filtered = filterByChannels(activeChannels);
+    reset();
+  }
+
+  // "For you" re-rank from the personalization island. detail.order = the
+  // affinity id order for the register's tail; detail.reset reverts to SSR order.
+  document.addEventListener("khz:foryou", (ev) => {
+    const detail = (ev as CustomEvent<{ order?: string[]; reset?: boolean }>).detail;
+    applyForYouOrder(detail?.reset ? null : detail?.order ?? null);
+  });
+
+  // If the island emitted khz:foryou BEFORE this register initialized (it's
+  // imported first), replay the stashed order so a late init still re-ranks.
+  const stashed = (window as Window & { __khzForYouOrder?: string[] }).__khzForYouOrder;
+  if (stashed && stashed.length > 0) applyForYouOrder(stashed);
 
   // Listen for channel filter changes from the header hierarchical filter.
   // Extended event detail: { channel, channels?, group? }

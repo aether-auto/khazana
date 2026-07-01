@@ -19,7 +19,13 @@ import {
   CATEGORY_MIN_MINUTES,
 } from "../lib/feed.js";
 import { assignBento } from "../lib/bento.js";
-import { CHANNELS } from "@khazana/core";
+import {
+  CHANNELS,
+  scoreContributions,
+  RANK_WEIGHTS,
+  GAUSSIAN_DEFAULTS,
+  DEFAULT_HALF_LIFE_DAYS,
+} from "@khazana/core";
 import { dataDir } from "../lib/data.js";
 import { readTimeFromHtml } from "../lib/read-time.js";
 import { extractYouTubeId, buildYouTubeThumbnail } from "../lib/media.js";
@@ -98,6 +104,39 @@ const registerData = rest.map((it) => {
 // A small no-JS fallback so the tail isn't blank without the register script.
 const fallback = rest.slice(0, 20);
 
+// ── "for you" personalization payload ────────────────────────────────────────
+// SSR renders quality order (curated.json is pre-ranked); the client re-orders
+// into an affinity-weighted "for you" ranking ONLY when the live taste model is
+// ready. Personalization is affinity-only: in core `scoreContributions` the sole
+// profile-dependent term is `affinity`, so forYouTotal === base + affinityDelta
+// where `base` is the core total with a NOT-ready profile. We precompute `base`
+// here (same weights/gaussian/clusterSize/now the build ranks with) and ship only
+// {id, base, topics, entities, region} — no bodies. See lib/for-you.ts + its
+// parity test, which locks base + affinityDelta === scoreContributions(...).total.
+const clusterSizes = new Map<string, number>();
+for (const it of all) {
+  if (it.clusterId) clusterSizes.set(it.clusterId, (clusterSizes.get(it.clusterId) ?? 0) + 1);
+}
+const featuredIds = new Set(featured.map((it) => it.id));
+const personalizeData = all.map((it) => {
+  const clusterSize = it.clusterId ? clusterSizes.get(it.clusterId) ?? 1 : 1;
+  const base = scoreContributions(it, {
+    weights: RANK_WEIGHTS,
+    gaussian: GAUSSIAN_DEFAULTS,
+    clusterSize,
+    now,
+    profile: { ready: false, topics: {}, entities: {} },
+    halfLifeDays: DEFAULT_HALF_LIFE_DAYS,
+  }).total;
+  return {
+    id: it.id,
+    base,
+    topics: it.topics,
+    entities: it.entities,
+    region: featuredIds.has(it.id) ? "featured" : "rest",
+  };
+});
+
 // Channel filter — initial state read from URL at SSR time
 const urlParams = new URLSearchParams(Astro.url.search);
 const activeChannel = urlParams.get("channel") ?? "";
@@ -138,6 +177,32 @@ const delay = (i: number) => Math.min(i, 8) * 60;
   {
     all.length > 0 ? (
       <>
+        {/* "for you" payload (text, not DOM) — {id, base, topics, entities, region}
+            per item, no bodies. The feed-personalize island reads this to compute
+            the affinity re-rank when the live taste model is ready. */}
+        <script
+          type="application/json"
+          id="feed-personalize-data"
+          set:html={JSON.stringify(personalizeData)}
+        />
+
+        {/* Ranking affordance — hidden until the live taste model is ready. The
+            feed-personalize island unhides it and drives the ⇄ toggle:
+            "◈ for you" (affinity re-rank) ⇄ "top ranked" (SSR quality order). */}
+        <div class="rank-toggle" data-rank-toggle hidden>
+          <span class="rt-rule" aria-hidden="true"></span>
+          <button
+            type="button"
+            class="rt-btn"
+            data-rank-btn
+            aria-pressed="true"
+            title="Toggle between your personalized order and the top-ranked order"
+          >
+            <span class="rt-glyph" aria-hidden="true">◈</span>
+            <span class="rt-label" data-rank-label>for you</span>
+          </button>
+        </div>
+
         <!-- Bento: top 30 featured reads — rich, browsable, intentional structure.
              Hero lead (1 full-width feature) + varied mosaic grid beneath.
              Filtering is driven by the header chips via khz:channelchange. -->
@@ -360,6 +425,60 @@ const delay = (i: number) => Math.min(i, 8) * 60;
       animation: none;
       opacity: 1;
     }
+  }
+
+  /* ── ranking affordance ("◈ for you" ⇄ "top ranked") ─────────────────────
+     A subtle terminal×editorial toggle — mono, accent glyph, hairline rule.
+     Hidden until the live taste model is ready (the island unhides it), so we
+     never imply personalization that isn't there. */
+  .rank-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    margin: var(--s-4) 0 calc(-1 * var(--s-2));
+  }
+  .rank-toggle[hidden] {
+    display: none;
+  }
+  .rt-rule {
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+  .rt-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5ch;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.06em;
+    text-transform: lowercase;
+    color: var(--ink-dim);
+    background: var(--bg-card);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-md);
+    padding: 0.3em 0.8em;
+    cursor: pointer;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out);
+  }
+  .rt-btn:hover {
+    color: var(--ink);
+    border-color: color-mix(in oklab, var(--accent) 30%, var(--rule));
+  }
+  /* active = "for you" (aria-pressed true): the accent glyph glows */
+  .rt-glyph {
+    color: var(--ink-faint);
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  .rt-btn[aria-pressed="true"] {
+    color: var(--ink);
+    border-color: color-mix(in oklab, var(--accent) 34%, var(--rule));
+  }
+  .rt-btn[aria-pressed="true"] .rt-glyph {
+    color: var(--accent);
+    text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 45%, transparent);
   }
 
   /* Hidden bento cards must collapse out of the grid (they have display:flex
@@ -994,6 +1113,14 @@ const delay = (i: number) => Math.min(i, 8) * 60;
 
   initFeedFilter();
   document.addEventListener("astro:page-load", initFeedFilter);
+</script>
+
+<!-- "For you" personalization: fetches the device's /summary, derives the live
+     taste profile, and (when ready) re-orders the bento mosaic + emits khz:foryou
+     for the register. Imported BEFORE the register so its khz:foryou listener is
+     wired first; the register also handles a late event defensively. -->
+<script>
+  import "../scripts/feed-personalize";
 </script>
 
 <!-- The Register: lightweight, paginated card/list view for the feed tail.
