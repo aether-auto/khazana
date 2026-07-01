@@ -1,0 +1,87 @@
+name: feed-refresh
+
+# High-frequency, feed-ONLY refresh: fetch behavior → ingest+curate → build →
+# deploy. No generate / audio / scout / commit-back — this exists purely to keep
+# the Feed surface fresh cheaply between the heavier daily pipeline runs.
+#
+# curated.json + dist are deploy-not-commit (gitignored), so this touches no git
+# history; it just rebuilds and redeploys Pages from freshly curated data.
+
+on:
+  schedule:
+    # Every 3 hours. Cheap on a public repo (free unlimited minutes).
+    - cron: "0 */3 * * *"
+  workflow_dispatch:
+
+# Serialize with itself; don't stack refreshes.
+concurrency:
+  group: feed-refresh
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      LIMIT: "8"
+      ALLOW_DIRECT_YOUTUBE: "1"
+      REDDIT_MIN_GAP_MS: "1500"
+      YT_DLP_MIN_GAP_MS: "2000"
+      ARXIV_HOST_MIN_GAP_MS: "3000"
+      PUBLIC_WORKER_URL: ${{ vars.PUBLIC_WORKER_URL }}
+      PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
+      PUBLIC_BASE_PATH: ${{ vars.PUBLIC_BASE_PATH }}
+      EXPORT_TOKEN: ${{ secrets.EXPORT_TOKEN }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+      REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+      PODCASTINDEX_API_KEY: ${{ secrets.PODCASTINDEX_API_KEY }}
+      PODCASTINDEX_API_SECRET: ${{ secrets.PODCASTINDEX_API_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+
+      - name: Install ffmpeg + yt-dlp
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
+            -o /usr/local/bin/yt-dlp && sudo chmod a+rx /usr/local/bin/yt-dlp
+
+      - name: Cache ingest working caches
+        uses: actions/cache@v4
+        with:
+          path: .cache/ingest
+          key: ingest-cache-${{ github.run_id }}
+          restore-keys: |
+            ingest-cache-
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Fetch engagement events
+        run: pnpm exec tsx scripts/fetch-events.mts
+
+      - name: Ingest + curate
+        run: pnpm exec tsx scripts/real-ingest.mts
+
+      - name: Build site
+        run: pnpm --filter @khazana/site build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/site/dist
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4

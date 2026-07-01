@@ -1,0 +1,102 @@
+name: scout-discover
+
+# Weekly Source Scout: discover candidate sources → Claude appraises their
+# credibility → apply verdicts (auto-add strong, queue borderline, prune dead) →
+# commit the updated seed registry.
+#
+# KEPT SEPARATE from the daily pipeline (not folded in) on purpose:
+#   * cadence: source discovery only needs to run weekly, not daily;
+#   * cost: the Claude appraisal step is subscription-metered — running it weekly
+#     instead of daily is a 7x saving for no freshness loss on the registry;
+#   * blast radius: it commits data/sources.seed.json (a different git artifact
+#     than the daily MDX), so isolating it keeps each commit-back focused.
+
+on:
+  schedule:
+    # 05:00 UTC every Monday, ahead of that day's pipeline run.
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: scout-discover
+  cancel-in-progress: false
+
+permissions:
+  contents: write # commit updated sources.seed.json
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+
+      - run: pnpm install --frozen-lockfile
+
+      # Scout reads curated.json + events.json; regenerate them cheaply first so
+      # the gap analysis reflects current signal (no full ingest needed — recurate
+      # reuses the last raw.json if present, else scout still runs on what exists).
+      - name: Fetch engagement events
+        run: pnpm exec tsx scripts/fetch-events.mts
+        env:
+          PUBLIC_WORKER_URL: ${{ vars.PUBLIC_WORKER_URL }}
+          EXPORT_TOKEN: ${{ secrets.EXPORT_TOKEN }}
+
+      # 1. discover: writes sources.pending.json + a candidate-appraisal brief.
+      - name: Scout discover
+        run: pnpm --filter @khazana/scout scout
+
+      # 2. appraise: Claude reads the candidate brief and writes credibility
+      #    verdicts to data/scout/appraisal.json (consumed by `scout apply`).
+      - name: Appraise candidates (Claude Code)
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            You are the khazana Source Scout credibility appraiser, running
+            unattended in CI.
+            1. Read data/scout/candidate-brief.md — it lists candidate sources
+               awaiting a credibility verdict, and data/sources.pending.json holds
+               the structured candidates.
+            2. For each candidate, appraise credibility using the web: is the
+               outlet authoritative for its channel (primary/peer-reviewed >
+               reputable secondary > aggregator)? Is the feed live and on-topic?
+            3. Write verdicts to data/scout/appraisal.json as a JSON array of
+               objects matching the Appraisal shape:
+                 { "url": <candidate url>, "channels": [<channel...>],
+                   "trust": <0..1>, "decision": "approve"|"queue"|"reject"
+                   (optional), "rationale": <short string> }
+               Do not edit sources.seed.json yourself — the apply step does that.
+          claude_args: |
+            --model claude-sonnet-4-6
+            --max-turns 40
+            --allowedTools "WebSearch,WebFetch,Read,Write,Glob,Grep"
+
+      # 3. apply: merge verdicts, prune/repair, auto-add + queue → sources.json.
+      - name: Scout apply
+        run: pnpm --filter @khazana/scout scout apply
+
+      # 4. promote the applied registry to the committed seed + commit.
+      #    sources.json is gitignored; sources.seed.json is the committed registry.
+      - name: Commit updated seed registry
+        run: |
+          git config user.name "khazana-bot"
+          git config user.email "bot@users.noreply.github.com"
+          if [ -f data/sources.json ]; then
+            cp data/sources.json data/sources.seed.json
+          fi
+          git add data/sources.seed.json
+          if git diff --cached --quiet; then
+            echo "No source registry changes to commit."
+          else
+            git commit -m "chore: scout registry update $(date -u +%F) [skip ci]"
+            git push
+          fi

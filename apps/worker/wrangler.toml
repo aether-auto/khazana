@@ -3,8 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2026-06-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Created with: pnpm dlx wrangler kv namespace create KV
-# Paste the printed id below (replace the placeholder).
+# ⚠️ DEPLOY BLOCKER: the id below is a PLACEHOLDER — `wrangler deploy` fails
+# until it is a real KV namespace id. One-time founder setup (see docs/RUNBOOK.md
+# → "Cloudflare Worker + KV"):
+#   pnpm --filter @khazana/worker exec wrangler kv namespace create KV
+# then paste the printed id in place of REPLACE_WITH_KV_NAMESPACE_ID and commit.
 [[kv_namespaces]]
 binding = "KV"
 id = "REPLACE_WITH_KV_NAMESPACE_ID"

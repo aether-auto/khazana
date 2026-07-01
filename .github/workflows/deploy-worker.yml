@@ -1,0 +1,46 @@
+name: deploy-worker
+
+# Deploy the Cloudflare Worker (khazana-events behavior store) whenever its code
+# or config changes on main. Not on cron — the Worker is long-lived; it only
+# needs redeploying when apps/worker/** changes. Manually runnable too.
+#
+# Prereqs (see docs/RUNBOOK.md): CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID
+# secrets, a real KV namespace id filled into apps/worker/wrangler.toml, and the
+# EXPORT_TOKEN Worker secret set once via `wrangler secret put` (NOT set here).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/worker/**"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-worker
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+
+      - run: pnpm install --frozen-lockfile
+
+      # Uses the repo's pinned wrangler (apps/worker devDependency) via the
+      # package's own `deploy` script, so the CLI version matches local dev.
+      - name: Deploy Worker
+        run: pnpm --filter @khazana/worker deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
