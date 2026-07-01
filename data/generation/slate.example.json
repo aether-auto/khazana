@@ -1,0 +1,156 @@
+{
+  "_comment": "LABELED SPEC EXAMPLE — hand-constructed from the real snapshot at .superpowers/sdd/ideation-snapshots/snapshot-2026-07-01T22-55-57-043Z.json (337 feed items, 682 sources, 4 past reads, taste ready). This is NOT a real agent run; it is a target-shape fixture showing what the reads-survey agent should emit. seedItemIds/channels/suggestedFormat are all real values from that board. Each candidate now carries importance (0-1, distinct from interestingness) and origin (feed-grounded | interest-driven); candidate 3 is an interest-driven entry with empty seedItemIds (world/web-sourced, no feed seed) exercising the new shape, and candidate 6 is the guaranteed evergreen anchor from the history/geopolitics-thin channels. blendedScore uses DEFAULT_SLATE_WEIGHTS = { groundability .30, importance .20, interestingness .20, tasteFit .17, novelty .13 }. Validated against CandidateSlateSchema (drop the _comment fields before parsing; they are illustrative only).",
+  "generatedAt": "2026-07-01T22:55:57.000Z",
+  "candidates": [
+    {
+      "id": "the-memory-wall-of-llm-inference",
+      "thesis": "LLM inference speed is bottlenecked not by FLOPs but by memory bandwidth; three separate items this cycle (portable multi-silicon kernels, Arm-mobile quantization, Blackwell training) are all symptoms of the same wall. Teardown the arithmetic of the roofline and show why quantization and kernel portability are the escape hatches.",
+      "angle": "Unify three scattered infra items into one mechanism: the memory-bandwidth roofline, derived and then applied to each.",
+      "seedItemIds": [
+        "e9de8b5c8eb81b8b",
+        "87502737e8faeea2",
+        "ce90a119304d5330"
+      ],
+      "channels": [
+        "ai",
+        "tech"
+      ],
+      "suggestedFormat": "teardown",
+      "origin": "feed-grounded",
+      "scores": {
+        "groundability": 0.9,
+        "novelty": 0.85,
+        "tasteFit": 0.95,
+        "interestingness": 0.85,
+        "importance": 0.75
+      },
+      "rationale": "Cross-cluster synthesis of three surging, high-tasteScore infra items into one mechanism piece. Top taste-fit (ai + data-science are the founder's top channels; teardown is high-affinity). Rich primary literature exists (roofline model paper, quantization papers, vendor microarchitecture docs). Importance is high — the memory-bandwidth wall governs the economics of the entire inference stack — but not maximal (it's a durable engineering constraint, not a singular pivotal event).",
+      "groundabilityEvidence": "Williams et al. (2009) 'Roofline: An Insightful Visual Performance Model' CACM; llama.cpp/GGUF quantization writeups; Arm and NVIDIA microarchitecture docs; arXiv quantization papers (GPTQ, AWQ). Pre-check search 'roofline model memory bandwidth arxiv' expected to confirm.",
+      "noveltyCheck": "Checked vs ledger: the closest shipped read is the Bloom-filter teardown (tech/data-science) — different mechanism entirely (probabilistic membership, not hardware roofline). No overlap in sourceHosts. Untrodden.",
+      "blendedScore": 0.862
+    },
+    {
+      "id": "the-antikythera-mechanism-recomputed",
+      "thesis": "The Antikythera mechanism — a 2nd-century-BC Greek analog computer — encodes a Metonic-and-saros eclipse-prediction scheme whose gear ratios imply Babylonian astronomical knowledge reached Hellenistic craftsmen. Reconstruct WHAT it computed and HOW its 30+ bronze gears realize those cycles, and what its existence forces us to revise about ancient technological capability.",
+      "angle": "Treat a museum curiosity as an engineering teardown: derive the gear-train arithmetic from the surviving fragments and CT scans, then read the history backward from the mechanism's math.",
+      "channels": [
+        "history",
+        "science"
+      ],
+      "suggestedFormat": "chronicle",
+      "origin": "interest-driven",
+      "seedItemIds": [],
+      "scores": {
+        "groundability": 0.9,
+        "novelty": 0.85,
+        "tasteFit": 0.6,
+        "interestingness": 0.95,
+        "importance": 0.75
+      },
+      "rationale": "GUARANTEED EVERGREEN ANCHOR. The feed carries no history item this cycle, so feed-grounded ideation would never surface this — yet history/science are among the richest, most durable Read material. Sourced purely from the wider world + web research (origin interest-driven, empty seedItemIds), fully groundable to primary scholarship (never speculative). Highest interestingness on the slate (a genuine 'I didn't know that'); importance high because it revises the accepted ceiling of ancient technology. Deliberately widens the slate out of the AI/tech/finance monoculture.",
+      "groundabilityEvidence": "Freeth et al. (2006) 'Decoding the ancient Greek astronomical calculator known as the Antikythera Mechanism' Nature; Freeth et al. (2021) 'A Model of the Cosmos in the ancient Greek Antikythera Mechanism' Scientific Reports; the Antikythera Mechanism Research Project CT-scan datasets; Price (1974) 'Gears from the Greeks'. Primary, peer-reviewed, with public imaging data. Pre-check 'Antikythera mechanism Nature Freeth gear' expected to confirm.",
+      "noveltyCheck": "Checked vs ledger: 'The Carrington Event' (chronicle, science/history) is the only adjacent read — different subject entirely (a solar storm vs. an ancient computing artifact); no sourceHost overlap. Fully novel; occupies the history channel the ledger's science-leaning chronicle only grazes.",
+      "blendedScore": 0.8225
+    },
+    {
+      "id": "gbdts-still-own-the-hot-path",
+      "thesis": "Despite the agent hype, gradient-boosted trees still own the millisecond fraud-detection hot path while LLM agents are relegated to the cold path — a durable architectural split. Teardown WHY: latency budgets, calibration, and the economics of a false decline.",
+      "angle": "Use one payment-fraud item as the spine for a general 'hot path vs cold path' ML-systems law, with the latency arithmetic that forces it.",
+      "seedItemIds": [
+        "d06f0d288c5cb463",
+        "e9de8b5c8eb81b8b"
+      ],
+      "channels": [
+        "data-science",
+        "ai"
+      ],
+      "suggestedFormat": "teardown",
+      "origin": "feed-grounded",
+      "scores": {
+        "groundability": 0.85,
+        "novelty": 0.8,
+        "tasteFit": 0.9,
+        "interestingness": 0.8,
+        "importance": 0.6
+      },
+      "rationale": "Strong taste-fit (data-science + ai). A counterintuitive, defensible thesis against the agent narrative — good interestingness. GBDTs have deep primary literature; latency/calibration are measurable. Importance moderate: a real, durable architectural split worth naming, but not a field-defining result.",
+      "groundabilityEvidence": "Chen & Guestrin (2016) XGBoost KDD paper; Ke et al. (2017) LightGBM NeurIPS; calibration literature (Guo et al. 2017); public fraud-detection benchmarks. Pre-check 'gradient boosting fraud detection latency arxiv'.",
+      "noveltyCheck": "Checked vs ledger: no prior ML-systems read. Bloom-filter teardown is data-structures, not model-serving architecture. Distinct.",
+      "blendedScore": 0.792
+    },
+    {
+      "id": "benfords-law-goes-to-the-ballot-box",
+      "thesis": "A deliberate follow-up to 'The First Digit Law': take Benford's law from the fraud-accounting frame into election forensics, and show rigorously WHY first-digit tests fail on vote counts even though second-digit tests sometimes work — a cautionary tale about misapplied statistics.",
+      "angle": "Explicit series entry that extends a shipped primer into contested territory, correcting a popular misuse rather than repeating the derivation.",
+      "seedItemIds": [],
+      "channels": [
+        "data-science",
+        "politics"
+      ],
+      "suggestedFormat": "primer",
+      "origin": "interest-driven",
+      "scores": {
+        "groundability": 0.9,
+        "novelty": 0.6,
+        "tasteFit": 0.75,
+        "interestingness": 0.8,
+        "importance": 0.7
+      },
+      "rationale": "An INTEREST-DRIVEN idea — the feed carries no election-forensics item, so this is drawn from the founder's data-science/politics interests + the wider world, not a feed seed (empty seedItemIds, origin interest-driven). A deliberate, well-argued follow-up (novelty scored honestly at 0.6 — it reuses a known law) that adds real new content: the election-forensics literature and the specific reasons first-digit tests mislead. Importance is real (misapplied statistics recur in every disputed election); groundability strong.",
+      "groundabilityEvidence": "Deckert, Myagkov & Ordeshook (2011) 'Benford's Law and the Detection of Election Fraud' Political Analysis (already cited in the shipped primer — extend it); Mebane's second-digit work; Pericchi & Torres. Primary, peer-reviewed.",
+      "noveltyCheck": "INTENTIONAL SERIES ENTRY vs 'The First Digit Law' (primer, data-science/science). Not a rehash: the shipped read derives the law and covers accounting fraud; this one is specifically about the FAILURE mode in elections. noveltyCheck passes because it advances, not repeats.",
+      "blendedScore": 0.776
+    },
+    {
+      "id": "spacex-ipo-involuntary-concentration-risk",
+      "thesis": "The SpaceX listing quietly made millions of index-fund and pension holders involuntarily long a single founder's idiosyncratic risk. Quantify the concentration a $2T constituent injects into cap-weighted indices and model what a prolonged Starlink outage would do to the passive holder who never chose this exposure.",
+      "angle": "Reframe a geopolitics headline as a personal-finance concentration-risk problem, with a computed index-weight and a shock scenario.",
+      "seedItemIds": [
+        "bfd36e9cd80d3b32"
+      ],
+      "channels": [
+        "finance",
+        "geopolitics"
+      ],
+      "suggestedFormat": "dispatch",
+      "origin": "feed-grounded",
+      "scores": {
+        "groundability": 0.7,
+        "novelty": 0.8,
+        "tasteFit": 0.7,
+        "interestingness": 0.9,
+        "importance": 0.8
+      },
+      "rationale": "Highest-scoring cluster on the board, taken from a topic angle (concentration risk) rather than the source's geopolitics angle. Interesting and quantifiable. Importance high — a ~$2T constituent silently reshapes the risk of every cap-weighted passive holder. Groundability moderate: index methodology and historical single-name concentration episodes are well documented, but the IPO specifics are recent news.",
+      "groundabilityEvidence": "S&P/MSCI index-construction methodology docs (cap-weighting, single-issuer caps); historical single-name concentration studies (e.g. Bessembinder 2018 on wealth concentration); public index-weight data. Pre-check needed to confirm SpaceX's actual index inclusion + weight.",
+      "noveltyCheck": "Checked vs ledger: 'The Arithmetic of Ruin' (dispatch, finance) covered bet-sizing/Kelly — adjacent channel, different thesis (position concentration vs. stake sizing). Not a repeat; could be lightly cross-linked as a finance companion.",
+      "blendedScore": 0.773
+    },
+    {
+      "id": "africas-drone-wars-supply-chain",
+      "thesis": "Africa's proliferating drone conflicts are downstream of a small, traceable supply chain of Turkish, Chinese, and Iranian airframes. Map who sells what to whom, and how export economics — not doctrine — shapes which wars get drones.",
+      "angle": "Turn a conflict-survey headline into a supply-chain/trade-flow investigation with a sourced arms-transfer dataset.",
+      "seedItemIds": [
+        "d43898162d91837b"
+      ],
+      "channels": [
+        "geopolitics",
+        "geography"
+      ],
+      "suggestedFormat": "dispatch",
+      "origin": "feed-grounded",
+      "scores": {
+        "groundability": 0.8,
+        "novelty": 0.75,
+        "tasteFit": 0.55,
+        "interestingness": 0.75,
+        "importance": 0.7
+      },
+      "rationale": "Surging geopolitics item with a data angle (arms-transfer flows) that suits dispatch. Groundable to SIPRI/ACLED datasets. Taste-fit moderate (geopolitics is mid-affinity). Importance high — arms-proliferation dynamics shape real conflicts and lives.",
+      "groundabilityEvidence": "SIPRI Arms Transfers Database; ACLED conflict-event data; UN Panel of Experts reports. All public, primary, downloadable. Pre-check 'SIPRI drone transfers Africa'.",
+      "noveltyCheck": "Checked vs ledger: no prior geopolitics or geography read. Fully novel channel for the publication.",
+      "blendedScore": 0.721
+    }
+  ],
+  "notes": "Board snapshot: 337 curated items, 682 registered sources, taste READY (top channels ai/tech/data-science; top entities OpenAI/Netflix/NVIDIA; top format dispatch). TWO LANES: 4 feed-grounded picks synthesized from the curated feed + 2 interest-driven picks (Benford-election, Antikythera) drawn from founder channel interests + the wider world with NO feed seed — proof the feed signals what's fresh but does not bound the topic space. CHANNEL SPREAD (diversity mandate satisfied, ≤2 per channel): ai×2, data-science×2, tech×1, science×1, history×1, politics×1, finance×1, geopolitics×2, geography×1 — no single-channel monoculture; the Antikythera anchor is the GUARANTEED history/evergreen reserved slot that feed-grounded ideation would never have produced (the feed carries zero history items this cycle). IMPORTANT board caveat: clustering is currently near-atomic (337 clusters for 337 items) — every item is its own cluster, so cluster SIZE carries no signal this run and all synthesis is done by the survey agent across related items (see the memory-wall and gbdts picks, which each fuse 2–3 items the clusterer left separate). Passed over: a large bloc of US-politics/opinion items (birthright citizenship, 'narrow path to saving the republic') — high tasteScore but low groundability to PRIMARY sources and weak taste-fit vs the founder's ai/data/history lean. Open call for the orchestrator: the SpaceX-IPO pick's groundability hinges on confirming SpaceX's actual index inclusion — pre-check before spawning a writer."
+}
