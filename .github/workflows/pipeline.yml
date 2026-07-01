@@ -133,7 +133,7 @@ jobs:
             4. Do NOT touch any file outside apps/site/src/content/blog/ and the
                research dossiers under data/. Do NOT commit — the workflow commits.
           claude_args: |
-            --model claude-sonnet-4-6
+            --model claude-sonnet-5
             --max-turns 60
             --allowedTools "WebSearch,WebFetch,Read,Write,Edit,Glob,Grep,Bash(pnpm --filter @khazana/generate generate verify)"
 

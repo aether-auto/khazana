@@ -76,7 +76,7 @@ jobs:
                    (optional), "rationale": <short string> }
                Do not edit sources.seed.json yourself — the apply step does that.
           claude_args: |
-            --model claude-sonnet-4-6
+            --model claude-sonnet-5
             --max-turns 40
             --allowedTools "WebSearch,WebFetch,Read,Write,Glob,Grep"
 
