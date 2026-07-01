@@ -9,6 +9,11 @@ export interface FetchResult {
   url?: string;
   /** Whether the response followed at least one redirect (best-effort). */
   redirected?: boolean;
+  /**
+   * Response headers as a plain object (undefined if the FetchFn doesn't expose
+   * them). Consumed by the conditional-GET cache to read ETag/Last-Modified.
+   */
+  headers?: Record<string, string>;
   text(): Promise<string>;
   json(): Promise<unknown>;
 }
@@ -64,6 +69,7 @@ export const defaultFetch: FetchFn = async (url, init) => {
     status: res.status,
     url: res.url,
     redirected: res.redirected,
+    headers: Object.fromEntries(res.headers.entries()),
     text: () => res.text(),
     json: () => res.json(),
   };

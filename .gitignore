@@ -7,6 +7,11 @@ dist/
 .wrangler/
 *.log
 .DS_Store
+# Ingest on-disk caches (content-addressed, safe to delete; a cold cache just
+# does full work). Restored/saved via actions/cache in the ingest workflow.
+# Scoped to the ingest namespace so the committed .cache/transformers model
+# cache is unaffected.
+.cache/ingest/
 .superpowers/
 data/sources.json
 data/sources.pending.json

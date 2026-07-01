@@ -1,5 +1,6 @@
 import Parser from "rss-parser";
 import { FeedItemSchema, makeFeedItemId, type FeedItem, type SourceEntry } from "@khazana/core";
+import { parseTranscriptTags, type TranscriptTag } from "../transcript/parse.js";
 
 // Capture the Podcasting 2.0 <podcast:transcript> elements (kept as an array so
 // multiple transcript formats survive) for later transcript fetching.
@@ -40,6 +41,10 @@ export function pickTranscriptUrl(refs: TranscriptRef[] | undefined): string | u
 
 export async function parseRssFeed(xml: string, entry: SourceEntry, now: string): Promise<FeedItem[]> {
   const feed = await parser.parseString(xml);
+  // Feed-level language (e.g. <language>en-us</language>) used to prefer a
+  // language-matched <podcast:transcript> in the transcript resolver.
+  const rawLanguage = (feed as { language?: unknown }).language;
+  const feedLanguage = typeof rawLanguage === "string" ? rawLanguage.toLowerCase() : undefined;
   const kind =
     entry.type === "arxiv"
       ? "paper"
@@ -62,7 +67,14 @@ export async function parseRssFeed(xml: string, entry: SourceEntry, now: string)
     // FeedItem schema.
     const rssContent =
       (it as { contentEncoded?: string }).contentEncoded ?? it.content ?? undefined;
-    const transcriptUrl = pickTranscriptUrl((it as { podcastTranscript?: TranscriptRef[] }).podcastTranscript);
+    const podcastTranscript = (it as { podcastTranscript?: TranscriptRef[] }).podcastTranscript;
+    const transcriptUrl = pickTranscriptUrl(podcastTranscript);
+    // Full, normalized <podcast:transcript> tag list for the tiered resolver
+    // (type/language-aware selection + multi-format conversion).
+    const transcriptTags = parseTranscriptTags(podcastTranscript);
+    // Episode GUID — fallback transcript-cache key when there is no enclosure.
+    const guid =
+      typeof (it as { guid?: string }).guid === "string" ? (it as { guid: string }).guid : undefined;
     // Capture audio enclosure URL (the MP3 on the show's CDN) for Whisper transcription.
     // rss-parser exposes this as `item.enclosure.url`.
     const enclosureUrl =
@@ -91,10 +103,16 @@ export async function parseRssFeed(xml: string, entry: SourceEntry, now: string)
       // FeedItem schema; consumed and dropped before output).
       const enrichable = parsed.data as FeedItem & {
         transcriptUrl?: string;
+        transcriptTags?: TranscriptTag[];
+        feedLanguage?: string;
+        guid?: string;
         rssContent?: string;
         enclosureUrl?: string;
       };
       if (transcriptUrl) enrichable.transcriptUrl = transcriptUrl;
+      if (transcriptTags.length > 0) enrichable.transcriptTags = transcriptTags;
+      if (feedLanguage) enrichable.feedLanguage = feedLanguage;
+      if (guid) enrichable.guid = guid;
       if (rssContent) enrichable.rssContent = rssContent;
       if (enclosureUrl) enrichable.enclosureUrl = enclosureUrl;
       out.push(parsed.data);

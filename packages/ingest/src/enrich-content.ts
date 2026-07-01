@@ -10,9 +10,14 @@ import {
   type ExtractedArticle,
 } from "./extract.js";
 import { fetchYouTubeTranscriptResult, transcriptToHtml, youTubeVideoId } from "./youtube.js";
-import { fetchPodcastTranscript } from "./podcast.js";
-import { isFullTranscript, transcribePodcastEpisode } from "./whisper.js";
+import { transcribePodcastEpisode } from "./whisper.js";
 import { fetchArxivFullText } from "./arxiv-fulltext.js";
+import { resolvePodcastTranscript, type EpisodeRef } from "./transcript/resolve.js";
+import type { TranscriptTag } from "./transcript/parse.js";
+import { ephemeralCaches, type IngestCaches } from "./cache/store.js";
+import { urlKey } from "./cache/keys.js";
+import { PerHostLimiter } from "./concurrency.js";
+import { hostLimitedFetch, backoffFetch } from "./enrich/host-fetch.js";
 
 /**
  * Min plain-text length for an extraction result to be considered "good enough"
@@ -44,7 +49,13 @@ export type ExtractMethod =
   | "amp"
   | "meta"
   | "headless"
-  | "arxiv-mirror";
+  | "arxiv-mirror"
+  // Transcript-resolver tiers (podcast/audio) — which tier produced the body.
+  | "transcript-rss-tag"
+  | "transcript-podcastindex"
+  | "transcript-youtube"
+  | "transcript-whisper"
+  | "transcript-none";
 
 export interface EnrichContentOptions {
   /** Master switch; when false, items are returned untouched (default true). */
@@ -63,97 +74,29 @@ export interface EnrichContentOptions {
    * the report see the extraction-method distribution. Never affects output.
    */
   methodSink?: Map<string, ExtractMethod>;
+  /**
+   * On-disk caches (transcript + full-text). Defaults to `makeCaches()` — a
+   * fresh cold cache under `.cache/ingest/`. Injected in tests / by the run so
+   * the same instance carries hit/miss stats across the whole run.
+   */
+  caches?: IngestCaches;
+  /**
+   * Per-host limiter for the full-text fetch phase (per-host semaphore +
+   * min-gap). Defaults to a fresh `PerHostLimiter`, so many articles from one
+   * publisher don't burst.
+   */
+  hostLimiter?: PerHostLimiter;
 }
 
 // Item carries optional transient fields stashed by the RSS parser.
 type EnrichableItem = FeedItem & {
   transcriptUrl?: string;
+  transcriptTags?: TranscriptTag[];
+  feedLanguage?: string;
+  guid?: string;
   rssContent?: string;
   enclosureUrl?: string;
 };
-
-// ---------------------------------------------------------------------------
-// PodcastIndex.org transcript lookup (optional, behind env vars)
-// ---------------------------------------------------------------------------
-
-/**
- * Optional: fetch a transcript URL from the PodcastIndex.org API.
- *
- * Requires PODCASTINDEX_API_KEY and PODCASTINDEX_API_SECRET env vars (free
- * account at https://podcastindex.org/developer). When not set, returns ""
- * immediately — this never blocks the pipeline.
- *
- * Uses the `/api/1.0/episodes/byfeedurl` endpoint to find the episode, then
- * `/api/1.0/transcripts/byepisodeid` to get transcript URLs, and fetches
- * the best available (SRT/VTT/plain preferred). Validates via `isFullTranscript`.
- *
- * Returns sanitized HTML prose, or "" on any failure or when env not set.
- */
-async function fetchPodcastIndexTranscript(
-  episodeUrl: string,
-  fetchFn: FetchFn,
-): Promise<string> {
-  const apiKey = process.env["PODCASTINDEX_API_KEY"] ?? "";
-  const apiSecret = process.env["PODCASTINDEX_API_SECRET"] ?? "";
-  if (!apiKey || !apiSecret || !episodeUrl) return "";
-
-  try {
-    // PodcastIndex requires HMAC-SHA1 auth header.
-    // Auth header: X-Auth-Key, X-Auth-Date (unix epoch), Authorization (sha1 hash).
-    const { createHmac } = await import("node:crypto");
-    const authDate = String(Math.floor(Date.now() / 1000));
-    const hash = createHmac("sha1", apiSecret)
-      .update(apiKey + apiSecret + authDate)
-      .digest("hex");
-
-    const piHeaders: Record<string, string> = {
-      "X-Auth-Key": apiKey,
-      "X-Auth-Date": authDate,
-      Authorization: hash,
-      "User-Agent": "khazana-ingest/1.0",
-    };
-
-    // Step 1: find episode by feed URL to get episode ID.
-    // PodcastIndex doesn't have a direct episode-by-url endpoint; we use
-    // byFeedUrl and match by episode link.
-    const feedUrlEncoded = encodeURIComponent(episodeUrl);
-    const searchRes = await fetchFn(
-      `https://api.podcastindex.org/api/1.0/episodes/byurl?url=${feedUrlEncoded}&max=1`,
-      { headers: piHeaders },
-    );
-    if (!searchRes.ok) return "";
-
-    const searchJson = await searchRes.json() as Record<string, unknown>;
-    const episode = (searchJson["episode"] as Record<string, unknown> | undefined);
-    const episodeId = episode?.["id"];
-    if (!episodeId) return "";
-
-    // Step 2: fetch transcripts for this episode.
-    const txRes = await fetchFn(
-      `https://api.podcastindex.org/api/1.0/transcripts/byepisodeid?id=${episodeId}`,
-      { headers: piHeaders },
-    );
-    if (!txRes.ok) return "";
-
-    const txJson = await txRes.json() as Record<string, unknown>;
-    const items = txJson["items"] as Array<{ url: string; type: string }> | undefined;
-    if (!items || items.length === 0) return "";
-
-    // Prefer text/plain, text/vtt, text/srt, then any.
-    const preferred =
-      items.find((t) => t.type?.includes("plain")) ??
-      items.find((t) => t.type?.includes("vtt")) ??
-      items.find((t) => t.type?.includes("srt")) ??
-      items[0];
-    if (!preferred?.url) return "";
-
-    // Step 3: fetch and validate the transcript.
-    const html = await fetchPodcastTranscript(preferred.url, fetchFn);
-    return html;
-  } catch {
-    return "";
-  }
-}
 
 /** Wrap a fetch with a timeout that resolves (never rejects) into ok:false. */
 function withTimeout(fetchFn: FetchFn, timeoutMs: number): FetchFn {
@@ -191,6 +134,8 @@ async function enrichItem(
   item: EnrichableItem,
   fetchFn: FetchFn,
   opts: EnrichContentOptions,
+  caches: IngestCaches,
+  hostLimiter: PerHostLimiter,
 ): Promise<EnrichableItem> {
   try {
     if (item.sourceType === "youtube") {
@@ -206,40 +151,23 @@ async function enrichItem(
     }
 
     if (item.sourceType === "podcast") {
-      // 1. Try a published <podcast:transcript> URL — but only accept it when
-      //    the fetched content is a FULL transcript (long, dialogue), not a
-      //    chapter list or episode summary stub.
-      if (item.transcriptUrl) {
-        const html = await fetchPodcastTranscript(item.transcriptUrl, fetchFn);
-        if (html && isFullTranscript(html)) {
-          item.body = html;
-          return item;
-        }
-        // Short/stub transcript — fall through to PodcastIndex / Whisper.
-      }
-
-      // 2. Optional: check PodcastIndex.org for a published transcript URL.
-      //    Requires PODCASTINDEX_API_KEY + PODCASTINDEX_API_SECRET env vars.
-      //    Free account at https://podcastindex.org/developer — no charge.
-      const piTranscript = await fetchPodcastIndexTranscript(item.url, fetchFn);
-      if (piTranscript && isFullTranscript(piTranscript)) {
-        item.body = piTranscript;
-        return item;
-      }
-
-      // 3. Whisper transcription from the audio enclosure (MP3 on show's own CDN).
-      //    Uses native fetch internally (binary-safe), ignores the injected fetchFn.
-      //    Tier selection inside: Groq (if GROQ_API_KEY set) > local Whisper-base.
-      //    Skipped if no enclosureUrl was stashed.
-      if (item.enclosureUrl) {
-        const whisperHtml = await transcribePodcastEpisode(item.enclosureUrl);
-        if (whisperHtml) {
-          item.body = whisperHtml;
-          return item;
-        }
-      }
-
-      // 4. Keep the show-notes / description already in body (fallback).
+      // Tiered transcript discovery (published transcripts preferred; Whisper
+      // opt-in only). The resolver caches the outcome per episode so a resolved
+      // (or no-transcript) episode is never re-resolved.
+      const ref: EpisodeRef = {
+        url: item.url,
+        enclosureUrl: item.enclosureUrl,
+        transcriptTags: item.transcriptTags ?? [],
+        feedLanguage: item.feedLanguage,
+        guid: item.guid,
+      };
+      const resolved = await resolvePodcastTranscript(ref, fetchFn, caches, {
+        youtube: (videoId, ff) => fetchYouTubeTranscriptResult(videoId, ff),
+        whisper: (enclosureUrl) => transcribePodcastEpisode(enclosureUrl),
+      });
+      if (resolved.body) item.body = resolved.body;
+      opts.methodSink?.set(item.id, `transcript-${resolved.tier}`);
+      // No transcript → keep the show-notes / description already in body.
       return item;
     }
 
@@ -247,11 +175,27 @@ async function enrichItem(
     // fallback chain, taking the best (longest clean) result. Only upgrade the
     // body when the extraction is actually richer than the RSS summary we
     // already have — never replace a summary with something shorter.
-    const result = await extractFullText(item, fetchFn, opts);
+    //
+    // Full-text extraction cache: keyed by article URL hash. On a hit we skip
+    // the whole fetch+extract chain and reuse the extracted body.
+    const key = urlKey(item.url);
+    const cached = caches.fulltext.get(key);
     const existingLen = htmlToText(item.body ?? item.summary ?? "").length;
+    if (cached && htmlToText(cached.html).length > existingLen) {
+      item.body = cached.html;
+      opts.methodSink?.set(item.id, cached.method as ExtractMethod);
+      return item;
+    }
+    const result = await extractFullText(item, fetchFn, opts, hostLimiter);
     if (result && result.article.text.length > existingLen) {
       item.body = result.article.html;
       opts.methodSink?.set(item.id, result.method);
+      caches.fulltext.set(key, {
+        url: item.url,
+        method: result.method,
+        html: result.article.html,
+        fetchedAt: new Date().toISOString(),
+      });
     }
     return item;
   } catch {
@@ -276,6 +220,7 @@ async function extractFullText(
   item: EnrichableItem,
   fetchFn: FetchFn,
   opts: EnrichContentOptions,
+  hostLimiter: PerHostLimiter,
 ): Promise<MethodResult | null> {
   let best: MethodResult | null = null;
   // Length of the best result so far. Tracked separately so control-flow reads
@@ -310,7 +255,14 @@ async function extractFullText(
   }
 
   // Fetch the page once with realistic browser headers (recovers many sites).
-  const res = await safeFetch(fetchFn, item.url, { headers: BROWSER_HEADERS });
+  // Routed through the per-host limiter (per-host semaphore + min-gap) with a
+  // light 429/5xx backoff so many articles from one publisher don't burst.
+  const res = await hostLimitedFetch(
+    (u, init) => backoffFetch(fetchFn, u, init).then((r) => r ?? { ok: false, status: 0, headers: {}, text: async () => "", json: async () => ({}) }),
+    item.url,
+    hostLimiter,
+    { headers: BROWSER_HEADERS },
+  );
   const html = res?.ok ? await safeText(res) : "";
 
   if (html) {
@@ -324,7 +276,12 @@ async function extractFullText(
     if (bestLen < MIN_READABILITY_TEXT) {
       const ampUrl = findAmpUrl(html, item.url);
       if (ampUrl && ampUrl !== item.url) {
-        const ampRes = await safeFetch(fetchFn, ampUrl, { headers: BROWSER_HEADERS });
+        const ampRes = await hostLimitedFetch(
+          (u, init) => backoffFetch(fetchFn, u, init).then((r) => r ?? { ok: false, status: 0, headers: {}, text: async () => "", json: async () => ({}) }),
+          ampUrl,
+          hostLimiter,
+          { headers: BROWSER_HEADERS },
+        );
         const ampHtml = ampRes?.ok ? await safeText(ampRes) : "";
         if (ampHtml && consider("amp", tryReadability(ampHtml, ampUrl))) return best;
       }
@@ -347,19 +304,6 @@ async function extractFullText(
 function tryReadability(html: string, url: string): ExtractedArticle | null {
   try {
     return extractArticle(html, url);
-  } catch {
-    return null;
-  }
-}
-
-/** Fetch wrapper that swallows rejections into null. */
-async function safeFetch(
-  fetchFn: FetchFn,
-  url: string,
-  init?: { headers?: Record<string, string> },
-): Promise<{ ok: boolean; status: number; text(): Promise<string> } | null> {
-  try {
-    return await fetchFn(url, init);
   } catch {
     return null;
   }
@@ -438,15 +382,23 @@ export async function enrichContent(
 ): Promise<FeedItem[]> {
   if (opts.enabled === false) return items;
   const timed = withTimeout(fetchFn, opts.timeoutMs ?? 8000);
+  // Caches (transcript + full-text) and the per-host limiter default to fresh
+  // instances so the phase is safe to call standalone; the run injects shared
+  // ones so hit/miss stats aggregate across the whole ingest.
+  const caches = opts.caches ?? ephemeralCaches();
+  const hostLimiter = opts.hostLimiter ?? new PerHostLimiter();
   const targets = (items as EnrichableItem[]).filter(
     (it) => ARTICLE_TYPES.has(it.sourceType) || it.sourceType === "youtube" || it.sourceType === "podcast",
   );
   await pooledMap(targets, opts.concurrency ?? 4, async (it) => {
-    await enrichItem(it, timed, opts);
+    await enrichItem(it, timed, opts, caches, hostLimiter);
   });
   // Drop transient fields so they never leak into output.
   for (const it of items as EnrichableItem[]) {
     delete it.transcriptUrl;
+    delete it.transcriptTags;
+    delete it.feedLanguage;
+    delete it.guid;
     delete it.rssContent;
     delete it.enclosureUrl;
   }

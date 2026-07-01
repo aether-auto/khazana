@@ -71,9 +71,13 @@ test("youtube items get transcript body; podcast items use transcriptUrl", async
     url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", body: "video description",
   });
   const pod = makeItem({ id: "pod", sourceType: "podcast", kind: "audio", body: "show notes" }) as FeedItem & {
-    transcriptUrl?: string;
+    transcriptTags?: Array<{ url: string; type: string; language: string | undefined }>;
+    enclosureUrl?: string;
   };
-  pod.transcriptUrl = "https://cdn.example.com/ep.txt";
+  // New contract: the tiered resolver reads the normalized <podcast:transcript>
+  // tag list (not a single pre-selected URL) and the enclosure (cache key).
+  pod.transcriptTags = [{ url: "https://cdn.example.com/ep.txt", type: "text/plain", language: undefined }];
+  pod.enclosureUrl = "https://cdn.example.com/ep.mp3";
 
   // The new YouTube path: proxy via Invidious (no direct youtube.com calls).
   const INV_TEST = "https://inv.enrich-test.example.com";
@@ -113,8 +117,12 @@ spoken transcript words spoken transcript words spoken.
     if (url.startsWith(INV_TEST) && url.includes("label=")) {
       return { ok: true, status: 200, text: async () => spokenVtt, json: async () => ({}) };
     }
-    // Return a full transcript long enough to pass isFullTranscript (>= 1500 text chars)
-    const longTranscript = "This is a real word from a dialogue transcript. ".repeat(40);
+    // Return a full transcript long enough to pass isFullTranscript (>= 1500
+    // text chars). Vary each sentence so repetition-collapse doesn't fold it.
+    const longTranscript = Array.from(
+      { length: 40 },
+      (_, i) => `This is a real word from a dialogue transcript, sentence ${i} about subject ${i}.`,
+    ).join(" ");
     if (url.endsWith(".txt")) return { ok: true, status: 200, text: async () => longTranscript, json: async () => ({}) };
     return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
   };
@@ -125,8 +133,9 @@ spoken transcript words spoken transcript words spoken.
     // The podcast transcript body should contain the long transcript text
     expect(pod.body).toContain("real word from a dialogue transcript");
     expect(pod.body).not.toBe("show notes"); // must have been upgraded
-    // transient field scrubbed
-    expect((pod as { transcriptUrl?: string }).transcriptUrl).toBeUndefined();
+    // transient fields scrubbed
+    expect((pod as { transcriptTags?: unknown }).transcriptTags).toBeUndefined();
+    expect((pod as { enclosureUrl?: string }).enclosureUrl).toBeUndefined();
   } finally {
     if (savedInv === undefined) delete process.env["INVIDIOUS_INSTANCES"]; else process.env["INVIDIOUS_INSTANCES"] = savedInv;
     if (savedPiped === undefined) delete process.env["PIPED_INSTANCES"]; else process.env["PIPED_INSTANCES"] = savedPiped;
