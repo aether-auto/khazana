@@ -1,26 +1,72 @@
-import { FORMATS, type FeedItem } from "@khazana/core";
+import { FORMATS, type CitationLedger, type FeedItem } from "@khazana/core";
 import type { Assignment } from "./select.js";
 
+export interface BriefResearch {
+  /** Free-text research dossier: findings-by-question, appraisal notes, synthesis. */
+  researchDossier?: string;
+  /** Curated ∪ researched appraised sources. Every cited url MUST be in here. */
+  citationLedger?: CitationLedger;
+}
+
+/**
+ * Curated seed block. Inlines FULL source text (`body`) where curation captured it,
+ * falling back to the summary otherwise — the writer researches outward from these.
+ */
 function sourceBlock(items: FeedItem[]): string {
   return items
+    .map((it) => {
+      const text = it.body?.trim()
+        ? `  - full text:\n\n${indent(it.body.trim())}`
+        : `  - summary: ${it.summary || "(no summary)"}`;
+      return `- **id:** \`${it.id}\` — **${it.title}**\n` + `  - url: ${it.url}\n` + text;
+    })
+    .join("\n\n");
+}
+
+function indent(text: string): string {
+  return text
+    .split("\n")
+    .map((line) => `    ${line}`)
+    .join("\n");
+}
+
+function ledgerBlock(ledger: CitationLedger): string {
+  return ledger
     .map(
-      (it) =>
-        `- **id:** \`${it.id}\` — **${it.title}**\n` +
-        `  - url: ${it.url}\n` +
-        `  - summary: ${it.summary || "(no summary)"}`,
+      (e) =>
+        `- [${e.tier.toUpperCase()} · ${e.origin}] **${e.title}** — ${e.url}` +
+        (e.firstSeen ? ` _(first seen ${e.firstSeen})_` : ""),
     )
     .join("\n");
 }
 
-export function buildBrief(assignment: Assignment, items: FeedItem[], style: string): string {
+export function buildBrief(
+  assignment: Assignment,
+  items: FeedItem[],
+  style: string,
+  research: BriefResearch = {},
+): string {
   const fmt = FORMATS[assignment.format];
   const byId = new Map(items.map((it) => [it.id, it]));
   const sources = assignment.sourceItemIds
     .map((id) => byId.get(id))
     .filter((it): it is FeedItem => it !== undefined);
 
+  const ledger = research.citationLedger ?? [];
+  // Frontmatter `sources` seed: prefer the appraised ledger; else the curated seeds.
+  const sourceRows = ledger.length > 0 ? ledger.map((e) => ({ url: e.url })) : sources.map((it) => ({ url: it.url }));
+
   const channelsYaml = [assignment.channel].map((c) => `  - ${c}`).join("\n");
-  const sourcesYaml = sources.map((it) => `  - { title: "<title>", url: "${it.url}" }`).join("\n");
+  const sourcesYaml = sourceRows.map((s) => `  - { title: "<title>", url: "${s.url}" }`).join("\n");
+
+  const dossierSection = research.researchDossier?.trim()
+    ? `## Research dossier (from the \`writers/researcher\` phase)\nGround your claims against this. Expand it further with your own research where the dossier is thin.\n\n${research.researchDossier.trim()}\n`
+    : `## Research dossier\n(No dossier supplied — you MUST run the \`writers/researcher\` phase first: literature search, source discovery beyond the seeds below, credibility appraisal, and triangulation, recording every appraised source into the citation ledger.)\n`;
+
+  const ledgerSection =
+    ledger.length > 0
+      ? `## Citation ledger (curated ∪ researched — every cited url MUST be here)\n${ledgerBlock(ledger)}\n`
+      : `## Citation ledger\n(Empty — build it during the research phase. Tiers: High = peer-reviewed/journal/arXiv/primary-document/official-standard; Med = reputable secondary (established press, official docs); Low = blog/forum, allowed only if corroborated.)\n`;
 
   return `# Authoring brief: ${assignment.title}
 
@@ -57,10 +103,12 @@ draft: false
 
 - \`format\` MUST be exactly \`${assignment.format}\`.
 - \`channels\` MUST be a non-empty list drawn from the site channel vocabulary.
-- \`sources\` MUST be a non-empty list of \`{ title, url }\` — one entry per source you actually cite, using the URLs below verbatim.
+- \`sources\` MUST be a non-empty list of \`{ title, url }\` — one entry per source you actually cite, each url drawn from the citation ledger below.
 
-## Source items to synthesize and CITE
-Use ONLY these items. Every factual claim must trace to one of them.
+${dossierSection}
+${ledgerSection}
+## Curated seed sources (starting points — research OUTWARD from these)
+These are the curated FeedItems that seeded this assignment. Read their full text, then follow their citations, find the primary papers/official docs, and appraise every source you add.
 
 ${sourceBlock(sources)}
 
@@ -69,13 +117,14 @@ Import these from \`@/components/mdx\` and prefer them over prose-only sections:
 ${fmt.componentKit.map((c) => `- <${c}>`).join("\n")}
 
 ## Grounding & verification mandate (non-negotiable)
-- Cite EVERY factual claim: every assertion must be traceable to one of the source items above.
-- Reflect each cited item's URL in the \`sources\` frontmatter array AND cite it inline (e.g. an \`<Annotation>\` or a link).
-- Do NOT introduce facts, numbers, names, or dates that are not supported by a listed source. If a claim cannot be grounded, cut it.
+- Research like a PhD thesis: literature search, source discovery, credibility appraisal, triangulation. You MUST research to build the citation ledger — do not stop at the seeds above.
+- Ground EVERY factual claim in the citation ledger: every assertion must trace to a ledger source (curated OR researched). Load-bearing claims must be corroborated by ≥2 INDEPENDENT sources; prefer High-tier (primary/peer-reviewed) over secondary, secondary over Low.
+- Reflect each cited url in the \`sources\` frontmatter array AND cite it inline (e.g. an \`<Annotation>\` or a link). Every \`sources\` url MUST be in the ledger.
+- Do NOT fabricate facts, numbers, names, dates, or quotes. If a claim cannot be grounded in an appraised ledger source, cut it. A Low-tier source alone never grounds a load-bearing claim.
 - Prefer interactive components over prose-only explanation — the chart/diagram should arrive before the words that explain it.
 - Use ONLY components from the kit above; do not invent component names.
 
 ## Target length
-${fmt.length === "feature" ? "Feature (~1500–2500 words) + interactive components." : "Brief (~300–500 words)."}
+${fmt.length === "feature" ? "Feature (~3000–4500 words, ~15-min read) with rich interactive components — depth EARNED from real research, not padding." : "Brief (~300–500 words)."}
 `;
 }

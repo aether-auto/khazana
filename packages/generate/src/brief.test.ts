@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { FORMATS, type FeedItem } from "@khazana/core";
+import { FORMATS, type CitationLedger, type FeedItem } from "@khazana/core";
 import type { Assignment } from "./select.js";
 import { buildBrief } from "./brief.js";
 
@@ -81,4 +81,50 @@ test("brief lists the format componentKit and mandates grounding/citation", () =
   expect(brief.toLowerCase()).toContain("source");
   // prefer interactive components over prose-only
   expect(brief.toLowerCase()).toContain("interactive");
+});
+
+test("brief drops the closed-corpus 'use ONLY these items' restriction, mandates research", () => {
+  const brief = buildBrief(assignment, items, STYLE);
+  expect(brief).not.toContain("Use ONLY these items");
+  expect(brief.toLowerCase()).toContain("citation ledger");
+  expect(brief.toLowerCase()).toContain("research");
+  // triangulation / corroboration discipline
+  expect(brief.toLowerCase()).toMatch(/corroborat|independent sources/);
+});
+
+test("brief inlines FULL curated source text when a body is present", () => {
+  const withBody: FeedItem[] = [
+    { ...item("s1", "GPT-5 launch", "https://e.com/1"), body: "The FULL body of the article, all of it." },
+    item("s2", "Agentic tool use", "https://e.com/2"),
+  ];
+  const brief = buildBrief(assignment, withBody, STYLE);
+  expect(brief).toContain("The FULL body of the article, all of it.");
+  expect(brief.toLowerCase()).toContain("full text");
+  // s2 has no body -> falls back to its summary
+  expect(brief).toContain("Summary of Agentic tool use.");
+});
+
+test("brief carries the research dossier and citation ledger when provided", () => {
+  const ledger: CitationLedger = [
+    { url: "https://academic.oup.com/mnras/1859", title: "MNRAS 1859", tier: "high", origin: "researched" },
+    { url: "https://e.com/1", title: "GPT-5 launch", tier: "med", origin: "curated" },
+  ];
+  const brief = buildBrief(assignment, items, STYLE, {
+    researchDossier: "Q1: What happened in 1859? Finding: the Carrington super-flare.",
+    citationLedger: ledger,
+  });
+  expect(brief).toContain("Q1: What happened in 1859? Finding: the Carrington super-flare.");
+  expect(brief).toContain("https://academic.oup.com/mnras/1859");
+  expect(brief).toContain("MNRAS 1859");
+  expect(brief).toContain("HIGH");
+  // frontmatter sources seed is drawn from the ledger, incl the researched url
+  expect(brief).toContain('url: "https://academic.oup.com/mnras/1859"');
+});
+
+test("brief is deterministic with research inputs", () => {
+  const research = {
+    researchDossier: "dossier",
+    citationLedger: [{ url: "https://e.com/1", title: "A", tier: "high", origin: "curated" }] as CitationLedger,
+  };
+  expect(buildBrief(assignment, items, STYLE, research)).toBe(buildBrief(assignment, items, STYLE, research));
 });

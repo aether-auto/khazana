@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { FeedItemSchema, type FeedItem } from "@khazana/core";
+import { CitationLedgerEntrySchema, FeedItemSchema, type CitationLedger, type FeedItem } from "@khazana/core";
 import type { TastePayload } from "@khazana/curate";
 import type { VerifyReport } from "./verify.js";
 
@@ -14,6 +14,29 @@ export function readCurated(dataDir: string): FeedItem[] {
   const out: FeedItem[] = [];
   for (const candidate of raw) {
     const r = FeedItemSchema.safeParse(candidate);
+    if (r.success) out.push(r.data);
+  }
+  return out;
+}
+
+/**
+ * Read the citation ledger (curated ∪ researched, appraised) that the research
+ * phase persisted. Widens the grounding gate beyond the curated FeedItem set.
+ * Invalid entries are dropped, mirroring readCurated's tolerant parse.
+ */
+export function readLedger(dataDir: string): CitationLedger {
+  const path = join(dataDir, "generation", "research", "ledger.json");
+  if (!existsSync(path)) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(path, "utf8"));
+  } catch {
+    return [];
+  }
+  const raw = Array.isArray(parsed) ? parsed : [];
+  const out: CitationLedger = [];
+  for (const candidate of raw) {
+    const r = CitationLedgerEntrySchema.safeParse(candidate);
     if (r.success) out.push(r.data);
   }
   return out;

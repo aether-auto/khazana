@@ -2,7 +2,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, test } from "vitest";
-import { listDrafts, readCurated, readDraft, readStyle, readTaste, writeBrief, writeReport } from "./io.js";
+import { listDrafts, readCurated, readDraft, readLedger, readStyle, readTaste, writeBrief, writeReport } from "./io.js";
 
 let dir: string;
 
@@ -64,6 +64,21 @@ test("listDrafts lists only .mdx files; readDraft reads one", () => {
   const drafts = listDrafts(content).sort();
   expect(drafts).toHaveLength(2);
   expect(readDraft(drafts[0]!)).toBe("A");
+});
+
+test("readLedger returns [] when missing and validates entries when present", () => {
+  expect(readLedger(dir)).toEqual([]);
+  mkdirSync(join(dir, "generation", "research"), { recursive: true });
+  writeFileSync(
+    join(dir, "generation", "research", "ledger.json"),
+    JSON.stringify([
+      { url: "https://academic.oup.com/mnras/1859", title: "MNRAS 1859", tier: "high", origin: "researched" },
+      { url: "not-a-url", title: "bad", tier: "high", origin: "curated" },
+    ]),
+  );
+  const ledger = readLedger(dir);
+  expect(ledger).toHaveLength(1);
+  expect(ledger[0]!.url).toBe("https://academic.oup.com/mnras/1859");
 });
 
 test("writeReport writes generation/report.json", () => {

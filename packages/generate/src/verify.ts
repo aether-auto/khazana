@@ -1,11 +1,24 @@
-import type { FeedItem } from "@khazana/core";
+import { type CitationLedger, type FeedItem, ledgerUrls } from "@khazana/core";
 import { validateDraft } from "./validate.js";
+import type { FactCheckVerdict } from "./fact-checker.js";
 
 export interface FactCheckResult {
   ok: boolean;
   notes: string;
+  verdict?: FactCheckVerdict;
 }
-export type FactChecker = (input: { mdx: string; sources: FeedItem[] }) => Promise<FactCheckResult>;
+
+/**
+ * The adversarial verification hook. Receives the draft, the curated source items
+ * it cites, and the FULL citation ledger (curated ∪ researched) so it can ground
+ * against researched sources too. The deterministic gate lives in `checkClaims`;
+ * this hook is where the cloud re-read maps claims -> ledger, then calls it.
+ */
+export type FactChecker = (input: {
+  mdx: string;
+  sources: FeedItem[];
+  ledger: CitationLedger;
+}) => Promise<FactCheckResult>;
 
 export interface DraftCheck {
   slug: string;
@@ -23,6 +36,8 @@ export interface VerifyReport {
 
 export interface VerifyOpts {
   now: string;
+  /** Citation ledger (curated ∪ researched-and-appraised). Widens the grounding gate. */
+  ledger?: CitationLedger;
   factChecker?: FactChecker;
 }
 
@@ -31,7 +46,9 @@ export async function runVerify(
   curated: FeedItem[],
   opts: VerifyOpts,
 ): Promise<VerifyReport> {
-  const knownUrls = new Set(curated.map((it) => it.url));
+  const ledger = opts.ledger ?? [];
+  // Grounding gate = curated FeedItem urls ∪ ledger urls (curated ∪ researched).
+  const knownUrls = new Set<string>([...curated.map((it) => it.url), ...ledgerUrls(ledger)]);
   const byUrl = new Map(curated.map((it) => [it.url, it]));
   const out: DraftCheck[] = [];
 
@@ -45,9 +62,10 @@ export async function runVerify(
     };
 
     if (opts.factChecker) {
-      // Only fact-check structurally valid drafts; pass the cited source items.
-      const sources = curated.filter((it) => knownUrls.has(it.url) && byUrl.has(it.url));
-      const fc = await opts.factChecker({ mdx: draft.mdx, sources });
+      // Pass the curated items we have bodies for; the ledger carries researched
+      // sources the checker maps claims against.
+      const sources = curated.filter((it) => byUrl.has(it.url));
+      const fc = await opts.factChecker({ mdx: draft.mdx, sources, ledger });
       check.factCheck = fc;
       if (!fc.ok) {
         check.ok = false;

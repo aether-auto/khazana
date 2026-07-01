@@ -5,6 +5,7 @@ import {
   listDrafts,
   readCurated,
   readDraft,
+  readLedger,
   readStyle,
   readTaste,
   writeBrief,
@@ -36,9 +37,10 @@ async function runPlan(deps: CliDeps): Promise<number> {
 
 async function runVerifyCmd(deps: CliDeps): Promise<number> {
   const curated = readCurated(deps.dataDir);
+  const ledger = readLedger(deps.dataDir);
   const files = listDrafts(deps.contentDir);
   const drafts = files.map((file) => ({ file, mdx: readDraft(file) }));
-  const report = await runVerify(drafts, curated, { now: deps.now, factChecker: deps.factChecker });
+  const report = await runVerify(drafts, curated, { now: deps.now, ledger, factChecker: deps.factChecker });
   const path = writeReport(deps.dataDir, report);
   for (const d of report.drafts) {
     if (!d.ok) console.error(`[generate:verify] FAIL ${d.file}: ${d.errors.join("; ")}`);

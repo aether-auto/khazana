@@ -18,7 +18,14 @@ export const BlogFrontmatterSchema = z.object({
 });
 export type BlogFrontmatter = z.infer<typeof BlogFrontmatterSchema>;
 
-// The P5B component barrel (apps/site/src/components/mdx/index.ts).
+// Retired components that MUST NOT be authored, even if still exported from the
+// barrel for backwards-compat. Kept out of the allow-list on purpose.
+export const RETIRED_COMPONENTS = ["NarrativeScene"] as const;
+
+// Single source of truth for authorable MDX components. This MUST stay in sync
+// with the live kit exported from apps/site/src/components/mdx/index.ts (minus
+// RETIRED_COMPONENTS). The `component allow-list matches the mdx barrel` test in
+// validate.test.ts fails if this list drifts from the barrel.
 export const KNOWN_COMPONENTS = [
   "Annotation",
   "Chart",
@@ -26,8 +33,16 @@ export const KNOWN_COMPONENTS = [
   "DataTable",
   "Scrolly",
   "ScrollyStep",
+  "ScrollyTimeline",
   "RunnableCode",
   "Map",
+  "ControlledChart",
+  "KellyChart",
+  "Model3D",
+  "Sidenote",
+  "DrawChart",
+  "StatBand",
+  "Pullquote",
 ] as const;
 
 export interface DraftResult {
