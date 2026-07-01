@@ -9,7 +9,16 @@ import {
   sanitizeArticleHtml,
   type ExtractedArticle,
 } from "./extract.js";
-import { fetchYouTubeTranscriptResult, transcriptToHtml, youTubeVideoId } from "./youtube.js";
+import {
+  fetchYouTubeTranscriptResult,
+  transcriptToHtml,
+  youTubeVideoId,
+  fetchYouTubeVideoMeta,
+  makeVideoMetaCache,
+  enrichYouTubeItem,
+  isDirectYouTubeEnabled,
+  isYtDlpAvailable,
+} from "./youtube.js";
 import { transcribePodcastEpisode } from "./whisper.js";
 import { fetchArxivFullText } from "./arxiv-fulltext.js";
 import { resolvePodcastTranscript, type EpisodeRef } from "./transcript/resolve.js";
@@ -146,6 +155,16 @@ async function enrichItem(
           item.body = transcriptToHtml(result.text);
         }
         // kind === "none": all methods failed — leave body untouched.
+
+        // Engagement + credibility: fetch measurable channel/video signals via
+        // one paced+cached `yt-dlp -J`, then stamp metrics + a credibility-derived
+        // trustScore onto the item. This is the data-getting half that makes
+        // YouTube out-rank podcasts (which expose no such signals). Gated to the
+        // same environment as the transcript path so a local run stays cheap.
+        if (isDirectYouTubeEnabled() && isYtDlpAvailable()) {
+          const meta = await fetchYouTubeVideoMeta(id, { cache: makeVideoMetaCache() });
+          if (meta) enrichYouTubeItem(item, meta, { seedTrust: item.trustScore });
+        }
       }
       return item;
     }

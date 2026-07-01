@@ -614,3 +614,38 @@ export async function fetchYouTubeTranscript(videoId: string, fetchFn: FetchFn):
   const result = await fetchYouTubeTranscriptResult(videoId, fetchFn);
   return result.kind === "transcript" ? result.text : "";
 }
+
+// ---------------------------------------------------------------------------
+// Metadata (engagement + channel signals) — data getting alongside transcripts.
+// ---------------------------------------------------------------------------
+// The metadata getter lives in `youtube-meta.ts` and is re-exported here so the
+// ingest barrel (`export * from "./youtube.js"`) surfaces it automatically. It
+// reuses THIS file's `YtDlpGate` (concurrency 1 + min-gap) for pacing.
+export {
+  fetchYouTubeVideoMeta,
+  parseYtDlpJson,
+  makeVideoMetaCache,
+  YouTubeVideoMetaSchema,
+  CachedVideoMetaSchema,
+  type YouTubeVideoMeta,
+  type FetchMetaDeps,
+  type VideoMetaCache,
+  type MetaExecRunner,
+} from "./youtube-meta.js";
+
+/**
+ * The shared process-wide yt-dlp gate, exposed so the metadata getter and any
+ * caller can pace ALL yt-dlp invocations (transcripts AND `-J` metadata) through
+ * ONE serial gate — the shared-Actions-IP ban is the risk, so everything queues.
+ */
+export function sharedYtDlpGateInstance(): YtDlpGate {
+  return sharedYtDlpGate;
+}
+
+// The pure enrichment glue (meta → item metrics + credibility trustScore) lives
+// in `youtube-enrich.ts` and is re-exported here so the ingest barrel surfaces it.
+export {
+  enrichYouTubeItem,
+  type YouTubeEnrichable,
+  type EnrichYouTubeOpts,
+} from "./youtube-enrich.js";

@@ -3,6 +3,11 @@ import { dedupeCandidates } from "./candidate.js";
 import { mineLinks, type LinkMineOpts } from "./generators/link-mine.js";
 import { domainFrequency, type DomainFrequencyOpts } from "./generators/domain-frequency.js";
 import { importOpml, type OpmlOpts } from "./generators/opml.js";
+import {
+  discoverYouTubeChannels,
+  type DiscoverYouTubeOpts,
+  type VideoMetaLookup,
+} from "./generators/youtube-channels.js";
 
 export interface GenerateInput {
   registry: Registry;
@@ -12,12 +17,22 @@ export interface GenerateInput {
   raw?: FeedItem[];
   /** Optional OPML string to import (blogroll / awesome-list export). */
   opml?: string;
+  /**
+   * Per-video metadata lookup for the YouTube channel miner (usually populated
+   * from ingest's `fetchYouTubeVideoMeta` over curated video items). When absent,
+   * curated-channel mining is skipped.
+   */
+  youtubeMetaLookup?: VideoMetaLookup;
+  /** Raw `yt-dlp ytsearch` stdout to parse into channel candidates (orchestrator runs the live search). */
+  youtubeSearchStdout?: string;
 }
 
 export interface GenerateOpts {
   linkMine?: LinkMineOpts;
   domainFrequency?: DomainFrequencyOpts;
   opml?: OpmlOpts;
+  /** YouTube channel discovery ranking/threshold options. */
+  youtube?: DiscoverYouTubeOpts;
   /** Max candidates to return after dedupe/ranking. Default 200. */
   limit?: number;
 }
@@ -36,8 +51,24 @@ export function generateCandidates(input: GenerateInput, opts: GenerateOpts = {}
   if (input.raw?.length) raw.push(...domainFrequency(input.raw, input.registry, opts.domainFrequency));
   if (input.opml) raw.push(...importOpml(input.opml, input.registry, opts.opml));
 
+  // Domain-based dedupe for site/blog candidates (each has a distinct domain).
   const deduped = dedupeCandidates(raw, input.registry);
-  return opts.limit ? deduped.slice(0, opts.limit) : deduped;
+
+  // YouTube channels dedup by CHANNEL ID (every channel shares youtube.com), so
+  // they bypass the domain deduper and are appended as their own already-ranked
+  // block. YouTube's measurable credibility is what ranks them.
+  const youtube = discoverYouTubeChannels(
+    {
+      registry: input.registry,
+      curated: input.curated,
+      metaLookup: input.youtubeMetaLookup,
+      searchStdout: input.youtubeSearchStdout,
+    },
+    opts.youtube,
+  );
+
+  const merged = [...deduped, ...youtube];
+  return opts.limit ? merged.slice(0, opts.limit) : merged;
 }
 
 /**

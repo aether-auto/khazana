@@ -17,6 +17,9 @@ export const DISCOVERED_VIA = [
   "engaged-domain",
   "outbound-domain",
   "manual",
+  // YouTube channel discovery: channels behind curated videos, and ytsearch hits.
+  "youtube-channel",
+  "youtube-search",
 ] as const;
 export const DiscoveredViaSchema = z.enum(DISCOVERED_VIA);
 export type DiscoveredVia = z.infer<typeof DiscoveredViaSchema>;
