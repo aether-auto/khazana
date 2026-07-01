@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { discoverFeed, fetchAndDiscoverFeed, looksLikeFeedUrl } from "./discover-feed.js";
-import type { FetchFn, FetchResult } from "@khazana/ingest";
+import type { FetchFn, FetchResult } from "./fetchers/build-source.js";
 
 const ok = (text: string): FetchResult => ({ ok: true, status: 200, text: async () => text, json: async () => ({}) });
 

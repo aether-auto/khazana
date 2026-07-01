@@ -10,17 +10,22 @@ const src = (over: Partial<SourceEntry>): SourceEntry => ({
 const now = "2026-06-23T00:00:00.000Z";
 
 test("constants are the documented defaults", () => {
-  expect(DISABLE_AFTER).toBe(5);
+  expect(DISABLE_AFTER).toBe(3); // shares the core strike threshold
   expect(STALE_DAYS).toBe(30);
 });
 
-test("disables (not deletes) sources at/over the failure threshold", () => {
-  const reg: Registry = { version: 1, sources: [src({ id: "dead", failureCount: 5 }), src({ id: "ok", failureCount: 1 })] };
+test("disables (not deletes) sources at/over the strike threshold", () => {
+  const reg: Registry = {
+    version: 1,
+    sources: [src({ id: "dead", consecutiveFailures: 3 }), src({ id: "ok", consecutiveFailures: 1 })],
+  };
   const { registry, actions } = pruneRegistry(reg, { now });
   expect(registry.sources).toHaveLength(2); // nothing deleted
-  expect(registry.sources.find((s) => s.id === "dead")!.enabled).toBe(false);
+  const dead = registry.sources.find((s) => s.id === "dead")!;
+  expect(dead.enabled).toBe(false);
+  expect(dead.status).toBe("disabled");
   expect(registry.sources.find((s) => s.id === "ok")!.enabled).toBe(true);
-  expect(actions).toEqual([{ id: "dead", action: "disable", reason: "failures>=5" }]);
+  expect(actions).toEqual([{ id: "dead", action: "disable", reason: "failures>=3" }]);
 });
 
 test("flags stale sources without disabling them", () => {
@@ -39,13 +44,13 @@ test("fresh source produces no actions", () => {
 });
 
 test("already-disabled sources are untouched", () => {
-  const reg: Registry = { version: 1, sources: [src({ id: "off", enabled: false, failureCount: 9 })] };
+  const reg: Registry = { version: 1, sources: [src({ id: "off", enabled: false, consecutiveFailures: 9 })] };
   const { actions } = pruneRegistry(reg, { now });
   expect(actions).toEqual([]);
 });
 
 test("does not mutate the input registry", () => {
-  const reg: Registry = { version: 1, sources: [src({ id: "dead", failureCount: 7 })] };
+  const reg: Registry = { version: 1, sources: [src({ id: "dead", consecutiveFailures: 7 })] };
   pruneRegistry(reg, { now });
   expect(reg.sources[0]!.enabled).toBe(true); // original untouched
 });

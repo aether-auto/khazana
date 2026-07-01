@@ -12,7 +12,7 @@ const seed = {
   version: 1,
   sources: [
     { id: "qm", type: "rss", url: "https://www.quantamagazine.org/feed/", channels: ["science"], trustScore: 0.8 },
-    { id: "dead", type: "rss", url: "https://dead.example.com/feed", channels: ["tech"], failureCount: 6 },
+    { id: "dead", type: "rss", url: "https://dead.example.com/feed", channels: ["tech"], consecutiveFailures: 4 },
   ],
 };
 
@@ -62,5 +62,5 @@ test("applyMain autodiscovers, adds high-trust, queues borderline, disables dead
   expect(report.added).toHaveLength(1);
   expect(report.queued).toEqual(["https://maybe.example.com"]);
   expect(report.rejected).toEqual([{ url: "https://www.quantamagazine.org/", reason: "duplicate" }]);
-  expect(report.pruned).toEqual([{ id: "dead", action: "disable", reason: "failures>=5" }]);
+  expect(report.pruned).toEqual([{ id: "dead", action: "disable", reason: "failures>=3" }]);
 });

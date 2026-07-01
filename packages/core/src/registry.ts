@@ -1,6 +1,23 @@
 import { z } from "zod";
 import { SourceTypeSchema } from "./vocab.js";
 
+/**
+ * Persisted, classified record of the most recent failed fetch. `kind`
+ * distinguishes a dead feed (`permanent`: 404/410/DNS/not-a-feed) from a
+ * recoverable hiccup (`transient`: 429/5xx/timeout/network) so the strike
+ * reducer never marches a rate-limited source toward death.
+ */
+export const SourceLastErrorSchema = z.object({
+  kind: z.string(),
+  code: z.number().int().optional(),
+  at: z.string().datetime(),
+});
+export type SourceLastError = z.infer<typeof SourceLastErrorSchema>;
+
+/** Persisted lifecycle status (source of truth; the site may still derive for legacy entries). */
+export const SourceStatusSchema = z.enum(["active", "dormant", "failing", "disabled"]);
+export type SourceStatus = z.infer<typeof SourceStatusSchema>;
+
 export const SourceEntrySchema = z.object({
   id: z.string(),
   type: SourceTypeSchema,
@@ -13,6 +30,18 @@ export const SourceEntrySchema = z.object({
   lastFetchedAt: z.string().datetime().optional(),
   failureCount: z.number().int().nonnegative().default(0),
   notes: z.string().optional(),
+
+  // ── Health / lifecycle (all optional → backward-compatible with live entries) ──
+  /** Persisted lifecycle status. Absent ⇒ treated as `active`. */
+  status: SourceStatusSchema.optional(),
+  /** The REAL strike counter (permanent failures). Absent ⇒ treated as 0. */
+  consecutiveFailures: z.number().int().nonnegative().optional(),
+  /** ISO timestamp of the last *successful* fetch (distinct from lastFetchedAt = last attempt). */
+  lastOkAt: z.string().datetime().optional(),
+  /** Last failure, classified transient vs permanent. */
+  lastError: SourceLastErrorSchema.optional(),
+  /** Set when rediscovery repairs a moved feed to a new live URL. */
+  resolvedUrl: z.string().url().optional(),
 });
 export type SourceEntry = z.infer<typeof SourceEntrySchema>;
 

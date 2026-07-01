@@ -1,6 +1,12 @@
-import type { Registry, SourceEntry } from "@khazana/core";
+import { DISABLE_THRESHOLD, type Registry, type SourceEntry } from "@khazana/core";
 
-export const DISABLE_AFTER = 5;
+/**
+ * Disable threshold for the *real* strike counter (`consecutiveFailures`),
+ * re-exported from the shared core reducer so there is ONE source of truth for
+ * "how many permanent failures kill a feed". (The legacy `failureCount` last-run
+ * flag is no longer used for pruning.)
+ */
+export const DISABLE_AFTER = DISABLE_THRESHOLD;
 export const STALE_DAYS = 30;
 
 export interface PruneAction {
@@ -11,6 +17,12 @@ export interface PruneAction {
 
 const DAY_MS = 86_400_000;
 
+/**
+ * Batch prune pass over the registry. Disable logic now keys off the real
+ * strike counter (`consecutiveFailures`, maintained by the ingest reconcile
+ * step) — NOT the old `failureCount` last-run flag, which never accumulated.
+ * The stale check is report-only (flags, does not disable).
+ */
 export function pruneRegistry(
   registry: Registry,
   opts: { now: string; disableAfter?: number; staleDays?: number },
@@ -22,9 +34,9 @@ export function pruneRegistry(
 
   const sources: SourceEntry[] = registry.sources.map((s) => {
     if (!s.enabled) return s;
-    if (s.failureCount >= disableAfter) {
+    if ((s.consecutiveFailures ?? 0) >= disableAfter) {
       actions.push({ id: s.id, action: "disable", reason: `failures>=${disableAfter}` });
-      return { ...s, enabled: false };
+      return { ...s, enabled: false, status: "disabled" };
     }
     if (s.lastFetchedAt) {
       const ageDays = (nowMs - Date.parse(s.lastFetchedAt)) / DAY_MS;

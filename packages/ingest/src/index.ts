@@ -7,6 +7,8 @@ export * from "./youtube.js";
 export * from "./podcast.js";
 export * from "./enrich-content.js";
 export * from "./fetch-result.js";
+export * from "./discover-feed.js";
+export * from "./rediscover.js";
 export * from "./transcript/parse.js";
 export * from "./transcript/resolve.js";
 export * from "./cache/store.js";
