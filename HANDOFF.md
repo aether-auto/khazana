@@ -20,6 +20,27 @@
 > the **first research-grade Read** ("The Plague Wage"). All committed on `p1-foundation`
 > (HEAD `83b3ffb`); 1307 tests green; typecheck clean. **A dev server is currently running on
 > :4321** and the founder is reviewing the new Read.
+>
+> **The 2026-07-02 session** ran a founder-directed **interactive-component OVERHAUL of Reads**:
+> audited the 16 existing MDX components (found the "buggy" complaint was 3 mobile CSS defects + 1
+> authoring gotcha — all fixed & browser-verified, incl. un-blanking the-plague-wage's Scrolly which
+> was rendering blank in prod), then **grew the authorable kit 16 → 40 components** (the two missing
+> primitives Figure + Math, plus per-format knowledge-carriers: Diagram, Simulation, Stepper, Quiz,
+> CodeWalkthrough, AnnotatedFigure, SmallMultiples/Distribution/Scatter/Slopegraph/RangePlot,
+> CompareSlider/CastGrid/EventCascade, StateMachine/LayerStack/Checklist/GanttStrip/RouteMap +
+> DataTable totals). **Every component was independently browser-verified** (360/390 × both motion
+> modes + JS-off) and the contract is now **drift-locked** (a test binds CONTRACT_COMPONENTS ==
+> KNOWN_COMPONENTS, killing the old "writers told 10, 16 legal" bug). **Rewrote all 5 long-form writer
+> skills** to wield the FULL kit aggressively (components carry knowledge, prose wraps around them;
+> ≥1 knowledge-carrying island / ~800-1000 words) at a **20-25 min length FLOOR** (field-notes exempt);
+> nudged reads-survey to prefer long, component-rich topics. **Proved it E2E** with a new grounded
+> primer, `how-gps-finds-you.mdx` (~6.3k words, 11 islands) — an independent adversarial fact-check
+> caught & fixed 4 real errors before publish. Commits `af7f224`→`f09f382` on `p1-foundation`; **1675
+> tests green**, typecheck clean, build 348 pages. Session reports: `.superpowers/sdd/{component-qa-audit,
+> component-expansion-design,build-p*,integrate-p*,verify-p*,wave4-*,wave5-*}.md`. **Still open** (the
+> pre-existing next-focus): formalize the writer/verify `.claude/agents` defs + build the Opus
+> orchestrator routine (§5-§6, §9B); deferred components needing a new dep (Sankey, ParameterPlay,
+> Model3D-glb); cosmetic: reads `<h1>` SplitText chars a few px past edge at 360 (no page scroll).
 
 ---
 
