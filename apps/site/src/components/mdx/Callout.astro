@@ -1,0 +1,45 @@
+---
+// apps/site/src/components/mdx/Callout.astro
+//
+// A semantic note with a single colored LEFT hairline — "lines not boxes", no
+// heavy box. Static Astro component so it takes MDX children directly (like
+// Pullquote). No island, no client directive → SSR/no-JS trivially fine and
+// reduced-motion-safe by construction.
+//
+//   kind        edge color         voice
+//   note        --rule-bright      neutral aside
+//   key-insight --accent (amber)   the thing to remember
+//   warning     --editorial (clay) heads-up
+//   caution     --editorial (clay) stronger heads-up
+//   aside       --rule-bright      tangential context
+import "./Callout.css";
+
+export interface CalloutProps {
+  /** Semantic kind → edge color + default label. */
+  kind: "note" | "warning" | "key-insight" | "aside" | "caution";
+  /** Optional heading; falls back to the kind's default label. */
+  title?: string;
+}
+
+const { kind, title } = Astro.props as CalloutProps;
+
+const DEFAULT_LABEL: Record<CalloutProps["kind"], string> = {
+  note: "Note",
+  warning: "Warning",
+  "key-insight": "Key insight",
+  aside: "Aside",
+  caution: "Caution",
+};
+const label = title ?? DEFAULT_LABEL[kind];
+---
+
+<aside class={`mdx-callout mdx-callout--${kind}`} role="note">
+  <p class="mdx-callout__label">{label}</p>
+  <div class="mdx-callout__body">
+    <slot />
+  </div>
+</aside>
+
+<style>
+  /* structural only; palette + tokens live in Callout.css */
+</style>

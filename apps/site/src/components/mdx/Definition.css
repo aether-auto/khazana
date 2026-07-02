@@ -1,0 +1,61 @@
+/* apps/site/src/components/mdx/Definition.css
+   Glossary tooltip. DOTTED amber underline ("learn this") — distinct from
+   Annotation's solid edge ("cite this"). Popover reuses Annotation's geometry. */
+
+.mdx-def { position: relative; }
+.mdx-def__term {
+  font: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: help;
+  color: var(--ink);
+}
+.mdx-def__abbr {
+  text-decoration: none;
+  /* the dotted amber underline is the signature — denser dashes than a link. */
+  border-bottom: 1px dashed color-mix(in oklab, var(--accent) 75%, transparent);
+}
+.mdx-def__term:hover .mdx-def__abbr { color: var(--accent); }
+
+.mdx-def__note {
+  position: absolute;
+  left: 0;
+  top: calc(100% + var(--s-2));
+  z-index: 5;
+  width: min(22rem, 70vw);
+  background: var(--bg-raised);
+  border: var(--hair) solid var(--rule);
+  /* amber left edge — this teaches; Annotation's clay edge cites. */
+  border-left: 2px solid var(--accent);
+  border-radius: var(--r-md);
+  padding: var(--s-3) var(--s-4);
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  line-height: var(--lh-read);
+  color: var(--ink-dim);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-2px);
+  transition: opacity 120ms ease, transform 120ms ease, visibility 120ms;
+}
+.mdx-def__note--open { opacity: 1; visibility: visible; transform: translateY(0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mdx-def__note { transition: none; }
+}
+
+/* Narrow screens: drop the popover out of absolute positioning into normal
+   block flow so it can NEVER widen the page (the page-zoom regression). Mirrors
+   Annotation's mobile pattern exactly. */
+@media (max-width: 900px) {
+  .mdx-def__note {
+    position: static;
+    display: none;
+    width: auto;
+    max-width: 100%;
+    margin: var(--s-2) 0;
+    transform: none;
+  }
+  .mdx-def__note--open { display: block; }
+}

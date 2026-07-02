@@ -43,6 +43,12 @@ export const KNOWN_COMPONENTS = [
   "DrawChart",
   "StatBand",
   "Pullquote",
+  // P0 wave: image + math primitives + shared connective tissue.
+  "Figure",
+  "Math",
+  "Callout",
+  "Detail",
+  "Definition",
 ] as const;
 
 export interface DraftResult {

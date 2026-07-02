@@ -1,0 +1,43 @@
+/* apps/site/src/components/mdx/Callout.css
+   "Lines not boxes" — a single colored left hairline, no heavy box. Tokens only. */
+
+.mdx-callout {
+  max-width: var(--measure);
+  margin: var(--s-5) auto;
+  padding: var(--s-2) 0 var(--s-2) var(--s-5);
+  border-left: 2px solid var(--rule-bright);
+}
+.mdx-callout__label {
+  margin: 0 0 var(--s-1);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-label);
+}
+.mdx-callout__body {
+  font-family: var(--font-read);
+  font-size: var(--t-md);
+  line-height: var(--lh-read);
+  color: var(--read);
+}
+/* keep the body's own paragraph spacing tidy */
+.mdx-callout__body :global(p) { margin: 0 0 var(--s-3); }
+.mdx-callout__body :global(p:last-child) { margin-bottom: 0; }
+
+/* Edge color + label tint per kind. */
+.mdx-callout--key-insight { border-left-color: var(--accent); }
+.mdx-callout--key-insight .mdx-callout__label { color: var(--accent-dim); }
+
+.mdx-callout--warning,
+.mdx-callout--caution { border-left-color: var(--editorial); }
+.mdx-callout--warning .mdx-callout__label,
+.mdx-callout--caution .mdx-callout__label { color: var(--editorial); }
+
+.mdx-callout--note,
+.mdx-callout--aside { border-left-color: var(--rule-bright); }
+
+/* Mobile: tighten the inset so long words never force horizontal overflow. */
+@media (max-width: 480px) {
+  .mdx-callout { padding-left: var(--s-4); }
+}

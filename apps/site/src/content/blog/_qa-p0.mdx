@@ -1,0 +1,103 @@
+---
+title: "QA P0: Figure, Math, Callout, Detail, Definition Under Stress"
+format: primer
+channels: ["science", "tech"]
+summary: "A non-shipping QA harness that exercises the five new P0 Reads components — Figure, Math, Callout, Detail, and Definition — with realistic props and deliberately stressful edge cases to surface overflow, wrapping, and sizing bugs at 360px and both motion modes."
+publishedAt: 2026-07-01T09:00:00.000Z
+sources:
+  - title: "Euler's identity — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Euler%27s_identity"
+draft: true
+---
+
+import { Math, Callout, Detail, Definition } from "../../components/mdx";
+import Figure from "../../components/mdx/Figure.astro";
+import demo from "./_assets/_demo/placeholder.png";
+
+This is a QA harness for the **P0 wave**. Each of the five new components appears below with realistic props and then deliberately stressed with long text, many rows, and narrow-viewport edge cases. The running prose is intentionally verbose so inline components like <Definition client:visible term="Definition" def="a glossary tooltip that teaches a term, distinguished from Annotation by a dotted amber underline — hover, tap, or focus to reveal the meaning." /> have real text to attach to, and so wrapping and reflow can be judged against a genuine paragraph rather than a single short line that hides bugs.
+
+Block math also renders inline: mass–energy is $E = mc^2$, and a display equation set with `$$` fences renders at build time with zero runtime JS:
+
+$$ \int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi} $$
+
+## 1. Figure — column, wide, full, no-zoom, aspect
+
+<Figure src={demo} alt="An 8×8 amber-and-near-black checker placeholder tile." caption="Default column figure with a caption, a credit line, and a grounding source link. Click to open the CSS-only lightbox; press Escape or click the backdrop to close." credit="khazana / generated placeholder" sourceUrl="https://en.wikipedia.org/wiki/Euler%27s_identity" />
+
+<Figure src={demo} alt="Placeholder tile shown at wide bleed." bleed="wide" caption="Wide bleed — widens toward --maxw on desktop, collapses to full available width on mobile so it never overflows at 360px." />
+
+<Figure src={demo} alt="Placeholder tile shown full-bleed with a reserved aspect box." bleed="full" aspect="16/9" caption="Full bleed with a reserved 16/9 aspect box (prevents layout shift). object-fit cover fills the reserved space." credit="NASA / demo" />
+
+<Figure src={demo} alt="Placeholder tile with zoom disabled." zoom={false} caption="Zoom disabled — the frame is a plain div, no lightbox, no zoom hint. Still fully visible with no JS." />
+
+## 2. Math — headline, numbered derivation, per-line why, long expression
+
+<Math client:visible tex="e^{i\pi} + 1 = 0" label="(1)" caption="A headline display equation with a margin label. KaTeX renders server-side, so this is fully typeset with no JavaScript." />
+
+<Math
+  client:visible
+  numbered
+  label="(2)"
+  tex="S_n = \sum_{k=1}^{n} k = \frac{n(n+1)}{2}"
+  steps={[
+    { tex: "S_n = 1 + 2 + 3 + \\cdots + n", note: "Write the sum forwards. Hover, tap, or focus this row to reveal the reasoning — the why popover reuses the Annotation mechanism and drops into normal flow on narrow screens so it can never widen the page." },
+    { tex: "S_n = n + (n-1) + \\cdots + 1", note: "Now write the very same sum backwards, term by term." },
+    { tex: "2S_n = (n+1) + (n+1) + \\cdots + (n+1)", note: "Add the two rows column-wise: every column totals n+1, and there are exactly n of them." },
+    { tex: "2S_n = n(n+1) \\;\\Longrightarrow\\; S_n = \\tfrac{n(n+1)}{2}", note: "Divide by two. Gauss reportedly did this in seconds as a schoolboy." },
+  ]}
+  caption="A numbered derivation. Each line carries an optional 'why' note revealed on hover/tap/focus."
+/>
+
+<Math client:visible tex="\hat{f}(\xi) = \int_{-\infty}^{\infty} f(x)\, e^{-2\pi i x \xi}\,\mathrm{d}x \quad\text{and}\quad f(x) = \int_{-\infty}^{\infty} \hat{f}(\xi)\, e^{\,2\pi i x \xi}\,\mathrm{d}\xi" caption="A deliberately WIDE equation to stress horizontal overflow — the equation scrolls inside its box rather than widening the page at 360px." />
+
+## 3. Callout — all five kinds
+
+<Callout kind="note" title="A note with a custom title">
+This is a plain note with the neutral `--rule-bright` left hairline. It carries a full paragraph so
+wrapping and the "lines not boxes" left rule can be judged against real running text rather than a
+single short line.
+</Callout>
+
+<Callout kind="key-insight">
+The most important sentence of a section belongs here — the amber left hairline marks it as the thing
+to remember. This callout uses the default label because no `title` was passed.
+</Callout>
+
+<Callout kind="warning" title="Heads up">
+A clay-edged warning. Supercalifragilisticexpialidocious antidisestablishmentarianism — two very long
+unbreakable-looking words to confirm the callout never forces horizontal overflow at 360px.
+</Callout>
+
+<Callout kind="caution">
+A stronger clay-edged caution, default label. Multiple paragraphs are supported:
+
+the second paragraph sits below the first with correct spacing and no residual bottom margin on the
+last child.
+</Callout>
+
+<Callout kind="aside">
+A tangential aside on the neutral rule — the kind of context a motivated reader appreciates but the
+main argument does not need inline.
+</Callout>
+
+## 4. Detail — closed, default-open, nested math
+
+<Detail summary="Go deeper: a proof sketch (closed by default)">
+This block is collapsed until the reader opens it, keeping the linear read short while still carrying
+depth. It works with **zero JavaScript** — native `<details>`. The amber triangle rotates on open.
+
+$$ \lim_{n\to\infty}\left(1 + \tfrac{1}{n}\right)^n = e $$
+</Detail>
+
+<Detail summary="An expanded caveat (defaultOpen) with a deliberately long summary line that should wrap gracefully and never push the page wider than the viewport at 360 pixels" defaultOpen>
+Rendered open on load. The long summary above stress-tests wrapping of the mono uppercase summary
+text; it must wrap, not overflow.
+</Detail>
+
+## 5. Definition — inline, rich children, mid-sentence
+
+The term <Definition client:visible term="entropy" def="In information theory, the average number of bits needed to encode outcomes drawn from a distribution — a measure of uncertainty." /> is distinct from a citation: it teaches rather than sources.
+
+A definition can also carry richer children in place of the plain string: <Definition client:visible term="children"><>Rich <strong>JSX children</strong> render inside the popover instead of the plain <code>def</code> string.</></Definition>.
+
+Several definitions in one paragraph — <Definition client:visible term="measure" def="A 65-character prose column, the sacred reading width." />, <Definition client:visible term="bleed" def="How far a figure may widen past the prose column: column, wide, or full." />, and <Definition client:visible term="hairline" def="A one-pixel rule — the house grammar is lines, not boxes." /> — confirm that multiple mid-line popovers coexist without widening the page at 360px.

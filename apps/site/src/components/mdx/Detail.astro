@@ -1,0 +1,30 @@
+---
+// apps/site/src/components/mdx/Detail.astro
+//
+// Progressive-disclosure "go deeper" block: a summary line that expands to
+// optional depth (a proof, a caveat, a longer worked example). Native
+// <details>/<summary> — works with ZERO JavaScript and is reduced-motion-safe
+// by construction. Static Astro component so it takes MDX children directly.
+//
+// Aesthetic: amber disclosure triangle, hairline top rule.
+import "./Detail.css";
+
+export interface DetailProps {
+  /** The always-visible summary line. */
+  summary: string;
+  /** Render expanded by default. */
+  defaultOpen?: boolean;
+}
+
+const { summary, defaultOpen = false } = Astro.props as DetailProps;
+---
+
+<details class="mdx-detail" open={defaultOpen}>
+  <summary class="mdx-detail__summary">
+    <span class="mdx-detail__marker" aria-hidden="true"></span>
+    <span class="mdx-detail__text">{summary}</span>
+  </summary>
+  <div class="mdx-detail__body">
+    <slot />
+  </div>
+</details>

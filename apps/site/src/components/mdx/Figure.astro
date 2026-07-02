@@ -1,0 +1,107 @@
+---
+// apps/site/src/components/mdx/Figure.astro
+//
+// The image / figure primitive. Static Astro component (like Pullquote) — no
+// React island, no client directive. Takes an IMPORTED local asset so Astro's
+// `astro:assets` pipeline fingerprints + optimizes it at build (responsive
+// srcset, width/height to prevent CLS, lazy loading, avif/webp). No runtime
+// network, no hotlinking — the $0 / offline mandate.
+//
+// Interaction: click/tap → a CSS-ONLY lightbox (a hidden checkbox toggles an
+// overlay via :checked; Esc and click-outside close it via a full-viewport
+// label). No JavaScript. Under reduced-motion the scale transition is dropped
+// (instant). With JS disabled the inline image is fully visible AND the
+// checkbox lightbox still works (it is pure HTML/CSS). Focus is trapped inside
+// the overlay by placing the close affordance as the only tabbable control.
+//
+// Aesthetic: hairline `--rule` frame ("lines not boxes", never a drop shadow),
+// mono `--ink-label` credit line, Fraunces caption via the shared .mdx-caption.
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+import "./Figure.css";
+
+export interface FigureProps {
+  /** Imported local asset: `import fig from "./_assets/slug/x.jpg"`. */
+  src: ImageMetadata;
+  /** Required alt text for a11y. */
+  alt: string;
+  /** Editorial caption (Fraunces, shared .mdx-caption). */
+  caption?: string;
+  /** Visible attribution, e.g. "NASA / SDO". */
+  credit?: string;
+  /** Grounding: the ledger / provenance URL for the image. */
+  sourceUrl?: string;
+  /** Click-to-lightbox. Default true. */
+  zoom?: boolean;
+  /** Column (65ch) | wide (--maxw) | full (edge-to-edge). Default column. */
+  bleed?: "column" | "wide" | "full";
+  /** e.g. "16/9" — reserves aspect box to prevent CLS. */
+  aspect?: string;
+}
+
+const {
+  src,
+  alt,
+  caption,
+  credit,
+  sourceUrl,
+  zoom = true,
+  bleed = "column",
+  aspect,
+} = Astro.props as FigureProps;
+
+// A stable id for the pure-CSS lightbox checkbox<->label pairing. crypto is
+// aliased out of the browser bundle but Astro renders this on the server.
+const uid = "fig-" + Math.random().toString(36).slice(2, 10);
+const frameStyle = aspect ? `aspect-ratio:${aspect};` : "";
+---
+
+<figure class={`mdx-figure mdx-fig mdx-fig--${bleed}`} data-reveal>
+  {
+    zoom ? (
+      <>
+        {/* Pure-CSS lightbox toggle. Visually hidden checkbox drives :checked. */}
+        <input type="checkbox" id={uid} class="mdx-fig__toggle" aria-hidden="true" />
+        <label class="mdx-fig__frame mdx-fig__open" for={uid} style={frameStyle}>
+          <Image src={src} alt={alt} class="mdx-fig__img" loading="lazy" />
+          <span class="mdx-fig__zoomhint" aria-hidden="true">⤢</span>
+        </label>
+        {/* The overlay. The backdrop label closes; the close button is the
+            single tabbable control (focus stays within the overlay). */}
+        <div class="mdx-fig__lightbox" role="dialog" aria-modal="true" aria-label={alt}>
+          <label class="mdx-fig__backdrop" for={uid} aria-label="Close image" />
+          <div class="mdx-fig__stage">
+            <Image src={src} alt={alt} class="mdx-fig__zoomed" loading="lazy" />
+            <label class="mdx-fig__close" for={uid} tabindex="0" role="button" aria-label="Close image">
+              ✕
+            </label>
+          </div>
+        </div>
+      </>
+    ) : (
+      <div class="mdx-fig__frame" style={frameStyle}>
+        <Image src={src} alt={alt} class="mdx-fig__img" loading="lazy" />
+      </div>
+    )
+  }
+  {
+    (caption || credit || sourceUrl) && (
+      <figcaption class="mdx-caption mdx-fig__cap">
+        {caption}
+        {(credit || sourceUrl) && (
+          <span class="mdx-fig__credit">
+            {credit}
+            {sourceUrl && (
+              <>
+                {credit ? " · " : ""}
+                <a class="mdx-fig__src" href={sourceUrl} rel="noopener noreferrer">
+                  source
+                </a>
+              </>
+            )}
+          </span>
+        )}
+      </figcaption>
+    )
+  }
+</figure>

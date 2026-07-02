@@ -48,8 +48,9 @@ import { Chart, Annotation } from "../../components/mdx";
 this allow-list:
 
 ```
-Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  RunnableCode  Map
-StatBand  Pullquote
+Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  ScrollyTimeline
+RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
+StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -178,6 +179,32 @@ hairline frame), `"telegram"` (perforated-tape top, amber routing header, upperc
 
 
 > **Note:** A richer scrollytelling component (`NarrativeScene`) is pending a rebuild — it is not in the allow-list and must not be used until reinstated.
+
+## 3a. P0 components — Figure, Math, Callout, Detail, Definition
+
+### Callout — semantic note, single left hairline (static Astro; takes MDX children)
+
+```jsx
+<Callout kind="key-insight" title="Optional title">
+The one sentence to remember. Amber edge for key-insight, clay for
+warning/caution, neutral for note/aside — "lines not boxes", no heavy box.
+</Callout>
+```
+
+Props: `kind: "note"|"warning"|"key-insight"|"aside"|"caution"`, `title?`,
+children = the note body (MDX). No `client:` directive.
+
+### Detail — progressive-disclosure "go deeper" (static Astro; ZERO JS)
+
+```jsx
+<Detail summary="Go deeper: a proof sketch" defaultOpen={false}>
+Depth for motivated readers without bloating the linear read. Native
+`<details>` — works with no JavaScript.
+</Detail>
+```
+
+Props: `summary: string`, `defaultOpen?`, children = the expandable body (MDX).
+
 
 ## 4. Body conventions
 

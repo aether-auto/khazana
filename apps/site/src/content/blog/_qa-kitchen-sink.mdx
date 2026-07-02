@@ -1,0 +1,187 @@
+---
+title: "QA Kitchen Sink: Every Component Under Stress"
+format: dispatch
+channels: ["tech", "data-science"]
+summary: "A non-shipping QA harness that exercises all 16 interactive Reads components with realistic and deliberately stressful props to surface overflow, wrapping, and sizing bugs at every viewport width."
+publishedAt: 2026-06-30T09:00:00.000Z
+sources:
+  - title: "Kelly, J. L. (1956). A New Interpretation of Information Rate. Bell System Technical Journal 35, 917–926."
+    url: "https://archive.org/details/bstj35-4-917"
+draft: true
+---
+
+import { Chart, ControlledChart, KellyChart, DrawChart, Timeline, Scrolly, ScrollyStep, ScrollyTimeline, DataTable, Map, Model3D, RunnableCode, Annotation, Sidenote, StatBand } from "../../components/mdx";
+import Pullquote from "../../components/mdx/Pullquote.astro";
+
+This is a QA harness. Every one of the sixteen enforceable interactive components appears below,
+each pushed with realistic props and then deliberately stressed with long text, many items, and
+edge values. The prose here is intentionally verbose so that inline components like Annotations and
+Sidenotes have real running text to attach to, and so that wrapping and reflow behavior can be
+judged against a genuine paragraph rather than a single short line that hides bugs.
+
+## 1. Chart — all four marks
+
+<Chart client:visible mark="line" x="k" y="fp" height={260} grid caption="False-positive rate vs number of hash functions (line)."
+  data={[{ k: 1, fp: 9.52 }, { k: 3, fp: 3.06 }, { k: 5, fp: 1.29 }, { k: 7, fp: 0.82 }, { k: 10, fp: 1.18 }, { k: 14, fp: 1.90 }]} />
+
+<Chart client:visible mark="bar" x="strategy" y="growth" height={260} caption="Relative long-run growth by staking strategy (bar), with intentionally long category labels to test axis wrapping."
+  data={[{ strategy: "Full Kelly (fraction = 1.0)", growth: 1.0 }, { strategy: "Half Kelly (fraction = 0.5)", growth: 0.75 }, { strategy: "Quarter Kelly (fraction = 0.25)", growth: 0.4375 }, { strategy: "Double Kelly (over-bet, fraction = 2.0)", growth: 0.0 }]} />
+
+<Chart client:visible mark="area" x="t" y="v" height={260} caption="Area mark."
+  data={[{ t: 0, v: 1 }, { t: 1, v: 1.4 }, { t: 2, v: 1.1 }, { t: 3, v: 2.2 }, { t: 4, v: 3.5 }, { t: 5, v: 3.1 }]} />
+
+<Chart client:visible mark="dot" x="x" y="y" series="grp" height={260} caption="Dot mark with a series."
+  data={[{ x: 1, y: 2, grp: "a" }, { x: 2, y: 3, grp: "a" }, { x: 3, y: 1, grp: "b" }, { x: 4, y: 4, grp: "b" }, { x: 5, y: 2.5, grp: "a" }]} />
+
+## 2. ControlledChart
+
+<ControlledChart client:visible start={3} floor={0.5} rate={0.2} span={24} threshold={1} unit="$/M tok" caption="Drag to steer the decay model. This component is not used by any shipping read, so it is untested in production." />
+
+## 3. KellyChart
+
+<KellyChart client:visible p={0.6} b={1} caption="Long-run growth vs fraction staked. Drag the two sliders below the chart." />
+
+## 4. DrawChart — many series (>4, to test hue overflow)
+
+<DrawChart client:visible logY xLabel="flips" yLabel="bankroll" duration={1800} caption="Six staking curves on a log axis — one more than the four distinct hues, to see how the fifth and sixth series render."
+  series={[
+    { id: "kelly", label: "Kelly 20%", points: [{ x: 0, y: 1.0 }, { x: 250, y: 150 }, { x: 500, y: 23900 }] },
+    { id: "half", label: "Half-Kelly 10%", points: [{ x: 0, y: 1.0 }, { x: 250, y: 40 }, { x: 500, y: 1850 }] },
+    { id: "quarter", label: "Quarter-Kelly 5%", points: [{ x: 0, y: 1.0 }, { x: 250, y: 12 }, { x: 500, y: 190 }] },
+    { id: "double", label: "Double-Kelly 40%", points: [{ x: 0, y: 1.0 }, { x: 250, y: 3 }, { x: 500, y: 0.4 }] },
+    { id: "flat", label: "Flat 2% stake", points: [{ x: 0, y: 1.0 }, { x: 250, y: 5 }, { x: 500, y: 22 }] },
+    { id: "wild", label: "All-in 100% stake (goes to zero)", points: [{ x: 0, y: 1.0 }, { x: 250, y: 0.01 }, { x: 500, y: 0.0001 }] }
+  ]} />
+
+## 5. Timeline — many dense events with long labels
+
+<Timeline client:visible caption="A deliberately dense timeline: many events, some clustered on the same day, with long labels to test overlap and overflow."
+  events={[
+    { date: "1859-08-28", label: "First auroras begin appearing at unusually low latitudes", detail: "Sky-watchers in the tropics report colored light." },
+    { date: "1859-09-01", label: "11:18 GMT — Carrington observes the white-light solar flare at Redhill Observatory", detail: "The first recorded observation of a solar flare in history." },
+    { date: "1859-09-01", label: "11:20 GMT — Kew magnetometer records a sudden crochet", detail: "The magnetic instruments jump within minutes of the flare." },
+    { date: "1859-09-02", label: "04:00 GMT — the coronal mass ejection reaches Earth after a 17.6 hour transit", detail: "One of the fastest CME transits ever recorded." },
+    { date: "1859-09-02", label: "05:00 GMT — telegraph systems across Europe and North America fail catastrophically", detail: "Operators report shocks; some send messages with the batteries disconnected." },
+    { date: "1859-09-03", label: "Auroras visible as far south as Cuba, Colombia, and Hawaii", detail: "People wake and begin their morning routines thinking dawn has come." },
+    { date: "1859-09-04", label: "The geomagnetic storm finally subsides", detail: "The most intense storm in recorded history winds down." }
+  ]} />
+
+## 6. Scrolly
+
+<Scrolly client:visible caption="Maximize expected dollars, and the math marches you off a cliff."
+  steps={[
+    { chart: { mark: "bar", x: "bet", y: "expected", height: 260, caption: "Expected gain, one flip, p=0.6",
+        data: [{ bet: "10%", expected: 2 }, { bet: "50%", expected: 10 }, { bet: "all-in", expected: 20 }] },
+      prose: "<p><strong>Expected value loves a big bet.</strong> Your edge is twenty cents on the dollar, and a naive expected-value maximizer reads that as a mandate to shove every chip into the middle of the table on every single flip, because more money wagered means more expected money returned.</p>" },
+    { chart: { mark: "line", x: "flip", y: "survival", height: 260, caption: "P(not yet broke), betting 100% each flip",
+        data: [{ flip: 0, survival: 1 }, { flip: 1, survival: 0.6 }, { flip: 2, survival: 0.36 }, { flip: 3, survival: 0.216 }] },
+      prose: "<p><strong>But one loss is fatal.</strong> Bet everything and a single tail wipes you out permanently, and the probability that you have not yet been ruined decays geometrically toward zero no matter how large your edge.</p>" },
+    { chart: { mark: "area", x: "f", y: "g", height: 260, caption: "Growth rate g(f)",
+        data: [{ f: 0, g: 0 }, { f: 0.1, g: 0.012 }, { f: 0.2, g: 0.02 }, { f: 0.3, g: 0.017 }, { f: 0.5, g: -0.02 }] },
+      prose: "<p><strong>There is one right answer.</strong> The growth rate peaks at a single interior fraction — Kelly's fraction — and betting either side of it costs you compounding.</p>" }
+  ]} />
+
+## 7. ScrollyStep (legacy children API — expected to render nothing meaningful)
+
+<Scrolly client:visible caption="Legacy ScrollyStep children form — documenting whether it renders.">
+  <ScrollyStep graphic={<Chart client:visible mark="bar" x="period" y="population" data={[{ period: "1348", population: 100 }, { period: "1351", population: 55 }]} />}>
+    **The demographic collapse.** This legacy children API is stale; the current Scrolly source reads only its own steps prop.
+  </ScrollyStep>
+</Scrolly>
+
+## 8. ScrollyTimeline
+
+<ScrollyTimeline client:visible caption="The 1859 storm, hour by hour, with long prose panels."
+  events={[
+    { date: "1859-09-01", label: "11:18 GMT — the flare", prose: "<p>Carrington sees the white-light flare erupt from a sunspot group, the first such observation in history, and sketches it before it fades in five minutes.</p>" },
+    { date: "1859-09-02", label: "04:00 GMT — impact", prose: "<p>The coronal mass ejection reaches Earth after a seventeen-hour transit, and the planet's magnetic field convulses as the storm's leading edge arrives.</p>" },
+    { date: "1859-09-02", label: "05:00 GMT — the wires fail", prose: "<p>Telegraph systems across two continents fail; operators are shocked, paper catches fire, and some lines carry messages on aurora current alone with the batteries disconnected.</p>" },
+    { date: "1859-09-03", label: "Dawn that was not dawn", prose: "<p>Auroras blaze as far south as the Caribbean; people rise and begin their day believing morning has broken hours early.</p>" }
+  ]} />
+
+## 9. DataTable — many wide columns and long cell text
+
+<DataTable client:load caption="A deliberately wide table: many columns and long cell text, to test horizontal scroll containment versus page overflow."
+  columns={[
+    { key: "strategy", label: "Staking strategy (full descriptive name)", type: "string" },
+    { key: "fraction", label: "Fraction of bankroll wagered per flip", type: "number", align: "right" },
+    { key: "growth", label: "Relative long-run growth rate", type: "number", align: "right" },
+    { key: "ruin", label: "Probability of eventual ruin", type: "number", align: "right" },
+    { key: "volatility", label: "Bankroll volatility (standard deviation)", type: "number", align: "right" },
+    { key: "notes", label: "Analyst notes and commentary on the strategy", type: "string" }
+  ]}
+  rows={[
+    { strategy: "Full Kelly (bet the growth-optimal fraction every time)", fraction: 1.0, growth: 1.0, ruin: 0.0, volatility: 1.0, notes: "Growth-optimal but stomach-churning drawdowns of fifty percent or more are routine." },
+    { strategy: "Half Kelly (bet half the growth-optimal fraction)", fraction: 0.5, growth: 0.75, ruin: 0.0, volatility: 0.5, notes: "Three quarters of the growth for half the variance — most practitioners settle here." },
+    { strategy: "Quarter Kelly", fraction: 0.25, growth: 0.4375, ruin: 0.0, volatility: 0.25, notes: "Very smooth ride, meaningfully slower compounding." },
+    { strategy: "Over-bet (double Kelly, a common and fatal mistake)", fraction: 2.0, growth: 0.0, ruin: 1.0, volatility: 4.0, notes: "Zero long-run growth and near-certain ruin despite a genuine edge." }
+  ]} />
+
+## 10. Map
+
+<Map client:visible caption="Documented aurora sightings during the Carrington Event, by country."
+  labels={{ USA: "United States ~40°N", COL: "Colombia ~4°N", GBR: "England ~51°N", CUB: "Cuba ~22°N", AUS: "Australia" }}
+  values={{ COL: 100, CUB: 92, USA: 52, GBR: 36, AUS: 44 }} />
+
+## 11. Model3D
+
+<Model3D client:visible caption="Gyroid lattice — the kind of infill a 3D-printer slicer generates." detail={16} />
+
+## 12. RunnableCode — includes one very long single line
+
+<RunnableCode client:load caption="Benford check with one intentionally very long line to stress horizontal scroll containment."
+  code={`const n = 500;
+const counts = new Array(10).fill(0);
+const aVeryLongVariableNameThatMakesThisLineRunWellPastFourHundredPixelsWideToTestHorizontalScrollContainmentInsideTheEditorRatherThanForcingThePageToZoom = "this single line is deliberately far too long to fit on a narrow mobile screen and should scroll inside the editor";
+for (let i = 0; i < n; i++) {
+  const num = Math.floor(Math.random() * 10000) + 1;
+  counts[parseInt(String(num)[0])]++;
+}
+for (let d = 1; d <= 9; d++) {
+  console.log(\`  \${d}   | \${(counts[d] / n * 100).toFixed(1)}%\`);
+}`} />
+
+## 13. Annotation (inline)
+
+The mortality was severe: <Annotation client:load term="roughly half of the English population" note="Estimates vary widely; Ziegler (1969) placed mortality near one-third, while more recent bioarchaeological work pushes it toward one half. This note is deliberately long to test how the popover wraps and whether it runs off the right edge of the viewport when the annotated term sits near the end of a line." /> died within three years. A second annotation appears near the right edge of this paragraph to test edge overflow, right about <Annotation client:load term="here at the line's end" note="If this popover overflows the right edge of the screen at desktop width, that is the bug the founder complained about." />.
+
+Here is a math annotation: <Annotation client:load math term="g(f) = p\ln(1 + bf) + q\ln(1 - f)" note="The Kelly growth rate as a function of the fraction staked." /> which typesets the term via KaTeX.
+
+## 14. Sidenote (inline)
+
+Wealth compounds by its geometric mean, not its arithmetic mean.<Sidenote client:load n={1} href="https://plato.stanford.edu/entries/paradox-stpetersburg/" source="Stanford Encyclopedia of Philosophy">Daniel Bernoulli proposed logarithmic utility in 1738, two centuries before Kelly derived the same fraction from information theory. This sidenote body is intentionally long to test wrapping in the gutter at desktop and inline reflow on mobile.</Sidenote> That single fact explains why bet sizing matters more than edge.<Sidenote client:load n={2}>A short sidenote with no link, to test the asterisk-free numbered form.</Sidenote>
+
+## 15. StatBand — many stats with long labels and big values
+
+<StatBand client:visible caption="The numbers, stressed: many stats, long labels, large grouped values."
+  stats={[
+    { value: 40, suffix: "–60%", label: "England's population lost to the plague between 1348 and 1351", sub: "1348–1351", href: "https://en.wikipedia.org/wiki/Black_Death_in_England" },
+    { value: 100, suffix: "%", label: "real wage gain for surviving laborers, 1350–1450", sub: "a century of gains" },
+    { value: 200000000, prefix: "~", label: "estimated deaths worldwide across the pandemic", decimals: 0 },
+    { value: 1349, group: false, label: "Ordinance of Laborers enacted to cap wages" },
+    { value: 1381, group: false, label: "Peasants' Revolt" },
+    { value: 3.14159, decimals: 5, label: "a precise decimal value to test decimal formatting" }
+  ]} />
+
+## 16. Pullquote — all four kinds
+
+<Pullquote kind="quote" cite="R. C. Carrington, MNRAS 20 (1859)" href="https://ui.adsabs.harvard.edu/abs/1859MNRAS..20...13C/abstract">
+While I was directing the telescope, two patches of intensely bright and white light broke out on the sunspot group, and I hastily ran to call someone to witness the exhibition with me.
+</Pullquote>
+
+<Pullquote kind="document" cite="Telegraph operator's log, Boston, 2 Sept 1859">
+Please cut off your battery entirely for fifteen minutes. We are working with the aurora current alone. How do you receive my writing?
+</Pullquote>
+
+<Pullquote kind="telegram" cite="Portland to Boston line">
+Aurora current strong. Battery disconnected. Signals still legible. Sky red as blood.
+</Pullquote>
+
+<Pullquote kind="headline" cite="The New York Times, 3 Sept 1859">
+The Aurora Borealis: The Heavens Ablaze From Coast to Coast
+</Pullquote>
+
+## End of harness
+
+The prose ends here so the last components have room to scroll into view and trigger their
+client:visible islands and count-up animations.

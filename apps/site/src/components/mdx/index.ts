@@ -31,6 +31,17 @@ export type { DrawChartProps } from "./DrawChart.js";
 export { default as StatBand } from "./StatBand.js";
 export type { StatBandProps, Stat } from "./StatBand.js";
 export { default as Pullquote } from "./Pullquote.astro";
+// ── P0 wave: image + math primitives + shared connective tissue ───────────────
+export { default as Figure } from "./Figure.astro";
+export type { FigureProps } from "./Figure.astro";
+export { default as Math } from "./Math.js";
+export type { MathProps, MathStep } from "./Math.js";
+export { default as Callout } from "./Callout.astro";
+export type { CalloutProps } from "./Callout.astro";
+export { default as Detail } from "./Detail.astro";
+export type { DetailProps } from "./Detail.astro";
+export { default as Definition } from "./Definition.js";
+export type { DefinitionProps } from "./Definition.js";
 export { default as NarrativeScene } from "./NarrativeScene.js";
 export type { NarrativeSceneProps } from "./NarrativeScene.js";
 export type {

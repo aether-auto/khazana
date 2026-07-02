@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
 import { KNOWN_COMPONENTS, RETIRED_COMPONENTS, validateDraft } from "./validate.js";
+import { CONTRACT_COMPONENTS } from "./component-contract.js";
 
 // Parse the actual site mdx barrel and return every component it exports as a
 // default/named component (i.e. `export { default as Foo }` and
@@ -107,6 +108,13 @@ test("component allow-list matches the mdx barrel (minus retired), no drift", ()
   for (const r of RETIRED_COMPONENTS) expect(barrel.has(r)).toBe(true);
   const expected = [...barrel].filter((c) => !RETIRED_COMPONENTS.includes(c as never)).sort();
   expect([...KNOWN_COMPONENTS].sort()).toEqual(expected);
+});
+
+test("mdx-contract documented set equals KNOWN_COMPONENTS (no contract drift)", () => {
+  // Binds the canonical contract list (mirrored in every writer mdx-contract.md
+  // allow-list block) to the enforced allow-list. Kills the historical
+  // "writers told 10, 16 legal" drift permanently.
+  expect([...CONTRACT_COMPONENTS].sort()).toEqual([...KNOWN_COMPONENTS].sort());
 });
 
 test("retired components are NOT authorable even though the barrel exports them", () => {

@@ -1,0 +1,54 @@
+/* apps/site/src/components/mdx/Detail.css
+   Native <details> disclosure. Amber triangle, hairline top rule. Tokens only. */
+
+.mdx-detail {
+  max-width: var(--measure);
+  margin: var(--s-5) auto;
+  border-top: var(--hair) solid var(--rule-bright);
+  padding-top: var(--s-3);
+}
+.mdx-detail__summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  cursor: pointer;
+  list-style: none; /* strip the default disclosure marker */
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-dim);
+  transition: color var(--dur) var(--ease-out);
+}
+.mdx-detail__summary::-webkit-details-marker { display: none; }
+.mdx-detail__summary:hover { color: var(--ink); }
+
+/* Amber disclosure triangle, rotates on open. */
+.mdx-detail__marker {
+  flex: none;
+  width: 0;
+  height: 0;
+  border-left: 0.42rem solid var(--accent);
+  border-top: 0.3rem solid transparent;
+  border-bottom: 0.3rem solid transparent;
+  transform: translateY(0.1em);
+  transition: transform var(--dur) var(--ease-out);
+}
+.mdx-detail[open] .mdx-detail__marker { transform: translateY(0.1em) rotate(90deg); }
+
+.mdx-detail__text { text-wrap: pretty; }
+
+.mdx-detail__body {
+  margin-top: var(--s-3);
+  font-family: var(--font-read);
+  font-size: var(--t-md);
+  line-height: var(--lh-read);
+  color: var(--read);
+}
+.mdx-detail__body :global(p) { margin: 0 0 var(--s-3); }
+.mdx-detail__body :global(p:last-child) { margin-bottom: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mdx-detail__summary,
+  .mdx-detail__marker { transition: none; }
+}

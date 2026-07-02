@@ -1,0 +1,147 @@
+/* apps/site/src/components/mdx/Figure.css
+   The image primitive. Hairline frame, CSS-only lightbox. Tokens only. */
+
+.mdx-fig {
+  margin: var(--s-6) auto;
+}
+/* Bleed widths — never disturb the prose column at rest; the figure itself may
+   widen. On mobile every variant collapses to full available width (no
+   horizontal overflow at 360px). */
+.mdx-fig--column { max-width: var(--measure); }
+.mdx-fig--wide { max-width: min(100%, var(--maxw)); }
+.mdx-fig--full { max-width: 100%; }
+
+.mdx-fig__frame {
+  display: block;
+  position: relative;
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-md);
+  overflow: clip;
+  background: var(--bg-inset);
+  width: 100%;
+}
+.mdx-fig__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Archival warmth: sit photos in the near-black world, not glaring white. */
+  filter: saturate(0.92) contrast(0.98);
+}
+/* When an aspect ratio is reserved, the image fills the reserved box. */
+.mdx-fig__frame[style*="aspect-ratio"] .mdx-fig__img {
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Zoom affordance — a corner glyph on hover/focus of the frame. */
+.mdx-fig__open { cursor: zoom-in; }
+.mdx-fig__zoomhint {
+  position: absolute;
+  right: var(--s-2);
+  bottom: var(--s-2);
+  width: 1.6rem;
+  height: 1.6rem;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--ink);
+  background: color-mix(in oklab, var(--bg-inset) 80%, transparent);
+  border: var(--hair) solid var(--rule-bright);
+  border-radius: var(--r-sm);
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease-out);
+}
+.mdx-fig__open:hover .mdx-fig__zoomhint,
+.mdx-fig__open:focus-visible .mdx-fig__zoomhint { opacity: 1; }
+
+/* Caption / credit ──────────────────────────────────────────────────────── */
+.mdx-fig__cap { text-wrap: pretty; }
+.mdx-fig__credit {
+  display: block;
+  margin-top: var(--s-1);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  color: var(--ink-label);
+  text-transform: none;
+}
+.mdx-fig__src {
+  color: var(--editorial);
+  text-decoration: none;
+  border-bottom: var(--hair) solid color-mix(in oklab, var(--editorial) 30%, transparent);
+}
+.mdx-fig__src:hover { color: var(--accent); }
+
+/* ── CSS-only lightbox ───────────────────────────────────────────────────── */
+.mdx-fig__toggle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.mdx-fig__lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  place-items: center;
+  padding: var(--s-5);
+}
+/* :checked (the toggle precedes .mdx-fig__lightbox in the DOM) reveals it. */
+.mdx-fig__toggle:checked ~ .mdx-fig__lightbox { display: grid; }
+
+.mdx-fig__backdrop {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in oklab, var(--bg) 92%, transparent);
+  cursor: zoom-out;
+}
+.mdx-fig__stage {
+  position: relative;
+  max-width: min(100%, var(--maxw));
+  max-height: 92vh;
+  display: grid;
+}
+.mdx-fig__zoomed {
+  display: block;
+  max-width: 100%;
+  max-height: 92vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border: var(--hair) solid var(--rule-bright);
+  border-radius: var(--r-md);
+  transform: scale(0.98);
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+.mdx-fig__toggle:checked ~ .mdx-fig__lightbox .mdx-fig__zoomed { transform: scale(1); }
+
+.mdx-fig__close {
+  position: absolute;
+  top: calc(var(--s-4) * -1);
+  right: 0;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--t-md);
+  color: var(--ink);
+  background: var(--bg-raised);
+  border: var(--hair) solid var(--rule-bright);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.mdx-fig__close:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+@media (max-width: 480px) {
+  .mdx-fig__close { top: var(--s-2); right: var(--s-2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mdx-fig__zoomhint,
+  .mdx-fig__zoomed { transition: none; }
+  .mdx-fig__zoomed { transform: none; }
+}

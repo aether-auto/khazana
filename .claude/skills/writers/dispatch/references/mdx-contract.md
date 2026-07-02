@@ -48,8 +48,9 @@ import { Chart, Annotation } from "../../components/mdx";
 this allow-list:
 
 ```
-Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  RunnableCode  Map
-StatBand  Pullquote
+Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  ScrollyTimeline
+RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
+StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -178,6 +179,63 @@ hairline frame), `"telegram"` (perforated-tape top, amber routing header, upperc
 
 
 > **Note:** A richer scrollytelling component (`NarrativeScene`) is pending a rebuild — it is not in the allow-list and must not be used until reinstated.
+
+## 3a. P0 components — Figure, Math, Callout, Detail, Definition
+
+### Math — display equation + numbered derivation (island → `client:visible`)
+
+KaTeX renders server-side, so math shows with no JS; `$…$` inline and `$$…$$`
+block math also work directly in prose (remark-math + rehype-katex are wired).
+Reach for `<Math>` when you need numbering, a caption, or a per-line "why" note:
+
+```jsx
+<Math client:visible tex="S_n = \frac{n(n+1)}{2}" label="(2)" numbered
+  steps={[
+    { tex: "S_n = 1 + 2 + \cdots + n", note: "write the sum forwards" },
+    { tex: "2S_n = n(n+1)", note: "add it to its reverse, column-wise" },
+  ]}
+  caption="Gauss's pairing." />
+```
+
+Props: `tex: string` (display), `steps?: { tex, note? }[]` (each line
+annotatable), `label?` (e.g. `"(2)"`), `caption?`, `numbered?`.
+
+### Callout — semantic note, single left hairline (static Astro; takes MDX children)
+
+```jsx
+<Callout kind="key-insight" title="Optional title">
+The one sentence to remember. Amber edge for key-insight, clay for
+warning/caution, neutral for note/aside — "lines not boxes", no heavy box.
+</Callout>
+```
+
+Props: `kind: "note"|"warning"|"key-insight"|"aside"|"caution"`, `title?`,
+children = the note body (MDX). No `client:` directive.
+
+### Detail — progressive-disclosure "go deeper" (static Astro; ZERO JS)
+
+```jsx
+<Detail summary="Go deeper: a proof sketch" defaultOpen={false}>
+Depth for motivated readers without bloating the linear read. Native
+`<details>` — works with no JavaScript.
+</Detail>
+```
+
+Props: `summary: string`, `defaultOpen?`, children = the expandable body (MDX).
+
+### Definition — glossary tooltip that TEACHES a term (island → `client:visible`)
+
+Distinct from `Annotation` (which cites a source): `Definition` teaches, with a
+dotted amber underline. No-JS fallback via `<abbr title>`.
+
+```jsx
+The term <Definition client:visible term="entropy"
+  def="the average bits needed to encode outcomes from a distribution." /> is
+distinct from a citation.
+```
+
+Props: `term: string`, `def: string`, `children?` (rich popover body).
+
 
 ## 4. Body conventions
 

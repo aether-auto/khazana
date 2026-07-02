@@ -1,0 +1,160 @@
+/* apps/site/src/components/mdx/Math.css
+   Display equation + numbered derivation. Equations sit on --bg-inset, hairline
+   ruled, Fraunces label number in the margin. KaTeX color mapped to --ink. */
+
+.mdx-math {
+  max-width: var(--measure);
+  margin: var(--s-6) auto;
+}
+.mdx-math__block {
+  position: relative;
+  background: var(--bg-inset);
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-md);
+  padding: var(--s-5) var(--s-5) var(--s-5) var(--s-6);
+}
+/* Fraunces equation number in the margin. */
+.mdx-math__label {
+  position: absolute;
+  top: var(--s-4);
+  right: var(--s-4);
+  font-family: var(--font-display);
+  font-size: var(--t-sm);
+  color: var(--ink-faint);
+}
+
+.mdx-math__headline {
+  min-width: 0;       /* allow the flex/inline child to shrink below content width */
+}
+/* The headline .mdx-math__tex span must fill the block so its .katex-display
+   child has a finite width to scroll against (a shrink-to-fit inline span would
+   size to the wide content and clip). */
+.mdx-math__headline .mdx-math__tex {
+  display: block;
+  min-width: 0;
+}
+
+/* KaTeX color → --ink, not pure white. */
+.mdx-math :global(.katex),
+.mdx-math :global(.katex-display) { color: var(--ink); }
+.mdx-math :global(.katex-display) { margin: 0; }
+
+/* Wide DISPLAY equations scroll INSIDE the box instead of clipping. The scroll
+   lives directly on .katex-display (KaTeX's standard overflow target); text is
+   left-anchored so an overflowing equation reveals its start and every character
+   is reachable by scrolling, rather than clipping symmetrically around center.
+   Normal-width equations still visually center (see below). */
+.mdx-math__headline :global(.katex-display) {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  min-width: 0;
+  text-align: left;        /* left-anchor so scroll reveals both ends */
+  padding-bottom: 0.35rem; /* room for the scrollbar so it never covers glyphs */
+}
+/* Center the actual formula box only while it fits; when it overflows the
+   inline-block grows past 100% and margin:auto no longer centers, so it pins
+   left and scrolls — exactly the wanted behavior. */
+.mdx-math__headline :global(.katex-display) > :global(.katex) {
+  display: inline-block;
+  text-align: initial;
+  margin-inline: auto;
+}
+.mdx-math__headline :global(.katex-display)::-webkit-scrollbar {
+  height: 7px;
+}
+.mdx-math__headline :global(.katex-display)::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--accent) 22%, transparent);
+  border-radius: 99px;
+}
+
+/* Derivation rows ───────────────────────────────────────────────────────── */
+.mdx-math__steps {
+  margin-top: var(--s-4);
+  border-top: var(--hair) solid var(--rule);
+  padding-top: var(--s-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.mdx-math__step {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+}
+.mdx-math__stepnum {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--accent-dim);
+  min-width: 1.4rem;
+}
+.mdx-math__stepbtn {
+  font: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: help;
+  text-align: left;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  min-width: 0;
+  max-width: 100%;
+}
+.mdx-math__step .mdx-math__tex {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+}
+.mdx-math__whyhint {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-dim);
+  border-bottom: 1px dotted color-mix(in oklab, var(--accent) 60%, transparent);
+}
+
+/* Per-step "why" popover — Annotation's mechanism. */
+.mdx-math__note {
+  position: absolute;
+  left: 0;
+  top: calc(100% + var(--s-2));
+  z-index: 5;
+  width: min(24rem, 72vw);
+  background: var(--bg-raised);
+  border: var(--hair) solid var(--rule);
+  border-left: 2px solid var(--accent);
+  border-radius: var(--r-md);
+  padding: var(--s-3) var(--s-4);
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  line-height: var(--lh-read);
+  color: var(--ink-dim);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-2px);
+  transition: opacity 120ms ease, transform 120ms ease, visibility 120ms;
+}
+.mdx-math__note--open { opacity: 1; visibility: visible; transform: translateY(0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mdx-math__note { transition: none; }
+}
+
+@media (max-width: 900px) {
+  .mdx-math__note {
+    position: static;
+    display: none;
+    width: auto;
+    max-width: 100%;
+    margin: var(--s-2) 0;
+    transform: none;
+  }
+  .mdx-math__note--open { display: block; }
+  .mdx-math__block { padding-left: var(--s-5); }
+}

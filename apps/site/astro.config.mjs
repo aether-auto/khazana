@@ -46,6 +46,14 @@ export default defineConfig({
     },
   },
   build: { assets: "_assets" },
+  // Image handling for the <Figure> primitive. Astro's default optimizer needs
+  // the native `sharp` binary, which is NOT bundled in this $0/CI environment
+  // (a MissingSharp build error otherwise). The built-in `passthrough` service
+  // keeps astro:assets `<Image>` fully working — it still emits width/height
+  // (no CLS), lazy loading, and fingerprinted local assets — it just skips
+  // format re-encoding (avif/webp). No new dependency, no runtime network,
+  // fully offline: the committed source asset is copied through as-is.
+  image: { service: { entrypoint: "astro/assets/services/noop" } },
   vite: {
     resolve: {
       alias: [{ find: /^node:crypto$/, replacement: cryptoShim }],
