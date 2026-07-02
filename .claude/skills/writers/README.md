@@ -1,6 +1,6 @@
 # khazana writer skills
 
-Six specialized **per-format writer skills** plus a shared **`writers/researcher`**
+Seven specialized **per-format writer skills** plus a shared **`writers/researcher`**
 skill that runs the research phase before any of them draft. Each writer turns an
 authoring *brief* (produced by `packages/generate`'s `buildBrief()`) into one
 publishable MDX file in `apps/site/src/content/blog/` — a deep, genuinely educational,
@@ -10,19 +10,21 @@ data-rich, **fully-grounded, thesis-grade** interactive blog post in the founder
 |---|---|---|---|---|
 | `writers/researcher` | (all) | research | — (produces dossier + ledger + claims table) | WebSearch, WebFetch, fetch-data.py |
 | `writers/chronicle` | chronicle | narrate | **20–25 min FLOOR (~5,000–7,000+ w)** | Scrolly/ScrollyStep/ScrollyTimeline, Timeline, EventCascade, Map/RouteMap, Figure/AnnotatedFigure/CompareSlider, CastGrid, Pullquote, StatBand, Annotation, Sidenote, + shared Callout/Detail/Definition |
+| `writers/theater` | theater | narrate | **20–25 min FLOOR (~5,000–7,000+ w)** + military kit | **BattleMap** (phase-by-phase spine), OrderOfBattle, ForceComparison, Sankey, Map/RouteMap, Timeline/EventCascade, Diagram, Figure/AnnotatedFigure/CompareSlider, CastGrid, Scrolly, Pullquote, StatBand, Annotation, Sidenote, + shared Callout/Detail/Definition |
 | `writers/dispatch` | dispatch | explain | **20–25 min FLOOR (~5,000–7,000+ w)** + real-data viz | Chart, SmallMultiples, Distribution, Scatter, Slopegraph, RangePlot, DrawChart, ControlledChart, Scrolly, DataTable, StatBand, Pullquote, Annotation, Sidenote, Math, + shared Callout/Detail |
 | `writers/teardown` | teardown | explain | **20–25 min FLOOR (~5,000–7,000+ w)** + code/diagrams | Diagram, StateMachine, LayerStack, CodeWalkthrough, RunnableCode, Stepper, Chart, Model3D, Math, StatBand, Pullquote, Annotation, Sidenote, + shared Callout/Detail/Definition |
 | `writers/primer` | primer | explain | **20–25 min FLOOR (~5,000–7,000+ w)** + sandboxes | Simulation, Quiz, ParameterPlay, ControlledChart, Math, Diagram, CodeWalkthrough, Stepper, Chart, RunnableCode, Figure, Definition, StatBand, Pullquote, Annotation, Sidenote, + shared Callout/Detail |
 | `writers/build-log` | build-log | build | **20–25 min FLOOR (~5,000–7,000+ w)** + code | Figure/CompareSlider, Checklist, Stepper, GanttStrip, CodeWalkthrough, RunnableCode, DataTable (BOM total footer), Model3D, StatBand, Pullquote, Annotation, Sidenote, + shared Callout |
 | `writers/field-notes` | field-notes | synthesize | **~300–500 w (short exception — floor does NOT apply)** | Annotation, DataTable (sparingly StatBand/Pullquote); the ONE expansion allowed is a single `Callout` "watch for" box |
 
-> The five long-form formats are the **20–25 min / 5,000–7,000+ word** deep reads. **field-notes
-> is the deliberate short exception** — the length floor, the density target, and the expanded kit
-> do NOT apply to it; never pad a briefing toward the floor. The kit cells above **summarize** each
+> The six long-form formats (chronicle, theater, dispatch, teardown, primer, build-log) are the
+> **20–25 min / 5,000–7,000+ word** deep reads. **field-notes is the deliberate short exception** —
+> the length floor, the density target, and the expanded kit do NOT apply to it; never pad a briefing
+> toward the floor. The kit cells above **summarize** each
 > format's expanded kit (there are now ~40 authorable components in the allow-list); the
 > authoritative, prop-exact list per format is that format's **`references/mdx-contract.md`**.
 
-### Authoring doctrine (binding for the five long-form formats)
+### Authoring doctrine (binding for the six long-form formats)
 
 **Components carry knowledge; prose wraps around them.** A component should carry a block of
 knowledge the prose would otherwise spend 200–400 words asserting — lead with the chart / diagram /
@@ -116,7 +118,7 @@ Summary:
 
 ## Scripts (stdlib-only, $0, no API keys)
 
-- **`scripts/check-links.py`** (all six) — validates that every `sources[].url`
+- **`scripts/check-links.py`** (all writers) — validates that every `sources[].url`
   in a finished MDX file is reachable; non-zero exit blocks a draft that cites a
   dead link. `python3 scripts/check-links.py path/to/post.mdx`.
 - **`scripts/fetch-data.py`** (dispatch + teardown) — pulls real series from FRED,

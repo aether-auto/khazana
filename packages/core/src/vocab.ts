@@ -17,7 +17,7 @@ export const ItemKindSchema = z.enum(ITEM_KINDS);
 export type ItemKind = z.infer<typeof ItemKindSchema>;
 
 export const FORMAT_NAMES = [
-  "chronicle", "dispatch", "field-notes", "teardown", "primer", "build-log",
+  "chronicle", "dispatch", "field-notes", "teardown", "primer", "build-log", "theater",
 ] as const;
 export const FormatNameSchema = z.enum(FORMAT_NAMES);
 export type FormatName = z.infer<typeof FormatNameSchema>;

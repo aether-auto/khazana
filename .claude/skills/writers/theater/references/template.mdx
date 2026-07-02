@@ -1,0 +1,141 @@
+---
+# THEATER — annotated structural skeleton. Replace every […] with grounded,
+# cited content from the brief. Keep the frontmatter field set EXACTLY as below
+# (see references/mdx-contract.md). Delete these comment lines in the real file.
+title: "[Evocative title: a place + a contest, e.g. 'The Ridges West of Town']"
+format: theater
+channels:
+  - [channel from the brief, e.g. history]
+summary: "[One sentence: the contest and what it decided, concrete, no hedging.]"
+publishedAt: 2026-06-24T07:00:00.000Z
+sources:
+  - title: "[Real source article title from the brief]"
+    url: "[verbatim brief source URL]"
+  - title: "[Second source if cited]"
+    url: "[verbatim brief source URL]"
+draft: false
+---
+
+import { getImage } from "astro:assets";
+import { BattleMap, OrderOfBattle, ForceComparison, Sankey, Map, Timeline, EventCascade, StatBand, Annotation } from "../../components/mdx";
+import terrain from "./_assets/[slug]/terrain.png";
+
+export const map = await getImage({ src: terrain, width: 1600 });
+
+{/* SITUATE — 200–300w. Present tense. Open in the moment of decision, not the
+    textbook. A named formation, a named commander with a problem, one grounded,
+    cited military fact in the first two sentences. The reader is THERE. */}
+<Annotation client:load term="[a named ridge / formation / place]" note="[short cited gloss]" /> grounds
+the opening; the scene continues, tactical and specific.
+
+{/* Situate the theater immediately — the states / region and their weight —
+    before the tactical map narrows in. Use <Map> or <RouteMap>. */}
+<Map
+  client:visible
+  caption="[what the map situates — the theater / the combatant states]"
+  labels={{ ISO3: "[Name]" }}
+  values={{ ISO3: 100 }}
+/>
+
+{/* Optional <StatBand> of the stakes — forces engaged, the date, what's at risk —
+    each cited via href. Earn it: only if the numbers set the stakes. */}
+<StatBand client:visible caption="[the scale]"
+  stats={[
+    { value: 0, label: "[MEN ENGAGED]", sub: "[both sides]", href: "[ledger url]" },
+    { value: 1863, label: "YEAR", group: false }
+  ]} />
+
+{/* THE FORCES — establish who is on the field BEFORE the fighting. OrderOfBattle
+    is STATIC Astro — NO client directive. Then a going-in ForceComparison shows
+    the ratio the reader should feel. Both LEAD; prose interprets. */}
+<OrderOfBattle
+  caption="Order of battle — [contest], [dates]"
+  sides={[
+    { id: "[a]", label: "[Army A]", commander: "[Cmdr A]", tone: "friendly",
+      formations: [
+        { name: "[I Corps]", kind: "corps", strength: "[≈00,000]", commander: "[…]", note: "[…]",
+          units: [{ name: "[Division]", strength: "[≈0,000]", note: "[…]" }] }
+      ] },
+    { id: "[b]", label: "[Army B]", commander: "[Cmdr B]", tone: "enemy",
+      formations: [ { name: "[Corps]", kind: "corps", strength: "[≈00,000]" } ] }
+  ]} />
+
+<ForceComparison client:visible
+  caption="Forces going in — [contest]"
+  sides={[ { label: "[A]", tone: "friendly" }, { label: "[B]", tone: "enemy" } ]}
+  metrics={[
+    { label: "Troops",    values: [0, 0], unit: "men" },
+    { label: "Artillery", values: [0, 0], unit: "guns" }
+  ]} />
+
+{/* Prose beat (150–200w): read the two rosters and the ratio — the odds, the
+    asymmetry, the constraint each commander faces. Do NOT re-list the OOB in
+    prose; interpret it. Every named strength an <Annotation>. */}
+
+{/* THE CONTEST — the SPINE. One <BattleMap> carrying the phases; one phase per
+    narrative beat. Design the phases in Outline. The map LEADS each beat; the
+    prose beside it interprets the why and the cost. Walk map + prose in lockstep. */}
+<BattleMap client:visible
+  src={map.src} width={map.attributes.width} height={map.attributes.height}
+  alt="[terrain description]"
+  caption="[contest, date] — [what the map replays]"
+  sides={[
+    { id: "[a]", label: "[A]", tone: "friendly" },
+    { id: "[b]", label: "[B]", tone: "enemy" }
+  ]}
+  phases={[
+    { title: "[Phase 1 title]", time: "[hh:mm / day]",
+      note: "[one-line HTML caption on the map, <strong>key move</strong>]",
+      units: [ { side: "[a]", type: "infantry", label: "[unit]", strength: "[≈0,000]", at: [0.3, 0.4] } ],
+      movements: [ { side: "[b]", from: [0.6, 0.5], to: [0.35, 0.7], kind: "attack", label: "[move]" } ],
+      fronts: [ { side: "[a]", kind: "line", points: [[0.5, 0.2], [0.5, 0.8]] } ] },
+    { title: "[Phase 2 title]", time: "[…]", note: "[…]", units: [ /* … */ ], movements: [ /* … */ ] }
+  ]} />
+
+{/* BEAT PER PHASE — for EACH phase above, a 300–500w present-tense scene that
+    reads that phase: the named formation, the ground, one cited military fact per
+    paragraph. Alternate with a short analytic beat (how the ratio / the ground
+    shifted). The reader steps the scrubber and reads the matching paragraph. */}
+
+{/* THE TURN — carry the decisive move's CAUSALITY (not calendar) with an
+    <EventCascade>: the breakthrough → the exploitation → the collapse. */}
+<EventCascade client:visible caption="[how the line broke]"
+  nodes={[
+    { kind: "cause", label: "[the decisive move]", detail: "[cited]" },
+    { kind: "effect", label: "[the immediate result]", detail: "[cited]" },
+    { kind: "turning-point", label: "[what it decided]", detail: "[cited]" }
+  ]} />
+
+{/* THE RECKONING — the butcher's bill. A coming-out ForceComparison with
+    higherIsWorse on casualties, and/or a <Sankey> of how the losses broke down. */}
+<ForceComparison client:visible
+  caption="Losses — [contest]"
+  sides={[ { label: "[A]", tone: "friendly" }, { label: "[B]", tone: "enemy" } ]}
+  metrics={[ { label: "Casualties", values: [0, 0], unit: "men", higherIsWorse: true } ]} />
+
+<Sankey client:visible caption="[where the losses fell]" unit="men"
+  nodes={[
+    { id: "engaged", label: "Engaged" },
+    { id: "killed", label: "Killed" }, { id: "wounded", label: "Wounded" }, { id: "captured", label: "Captured / missing" },
+    { id: "returned", label: "Returned to duty" }
+  ]}
+  links={[
+    { source: "engaged", target: "killed", value: 0 },
+    { source: "engaged", target: "wounded", value: 0 },
+    { source: "engaged", target: "captured", value: 0 },
+    { source: "engaged", target: "returned", value: 0 }
+  ]} />
+
+{/* THE STRATEGIC VERDICT — 300–400w. Lift from the field to the war: what this
+    contest decided, at what cost, what it set in motion. A <Timeline> can carry
+    the aftermath; the final sentence is short, declarative, present-leaning. */}
+<Timeline
+  client:load
+  caption="[the aftermath / the strategic arc]"
+  events={[
+    { date: "[YYYY-MM-DD]", label: "[milestone]", detail: "[cited]" },
+    { date: "[YYYY-MM-DD]", label: "[milestone]", detail: "[cited]" }
+  ]}
+/>
+
+*[Final line: short. Declarative. The strategic echo forward.]*

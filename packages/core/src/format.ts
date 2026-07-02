@@ -50,6 +50,12 @@ export const FORMATS: Record<FormatName, Format> = {
     componentKit: ["RunnableCode", "DataTable", "Annotation"],
     topics: ["diy", "3d-printing", "iot", "embedded", "ai-projects"],
   },
+  theater: {
+    name: "theater", intent: "narrate", length: "feature",
+    voiceProfile: "Relive a battle, campaign, or strategic contest phase by phase: army movements, orders of battle, force ratios — cinematic yet every unit, strength, and casualty figure traces to real military-history sources.",
+    componentKit: ["BattleMap", "OrderOfBattle", "ForceComparison", "Sankey", "Map", "Timeline", "Annotation"],
+    topics: ["history", "geopolitics", "politics", "geography"],
+  },
 };
 
 export function formatsForChannel(channel: string): Format[] {
