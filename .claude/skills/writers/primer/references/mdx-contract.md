@@ -54,7 +54,7 @@ StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
 StateMachine  LayerStack  Checklist  GanttStrip  RouteMap
-Sankey  BattleMap  OrderOfBattle  ForceComparison
+Sankey  BattleMap  OrderOfBattle  ForceComparison  ParameterPlay
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -337,6 +337,21 @@ Props: `states: { id, label, x, y }[]` (x/y = author grid coords, like Diagram),
   ]} />
 ```
 Props: `layers: { label, note, detail? }[]` (top-to-bottom as authored), `orientation?: "vertical"` (only value in v1), `caption?`. Click/hover/focus expands a slab; arrow/Home/End move the active layer. No-JS / reduced-motion → every layer expanded as a semantic `<ol>` (never blank).
+
+### ParameterPlay — N reader sliders bound to YOUR formula, live curve + readouts (island → `client:visible`)
+```jsx
+<ParameterPlay client:visible
+  params={[
+    { key: "dop", label: "geometric dilution (DOP)", min: 1, max: 10, default: 2.5, step: 0.1 }
+  ]}
+  expr="dop * x"
+  xRange={[0, 6]}
+  xLabel="range error σ_range (m)"
+  yLabel="position error σ_pos (m)"
+  readouts={[{ label: "σ_pos at σ_range = 3 m", expr: "dop * 3", unit: "m" }]}
+  caption="Position error scales linearly with range error, amplified by the geometry factor DOP." />
+```
+Props: `params: { key, label, min, max, default, step, unit? }[]` (the reader sliders — `key` is the identifier used in the formulas), `expr: string` (a **pure** formula of the param keys + the `x` variable → y, e.g. `"dop * x"`), `xRange: [from, to]`, `xVar?` (default `"x"`), `xLabel?`, `yLabel?`, `readouts?: { label, expr, unit? }[]` (pure scalar formulas of the params — **may NOT reference x**), `caption?`. The formula grammar is `+ - * / ^` (right-assoc), unary minus, parens, numbers (incl. `1e3`), whitelisted funcs `sin cos tan exp log ln sqrt abs min max pow floor ceil round` + constants `pi e` — **nothing else** (no `eval`, no property access; author string is sandboxed, never `eval`'d). Use this when you need a NEW reader-tunable relationship a fixed component doesn't already cover — the formula MUST express a relationship already cited in your prose (do not invent figures). No-JS / reduced-motion → the default-parameter curve as inert SVG + one static slider per param + the readouts strip (never blank; sliders still adjust the curve, nothing animates on a timer).
 
 ## 4. Body conventions
 

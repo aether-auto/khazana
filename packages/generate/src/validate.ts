@@ -76,6 +76,8 @@ export const KNOWN_COMPONENTS = [
   "BattleMap",
   "OrderOfBattle",
   "ForceComparison",
+  // X wave: generalized reader-controlled model.
+  "ParameterPlay",
 ] as const;
 
 export interface DraftResult {

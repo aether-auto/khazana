@@ -34,7 +34,7 @@ sources:
 draft: false
 ---
 
-import { RunnableCode, Chart, Annotation, StatBand, Math, Stepper, Quiz, Timeline, Definition, Callout, Detail, Pullquote, Sidenote, Diagram } from "../../components/mdx";
+import { RunnableCode, Chart, Annotation, StatBand, Math, Stepper, Quiz, Timeline, Definition, Callout, Detail, Pullquote, Sidenote, Diagram, Simulation, ParameterPlay } from "../../components/mdx";
 
 Your phone is a dumb radio. It doesn't contain a map of the world, a ruler, or a particularly accurate clock. And yet, right now, it knows where you are to within five meters. How?
 
@@ -373,9 +373,37 @@ Here's a subtlety that surprises people: even with perfect measurements, the geo
 
 <Definition client:visible term="dilution of precision (DOP)" def="A dimensionless multiplier that quantifies how satellite geometry amplifies (or compresses) ranging errors into position errors. Low DOP (near 1) is ideal; DOP > 5 is poor." /> works like this: if all four visible satellites are clustered in one part of the sky, the spheres they define are nearly parallel — their intersection is poorly conditioned and any small ranging error creates a large position uncertainty. If the satellites are spread across the sky (one near the horizon in each cardinal direction, one overhead), the spheres intersect at acute angles and the position is tightly constrained.
 
+You can feel this directly. In the sandbox below, each satellite reports a noisy distance and the receiver solves for its position over and over; the amber scatter is the cloud of resulting fixes and the ellipse is its 1σ spread. Drag **Sky spread** down to ~30° so the satellites bunch into a narrow arc and watch the same range noise smear the fix into a large, elongated cloud — that stretch, produced by geometry alone with the noise held constant, *is* dilution of precision.
+
+<Simulation
+  client:visible
+  kind="trilateration"
+  height={360}
+  caption="Each satellite reports a noisy distance. Spread them across the sky and the same noise gives a tight, round fix (low DOP); bunch them into a narrow arc and the identical noise smears the fix into a large, elongated cloud — that's dilution of precision."
+  params={[
+    { key: "satellites", label: "Satellites", min: 3, max: 8, default: 5, step: 1 },
+    { key: "spread", label: "Sky spread (°)", min: 20, max: 340, default: 220, step: 10 },
+    { key: "noise", label: "Range noise σ (m)", min: 0, max: 20, default: 6, step: 1 }
+  ]}
+/>
+
 Mathematically, DOP is derived from the covariance matrix of the least-squares position solution. The position error in any dimension is<Annotation client:load term="σ_position = DOP × σ_range" note="The relationship between DOP and position accuracy. A DOP of 2 with 3 m range errors gives 6 m position error. Source: Error Analysis for the Global Positioning System, Wikipedia; VectorNav." />:
 
 $$\sigma_{\text{position}} = \text{DOP} \times \sigma_{\text{range}}$$
+
+That is a linear amplifier, and you can turn its knobs. The curve below plots position error against range error; the slider sets the geometry factor DOP. At the read's cited example — DOP = 2 with 3 m range errors — the readout lands on 6 m of position error. Push DOP toward 5 and the same 3 m of ranging noise balloons into 15 m: identical measurements, worse geometry, a worse fix.
+
+<ParameterPlay client:visible
+  params={[
+    { key: "dop", label: "geometric dilution (DOP)", min: 1, max: 6, default: 2, step: 0.1 }
+  ]}
+  expr="dop * x"
+  xRange={[0, 6]}
+  xLabel="range error σ_range (m)"
+  yLabel="position error σ_pos (m)"
+  readouts={[{ label: "σ_pos at σ_range = 3 m", expr: "dop * 3", unit: "m" }]}
+  caption="Position error scales linearly with range error, amplified by the geometry factor DOP. At DOP = 2 and σ_range = 3 m, σ_position = 6 m — exactly the cited figure."
+/>
 
 A PDOP (3D position DOP) of 2 is good; a DOP of 1.5 is excellent; above 5 is poor. Urban canyons don't just create multipath — they also hide satellites behind buildings, raising DOP and compounding the geometry penalty on top of the reflections.
 

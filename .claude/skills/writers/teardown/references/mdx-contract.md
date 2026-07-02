@@ -54,7 +54,7 @@ StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
 StateMachine  LayerStack  Checklist  GanttStrip  RouteMap
-Sankey  BattleMap  OrderOfBattle  ForceComparison
+Sankey  BattleMap  OrderOfBattle  ForceComparison  ParameterPlay
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands

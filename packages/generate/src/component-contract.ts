@@ -60,4 +60,6 @@ export const CONTRACT_COMPONENTS = [
   "BattleMap",
   "OrderOfBattle",
   "ForceComparison",
+  // X wave: generalized reader-controlled model.
+  "ParameterPlay",
 ] as const;

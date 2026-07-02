@@ -1,0 +1,80 @@
+---
+title: "QA ParameterPlay: Author-Formula Sliders Under Stress"
+format: primer
+channels: ["tech", "science"]
+summary: "A non-shipping QA harness that exercises ParameterPlay — N author-defined sliders bound to a sandboxed author formula, plotting the live curve + live readouts. Covers the realistic GPS error-budget case (sigma_pos = DOP x sigma_range), a 3-slider mobile-stress case (logistic growth) that collapses the controls grid at 360px, a curve that straddles zero (the reference rule), a whitelisted-function case, and a deliberately malformed formula to verify the visible author-error alert. Judge at 360px, in both motion modes, and with JS off."
+publishedAt: 2026-07-02T13:00:00.000Z
+sources:
+  - title: "Dilution of Precision — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Dilution_of_precision"
+draft: true
+---
+
+import { ParameterPlay } from "../../components/mdx";
+
+This is a QA harness for **ParameterPlay** (the generalized reader-controlled model). Each case appears with real props, then a mobile-stress case to judge how the controls grid collapses at 360px, in both motion modes, and with JS off. Nothing here ships.
+
+## 1. GPS error budget — sigma_pos = DOP x sigma_range (realistic, one slider)
+
+<ParameterPlay
+  client:visible
+  params={[
+    { key: "dop", label: "geometric dilution (DOP)", min: 1, max: 10, default: 2.5, step: 0.1 }
+  ]}
+  expr="dop * x"
+  xRange={[0, 6]}
+  xLabel="range error σ_range (m)"
+  yLabel="position error σ_pos (m)"
+  readouts={[{ label: "σ_pos at σ_range = 3 m", expr: "dop * 3", unit: "m" }]}
+  caption="Position error scales linearly with range error, amplified by the geometry factor DOP."
+/>
+
+## 2. Mobile stress — 3 sliders + 2 readouts (logistic growth; collapses the grid at 360px)
+
+<ParameterPlay
+  client:visible
+  params={[
+    { key: "L",  label: "carrying capacity", min: 1,   max: 100, default: 50, step: 1 },
+    { key: "k",  label: "growth rate",       min: 0.1, max: 3,   default: 1,  step: 0.1 },
+    { key: "x0", label: "midpoint",          min: 0,   max: 10,  default: 5,  step: 0.5 }
+  ]}
+  expr="L / (1 + exp(-k * (x - x0)))"
+  xRange={[0, 10]}
+  xLabel="t"
+  yLabel="population"
+  readouts={[
+    { label: "value at midpoint", expr: "L / 2" },
+    { label: "max slope",         expr: "k * L / 4" }
+  ]}
+  caption="The logistic curve: capacity L, steepness k, inflection at x0. Three sliders + two readouts stress the collapsing controls grid at 360px."
+/>
+
+## 3. Curve straddling zero — the reference rule + whitelisted funcs (2 sliders)
+
+<ParameterPlay
+  client:visible
+  params={[
+    { key: "amp",  label: "amplitude", min: 0.5, max: 5,   default: 2,   step: 0.1 },
+    { key: "freq", label: "frequency", min: 0.2, max: 3,   default: 1,   step: 0.1 }
+  ]}
+  expr="amp * sin(freq * x)"
+  xRange={[0, 10]}
+  xLabel="x"
+  yLabel="amp · sin(freq · x)"
+  readouts={[{ label: "peak", expr: "amp" }]}
+  caption="A sine that straddles zero, exercising the quiet zero-reference rule and the sqrt/sin/cos function whitelist."
+/>
+
+## 4. Author-error path — a malformed formula must surface a VISIBLE alert (never a silent blank)
+
+<ParameterPlay
+  client:visible
+  params={[
+    { key: "a", label: "a", min: 0, max: 10, default: 3, step: 1 }
+  ]}
+  expr="a * window.location"
+  xRange={[0, 5]}
+  xLabel="x"
+  yLabel="y"
+  caption="This formula references a forbidden identifier (window). ParameterPlay must render a visible role=alert fault line, not a blank chart."
+/>

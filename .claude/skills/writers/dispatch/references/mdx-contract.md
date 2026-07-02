@@ -54,7 +54,7 @@ StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
 StateMachine  LayerStack  Checklist  GanttStrip  RouteMap
-Sankey  BattleMap  OrderOfBattle  ForceComparison
+Sankey  BattleMap  OrderOfBattle  ForceComparison  ParameterPlay
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -455,6 +455,23 @@ Props: `routes?: { from: [lng,lat], to: [lng,lat], label?, kind?: "march"|"arc"|
   ]} />
 ```
 Props: `nodes: { id, label? }[]` (`label` falls back to `id`), `links: { source, target, value }[]` (ids reference `nodes`; `value` positive finite; the graph must be a DAG — no cycles/self-loops), `unit?` (suffix on flow values, e.g. `"$M"`, `"TWh"`), `caption?`. Hover/focus a flow → its value + share of total in a stable readout. `% of total` = flow value / sum of ALL link values (shares sum to 1). No-JS / <640px → a semantic `source → target: value (unit) (pct)` list + total (never blank); reduced-motion → static end state.
+
+## 3f. Reader-tunable model — ParameterPlay (this format's kit)
+
+### ParameterPlay — N reader sliders bound to YOUR formula, live curve + readouts (island → `client:visible`)
+```jsx
+<ParameterPlay client:visible
+  params={[
+    { key: "rate", label: "adoption rate", min: 0.1, max: 3, default: 1, step: 0.1 }
+  ]}
+  expr="100 / (1 + exp(-rate * (x - 5)))"
+  xRange={[0, 10]}
+  xLabel="quarters"
+  yLabel="% adopted"
+  readouts={[{ label: "max slope", expr: "rate * 100 / 4", unit: "%/qtr" }]}
+  caption="How adoption rate reshapes the S-curve." />
+```
+Props: `params: { key, label, min, max, default, step, unit? }[]` (the reader sliders — `key` is the identifier used in the formulas), `expr: string` (a **pure** formula of the param keys + the `x` variable → y), `xRange: [from, to]`, `xVar?` (default `"x"`), `xLabel?`, `yLabel?`, `readouts?: { label, expr, unit? }[]` (pure scalar formulas of the params — **may NOT reference x**), `caption?`. Grammar: `+ - * / ^` (right-assoc), unary minus, parens, numbers (incl. `1e3`), whitelisted funcs `sin cos tan exp log ln sqrt abs min max pow floor ceil round` + constants `pi e` — **nothing else** (the author string is sandboxed; never `eval`'d). Use it when a report needs a NEW reader-tunable relationship a fixed component doesn't cover — the formula MUST express a relationship already cited in your prose (do not invent figures). No-JS / reduced-motion → the default-parameter curve as inert SVG + one static slider per param + the readouts strip (never blank; sliders adjust the curve, nothing animates on a timer).
 
 ## 4. Body conventions
 

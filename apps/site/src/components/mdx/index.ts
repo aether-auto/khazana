@@ -123,3 +123,6 @@ export type { OOBSide, OOBFormation, OOBUnit } from "./lib/order-of-battle.js";
 export { default as ForceComparison } from "./ForceComparison.js";
 export type { ForceComparisonProps } from "./ForceComparison.js";
 export type { ForceSide, ForceMetric } from "./lib/force-comparison.js";
+// X wave: generalized reader-controlled model (author formula → live curve + readouts).
+export { default as ParameterPlay } from "./ParameterPlay.js";
+export type { ParameterPlayProps, ParameterPlayParam, ParameterPlayReadout } from "./ParameterPlay.js";

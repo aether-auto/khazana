@@ -330,6 +330,276 @@ const life: SimKind<LifeState> = {
   },
 };
 
+// ── kind: "trilateration" — GPS-style position fix & dilution of precision ────
+// N satellites/beacons ring a receiver at the origin. Each tick, every satellite
+// yields a NOISY range measurement (true distance + gaussian noise, σ = `noise`
+// metres, drawn from the seeded PRNG). We solve the over-determined system for an
+// estimated receiver position by iterative least-squares (Gauss–Newton on the
+// range residuals), then push that estimate into a bounded scatter cloud of the
+// recent fixes. The SHAPE of that cloud IS the reader's takeaway: with the
+// satellites spread WIDE around the sky the geometry is strong → the same range
+// noise collapses into a tight, round cloud (low DOP); cluster them into a narrow
+// arc (`spread` small) and the identical noise smears into a large, elongated
+// cloud (high DOP). Tunables: `satellites`, `spread` (angular deg), `noise` (σ m).
+//
+// Everything lives in a metres-scaled world centred on the true receiver; `draw`
+// maps world→canvas with a fixed scale so the cloud's absolute growth is visible.
+interface TriEstimate {
+  x: number; // estimate offset from true receiver, metres
+  y: number;
+}
+interface TriState {
+  sats: { x: number; y: number }[]; // satellite positions, metres, world-centred on receiver
+  ranges: number[]; // last frame's noisy measured ranges (for the faint circles)
+  est: TriEstimate; // latest position estimate (metres from truth)
+  cloud: TriEstimate[]; // bounded ring buffer of recent estimates
+  t: number;
+}
+
+// The true receiver sits at world origin; the demo world spans ±TRI_WORLD metres
+// mapped across the canvas. Satellites orbit at TRI_RADIUS metres.
+const TRI_WORLD = 120; // half-extent of the drawn world, metres (canvas edge)
+const TRI_RADIUS = 90; // satellite orbit radius, metres
+const TRI_CLOUD_MAX = 160; // recent-estimate ring-buffer length
+const TRI_GN_ITERS = 8; // Gauss–Newton iterations per solve (plenty at this scale)
+
+/** Box–Muller: one standard normal sample from two uniforms of the seeded PRNG. */
+function gaussian(rng: Rng): number {
+  let u = rng();
+  if (u < 1e-12) u = 1e-12; // avoid log(0)
+  const v = rng();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * v);
+}
+
+// Place the satellites in an arc of angular width `spreadDeg`, centred overhead.
+// Narrow spread ⇒ they bunch into a sliver of sky ⇒ bad geometry (high DOP).
+function triPlaceSats(n: number, spreadDeg: number): { x: number; y: number }[] {
+  const spread = (Math.max(0, spreadDeg) * Math.PI) / 180;
+  const centre = -Math.PI / 2; // point the arc "up" (screen-up), purely cosmetic
+  const sats: { x: number; y: number }[] = [];
+  for (let i = 0; i < n; i++) {
+    // spread the n satellites evenly across the arc; single sat sits at centre
+    const frac = n === 1 ? 0.5 : i / (n - 1);
+    const ang = centre + (frac - 0.5) * spread;
+    sats.push({ x: TRI_RADIUS * Math.cos(ang), y: TRI_RADIUS * Math.sin(ang) });
+  }
+  return sats;
+}
+
+// Iterative least-squares position solve. `measured[i]` are the noisy ranges to
+// `sats[i]`; returns the best-fit receiver position (metres, world-centred). Pure
+// linear algebra — no randomness — so the estimate is a deterministic function of
+// the measurements handed in.
+function triSolve(
+  sats: { x: number; y: number }[],
+  measured: number[],
+): TriEstimate {
+  // start the guess at the origin (our world centre) and refine
+  let px = 0;
+  let py = 0;
+  for (let iter = 0; iter < TRI_GN_ITERS; iter++) {
+    // Normal-equations accumulators for the 2×2 system JᵀJ · δ = Jᵀr
+    let a = 0; // Σ (∂/∂x)²
+    let b = 0; // Σ (∂/∂x)(∂/∂y)
+    let d = 0; // Σ (∂/∂y)²
+    let g1 = 0; // Σ (∂/∂x)·residual
+    let g2 = 0; // Σ (∂/∂y)·residual
+    for (let i = 0; i < sats.length; i++) {
+      const s = sats[i];
+      if (!s) continue;
+      const dx = px - s.x;
+      const dy = py - s.y;
+      const dist = Math.hypot(dx, dy) || 1e-6;
+      const jx = dx / dist; // ∂dist/∂px
+      const jy = dy / dist; // ∂dist/∂py
+      const r = (measured[i] ?? dist) - dist; // residual: measured − predicted
+      a += jx * jx;
+      b += jx * jy;
+      d += jy * jy;
+      g1 += jx * r;
+      g2 += jy * r;
+    }
+    // solve the 2×2 (with a whisper of Levenberg damping for degenerate geometry)
+    const lm = 1e-9;
+    const det = (a + lm) * (d + lm) - b * b;
+    if (Math.abs(det) < 1e-12) break; // singular → keep current guess
+    const dxp = ((d + lm) * g1 - b * g2) / det;
+    const dyp = ((a + lm) * g2 - b * g1) / det;
+    px += dxp;
+    py += dyp;
+    if (Math.hypot(dxp, dyp) < 1e-6) break; // converged
+  }
+  // guard against any pathological blow-up so the cloud stays finite & on-screen
+  if (!Number.isFinite(px)) px = 0;
+  if (!Number.isFinite(py)) py = 0;
+  const CAP = TRI_WORLD * 4;
+  px = Math.max(-CAP, Math.min(CAP, px));
+  py = Math.max(-CAP, Math.min(CAP, py));
+  return { x: px, y: py };
+}
+
+// One measurement→solve tick. Adds gaussian range noise (σ = `noise`) from the
+// seeded PRNG, solves, and appends the estimate to the bounded cloud.
+function triMeasureAndSolve(state: TriState, noise: number, rng: Rng): void {
+  const measured = new Array<number>(state.sats.length);
+  for (let i = 0; i < state.sats.length; i++) {
+    const s = state.sats[i];
+    if (!s) {
+      measured[i] = 0;
+      continue;
+    }
+    const trueRange = Math.hypot(s.x, s.y); // receiver is at origin
+    measured[i] = trueRange + gaussian(rng) * noise;
+  }
+  state.ranges = measured;
+  const est = triSolve(state.sats, measured);
+  state.est = est;
+  state.cloud.push(est);
+  if (state.cloud.length > TRI_CLOUD_MAX) state.cloud.shift();
+}
+
+const trilateration: SimKind<TriState> = {
+  defaultHeight: 340,
+  describe:
+    "GPS-style trilateration: satellites ring a receiver and each reports a noisy distance. Spread the satellites wide and the same noise gives a tight, round position fix (low DOP); bunch them into a narrow arc and the fix smears into a large, elongated cloud (high dilution of precision).",
+  init(params, rng) {
+    const n = Math.max(3, Math.round(param(params, "satellites", 5)));
+    const spread = param(params, "spread", 220);
+    const noise = Math.max(0, param(params, "noise", 6));
+    const state: TriState = {
+      sats: triPlaceSats(n, spread),
+      ranges: [],
+      est: { x: 0, y: 0 },
+      cloud: [],
+      t: 0,
+    };
+    // seed the cloud with a few fixes so a single static frame is already
+    // meaningful (reduced-motion paints exactly this shape, no live loop).
+    for (let k = 0; k < 24; k++) triMeasureAndSolve(state, noise, rng);
+    return state;
+  },
+  step(state, params, rng) {
+    const n = Math.max(3, Math.round(param(params, "satellites", 5)));
+    const spread = param(params, "spread", 220);
+    const noise = Math.max(0, param(params, "noise", 6));
+    // re-place satellites if the geometry sliders moved (cheap, keeps demo live)
+    if (state.sats.length !== n) {
+      state.sats = triPlaceSats(n, spread);
+      state.cloud = []; // geometry changed → old cloud no longer comparable
+    } else {
+      state.sats = triPlaceSats(n, spread);
+    }
+    triMeasureAndSolve(state, noise, rng);
+    state.t += 1;
+    return state;
+  },
+  draw(ctx, state, w, h, _params, pal) {
+    ctx.fillStyle = pal.bgInset;
+    ctx.fillRect(0, 0, w, h);
+    // world→canvas: origin (true receiver) at canvas centre, TRI_WORLD → half-min
+    const cx = w / 2;
+    const cy = h / 2;
+    const scale = Math.min(w, h) / 2 / TRI_WORLD;
+    const px = (mx: number) => cx + mx * scale;
+    const py = (my: number) => cy + my * scale;
+
+    // faint range circles from each satellite (the "somewhere on this ring" idea)
+    ctx.strokeStyle = pal.rule;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.5;
+    for (let i = 0; i < state.sats.length; i++) {
+      const s = state.sats[i];
+      if (!s) continue;
+      const r = (state.ranges[i] ?? Math.hypot(s.x, s.y)) * scale;
+      ctx.beginPath();
+      ctx.arc(px(s.x), py(s.y), Math.max(0, r), 0, TAU);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // the estimate scatter cloud — amber, faint, its SHAPE is the whole point
+    ctx.fillStyle = pal.accent;
+    ctx.globalAlpha = 0.35;
+    for (let i = 0; i < state.cloud.length; i++) {
+      const e = state.cloud[i];
+      if (!e) continue;
+      ctx.beginPath();
+      ctx.arc(px(e.x), py(e.y), 1.6, 0, TAU);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // 1σ error ellipse over the cloud (axis-aligned covariance approximation) so
+    // the reader can literally see the DOP: round & small vs. long & large.
+    if (state.cloud.length >= 3) {
+      let mx = 0;
+      let my = 0;
+      for (const e of state.cloud) {
+        mx += e.x;
+        my += e.y;
+      }
+      mx /= state.cloud.length;
+      my /= state.cloud.length;
+      let vxx = 0;
+      let vyy = 0;
+      let vxy = 0;
+      for (const e of state.cloud) {
+        vxx += (e.x - mx) ** 2;
+        vyy += (e.y - my) ** 2;
+        vxy += (e.x - mx) * (e.y - my);
+      }
+      const nInv = 1 / state.cloud.length;
+      vxx *= nInv;
+      vyy *= nInv;
+      vxy *= nInv;
+      // eigen-decomposition of the 2×2 symmetric covariance → ellipse axes/angle
+      const tr = vxx + vyy;
+      const det = vxx * vyy - vxy * vxy;
+      const disc = Math.max(0, (tr / 2) ** 2 - det);
+      const l1 = tr / 2 + Math.sqrt(disc);
+      const l2 = tr / 2 - Math.sqrt(disc);
+      const ax = Math.sqrt(Math.max(0, l1));
+      const bx = Math.sqrt(Math.max(0, l2));
+      const ang = Math.abs(vxy) < 1e-12 && vxx >= vyy ? 0 : 0.5 * Math.atan2(2 * vxy, vxx - vyy);
+      // draw as a polyline approximation of the rotated ellipse (Ctx2D has no
+      // ellipse/rotate — trace it with lineTo, mapping metres→canvas per point).
+      ctx.strokeStyle = pal.accent;
+      ctx.globalAlpha = 0.9;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      const STEPS = 48;
+      const ca = Math.cos(ang);
+      const sa = Math.sin(ang);
+      for (let k = 0; k <= STEPS; k++) {
+        const th = (k / STEPS) * TAU;
+        // 1σ ellipse point in metres, rotated into world frame, centred on mean
+        const ex = ax * Math.cos(th);
+        const ey = bx * Math.sin(th);
+        const wx = mx + ex * ca - ey * sa;
+        const wy = my + ex * sa + ey * ca;
+        if (k === 0) ctx.moveTo(px(wx), py(wy));
+        else ctx.lineTo(px(wx), py(wy));
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    // the satellites (amber dots on the sky ring)
+    ctx.fillStyle = pal.accentDim;
+    for (const s of state.sats) {
+      ctx.beginPath();
+      ctx.arc(px(s.x), py(s.y), 3.2, 0, TAU);
+      ctx.fill();
+    }
+
+    // the TRUE receiver at world origin (ink cross-dot), for the reader's anchor
+    ctx.fillStyle = pal.ink;
+    ctx.beginPath();
+    ctx.arc(px(0), py(0), 2.6, 0, TAU);
+    ctx.fill();
+  },
+};
+
 // ── the registry ─────────────────────────────────────────────────────────────
 // The ONE place a writer's `kind` string is resolved to physics. Add a kind here
 // and it is immediately available to every Simulation island — no React, no
@@ -339,6 +609,7 @@ export const SIM_KINDS = {
   sir,
   wave,
   life,
+  trilateration,
 } satisfies Record<string, SimKind<any>>;
 
 export type SimKindName = keyof typeof SIM_KINDS;

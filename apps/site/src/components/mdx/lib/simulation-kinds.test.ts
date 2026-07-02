@@ -91,8 +91,14 @@ describe("param", () => {
 });
 
 describe("registry", () => {
-  it("exposes the four wave-1 kinds", () => {
-    expect(SIM_KIND_NAMES.sort()).toEqual(["life", "sir", "walk", "wave"]);
+  it("exposes the registered kinds", () => {
+    expect(SIM_KIND_NAMES.sort()).toEqual([
+      "life",
+      "sir",
+      "trilateration",
+      "walk",
+      "wave",
+    ]);
   });
   it("resolves a kind by name and misses gracefully", () => {
     expect(getSimKind("walk")).toBeDefined();
@@ -232,5 +238,108 @@ describe("life kind", () => {
     let st = life.init({ density: 0 }, mulberry32(1));
     for (let i = 0; i < 5; i++) st = life.step(st, {}, mulberry32(1));
     expect((st as { cells: Uint8Array }).cells.some((c) => c === 1)).toBe(false);
+  });
+});
+
+describe("trilateration kind", () => {
+  const tri = SIM_KINDS.trilateration;
+
+  type TriEst = { x: number; y: number };
+  type TriS = {
+    sats: { x: number; y: number }[];
+    ranges: number[];
+    est: TriEst;
+    cloud: TriEst[];
+    t: number;
+  };
+
+  // RMS distance of the estimate cloud from the true receiver (world origin).
+  // This is the reader-visible "size" of the fix — the DOP proxy under test.
+  const cloudSpread = (cloud: TriEst[]): number => {
+    if (cloud.length === 0) return 0;
+    const ss = cloud.reduce((a, e) => a + e.x * e.x + e.y * e.y, 0);
+    return Math.sqrt(ss / cloud.length);
+  };
+
+  const run = (
+    params: { satellites: number; spread: number; noise: number },
+    steps: number,
+    seed: number,
+  ): TriS => {
+    const rng = mulberry32(seed);
+    let st = tri.init(params, rng) as TriS;
+    for (let i = 0; i < steps; i++) st = tri.step(st, params, rng) as TriS;
+    return st;
+  };
+
+  it("places at least the requested satellites (min 3)", () => {
+    const st = tri.init({ satellites: 6, spread: 220, noise: 5 }, mulberry32(1)) as TriS;
+    expect(st.sats).toHaveLength(6);
+    // floor at 3 even if the reader asks for fewer
+    const st2 = tri.init({ satellites: 1, spread: 220, noise: 5 }, mulberry32(1)) as TriS;
+    expect(st2.sats).toHaveLength(3);
+  });
+
+  it("init is deterministic and pre-seeds a non-empty cloud for a static frame", () => {
+    const a = tri.init({ satellites: 5, spread: 200, noise: 6 }, mulberry32(7)) as TriS;
+    const b = tri.init({ satellites: 5, spread: 200, noise: 6 }, mulberry32(7)) as TriS;
+    expect(a.cloud.length).toBeGreaterThan(3); // meaningful single-frame render
+    expect(a.cloud).toEqual(b.cloud); // reproducible given the same seed
+  });
+
+  it("keeps every estimate finite and on a sane bound", () => {
+    const st = run({ satellites: 6, spread: 180, noise: 8 }, 120, 3);
+    expect(st.cloud.length).toBeGreaterThan(0);
+    for (const e of st.cloud) {
+      expect(Number.isFinite(e.x)).toBe(true);
+      expect(Number.isFinite(e.y)).toBe(true);
+      // solver caps blow-ups well inside a few world-widths (< 4·120 m)
+      expect(Math.hypot(e.x, e.y)).toBeLessThan(600);
+    }
+    // the ring buffer is bounded — long runs don't grow without limit
+    expect(st.cloud.length).toBeLessThanOrEqual(160);
+  });
+
+  it("with zero noise the fix collapses onto the true receiver", () => {
+    const st = run({ satellites: 5, spread: 220, noise: 0 }, 40, 11);
+    // no measurement noise ⇒ estimate ≈ origin (sub-metre) regardless of geometry
+    expect(cloudSpread(st.cloud)).toBeLessThan(1);
+  });
+
+  it("GOOD geometry (wide spread) gives a TIGHTER fix than BAD geometry (narrow spread) at equal noise", () => {
+    const NOISE = 6;
+    const SATS = 6;
+    // average over several seeds so the comparison is robust, not a lucky draw
+    let goodSum = 0;
+    let badSum = 0;
+    const SEEDS = 8;
+    for (let s = 0; s < SEEDS; s++) {
+      const good = run({ satellites: SATS, spread: 300, noise: NOISE }, 120, 100 + s);
+      const bad = run({ satellites: SATS, spread: 30, noise: NOISE }, 120, 100 + s);
+      goodSum += cloudSpread(good.cloud);
+      badSum += cloudSpread(bad.cloud);
+    }
+    const good = goodSum / SEEDS;
+    const bad = badSum / SEEDS;
+    expect(good).toBeGreaterThan(0); // noise does produce a real cloud
+    expect(bad).toBeGreaterThan(good); // bad geometry inflates the fix (high DOP)
+  });
+
+  it("advances its clock and refreshes the last measured ranges each step", () => {
+    const rng = mulberry32(4);
+    let st = tri.init({ satellites: 4, spread: 200, noise: 5 }, rng) as TriS;
+    st = tri.step(st, { satellites: 4, spread: 200, noise: 5 }, rng) as TriS;
+    st = tri.step(st, { satellites: 4, spread: 200, noise: 5 }, rng) as TriS;
+    expect(st.t).toBe(2);
+    expect(st.ranges).toHaveLength(4);
+    for (const r of st.ranges) expect(Number.isFinite(r)).toBe(true);
+  });
+
+  it("draw paints the geometry, cloud and error ellipse without a DOM", () => {
+    const rec = makeCtx(240, 200);
+    const st = tri.init({ satellites: 5, spread: 200, noise: 6 }, mulberry32(2));
+    tri.draw(rec.ctx, st, 240, 200, { satellites: 5, spread: 200, noise: 6 }, PAL);
+    expect(rec.fills).toBeGreaterThan(5); // cloud dots + satellites + receiver
+    expect(rec.strokes).toBeGreaterThan(0); // range circles + 1σ ellipse
   });
 });

@@ -1,0 +1,621 @@
+---
+title: "Midway: The Carrier Battle That Turned an Ocean"
+format: theater
+channels:
+  - history
+  - geopolitics
+summary: "In June 1942, US codebreakers handed three carrier task forces foreknowledge of a Japanese ambush, and when dive bombers arrived at precisely the right moment on 4 June, Japan lost four fleet carriers and the strategic initiative of the Pacific War in a single afternoon."
+publishedAt: 2026-07-02T09:00:00.000Z
+sources:
+  - title: "Battle of Midway — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Battle_of_Midway"
+  - title: "Doolittle Raid — National WWII Museum (Turning Point)"
+    url: "https://turningpoint1942.org/doolittle-raid.html"
+  - title: "Battle of Midway — History.com"
+    url: "https://www.history.com/articles/battle-of-midway"
+  - title: "Battle of Midway — National WWII Museum"
+    url: "https://www.nationalww2museum.org/war/articles/battle-midway"
+  - title: "US Order of Battle at Midway — HyperWar / ibiblio.org"
+    url: "https://www.ibiblio.org/hyperwar/PTO/TideTurns/Midway/Midway-OOB.html"
+  - title: "Battle of Midway: The Complete Intelligence Story — War on the Rocks"
+    url: "https://warontherocks.com/2016/06/the-battle-of-midway-the-complete-intelligence-story/"
+  - title: "Torpedo Squadron 8 at Midway — Warfare History Network"
+    url: "https://warfarehistorynetwork.com/article/torpedo-squadron-8-their-heroic-flight-at-the-battle-of-midway/"
+  - title: "Japanese Records Shed New Light on Midway — Warfare History Network"
+    url: "https://warfarehistorynetwork.com/article/revelations-from-japanese-records-shed-new-light-on-the-epic-battle-of-midway/"
+  - title: "Torpedo Attack at Midway — Pacific Eagles"
+    url: "https://pacificeagles.net/battle-of-midway-the-torpedo-attack/"
+  - title: "Shattered Sword: The Untold Story of the Battle of Midway — Parshall and Tully (review)"
+    url: "http://cv5yorktown.com/about/books-and-film/shattered-sword-the-untold-story-of-the-battle-of-midway/"
+  - title: "Midway: Was It a Decisive Battle? — USNI Naval History Magazine"
+    url: "https://www.usni.org/magazines/naval-history-magazine/2005/october/midway-decisive-battle"
+  - title: "The Battle of Midway: The Complete Intelligence Story — Station HYPO"
+    url: "https://stationhypo.com/2025/06/05/the-battle-of-midway-the-complete-intelligence-story/"
+  - title: "WWII Book Review: Shattered Sword — HistoryNet"
+    url: "https://historynet.com/wwii-book-review-shattered-sword/"
+  - title: "Coral Sea and Midway: Two Pivotal Sea Battles — The Collector"
+    url: "https://www.thecollector.com/coral-sea-and-midway-pivotal-sea-battles/"
+draft: false
+---
+
+import {
+  BattleMap,
+  OrderOfBattle,
+  ForceComparison,
+  Sankey,
+  RouteMap,
+  Timeline,
+  EventCascade,
+  StatBand,
+  Pullquote,
+  Annotation,
+  Callout,
+  Detail,
+  Definition,
+  Sidenote,
+} from "../../components/mdx";
+import { getImage } from "astro:assets";
+import terrain from "./_assets/midway-carrier-battle/midway-terrain.png";
+
+export const battleMap = await getImage({ src: terrain, width: 1200 });
+
+It is 04:30 on 4 June 1942, and Vice Admiral Chuichi Nagumo is launching his aircraft from the dark North Pacific. The targets are the sand-and-coral spits of Midway Atoll, 240 miles to the southeast. What Nagumo does not know — what Yamamoto's entire Combined Fleet does not know — is that three American carrier task forces are already in position northeast of Midway, waiting. They have been there since June 2nd.
+<Annotation client:load term="the US carriers' position, known as 'Point Luck'" note="Admiral Chester Nimitz ordered TF16 (Enterprise and Hornet, under Spruance) to sail May 28 and TF17 (Yorktown, under Fletcher) to sail May 30, rendezvousing at 'Point Luck,' approximately 350 miles northeast of Midway, on June 2. This positioning — close enough to strike but outside probable Japanese search patterns — was Nimitz's direct implementation of Commander Joseph Rochefort's intelligence estimate. Sources: Wikipedia (Battle of Midway), NHHC H-Gram 006-1." />
+They are waiting because an American naval intelligence team in a basement in Honolulu has spent six weeks reading Japan's mail.
+
+The Battle of Midway, fought 4–7 June 1942, is the most studied naval engagement of the twentieth century — and one of the most mythologized. The popular version, assembled from Mitsuo Fuchida's unreliable 1955 memoir and fixed in place by the 1976 film, offers a "five-minute miracle": Japan's carriers were seconds from launching a devastating strike when American dive bombers arrived from nowhere and destroyed them in a single, improbable moment of luck. That version is wrong in almost every particular — wrong on the timing, wrong on what was where on which deck, wrong on why the carriers burned so catastrophically.
+<Annotation client:load term="Parshall and Tully's Shattered Sword (2005)" note="Jonathan Parshall and Anthony Tully's Shattered Sword: The Untold Story of the Battle of Midway (2005) is the standard corrective scholarly work. Drawing on Japanese primary sources — the official Senshi Sosho (War History Series), translated carrier action reports, and casualty records — they demonstrate that Fuchida's account was fabricated on multiple key points. Reviews: HistoryNet, cv5yorktown.com. The present piece follows their corrections throughout." />
+
+The real story is less miraculous and more interesting. It is a story about the structural power of intelligence — how Commander Joseph Rochefort's Station HYPO codebreaking operation handed Nimitz a precise prediction of when and where the Japanese would strike, and how Nimitz acted on that prediction with a precision his Japanese counterpart never suspected. It is a story about Nagumo's genuine dilemma, about the sequential grinding down of Japanese air defenses by torpedo squadrons that never scored a hit but died to make the final stroke possible, and about the accident of timing that brought three separate American dive-bomber groups over three Japanese carriers at almost exactly the same moment.
+
+Five minutes had nothing to do with it.
+
+---
+
+## The Road to Midway: Six Months of Japanese Advance
+
+Pearl Harbor on 7 December 1941 did not destroy the American carrier force.
+<Annotation client:load term="The US carriers were at sea on 7 December 1941" note="USS Enterprise was returning from Wake Island delivery of Marine fighters; USS Lexington was ferrying aircraft to Midway; USS Saratoga was on the US West Coast. All three survived the attack. This was the pivotal accident that defined the Pacific War's subsequent character. Wikipedia (Battle of Midway), NHHC H-Gram 006-1." />
+All three US Pacific Fleet carriers were at sea. Yamamoto had planned to destroy them — his strategic theory depended on it. Without them, the American ability to project power across the Pacific would depend on a battleship fleet that had just been devastated. With them, the war's outcome was in doubt from the first day.
+
+The six months that followed Pearl Harbor were months of Japanese strategic expansion on a scale never before achieved in the Pacific. Japanese forces seized Wake Island, the Philippines, Hong Kong, Malaya, Singapore, the Dutch East Indies, and Burma with a speed that stunned Western capitals. By spring 1942, Japan's defensive perimeter extended from the Aleutians to New Guinea. And yet the US carriers remained at large, striking back in raid after raid — the Doolittle Raid on Tokyo in April 1942 was the most psychologically significant, but the Coral Sea in early May 1942 was strategically the more consequential.
+<Annotation client:load term="Battle of the Coral Sea, 4–8 May 1942" note="The Battle of the Coral Sea was the first naval battle in history fought entirely by carrier aircraft — no surface ships came within sight of each other. The US lost Lexington and suffered severe damage to Yorktown. Japan suffered damage to Shokaku (which would require months in drydock) and significant aircrew losses in Zuikaku's air group. Both Shokaku and Zuikaku were consequently absent from the Midway operation. Sources: Wikipedia (Battle of Midway), The Collector (Coral Sea and Midway)." />
+At Coral Sea, the Japanese invasion force heading for Port Moresby was turned back — the first check to Japanese expansion. Japan lost light carrier Shoho, and fleet carriers Shokaku and Zuikaku suffered damage or aircrew losses that would keep them out of the forthcoming operation. This would matter enormously.
+
+Yamamoto's response to the unfinished business of the carrier war was Operation MI — the seizure of Midway Atoll and the destruction of the American carrier force in a single decisive engagement.
+<Annotation client:load term="Yamamoto's Operation MI" note="Operation MI was planned in April 1942 and approved over objections from the Naval General Staff, who preferred operations toward Australia or the Indian Ocean. Yamamoto's logic: Midway was close enough to Hawaii to threaten it, and its capture would force the US to commit its carriers to a counterattack — where they could be destroyed by Japan's superior carrier force. His leverage was the threat to resign. Wikipedia (Battle of Midway), NHHC H-Gram 006-1." />
+Yamamoto's plan was elaborate: a multi-pronged assault involving more than 200 ships, including a diversionary operation against the Aleutian Islands intended to scatter American forces.
+<Annotation client:load term="The Aleutian operation was not a simple feint" note="Parshall and Tully (via HistoryNet review and cv5yorktown.com) correct the popular account that the Aleutian operation (AL) was designed as a feint to draw US carriers northward. It had its own strategic objectives — seizing Attu and Kiska — and the Aleutian and Midway strikes were planned as near-simultaneous. It was not an elaborate trap but an economy-of-force operation run concurrently." />
+At the core of it would be the Kido Butai — the six-carrier striking force that had attacked Pearl Harbor.
+
+For Midway, the Kido Butai would field four fleet carriers: Akagi, Kaga, Soryu, and Hiryu — with Shokaku and Zuikaku out of action. The absence of those two veteran carriers and their experienced air groups is one of the structural facts that shaped what followed.
+
+<Timeline client:load caption="Road to Midway: December 1941 – June 1942"
+  events={[
+    { date: "1941-12-07", label: "Pearl Harbor — but the US carriers survive", detail: "Japan's attack destroys 8 battleships and 188 aircraft. But all three US Pacific Fleet carriers — Enterprise, Lexington, Saratoga — are at sea. The Pacific War's carrier-vs-carrier character is set from day one." },
+    { date: "1942-02-01", label: "US carriers begin raiding strikes", detail: "Halsey's Enterprise-Yorktown task forces raid Marshall and Gilbert Islands, demonstrating that US carriers cannot be ignored. Yamamoto accelerates planning for a decisive engagement." },
+    { date: "1942-04-18", label: "Doolittle Raid on Tokyo", detail: "16 B-25s launched from Hornet strike Tokyo and four other Japanese cities. Physical damage minimal, but psychological shock enormous. Yamamoto's argument for seizing Midway — to extend Japan's defensive perimeter and prevent further American raids — gains political weight." },
+    { date: "1942-05-04", label: "Battle of the Coral Sea begins", detail: "The first carrier battle in history — no surface ship sees another. US loses Lexington; Yorktown damaged. Japan loses Shoho; Shokaku damaged; Zuikaku aircrew depleted. Both large Japanese carriers are unavailable for Midway." },
+    { date: "1942-05-20", label: "Station HYPO decrypts Operation MI", detail: "Commander Joseph Rochefort and Station HYPO — the Pearl Harbor codebreaking unit — piece together the target of the Japanese operation from partially decrypted JN-25b messages. The target is identified as 'AF.'" },
+    { date: "1942-05-22", label: "The water ruse confirms 'AF = Midway'", detail: "At Nimitz's request, Midway sends a fake plain-language radio message reporting its water distillation plant broken. Within days, Japan's own intercepts, decrypted by HYPO, report 'AF is short of water.' The target is confirmed beyond doubt." },
+    { date: "1942-05-27", label: "Layton briefs Nimitz: attack June 4–5, bearing 325°, ~175 miles out", detail: "Fleet Intelligence Officer Edwin Layton's prediction would prove accurate to within five miles and five minutes. Nimitz orders his carriers to sea." },
+    { date: "1942-06-02", label: "US task forces rendezvous at 'Point Luck'", detail: "TF16 (Enterprise + Hornet, under Rear Admiral Raymond Spruance) and TF17 (Yorktown, under Rear Admiral Frank Jack Fletcher) meet 350 miles northeast of Midway. Fletcher takes overall command. They wait." },
+    { date: "1942-06-03", label: "PBY patrol planes spot Japanese invasion fleet 700 miles out", detail: "Army B-17s from Midway attack the Japanese transport force but score no hits on the moving ships. The main carrier striking force — Kido Butai — is not yet sighted. Nagumo maintains radio silence." }
+  ]} />
+
+The codebreaking story is, in retrospect, the hinge of everything. Without it, three American carriers would have been groping in the wrong quadrant of the Pacific when Nagumo struck Midway. With it, Nimitz had not just warning but specifics: the attack was expected on 4–5 June, from the northwest, at approximately 175 miles' distance, around 0700.
+<Annotation client:load term="Layton's prediction, accurate to five miles and five minutes" note="Edwin Layton, Nimitz's fleet intelligence officer, briefed the admiral on May 27 with a prediction that proved extraordinary. His 'five, five, five' later referred to — five degrees off, five miles off, five minutes off — was a summary of how close the prediction was. The prediction was based on Rochefort's HYPO decryption work and Layton's own analysis. War on the Rocks (Complete Intelligence Story), NHHC H-Gram 006-1, Station HYPO website." />
+Nimitz acted on it. He was right to do so.
+
+---
+
+## The Forces
+
+<StatBand client:visible caption="Midway — the strategic stakes, June 1942"
+  stats={[
+    { value: 248, label: "JAPANESE CARRIER AIRCRAFT", sub: "across 4 fleet carriers (Akagi, Kaga, Soryu, Hiryu)", href: "https://en.wikipedia.org/wiki/Battle_of_Midway" },
+    { value: 233, label: "US CARRIER AIRCRAFT", sub: "across Enterprise, Hornet, Yorktown", href: "https://www.ibiblio.org/hyperwar/PTO/TideTurns/Midway/Midway-OOB.html" },
+    { value: 122, label: "MIDWAY LAND-BASED AIRCRAFT", sub: "PBYs, SBDs, B-17s, fighters, torpedo planes", href: "https://en.wikipedia.org/wiki/Battle_of_Midway" },
+    { value: 4, label: "JAPANESE CARRIERS (Kido Butai)", sub: "vs 3 US carriers: the going-in balance", href: "https://www.nationalww2museum.org/war/articles/battle-midway", group: false },
+    { value: 3057, label: "JAPANESE KIA", sub: "all four carriers sunk in 48 hours", href: "https://www.nationalww2museum.org/war/articles/battle-midway" },
+    { value: 307, label: "US KIA", sub: "incl. Yorktown, Hammann; ground crew", href: "https://en.wikipedia.org/wiki/Battle_of_Midway" }
+  ]} />
+
+The two forces that met at Midway in June 1942 were not evenly matched on paper. Japan had numerical carrier superiority and the initiative; its Kido Butai was the most experienced and battle-tested carrier striking force in the world. What equalized the battle — and ultimately reversed it — was intelligence, geography, and the compound failures of a plan that assumed surprise.
+
+<RouteMap client:visible
+  caption="Central Pacific theater, June 1942 — Japanese approach and US positioning"
+  routes={[
+    { from: [135.5, 34.7], to: [171.5, 30.5], label: "Kido Butai sortie from Hashirajima (May 27) toward Midway", kind: "march" },
+    { from: [171.5, 30.5], to: [177.4, 28.2], label: "Japanese approach (bearing 325° from Midway)", kind: "march" },
+    { from: [135.5, 34.7], to: [163.0, 31.0], label: "Yamamoto's Main Force (Combined Fleet) — ~600 miles behind Kido Butai", kind: "march" },
+    { from: [-157.9, 21.3], to: [-171.0, 29.0], label: "TF16 + TF17 sortie from Pearl Harbor — Point Luck, NE of Midway", kind: "march" }
+  ]}
+  points={[
+    { at: [177.4, 28.2], label: "Midway Atoll" },
+    { at: [-157.9, 21.3], label: "Pearl Harbor" },
+    { at: [-171.0, 29.0], label: "Point Luck (US TFs, June 2)" },
+    { at: [135.5, 34.7], label: "Hashirajima (Japan)" },
+    { at: [-170.0, 53.0], label: "Aleutians (diversion)" }
+  ]}
+  values={{ JPN: 80, USA: 70 }}
+  labels={{ JPN: "Japan", USA: "United States" }}
+/>
+
+The Kido Butai — Nagumo's carrier striking force — sortied from Hashirajima on 27 May 1942 with four fleet carriers.
+<Annotation client:load term="Akagi, Kaga, Soryu, Hiryu" note="The Kido Butai for Operation MI comprised four carriers: Akagi (Nagumo's flagship, 60 aircraft), Kaga (74 aircraft — an unusually large air group, largely B5N torpedo bombers), Soryu (57 aircraft), and Hiryu (57 aircraft). Together they embarked 248 aircraft. Sources: Wikipedia (Battle of Midway), NHHC H-Gram 006-1. Note: these four were the survivors of the Pearl Harbor Kido Butai after Shokaku and Zuikaku became unavailable." />
+These four ships and their 248 aircraft were Yamamoto's decisive instrument. Trailing several hundred miles behind them was Yamamoto's own Main Force — the super-battleship Yamato and her consorts — too far away to provide any protection on 4 June.
+<Annotation client:load term="Yamamoto's Main Force approximately 600 miles northwest on June 4" note="Yamamoto's Combined Fleet Main Force, including the battleship Yamato, was positioned approximately 600 miles northwest of Midway during the carrier battle, far too distant to influence events or provide anti-aircraft cover. This separation — which Yamamoto intended to conceal his position from US code-breakers — left Nagumo without battleship support precisely when it was needed. Sources: Wikipedia, Britannica (Battle of Midway)." />
+When the battle's crisis came, Yamamoto would be a spectator.
+
+<ForceComparison client:visible
+  caption="Forces going in — Midway, 4 June 1942 (carrier striking forces)"
+  sides={[
+    { label: "Japan (Kido Butai)", tone: "enemy" },
+    { label: "United States (TF16 + TF17)", tone: "friendly" }
+  ]}
+  metrics={[
+    { label: "Fleet carriers", values: [4, 3], unit: "ships" },
+    { label: "Carrier aircraft", values: [248, 233], unit: "planes" },
+    { label: "Land-based aircraft (Midway)", values: [0, 122], unit: "planes" },
+    { label: "Escort warships", values: [11, 15], unit: "ships" }
+  ]} />
+
+<OrderOfBattle
+  caption="Order of battle — Midway, 4–7 June 1942"
+  sides={[
+    {
+      id: "japan",
+      label: "Imperial Japanese Navy — Kido Butai (First Mobile Force)",
+      commander: "Vice Admiral Chuichi Nagumo (flagship: Akagi)",
+      tone: "enemy",
+      formations: [
+        {
+          name: "CarDiv 1 — Akagi and Kaga", kind: "fleet", strength: "134 aircraft",
+          commander: "Vice Admiral Nagumo (Akagi); Capt. Jisaku Okada (Kaga)",
+          note: "Akagi: Nagumo's flagship — 60 aircraft (18 Zero, 18 D3A Val, 18 B5N Kate + 6 reserve). Kaga: oversized air group — 74 aircraft, heavy B5N torpedo-bomber component",
+          units: [
+            { name: "Akagi", strength: "60 aircraft", note: "VF: 18 A6M Zero; VB: 18 D3A2 Val dive bombers; VT: 18 B5N2 Kate torpedo bombers + 6 reserve" },
+            { name: "Kaga", strength: "74 aircraft", note: "VF: 18 Zero; VB: 18 D3A Val; VT: 27 B5N Kate + 11 reserve — unusually large torpedo-bomber component" }
+          ]
+        },
+        {
+          name: "CarDiv 2 — Soryu and Hiryu", kind: "fleet", strength: "114 aircraft",
+          commander: "Rear Admiral Tamon Yamaguchi (Hiryu)",
+          note: "CarDiv 2 operated as a unit slightly separated from CarDiv 1, with Hiryu to the north — a separation that would save her from the initial dive-bomber strike",
+          units: [
+            { name: "Soryu", strength: "57 aircraft", note: "VF: 18 Zero; VB: 18 D3A Val; VT: 18 B5N Kate + 3 reserve" },
+            { name: "Hiryu", strength: "57 aircraft", note: "VF: 18 Zero; VB: 18 D3A Val; VT: 18 B5N Kate + 3 reserve. Sole survivor of the first US strike" }
+          ]
+        },
+        {
+          name: "Escort screen — CruDiv 8 + DesRon 10", kind: "fleet", strength: "11 warships",
+          commander: "Rear Admiral Hiroaki Abe (battleships); Capt. Masa-aki Suzuki (Tone, Chikuma)",
+          note: "Escort included battleships Haruna and Kirishima; heavy cruisers Tone and Chikuma (search planes); light cruiser Nagara; 11 destroyers. Tone's delayed search plane would prove fateful.",
+          units: [
+            { name: "Heavy cruisers Tone and Chikuma", note: "Each carried 6 floatplane scouts. Tone's #4 scout was delayed 30 minutes by a catapult malfunction — a delay with major consequences for the battle" },
+            { name: "Battleships Haruna and Kirishima", note: "Anti-aircraft escort" }
+          ]
+        }
+      ]
+    },
+    {
+      id: "usa",
+      label: "United States Pacific Fleet — Task Forces 16 and 17",
+      commander: "Rear Admiral Frank Jack Fletcher (TF17, overall command); Rear Admiral Raymond A. Spruance (TF16)",
+      tone: "friendly",
+      formations: [
+        {
+          name: "Task Force 17 — USS Yorktown (CV-5)", kind: "fleet", strength: "75 aircraft",
+          commander: "Rear Admiral Frank Jack Fletcher",
+          note: "Yorktown was patched at Pearl Harbor in 72 hours after Coral Sea damage — a dry-dock repair originally estimated at 90 days. Fletcher held senior command of the combined operation.",
+          units: [
+            { name: "VF-3 (Fighting Three)", strength: "25 F4F-4 Wildcat", note: "Fighter squadron; 6 aircraft provided as escort for VT-3 torpedo bombers — an escort that suffered heavily" },
+            { name: "VB-3 (Bombing Three)", strength: "18 SBD-3 Dauntless", note: "Under Lt. Max Leslie; would sink Soryu on June 4; Leslie accidentally dropped his own bomb before the attack due to faulty arming" },
+            { name: "VS-5 (Scouting Five)", strength: "19 SBD-3 Dauntless", note: "Secondary dive-bomber element" },
+            { name: "VT-3 (Torpedo Three)", strength: "13 TBD-1 Devastator", note: "Under Lt. Cdr. Lance Massey (killed in action); attacked Hiryu; 10 of 12 attacking planes lost, no hits" }
+          ]
+        },
+        {
+          name: "Task Force 16 — USS Enterprise (CV-6) and USS Hornet (CV-8)", kind: "fleet", strength: "158 aircraft",
+          commander: "Rear Admiral Raymond A. Spruance",
+          note: "Spruance was a cruiser admiral substituting for the hospitalized Halsey — a decision Nimitz made after Halsey diagnosed himself with dermatitis. Spruance's caution and timing judgment on June 4 would prove decisive.",
+          units: [
+            { name: "Enterprise air group (VF-6 / VB-6 / VS-6 / VT-6)", strength: "79 aircraft (27 F4F-4, 19+19 SBD, 14 TBD)", note: "VB-6 under Lt. Cdr. Richard Best; VS-6 under Lt. Cdr. Wilmer Gallaher. Key: Best's dive on Akagi was an improvised redirect — most of VB-6 dived on Kaga by coordination error, and Best pulled off to hit Akagi with just two wingmen" },
+            { name: "Hornet air group (VF-8 / VB-8 / VS-8 / VT-8)", strength: "79 aircraft (27 F4F-4, 19+18 SBD, 15 TBD)", note: "VT-8 under Lt. Cdr. John C. Waldron. The most famous unit of the battle. Waldron found the carriers by dead reckoning when navigation failed; all 15 TBDs shot down, 29 of 30 aircrew killed. Sole survivor: Ensign George Gay, who watched the dive-bomber strike from the water" }
+          ]
+        },
+        {
+          name: "Midway Island Air Garrison (USMC, USAAF, USN patrol)",
+          kind: "wing", strength: "≈122–127 aircraft",
+          commander: "Commander Cyril Simard (NAS Midway)",
+          note: "Included 31 PBY Catalinas, 17–23 B-17s, 20 F2A Buffalo and 7 F4F Wildcat fighters (USMC VMF-221), 27 SBDs (VMSB-241), 6 TBF Avengers (VT-8 land detachment), 4 B-26 Marauders, and others",
+          units: [
+            { name: "PBY Catalina patrol planes", strength: "31–32", note: "The early-warning net. A PBY found the Japanese carrier force at 05:34; a second confirmed the inbound strike at 05:45" },
+            { name: "USMC fighters (VMF-221)", strength: "20 F2A Buffalo + 7 F4F Wildcat", note: "Badly outclassed by Zero escort fighters; 13 Buffalos and 2 Wildcats lost intercepting the Japanese first wave" }
+          ]
+        }
+      ]
+    }
+  ]} />
+
+The Japanese formation had a structural weakness that would prove fatal: its seven search planes, launched at 04:30 to scout 300-mile sectors ahead of the fleet, were insufficient to cover the approaches — and one of them, Tone's number 4 floatplane, was launched 30 minutes late due to a catapult malfunction.
+<Annotation client:load term="Tone's delayed scout — the malfunction that changed everything" note="Tone heavy cruiser's Number 4 search plane was supposed to cover Sector 5 — the exact sector where the US carriers were located. The plane launched 30 minutes late due to a catapult problem and thus arrived over the US force 30 minutes later than scheduled, reporting contact at 07:40 instead of ~07:10. Had the scout been on time, Nagumo would have known about the US carriers before he ordered the rearmament at 07:15. Sources: Wikipedia (Battle of Midway), Britannica (Battle of Midway), Warfare History Network (Japanese Records)." />
+That 30-minute delay would put Nagumo in an impossible position at exactly the wrong moment.
+
+---
+
+## The Battle: Phase by Phase
+
+<BattleMap client:visible
+  src={battleMap.src}
+  width={battleMap.attributes.width}
+  height={battleMap.attributes.height}
+  alt="Central Pacific Ocean showing Midway Atoll, Japanese approach from the northwest, and US carrier positions to the northeast"
+  caption="Midway, 4 June 1942 — the carrier battle, phase by phase"
+  sides={[
+    { id: "japan", label: "Japan (Kido Butai)", tone: "enemy" },
+    { id: "usa", label: "United States (TF16 + TF17)", tone: "friendly" }
+  ]}
+  phases={[
+    {
+      title: "Pre-battle: Japanese approach + US positioning",
+      time: "May 28 – June 3",
+      note: "Japan's <strong>Kido Butai</strong> approaches from the NW in radio silence. US carriers hold at 'Point Luck' NE of Midway. Midway-based PBYs run daily search arcs. US carriers are <strong>outside Japanese search range</strong> until Kido Butai is sighted June 3.",
+      units: [
+        { side: "japan", type: "naval", label: "Kido Butai (Nagumo)", strength: "4 carriers, 248 aircraft", at: [0.22, 0.34] },
+        { side: "japan", type: "hq", label: "Yamamoto's Main Force (far NW)", strength: "Yamato + fleet", at: [0.12, 0.28] },
+        { side: "usa", type: "naval", label: "TF16 (Spruance — Enterprise, Hornet)", strength: "2 carriers, 158 aircraft", at: [0.77, 0.30] },
+        { side: "usa", type: "naval", label: "TF17 (Fletcher — Yorktown)", strength: "1 carrier, 75 aircraft", at: [0.77, 0.36] },
+        { side: "usa", type: "air", label: "Midway garrison aircraft", strength: "≈122–127 planes", at: [0.56, 0.42] }
+      ],
+      fronts: [
+        { side: "japan", kind: "line", points: [[0.10, 0.28], [0.22, 0.30], [0.30, 0.36]] },
+        { side: "usa", kind: "area", points: [[0.70, 0.26], [0.84, 0.26], [0.84, 0.40], [0.70, 0.40]] }
+      ]
+    },
+    {
+      title: "Phase 1: Nagumo strikes Midway; first wave launches (04:30, June 4)",
+      time: "04:30 – 07:00",
+      note: "Nagumo launches 108-plane first wave against Midway. Midway fighters scramble — outclassed. Japanese bomb Midway hard but runways remain operational. Tomonaga radios: <strong>second strike on Midway required</strong>. 7 Japanese search scouts fan out — Tone #4 is 30 min late.",
+      units: [
+        { side: "japan", type: "naval", label: "Kido Butai — 4 carriers", strength: "248 aircraft", at: [0.32, 0.33] },
+        { side: "japan", type: "air", label: "1st wave: 108 aircraft (36 Val + 36 Kate + 36 Zero)", strength: "108 planes", at: [0.44, 0.38] },
+        { side: "usa", type: "naval", label: "TF16 + TF17 (NE, alerted)", strength: "3 carriers", at: [0.77, 0.30] },
+        { side: "usa", type: "air", label: "Midway fighters intercept (outclassed)", strength: "20 F2A + 7 F4F", at: [0.55, 0.40] }
+      ],
+      movements: [
+        { side: "japan", from: [0.32, 0.33], to: [0.55, 0.40], kind: "attack", label: "First wave →  Midway (108 planes)" }
+      ],
+      fronts: [
+        { side: "japan", kind: "line", points: [[0.10, 0.26], [0.32, 0.33]] }
+      ]
+    },
+    {
+      title: "Phase 2: Nagumo's dilemma — rearm order and reversal (07:15 – 09:18)",
+      time: "07:15 – 09:18",
+      note: "07:15: Nagumo orders reserve rearmed <strong>bombs → contact bombs</strong> for 2nd Midway strike. 07:40: Tone #4 scout reports US surface force (no carrier yet). 08:20: Scout confirms <strong>carrier present</strong>. Nagumo reverses: <strong>back to torpedoes</strong>. Yamaguchi urges immediate launch; Nagumo waits to recover first wave. Midway planes attack Kido Butai in waves — zero hits.",
+      units: [
+        { side: "japan", type: "naval", label: "Kido Butai (rearming, recovering first wave)", strength: "4 carriers", at: [0.34, 0.33] },
+        { side: "japan", type: "air", label: "Returning 1st wave (Tomonaga)", strength: "~90 survivors", at: [0.42, 0.36] },
+        { side: "usa", type: "air", label: "Midway attack waves (B-17s, TBFs, SBDs, B-26s)", strength: "63 planes, zero hits", at: [0.44, 0.36] },
+        { side: "usa", type: "naval", label: "US carriers prepare strike (launching begins)", strength: "3 carriers", at: [0.75, 0.29] }
+      ],
+      movements: [
+        { side: "usa", from: [0.56, 0.42], to: [0.40, 0.35], kind: "attack", label: "Midway attacks (all fail)" },
+        { side: "usa", from: [0.77, 0.30], to: [0.62, 0.33], kind: "advance", label: "US carrier strike launches" }
+      ]
+    },
+    {
+      title: "Phase 3: Torpedo squadrons — sacrifice and the degradation of the CAP (09:18 – 10:10)",
+      time: "09:18 – 10:10",
+      note: "Three US torpedo squadrons attack in sequence. <strong>VT-8</strong> (Hornet): all 15 TBDs shot down, 29/30 crew KIA. <strong>VT-6</strong> (Enterprise): 10 of 14 lost. <strong>VT-3</strong> (Yorktown): 10 of 12 lost. <strong>Zero hits</strong>. But: Japanese CAP — fighting for 2+ hours — is exhausted, low on fuel, and concentrated <strong>at low altitude</strong>. Dive bombers are en route from high altitude.",
+      units: [
+        { side: "japan", type: "naval", label: "Kido Butai (maneuvering, recovering aircraft)", strength: "4 carriers", at: [0.36, 0.34] },
+        { side: "japan", type: "air", label: "CAP Zeros (forced to low altitude)", strength: "~24 fighters", at: [0.42, 0.37] },
+        { side: "usa", type: "air", label: "VT-8: all 15 TBDs lost, 29/30 KIA (09:18)", strength: "15 → 0 TBDs", at: [0.46, 0.38] },
+        { side: "usa", type: "air", label: "VT-6: 10/14 lost (09:40) + VT-3: 10/12 lost (10:05)", strength: "26 → 8 survivors", at: [0.47, 0.34] }
+      ],
+      movements: [
+        { side: "usa", from: [0.62, 0.33], to: [0.44, 0.36], kind: "attack", label: "VT-8, VT-6, VT-3 attack in sequence" }
+      ]
+    },
+    {
+      title: "Phase 4: The dive-bomber strike — three carriers in six minutes (~10:22–10:25)",
+      time: "10:22 – 10:25",
+      note: "VB-6/VS-6 (Enterprise) arrive at altitude and dive: <strong>Kaga</strong> hit by multiple bombs; Best's element redirects to <strong>Akagi</strong> (1–2 hits, carrier ablaze). VB-3 (Yorktown) dives on <strong>Soryu</strong> (3 hits). Three carriers mortally wounded in minutes. <strong>Hiryu</strong> — screened north — survives. Note: carriers were NOT launching aircraft from the flight deck; strike planes were in the <strong>enclosed hangar decks</strong>, being rearmed — making the sealed hangars fatal furnaces.",
+      units: [
+        { side: "japan", type: "naval", label: "Akagi (burning) — Nagumo transfers flag", strength: "mortally hit", at: [0.37, 0.30] },
+        { side: "japan", type: "naval", label: "Kaga (burning, Capt. Okada killed)", strength: "mortally hit", at: [0.40, 0.36] },
+        { side: "japan", type: "naval", label: "Soryu (burning, Capt. Yanagimoto stays aboard)", strength: "mortally hit", at: [0.42, 0.32] },
+        { side: "japan", type: "naval", label: "Hiryu — survives; CarDiv 2 (Yamaguchi)", strength: "intact, ~57 aircraft", at: [0.34, 0.27] },
+        { side: "usa", type: "air", label: "VB-6/VS-6 (Enterprise) → Kaga + Akagi", strength: "32 SBDs", at: [0.46, 0.30] },
+        { side: "usa", type: "air", label: "VB-3 (Yorktown) → Soryu", strength: "17 SBDs", at: [0.47, 0.33] }
+      ],
+      movements: [
+        { side: "usa", from: [0.56, 0.26], to: [0.40, 0.33], kind: "attack", label: "VB-6/VS-6 dive on Kaga + Akagi" },
+        { side: "usa", from: [0.60, 0.30], to: [0.42, 0.32], kind: "attack", label: "VB-3 dives on Soryu" }
+      ],
+      fronts: [
+        { side: "japan", kind: "area", points: [[0.33, 0.25], [0.46, 0.25], [0.46, 0.40], [0.33, 0.40]] }
+      ]
+    },
+    {
+      title: "Phase 5: Hiryu counterstrikes — Yorktown crippled; Hiryu sunk (11:00–17:00)",
+      time: "11:00 – 17:00",
+      note: "Yamaguchi launches Hiryu's airgroup in two waves. <strong>First wave (18 Vals)</strong>: ~12:05, 3 bomb hits on Yorktown — boilers out, flight deck holed. <strong>Second wave (10 Kates)</strong>: ~14:30, 2 torpedo hits; Yorktown lists severely, abandoned ~15:00. Then: Enterprise launches 24 SBDs. <strong>~17:00: Hiryu struck</strong> (4 hits), mortally wounded. By nightfall all four Japanese carriers are burning.",
+      units: [
+        { side: "japan", type: "naval", label: "Hiryu (launching strike against Yorktown)", strength: "2 wave strikes", at: [0.34, 0.27] },
+        { side: "japan", type: "air", label: "Hiryu 1st wave: 18 Vals → Yorktown (12:05)", strength: "18 D3A Val", at: [0.52, 0.29] },
+        { side: "japan", type: "air", label: "Hiryu 2nd wave: 10 Kates → Yorktown (14:30)", strength: "10 B5N Kate", at: [0.56, 0.32] },
+        { side: "usa", type: "naval", label: "Yorktown (hit twice, abandoned ~15:00)", strength: "crippled", at: [0.68, 0.30] },
+        { side: "usa", type: "air", label: "Enterprise retaliation: 24 SBDs → Hiryu (~17:00)", strength: "24 SBD", at: [0.54, 0.27] }
+      ],
+      movements: [
+        { side: "japan", from: [0.34, 0.27], to: [0.65, 0.30], kind: "attack", label: "Hiryu strikes (2 waves)" },
+        { side: "usa", from: [0.73, 0.29], to: [0.42, 0.27], kind: "attack", label: "Enterprise SBDs sink Hiryu" }
+      ]
+    }
+  ]} />
+
+### Phase 1 — Nagumo Strikes Midway
+
+Nagumo's first wave launches at 04:30 on 4 June.
+<Annotation client:load term="The first wave composition" note="108 aircraft: 36 D3A Val dive bombers, 36 B5N Kate level bombers, and 36 Zero fighters as escort, drawn from all four carriers. The strike commander was Lt. Joichi Tomonaga (Hiryu). Wikipedia (Battle of Midway), NHHC H-Gram 006-1." />
+One hundred and eight aircraft — Vals, Kates, and Zeros — claw into the predawn Pacific sky and head southeast. Seven floatplane scouts spread in fan arcs ahead of the fleet to find any American surface forces.
+
+One of those scouts, Tone's number 4 plane, is supposed to cover Sector 5. Its catapult is malfunctioning. By the time it launches, it is 30 minutes late. That delay will not seem significant for another three hours.
+
+A PBY Catalina patrol plane spots Nagumo's carriers at 05:34 and radios the contact.
+<Annotation client:load term="PBY sighting and Midway's response" note="At 05:34, a PBY from Midway (Ensign Jack Reid) spotted two Japanese carriers and accompanying warships. A second PBY at 05:45 reported the inbound Japanese strike approximately 93 miles out. Midway radar detected the incoming aircraft at 05:53. Marine fighters of VMF-221 scrambled. Wikipedia (Battle of Midway), National WWII Museum (Battle of Midway)." />
+By 05:45, a second PBY has spotted the incoming strike 93 miles out. Midway scrambles its fighters — 20 obsolescent F2A Buffalos and 7 F4Fs against 36 Zeros.
+
+The result is not a contest. Marine pilots flying Buffalos — a plane their own officers described as suitable only for advanced training by 1942 — are slaughtered.
+<Annotation client:load term="VMF-221 losses intercepting the Japanese first wave" note="VMF-221 lost 13 F2A Buffalos and 2 F4F Wildcats of 27 intercepting fighters. Approximately 14–15 pilots were killed or wounded. The Buffalo was 60–70 mph slower than the Zero and far less maneuverable. USMC reports cited in Wikipedia (Battle of Midway) noted the F2A as 'hopeless' against modern Japanese fighters." />
+Thirteen Buffalos and two Wildcats go down. The surviving Japanese bombers hit Midway's installations hard — fuel storage burns, the hospital is struck — but the runways remain intact. Tomonaga radios back to Nagumo: *a second strike on Midway is necessary.*
+
+This is the message that starts the chain of decisions that destroys the Kido Butai.
+
+<Pullquote cite="Lt. Joichi Tomonaga, strike commander, radio message to Nagumo, 07:00, 4 June 1942 (as recorded in action reports, via Wikipedia)" href="https://en.wikipedia.org/wiki/Battle_of_Midway" kind="telegram">
+There is need for a second attack wave.
+</Pullquote>
+
+### Phase 2 — Nagumo's Dilemma
+
+At 07:15, Nagumo makes a decision that will be debated for the next eighty years. With Tomonaga's request for a second Midway strike in hand and (as far as Nagumo knows) no American carriers in the vicinity, he orders his reserve aircraft rearmed from their standard torpedo loadout — intended for use against enemy ships — to contact-fused bombs suitable for land attack.
+
+This violates Yamamoto's standing order, which specified that the reserve be kept armed with torpedoes in case American surface forces appeared.
+<Annotation client:load term="Yamamoto's standing order vs. Nagumo's decision" note="Yamamoto's pre-battle instructions explicitly ordered Nagumo to keep a strike force armed and ready for anti-ship action (with torpedoes) while his first wave attacked Midway. Nagumo's decision to rearm for land attack was technically a violation of this guidance, though Nagumo's interpretation — that no US carriers were present — was reasonable given his intelligence at the time. Wikipedia (Battle of Midway), Britannica (Battle of Midway)." />
+But it is reasonable given what Nagumo knows at 07:15. His scouts have found nothing. There are no American carriers.
+
+Twenty-five minutes later, at 07:40, Tone's delayed number 4 scout finally reaches Sector 5.
+
+*Contact. Ten surface ships, course 150°, speed 20 knots, 240 miles from the carriers.*
+
+Nagumo immediately demands clarification: are there any carriers? The scout takes until 08:20 to reply.
+
+*What appears to be a carrier.*
+<Annotation client:load term="The Tone scout's critical message, 08:20" note="The exact timing and wording of Tone scout #4's contact reports are attested in multiple sources: Wikipedia (Battle of Midway), Britannica, and the Warfare History Network (Japanese Records). The scout's initial 07:40 report specified surface ships but not carriers; the follow-up at approximately 08:20 identified 'what appears to be a carrier.' Had the plane launched on time at ~06:00, this confirmation would have arrived before the 07:15 rearmament order." />
+
+Now Nagumo has his dilemma in full. A carrier — possibly more than one — is within striking distance. His reserve aircraft are in the process of being rearmed with land-attack bombs. His first-wave aircraft — Tomonaga's bombers and their Zero escorts — are beginning to return to the fleet and must be recovered before he can respot and relaunch.
+
+Rear Admiral Yamaguchi, commanding CarDiv 2 from Hiryu, signals immediately: *Recommend commencing attacks with forces now available.* A partial strike, launched immediately, might reach the Americans before they could strike.
+
+Nagumo refuses.
+<Annotation client:load term="Nagumo's decision not to launch immediately — Parshall/Tully analysis" note="The Parshall and Tully interpretation (via HistoryNet review and cv5yorktown.com) argues Nagumo's decision was defensible by Japanese carrier doctrine of the time, which emphasized the concentrated strike (the ichi-go attack) over piecemeal launches. A partial strike of half-armed planes without fighter cover was judged ineffective. The counter-argument is Yamaguchi's: even an imperfect strike might have disrupted the US strike in preparation. The debate has never been resolved cleanly." />
+His logic, evaluated against Japanese carrier doctrine, is not obviously wrong: a partial strike, without proper fighter escort, against an alerted American carrier force, is unlikely to succeed and will dissipate the reserve he needs for the main blow. Better to recover Tomonaga's aircraft, rearm with torpedoes, and launch a full coordinated strike.
+
+He reverses the rearmament order at approximately 08:20: back to torpedoes. The ordnancemen in the hangar decks, who have just spent an hour changing loadouts, must do it again.
+
+<Callout kind="key-insight" title="Why the hangar decks became furnaces">
+Here is where the popular account — fueled aircraft and armed bombs scattered on the flight deck, creating a catastrophic daisy-chain when the dive bombers hit — is wrong. Parshall and Tully's research into Japanese carrier design shows that Japanese fleet carriers used fully enclosed hangars, unlike American carriers with their open hangars. Rearming happened below, in sealed spaces. When the bombs from the dive bombers penetrated the flight decks and reached the hangar levels, they ignited not neatly stacked flight-deck ordnance but a nightmare: enclosed spaces where fuel vapor had accumulated during frantic rearming cycles, aviation gasoline running from hoses left across the hangar floors, and ordnance pulled from magazines but not yet properly stowed. The carriers burned so catastrophically not because they were caught with armed planes on deck, but because their enclosed hangars had become sealed tanks of fuel vapor and loose ordnance. The flight decks were clear. The killing blow went below.
+</Callout>
+
+While the rearming reversal is underway — and Tomonaga's returning first wave is stacking up overhead waiting to land — the Americans arrive.
+
+### Phase 3 — The Torpedo Squadrons: Sacrifice Without Hits
+
+Between 07:50 and 09:18, Midway-based aircraft attack the Kido Butai in six separate waves — Army B-17s from high altitude, Navy TBF Avengers, USMC SBDs, B-26 Marauders. None score a hit.
+<Annotation client:load term="Midway-based attacks on Kido Butai, 07:50–09:10" note="The attacks by Midway-based aircraft between approximately 07:50 and 09:10 are documented in Wikipedia (Battle of Midway) and the HyperWar OOB. The B-17s dropped from too high altitude, the TBFs and B-26s were intercepted, and the SBDs failed to press home. No hits scored. Each attack forced the carriers to maneuver evasively and kept the CAP busy." />
+The carriers maneuver evasively. The CAP — constantly cycling off and on the flight decks — accumulates hours in the air.
+
+At 09:18, fifteen TBD Devastator torpedo bombers of Torpedo Squadron 8 arrive over the Japanese formation.
+<Annotation client:load term="VT-8 finds the Japanese fleet by dead reckoning" note="Lt. Cdr. John Waldron of VT-8 did not follow the group navigation plan. Calculating that the Japanese had turned, he broke from the formation and flew a direct heading that found the carriers when the rest of Hornet's air group was searching empty ocean. Waldron had no fighter escort — VF-8's Wildcats had lost contact with VT-8 and flew on. Sources: Wikipedia (Battle of Midway), Warfare History Network (VT-8)." />
+
+They have no fighter escort. Their fighter escort, VF-8, lost contact with them. They are flying the TBD Devastator — a torpedo bomber already obsolete when the war began, too slow and too unmaneuver able to survive against modern fighters. They have to fly straight and level for the final torpedo run. Against 36 waiting Zeros.
+
+<Pullquote cite="Lt. Cdr. John C. Waldron, VT-8 commanding officer, last communication before his death, June 4, 1942 (via Warfare History Network)" href="https://warfarehistorynetwork.com/article/torpedo-squadron-8-their-heroic-flight-at-the-battle-of-midway/" kind="quote">
+My greatest hope is that we encounter a favorable tactical situation, but if we don't and the worst comes to the worst, I want each of us to do his utmost to destroy our enemies. If there is only one plane left to make a final run-in, I want that man to go in and get a hit.
+</Pullquote>
+
+All fifteen TBDs are shot down. Twenty-nine of thirty pilots and aircrew are killed.
+<Annotation client:load term="VT-8's losses and sole survivor Ensign George Gay" note="VT-8 lost all 15 TBD-1 Devastators and 29 of its 30 aircrew. The sole survivor was Ensign George Gay, who was shot down and hid in the water beneath a seat cushion and flotation gear for several hours, watching the subsequent dive-bomber attack before being rescued. He was the only American to witness the attack from the water. Sources: Wikipedia, Warfare History Network (VT-8), Pacific Eagles." />
+The sole survivor, Ensign George Gay, is in the water, hiding under a seat cushion, watching the Zeros circle.
+
+Twenty minutes later, at approximately 09:40, fourteen TBDs of Torpedo Squadron 6 from Enterprise arrive.
+<Annotation client:load term="VT-6 losses" note="VT-6 lost 10 of 14 TBD-1 Devastators; Lt. Cdr. Eugene Lindsey, the squadron commander, was killed. Like VT-8, VT-6 had inadequate fighter escort. Unlike VT-8, Lindsey had been injured in an accident before the battle but chose to lead anyway. Sources: Wikipedia (Battle of Midway), Pacific Eagles (Torpedo Attack at Midway)." />
+Ten of fourteen are lost. No hits.
+
+At approximately 10:05, twelve TBDs of Torpedo Squadron 3 from Yorktown begin their run.
+<Annotation client:load term="VT-3 losses" note="VT-3 had the best coordination of the three squadrons — a six-fighter escort from VF-3. It still lost 10 of 12 TBDs, including the squadron commander Lt. Cdr. Lance Massey. One Wildcat from the escort was also lost. Total torpedo losses: approximately 35 of 41 TBDs attacking, with zero hits. Sources: Wikipedia (Battle of Midway), Pacific Eagles." />
+This squadron has a six-fighter escort — the only one of the three to get any. It still loses ten of twelve aircraft. Massey is killed.
+
+Three torpedo squadrons. Forty-one aircraft launched. Thirty-five lost. Zero hits scored.
+
+What the torpedo attacks accomplish is structural and cumulative rather than deliberate. The Japanese CAP has been fighting almost continuously for more than two hours, cycling fighters down to rearm and refuel in a constant stream. The Zeros have been forced low, chasing torpedo planes that must fly straight and level just above the wave tops.
+<Annotation client:load term="CAP Zeros at low altitude when dive bombers arrived" note="Wikipedia (Battle of Midway) and Pacific Eagles (Torpedo Attack at Midway) confirm that when the US dive bombers arrived, the Japanese CAP was concentrated at low altitude from pursuing the torpedo squadrons. Parshall and Tully note that the CAP degradation was partly from the torpedo attacks pulling Zeros low and partly from simple exhaustion after two-plus hours of combat — the timing was fortuitous, not part of any coordinated sacrifice plan. The Zeros were unable to climb fast enough to intercept the SBDs diving from 19,000 feet." />
+They are low on fuel, low on ammunition, unable to climb quickly. High above — very high, at roughly 19,000 feet — the dive bombers are already in their final approach.
+
+Ensign Gay, floating in the Pacific, looks up.
+
+### Phase 4 — Three Carriers in Six Minutes
+
+At approximately 10:22, Lieutenant Commander Richard Best, leading VB-6 from Enterprise, rolls into his dive over the Japanese formation.
+<Annotation client:load term="The coordination error that split VB-6 and sent Best to Akagi" note="VB-6 and VS-6 from Enterprise had a near-disastrous coordination error over the target: the majority of VB-6 joined VS-6 in diving on Kaga, leaving Best with only two wingmen. Best pulled out of his Kaga dive, recognizing the duplication, and redirected to Akagi. His bomb — and possibly one other — caused the hit that fatally wounded Nagumo's flagship. Sources: Wikipedia (Battle of Midway), NHHC H-Gram 006-1." />
+A coordination error has already sent most of his squadron to dive on Kaga alongside VS-6. Best watches his planes disappear into the wrong dive. He and his two remaining wingmen pull off and redirect to Akagi — Nagumo's flagship, the carrier that Pearl Harbor was launched from.
+
+Kaga takes multiple direct hits almost simultaneously.
+<Annotation client:load term="Kaga struck, Captain Okada killed" note="VB-6 and VS-6 scored 3–5 direct hits on Kaga. One bomb struck the bridge area, killing Captain Jisaku Okada and most of his senior officers. Kaga's flight deck was ruptured and fires spread rapidly to the hangar below. The ship burned throughout the day, with multiple secondary explosions from ordnance and fuel. Sinking time: 19:25, June 4. Wikipedia (Battle of Midway), Britannica." />
+Three, possibly four bombs. One hits the bridge, killing Captain Okada and most of his senior staff instantaneously. Kaga is ablaze.
+
+Best's small element — three planes — dives on Akagi. He releases at low altitude. One, perhaps two bombs, but Best's is almost certainly direct.
+<Annotation client:load term="Akagi struck — one or two hits, but uncontrollable fires" note="The number of bomb hits on Akagi is disputed. Wikipedia and Britannica record 2–3 direct hits; Parshall and Tully's analysis suggests one central hit was particularly lethal — striking the edge of the midship elevator and penetrating to the upper hangar deck where rearming was still in progress. The fires proved uncontrollable despite desperate damage control; Akagi burned through the night and was ordered scuttled at approximately 03:50–05:00 on June 5. NHHC H-Gram 006-1, Wikipedia." />
+The bomb penetrates the flight deck and reaches the upper hangar — where torpedoes and bombs pulled from the magazines are lying on the floor, not yet stowed, during the second rearmament cycle. The resulting fire is immediately uncontrollable.
+
+Simultaneously — within minutes, possibly within seconds — Lieutenant Max Leslie's VB-3 from Yorktown arrives over Soryu.
+<Annotation client:load term="Leslie's dive on Soryu — and his accidental bomb release" note="Lt. Max Leslie had accidentally released his own bomb before the attack due to a faulty new bomb-arming device. He led his squadron through the attack without his own weapon, directing his pilots onto the target. VB-3 scored at least 3 direct hits on Soryu. Soryu was abandoned at approximately 10:45 and sank at 16:10, June 4. Wikipedia (Battle of Midway), Britannica." />
+Leslie had already dropped his own bomb by accident — a new electrical arming mechanism triggered it — and now leads his squadron empty-handed. His pilots score at least three direct hits. Soryu is immediately ablaze.
+
+Within approximately six minutes, three of Japan's four fleet carriers are dying.
+
+Hiryu, operating with CarDiv 2 slightly separated to the north, survives.
+
+<EventCascade client:visible caption="How Midway's tactical sequence reversed the Pacific War"
+  nodes={[
+    { kind: "cause", label: "Station HYPO decrypts Operation MI + water ruse confirms 'AF = Midway'", detail: "Commander Rochefort's team identifies the target; the fake water-shortage message forces Japan's hand. Nimitz has the date, bearing, and distance of the attack before it launches. Without this, three US carriers have no ambush position." },
+    { kind: "cause", label: "Tone scout #4 launches 30 minutes late — Nagumo orders rearmament before learning of US carriers", detail: "The catapult malfunction is the key accident. Had the scout launched on time, Nagumo would have known about the US carriers before the 07:15 rearmament order. As it is, the rearmament cycle and the recovery of Tomonaga's first wave consume the critical 90 minutes." },
+    { kind: "cause", label: "VT-8, VT-6, VT-3 attack sequentially — zero hits, 35 aircraft lost — but CAP is exhausted at low altitude", detail: "The three torpedo squadrons' losses are catastrophic. What they purchase, through accumulated attrition of the CAP, is a defense gap. When dive bombers arrive at 19,000 feet at 10:22, the Zeros cannot climb to intercept." },
+    { kind: "turning-point", label: "Three carriers struck in ~6 minutes: Kaga, Akagi, Soryu ablaze by 10:28", detail: "VB-6/VS-6 hit Kaga (multiple direct hits); Best's element redirects and hits Akagi (1–2 hits, fires reach rearming hangar); VB-3 hits Soryu (3 hits). The carriers burn because their enclosed hangars are full of fuel vapor and loose ordnance from the double rearmament cycle. Not because planes were on deck." },
+    { kind: "effect", label: "Hiryu's counterstrikes cripple Yorktown but cannot reverse the outcome", detail: "Yamaguchi launches both of Hiryu's air groups. Yorktown takes 5 hits across two waves and is eventually sunk by submarine I-168 on June 7. But Enterprise's retaliation strikes hit Hiryu at ~17:00. By nightfall, all four Japanese carriers are dying." },
+    { kind: "turning-point", label: "Japan loses 4 carriers, ~248 aircraft, ~3,057 KIA — strategic initiative shifts permanently", detail: "The loss is not just the ships: it is the trained air groups that flew from them. Japan's carrier construction pipeline cannot replace four fleet carriers quickly. The US commissions Essex-class carriers from 1943. The Pacific War's trajectory is reversed, though the grinding attrition continues through 1945." }
+  ]} />
+
+### Phase 5 — Hiryu's Counterstrike, and Hiryu's End
+
+Nagumo's flag is in the water. He transfers to the cruiser Nagara, then to destroyer Nowaki — unable to communicate, unable to command, the fleet leader of the battle effectively gone.
+
+Yamaguchi does not wait. His signal to Nagumo at the moment the Kido Butai was struck had been ignored; now he acts on his own authority. Within thirty minutes of the dive-bomber attack, Hiryu's first counterstrike is in the air: eighteen D3A Vals and six Zeros, with a single target: the Yorktown.
+<Annotation client:load term="Hiryu's first counterstrike — 18 Vals, 6 Zeros, ~11:00 launch" note="The timing of Hiryu's first strike launch is approximately 11:00 (Wikipedia) or shortly after. The strike located the Yorktown by about 12:05. Japan's Vals had previously participated in the Midway first wave and were reloaded for ship attack. Sources: Wikipedia (Battle of Midway), Britannica." />
+
+They find Yorktown at approximately 12:05. Three bomb hits: the flight deck is holed, two boilers are out, Yorktown slows and stops. The Japanese pilots, not knowing there is more than one US carrier in the area, report that they have hit and disabled the only one.
+
+Yorktown's damage control is superb.
+<Annotation client:load term="Yorktown's damage control performance" note="After the first Hiryu strike, Yorktown's crew plugged fuel lines, relit five boilers, and had the ship underway again, making 18 knots, by approximately 13:40. When the second Hiryu strike arrived at ~14:30, Japanese aircrew initially thought they had found a fresh, undamaged carrier before realizing it was the same ship. The performance was one of the outstanding damage-control achievements of the Pacific War. Wikipedia (Battle of Midway), National WWII Museum." />
+Within ninety minutes, she has patched lines, relit boilers, and is making 18 knots. When Hiryu's second strike — ten B5N Kate torpedo bombers and six Zeros — arrives at approximately 14:30, its pilots think at first they have found a second, undamaged carrier. Then they recognize her.
+
+Two torpedo hits. Yorktown lists fifteen degrees. Fletcher transfers command to Spruance by radio. By 15:00, Yorktown is abandoned.
+
+Spruance sends his answer at roughly 15:30: twenty-four dive bombers from Enterprise, assigned to the one carrier still floating.
+<Annotation client:load term="Enterprise's retaliation strike on Hiryu" note="The Enterprise strike that found and struck Hiryu at approximately 17:00 consisted of 24 SBDs from VB-6, VS-6, and VS-5 (Yorktown's scouting squadron, now operating from Enterprise). Four direct hits were scored. Yamaguchi and Captain Tomeo Kaku chose to go down with the ship; Hiryu was scuttled by destroyer torpedo and sank approximately 09:00, June 5. Wikipedia (Battle of Midway), Britannica." />
+At approximately 17:00, four direct hits. Hiryu — the last of the four — is dying.
+
+Rear Admiral Yamaguchi composes a brief message to his crew, apologizes for his defeat, and goes below. He and Captain Kaku go down with the ship.
+
+By nightfall on 4 June 1942, all four Japanese fleet carriers are burning. Soryu sinks at 16:10. Kaga at 19:25. Akagi and Hiryu will follow on June 5.
+
+---
+
+## The Reckoning
+
+<ForceComparison client:visible
+  caption="Midway — the butcher's bill (4–7 June 1942)"
+  sides={[
+    { label: "Japan (Kido Butai)", tone: "enemy" },
+    { label: "United States", tone: "friendly" }
+  ]}
+  metrics={[
+    { label: "Fleet carriers lost", values: [4, 1], unit: "ships", higherIsWorse: true },
+    { label: "Aircraft lost (all types)", values: [248, 150], unit: "planes", higherIsWorse: true },
+    { label: "Personnel KIA", values: [3057, 362], unit: "men", higherIsWorse: true },
+    { label: "Destroyers/cruisers lost", values: [1, 1], unit: "ships", higherIsWorse: true }
+  ]} />
+
+Japan lost Akagi, Kaga, Soryu, and Hiryu — and with them approximately 248 carrier aircraft and roughly 3,057 men.
+<Annotation client:load term="Japanese personnel losses at Midway" note="Wikipedia (Battle of Midway) gives approximately 3,057 Japanese KIA. The National WWII Museum gives the same figure. This includes aircrew killed in combat, crew members who went down with ships, and sailors killed by subsequent explosions. Japan also lost one heavy cruiser, Mikuma, sunk June 6 after collision with Mogami while evading US air attack." />
+The aircraft losses, in aggregate, represent the entire embarked strength of the four-carrier force.
+
+<Sankey client:visible
+  caption="Japanese carrier aircraft losses at Midway — operational fate of 248 aircraft"
+  unit="planes"
+  nodes={[
+    { id: "total", label: "Kido Butai embarked (248 aircraft)" },
+    { id: "firstwave", label: "1st Midway strike wave launched (~108)" },
+    { id: "cap", label: "CAP fighters (continuous)" },
+    { id: "reserve", label: "Reserve strike force (rearming/recovering)" },
+    { id: "lost_combat", label: "Lost in combat" },
+    { id: "lost_carriers", label: "Lost when carriers sank" },
+    { id: "survived", label: "Survived to fight (few)" }
+  ]}
+  links={[
+    { source: "total", target: "firstwave", value: 108 },
+    { source: "total", target: "cap", value: 36 },
+    { source: "total", target: "reserve", value: 104 },
+    { source: "firstwave", target: "lost_combat", value: 18 },
+    { source: "firstwave", target: "lost_carriers", value: 60 },
+    { source: "cap", target: "lost_combat", value: 20 },
+    { source: "cap", target: "lost_carriers", value: 12 },
+    { source: "reserve", target: "lost_carriers", value: 104 },
+    { source: "firstwave", target: "survived", value: 30 },
+    { source: "cap", target: "survived", value: 4 }
+  ]} />
+
+<Detail summary="Go deeper: the pilot-loss debate (Parshall and Tully's corrective)">
+The traditional narrative holds that Midway destroyed Japan's irreplaceable core of experienced carrier aviators — the veterans who had trained for years and were impossible to replace. Parshall and Tully's research modifies this substantially. They found, from the Japanese casualty records, that pilot losses at Midway — while significant — were not the primary cause of Japan's subsequent carrier impotence. The loss of the experienced maintenance crews, the ordnancemen, the aviation technicians who had operated together for years, was as important as the aircrew losses themselves. More significant still was the structural destruction: four fleet carriers removed from Japan's order of battle permanently. No matter how many pilots survived, the ships they needed to fly from were gone. Japan commissioned new carriers through 1943–44, but the pace of US construction — the Essex class — would overwhelm them regardless. Midway's decisive impact on Japan's air power lay primarily in the irreplaceable carriers, not solely in the pilots.
+</Detail>
+
+The United States lost Yorktown — finally, on 7 June — and USS Hammann.
+<Annotation client:load term="Yorktown and Hammann — the I-168 attack" note="Yorktown was damaged on June 4 but did not sink immediately. A salvage party reboarded her on June 6 while she was being towed, believing the ship could be saved. Japanese submarine I-168, which had survived US destroyer searches, fired four torpedoes at approximately 13:35 on June 6: two hit Yorktown, one hit and sank the destroyer Hammann (which sank in minutes, with the loss of 80 crew). Yorktown finally rolled over and sank at approximately 07:00 on June 7. Wikipedia (Battle of Midway), National WWII Museum." />
+Yorktown was first hit on June 4, abandoned, reboarded by a salvage party on June 6, and torpedoed again by submarine I-168 while under tow. She sank on June 7 — three days after the battle's decisive moment.
+<Annotation client:load term="USS Hammann" note="The destroyer USS Hammann (DD-412) was alongside Yorktown providing power to the salvage party when I-168's torpedo spread hit both ships. Hammann sank within minutes, with the loss of approximately 80 of her 241 crew — men drowned or killed by the underwater shockwaves of her own depth charges, which continued detonating as she sank." />
+USS Hammann sank within minutes of the submarine attack, killing approximately 80 of her crew in a particularly cruel manner: depth charges in her racks continued to explode as she sank, killing men who were already in the water.
+
+American aircraft losses — approximately 144–150 planes of all types — were severe.
+<Annotation client:load term="US aircraft losses" note="The National WWII Museum gives approximately 150 US aircraft lost; Wikipedia gives approximately 144. The total includes carrier aircraft from all three carriers, Midway-based aircraft (particularly in the torpedo attacks and the fighter defense), and patrol planes. The 35 torpedo bombers lost from VT-8, VT-6, and VT-3 alone represent the most concentrated loss of a specific aircraft type in a single engagement." />
+The torpedo squadrons' collective loss — roughly 35 of 41 TBD Devastators, with their crews — was the most concentrated single-type loss of the battle. The TBD Devastator was immediately withdrawn from front-line service after Midway; its replacement, the Grumman TBF Avenger, had already been introduced at the battle.
+
+---
+
+## What Midway Decided — and What It Did Not
+
+The popular verdict assigns Midway the role of the Pacific War's turning point — the moment the tide reversed, after which American victory was inevitable. It is a cleaner story than the facts support.
+
+What Midway unambiguously decided was the defeat of Operation MI. Japan's plan — to seize Midway, extend its defensive perimeter, and destroy the American carrier force in the battle that followed — failed completely. The perimeter was not extended. The American carrier force was not destroyed. It was Japan's striking force that was destroyed.
+
+What Midway also decided, more structurally, was the carrier balance of the Pacific.
+<Annotation client:load term="Japan's carrier construction pipeline vs. the Essex class" note="Japan lost four fleet carriers at Midway that could not be quickly replaced. Japan commissioned Taiho (1944) and converted several other vessels to carriers, but the pace was inadequate against US production. The Essex-class program, begun before Midway, delivered its first ship (USS Essex) in December 1942 and eventually produced 24 fleet carriers. By 1944, US carrier superiority was overwhelming. USNI Naval History Magazine (Midway Decisive?), Wikipedia (Battle of Midway)." />
+The four carriers lost at Midway — Akagi, Kaga, Soryu, Hiryu — represented Japan's best fleet carriers, with their trained, experienced air groups. Japan could not replace four fleet carriers on the pace needed to keep up with American construction. The United States' Essex-class program was already producing hulls; by 1943 and 1944, the numerical balance would shift decisively. The window to win the Pacific War by carrier superiority was at Midway, and Japan failed to close it.
+
+<Callout kind="note" title="What Midway did not decide">
+Midway did not end the Pacific War, or even the Pacific crisis. Japan retained carriers — Shokaku and Zuikaku survived, and several others. The Battle of Guadalcanal (August–November 1942) was intensely contested; the naval battles around that island cost the US several cruisers and came close to catastrophe more than once. Japanese land forces would fight on Guadalcanal until February 1943. The grinding island-hopping campaign from 1943 to 1945 still lay ahead. The USNI Naval History Magazine debate (2005) captures the revisionist qualification: Midway was decisive in preventing Japanese strategic expansion and reversing the carrier balance — it was not decisive in the sense of making subsequent American victory inevitable or easy.
+</Callout>
+
+The battle also decided something about intelligence and the American way of war. Nimitz had acted on Rochefort's estimate with a confidence that, had the intelligence been wrong, would have been catastrophic — three carriers committed to an ambush position that turned out to be empty. It was not wrong.
+<Annotation client:load term="The validation of signals intelligence as a strategic asset" note="The success at Midway validated signals intelligence — COMINT, in modern terminology — as a strategic tool capable of influencing the outcome of major fleet engagements. Nimitz's decision to trust Rochefort's estimate over alternative assessments (Admiral King in Washington initially doubted the Midway conclusion) shaped post-war US intelligence doctrine. War on the Rocks (Complete Intelligence Story), NHHC H-Gram 006-1." />
+The lesson embedded itself deeply in American strategic culture: intelligence that comes from enemy communications, properly analyzed, can be the decisive advantage even against numerical superiority.
+
+<Pullquote cite="Admiral Chester W. Nimitz, Commander in Chief Pacific Fleet, June 1942 — post-battle assessment (via National WWII Museum)" href="https://www.nationalww2museum.org/war/articles/battle-midway" kind="quote">
+Pearl Harbor has now been partially avenged. Vengeance will not be complete until Japanese sea power is reduced to impotence.
+</Pullquote>
+
+The "five-minute miracle" is a comforting story. It says that Midway was won by luck — by a narrow margin of time that just happened to favor the Americans. The real story is less cinematic and more demanding. It was won by the systematic, careful work of analysts in a basement at Pearl Harbor who read Japanese radio traffic for months. It was won by Nimitz's decision to trust their analysis and commit his carriers to a position. It was won by the torpedo squadron pilots — Waldron, Lindsey, Massey, and the men behind them — who flew their obsolete planes into certain death without scoring a single hit, and who thereby helped exhaust a fighter defense that could not be reconstituted in time.
+
+<Detail summary="Go deeper: the myth of the 'five minutes' — Fuchida and Parshall/Tully">
+Mitsuo Fuchida, the Japanese naval aviator who led the Pearl Harbor strike, published Midway: The Battle That Doomed Japan in 1955. His account included the dramatic claim that Japanese carriers were approximately five minutes from launching a decisive counterstrike against the American fleet when the dive bombers arrived — hence the "five-minute miracle." Fuchida had not been present at the decisive moment (he was recovering from an appendectomy and watched from the bridge). Parshall and Tully's research identified his account as fabricated on multiple key points, drawing on Japanese carrier action reports, elevator cycle times, and basic physics of carrier operations. The flight decks were clear of armed aircraft because they had to be — the CAP was constantly cycling. A full strike launch was at minimum 30–60 minutes from being ready. The bombs hit hangars full of fuel vapor and rearming ordnance, not a flight deck crowded with gassed-up planes. Fuchida's "five minutes" was invented drama. The real story — a cascade of rational decisions, an unlucky catapult malfunction, three desperate torpedo attacks, and a navigation error that accidentally split a dive-bomber group — is more instructive precisely because none of it was miraculous.
+</Detail>
+
+And it was won by the fact, which Yamamoto had gambled away, that Japanese carriers on 4 June 1942 were exposed, without battleship anti-aircraft cover, in range of American dive bombers who had been waiting for them for three days.
+
+The ocean turned that morning. It never turned back.
+
+---
+
+## Strategic Aftermath
+
+<Timeline client:load caption="Pacific War after Midway — the road the battle opened"
+  events={[
+    { date: "1942-06-07", label: "Yorktown sinks — the full cost of the battle is counted", detail: "The last of the Midway combatants goes down. Japan has lost four fleet carriers; the US one. The strategic arithmetic is settled." },
+    { date: "1942-08-07", label: "US landings on Guadalcanal — the first American offensive", detail: "Using the naval breathing room created by Midway, the US Marines land on Guadalcanal and Tulagi. The six-month Guadalcanal campaign is still bitterly contested, but the strategic initiative now lies with the US." },
+    { date: "1942-11-14", label: "Naval Battle of Guadalcanal — Japan's last major offensive effort", detail: "The final major Japanese naval counterattack to retake Guadalcanal is defeated. Japan loses two battleships. After this, Japan shifts from offensive to defensive operations in the South Pacific." },
+    { date: "1943-02-09", label: "Japan evacuates Guadalcanal", detail: "Japanese forces complete a secret night withdrawal. Six months of brutal ground and naval combat end in American possession of the island. The next phase — the Central Pacific drive — can now begin." },
+    { date: "1943-12-01", label: "USS Essex commissioned — the new carrier force takes shape", detail: "The first Essex-class fleet carrier, product of a pre-war construction program, enters service. By 1944, fast carrier task forces will have overwhelming numerical superiority over Japan's rebuilt carrier force." },
+    { date: "1944-06-19", label: "Battle of the Philippine Sea — 'The Great Marianas Turkey Shoot'", detail: "The rebuilt Japanese carrier force (9 carriers, including Shokaku and Taiho) confronts 15 US carriers. Japan loses 3 carriers and approximately 600 aircraft and crews. The aircrew replacement pipeline destroyed at Midway and in subsequent battles has made Japanese naval aviation a shadow of what fought at Coral Sea and Midway." },
+    { date: "1945-08-15", label: "Japan surrenders", detail: "Three years and two months after Midway. The ocean has not turned back." }
+  ]} />
+
+Midway did not end the war. It changed its character. Before 4 June 1942, the Pacific War was a contest between roughly equal carrier forces, with Japan holding the initiative and the best-trained striking force. After 4 June, the war was an attritional campaign that Japan could not win on the timetable available to it.
+
+Japan's naval aviation — the specific combination of hulls, aircraft, and trained pilots and crews that had made the Kido Butai the most formidable carrier force in the world — was not rebuilt to competitive parity before US industrial production made the question irrelevant. At the Philippine Sea in June 1944, the rebuilt Japanese carrier force flew into a slaughter. At Leyte Gulf in October 1944, Japan's remaining carriers were used as decoys. The trajectory from 4 June 1942 to 2 September 1945 runs directly through Midway.
+
+The lesson Nimitz drew was not that luck had saved the Pacific Fleet. It was that intelligence, carefully built and courageously acted on, could neutralize any tactical disadvantage. The lesson Yamamoto drew — had he survived the war to articulate it — might have been simpler: *never assume the enemy is where you left him*.
+
+The ocean does not favor the side that was last correct. It favors the side that is correct now.

@@ -1,0 +1,84 @@
+/* apps/site/src/components/mdx/ParameterPlay.css
+   The generalized reader-controlled model. Reuses the instrument register from
+   ControlledChart.css (mono telemetry, amber signal line, paper panel, the
+   slider styling, the sr-readout). This file only adds what is unique to an
+   N-slider generalized model: the responsive controls grid, the per-slider live
+   value badge, the author-error / empty-curve states, and the neutral zero rule.
+   Tokens from tokens.css. */
+
+/* The signal line here is a neutral author curve (no single "threshold" the
+   reader steers toward, unlike ControlledChart's clay target) — so the base
+   amber .cc-line from ControlledChart.css carries it. */
+
+/* zero reference line — quiet hairline, only drawn when the curve straddles 0 */
+.pp-zero {
+  stroke: var(--rule-bright);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+  opacity: 0.7;
+}
+
+/* the controls grid — auto-fit columns that collapse to ONE column on mobile so
+   the panel never overflows a 360px viewport. Two-up on wide, stacked on narrow. */
+.pp-controls {
+  position: relative;
+  z-index: 1;
+  margin-top: var(--s-3);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: var(--s-3) var(--s-4);
+}
+@media (max-width: 34rem) {
+  .pp-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* per-slider label row: name on the left, live value on the right */
+.pp-control-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+.pp-control-val {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.02em;
+}
+
+/* the readout strip inherits .cc-readout; on very narrow screens let it wrap
+   tighter so it never pushes the panel past 360px. */
+.pp-readout {
+  gap: var(--s-4);
+}
+
+/* author-facing compile error — visible, honest, never a silent blank chart.
+   Reads as an instrument fault line (clay), set in mono. */
+.pp-error {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border-left: 2px solid var(--editorial);
+  background: color-mix(in oklab, var(--editorial) 8%, transparent);
+  color: var(--ink-dim);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  line-height: 1.5;
+}
+
+/* the "no plottable curve" text drawn in the SVG when the model yields nothing */
+.pp-empty {
+  fill: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+/* keep the SVG fluid + aspect-locked (inherits .cc-svg, restated for clarity) */
+.pp-svg {
+  width: 100%;
+  height: auto;
+}
