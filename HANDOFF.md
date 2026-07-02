@@ -1,609 +1,347 @@
 # khazana — Agent Handoff
 
-> You are taking over as **cofounder** of khazana. Read this top to bottom, then
-> read the MUST-READ files in §5, then do §8 "Do this first." This doc is the
-> single source of truth for picking up cold. **Your next focus is the FEED
-> personalization pass ("for you" ordering, now that the live affinity layer
-> exists), then P9 (Publish + full ingest / deploy).** Everything on the
-> page-by-page roadmap is DONE: Feed, Workshop, Graph→**Observatory**, **Sources**,
-> **Taste → the Calibration Bench**.
+> You are taking over as **cofounder** of khazana. Read this top to bottom, then read the
+> MUST-READ files in §7 and the founder memories, then do §9 "Do this first." This doc is the
+> single source of truth for picking up cold.
 >
-> **The 2026-06-29/30 sessions were a deep rebuild + polish of the Reads surface (§4a) —**
-> the whole `/reads` experience was rebuilt and hardened: **4 deep, source-grounded
-> Reads** (Carrington Chronicle, Benford Primer, Bloom Teardown, Kelly Dispatch) all
-> at the ~15-min read-time peak; a redesigned **`/reads` index** (featured hero +
-> facet filter + gallery); a new **interactive `ScrollyTimeline`** (scroll/scrub
-> narrative timeline) + **StatBand** + **Pullquote** components; a full **MDX-chart
-> bug/quality pass**; a **bilingual liquid-glass-gold wordmark** (खज़ाना / khazana);
-> a **curate full-text hard gate** (`readTime` weight → 2); and an **authoring-policy
-> rewrite** (target the peak, components must be EARNED). Driven by a **4-persona
-> review → fix → re-verify** loop and **interaction-QA** (real pointer/scroll/touch on
-> mobile). See §4a. Earlier 2026-06-28 work (code/math typography, nav, TTS narration,
-> dedup, retention, 17 GitHub sources, node_modules dedupe) is in §4.
+> **Your next focus is finishing the REDESIGNED Reads generation workflow** — an
+> **orchestrator-worker pipeline run as a Claude *routine*, 2×/day**: an **Opus orchestrator**
+> that never writes, driving **Sonnet-5 subagents** (survey → writers → verifiers). The
+> **ideation half is built + drilled** and the **whole pipeline is proven end-to-end** (a real
+> Read shipped). What's left: formalize the **writer + verify subagent definitions**, build the
+> **Opus orchestrator routine**, and **restructure the P9 workflows** so LLM work runs on Claude
+> routines (not the GitHub-Actions Claude step). See §5–§6, §9.
+>
+> **The 2026-07-01 session** rebuilt the whole back end (P9 ingestion caching + podcast
+> transcript-discovery, research-grade generation with a citation ledger, self-healing source
+> verification, no-AI discovery, GitHub Actions orchestration), **redesigned Reads generation**
+> as the orchestrator-worker routine above, made **YouTube a first-class source that beats
+> podcasts**, **removed all TTS**, shipped the **Feed "for you" personalization**, and produced
+> the **first research-grade Read** ("The Plague Wage"). All committed on `p1-foundation`
+> (HEAD `83b3ffb`); 1307 tests green; typecheck clean. **A dev server is currently running on
+> :4321** and the founder is reviewing the new Read.
 
 ---
 
 ## 1. Who you are (persona + how to operate)
 
-You are the founder's **cofounder/engineer** on khazana — not a passive assistant.
-The founder (Arnav, a SWE who loves numbers, charts, visuals, and impressive
-design) hired you to **build the best possible product, proactively**.
+You are the founder's **cofounder/engineer** on khazana — not a passive assistant. The founder
+(Arnav, a SWE who loves numbers, charts, visuals, impressive design) hired you to **build the
+best possible product, proactively**.
 
-Operating rules (the founder has stated these repeatedly — honor them):
-- **Subagents do ALL building. You orchestrate.** Never burn your own context
-  writing code/tests — dispatch implementer subagents (+ a separate reviewer for
-  big work), have them write reports to `.superpowers/sdd/*-report.md`, and you
-  review + verify. Your context is for architecture and decisions.
-- **NEVER use a subagent to run ingestion/data scripts.** Run those yourself in a
-  **background shell** (`run_in_background`), modest limits, then read the result.
-- **Aggressively hunt for skills** that raise quality (frontend-design,
-  brainstorming, huggingface-skills, context7, etc.) and **aggressively improve the
-  app on your own initiative.** Don't present big option-menus ("which track?") —
-  exercise judgment and execute; only ask when the decision is genuinely the
-  founder's (his accounts/credentials, a big aesthetic move, or a true constraint
-  conflict). He has rejected AskUserQuestion menus twice — show built artifacts and
+Operating rules (stated repeatedly — honor them):
+- **Subagents do ALL building. You orchestrate.** Never burn your own context writing code/tests —
+  dispatch implementer subagents (+ a separate reviewer/verifier for big work), have them write
+  reports to `.superpowers/sdd/*-report.md`, and you review + verify. Your context is for
+  architecture and decisions.
+- **NEVER use a subagent to run ingestion/data/network scripts** (ingest, yt-dlp, etc.). Run those
+  YOURSELF in a **background shell** (`run_in_background`), modest limits, then read the result.
+  (This session: the live yt-dlp verification was run by the orchestrator, not a subagent.)
+- **Independent verification beats self-verification — always split them.** Proven this session:
+  the writer self-verified and passed, but a **fresh-context** verify agent caught a real factual
+  error + two misattributions. Every Read gets an independent adversarial verify pass.
+- **Aggressively hunt for skills** that raise quality and **aggressively improve the app on your
+  own initiative.** Don't present big option-menus — exercise judgment and execute; only ask when
+  the decision is genuinely the founder's (his accounts/credentials, a big aesthetic move, a true
+  constraint conflict). He has rejected AskUserQuestion menus repeatedly — show built artifacts and
   recommend, don't poll.
-- **UI / feel is PARAMOUNT.** Award-level (Awwwards / Pudding / Distill / NYT-
-  graphics), distinctive, *alive*, not "vibecoded AI-template." Dramatic but
-  genuinely usable and comfortable to read.
-- **Verify by USING it, not just by checking it (the hardest-won lesson — 2026-06-30).**
-  Tests + `astro build` + "0 console errors" + a static screenshot are NOT proof — they
-  miss the bugs the founder actually hits. You MUST drive REAL interactions on a headless
-  browser: scroll slowly and watch frame-by-frame, DRAG sliders/scrubbers, click/tap every
-  control, **and test at MOBILE widths (390/360) where most bugs live** (and in both motion
-  modes). The reliable pattern that worked: dispatch **persona interaction-QA agents** (an
-  art-director, a skeptical engineer, a mobile reader, an a11y/keyboard user) that drive
-  real pointer/scroll/keyboard sequences, capture frame strips, and report bugs — then FIX
-  → RE-VERIFY with the same panel. Beware: automated DOM probes mislead (wrong selectors;
-  `client:visible` islands aren't hydrated pre-scroll; whitespace-stripped text checks give
-  false positives). Hard-won mobile gotchas this session: a shared `.mdx-figure` view-timeline
-  entrance can trap TALL panels near opacity:0 on short viewports; a hidden nav row left a
-  316px phantom-height box; KaTeX spans swallow taps so hover/focus-only reveals are dead on
-  touch. **After ANY code change, rebuild + restart the preview** (a stale preview once made
-  the founder think a finished redesign wasn't done).
-- **$0 / offline / no paywall.** Static + serverless only; no paid APIs, no runtime
-  CDN libs, no paywalled sources, no paywall-bypass tooling. (Free-tier accounts the
-  founder opts into — e.g. Groq for transcription — are OK behind env vars.)
-- **Keep the ledger updated** (`.superpowers/sdd/progress.md`) — it survives context
-  compaction; it is your memory. Persistent founder memories live at
-  `~/.claude/projects/-Users-arnavmarda-Desktop-Dev-khazana/memory/` (read
-  `MEMORY.md` + the files — UI-feel, authoring rules, **operating-mode-subagents**,
-  **feed-quality-bars**, **khazana-page-by-page-roadmap**).
+- **UI / feel is PARAMOUNT.** Award-level (Awwwards / Pudding / Distill / NYT-graphics),
+  distinctive, alive, not "vibecoded AI-template." Dramatic but genuinely usable and readable.
+- **Verify by USING it, not just checking it.** Tests + build + "0 console errors" + a static
+  screenshot are NOT proof. Drive REAL interactions on a headless browser (scroll, drag, tap,
+  MOBILE 390/360, both motion modes) via persona interaction-QA agents; then FIX → RE-VERIFY.
+  Rebuild + restart the preview after ANY change.
+- **$0 / offline / no paywall.** Static + serverless only; no paid APIs, no runtime CDN libs, no
+  paywalled sources. (Free-tier accounts the founder opts into are OK behind env vars.)
+- **Keep the ledger + memories updated.** `.superpowers/sdd/progress.md` survives compaction.
+  Persistent founder memories: `~/.claude/projects/-Users-arnavmarda-Desktop-Dev-khazana/memory/`
+  (`MEMORY.md` + the files — UI-feel, authoring, **operating-mode-subagents**, feed-quality-bars,
+  page-by-page-roadmap, observatory-live-data, **reads-generation-orchestration** [NEW]).
+- **Commit at clean milestones** with the exact co-author trailer (§12).
 
 ---
 
 ## 2. The project
 
-**khazana** ("treasury / vault" in Hindi/Urdu) = a personal, self-curating
-**treasury of the world's best signal** + a daily-growing collection of **gorgeous,
-interactive, AI-authored blogs ("Reads")** in the founder's voice.
+**khazana** ("treasury / vault") = a personal, self-curating **treasury of the world's best
+signal** + a daily-growing collection of **gorgeous, interactive, AI-authored blogs ("Reads")** in
+the founder's voice.
 
-Two halves:
-- **Curate** — pull from hundreds of sources, normalize to ONE format (`FeedItem`),
-  extract/transcribe **full text**, render it **on khazana itself** (reader-mode),
-  cluster/dedup, rank to taste.
-- **Create** — generate deep, interactive, educational Reads, each **grounded in
-  real existing source article(s)** (cited, never invented).
+- **Curate** — pull from hundreds of sources, normalize to ONE `FeedItem`, extract full text /
+  transcripts, render on khazana itself, cluster/dedup, rank to taste.
+- **Create** — generate deep, interactive, educational Reads, each **grounded in real primary
+  sources** (cited, never invented — HARD rule).
 
-**Aesthetic:** terminal × NYT-editorial. Warm near-black `#0a0a0b`, ink `#e8e6df`,
-**amber `#ffb627`** (signal), **clay `#c1554a`** (editorial), hairline rules, "lines
-not boxes". Mono chrome (JetBrains/SF Mono) + Fraunces display + Newsreader body.
-Reading comfort sacred (65ch, ~18px Newsreader, zero animation in prose). Logo =
-amber gem ("Book-Gem", `brand/khazana-mark-book-gem.svg`).
+**Aesthetic:** terminal × NYT-editorial. Warm near-black `#0a0a0b`, ink `#e8e6df`, amber `#ffb627`
+(signal), clay `#c1554a` (editorial), hairline rules, "lines not boxes." Mono chrome + Fraunces
+display + Newsreader body. Reading comfort sacred (65ch, ~18px, zero animation in prose).
 
-**Cost model ($0):** static **Astro** site on **GitHub Pages**; one free **Cloudflare
-Worker + KV**; **GitHub Actions** cron runs the pipeline; the **Claude Code GitHub
-Action on the founder's subscription** is the AI author + web Scout. Free Whisper
-(transformers.js) for podcast transcription.
-
-Full vision spec: `docs/superpowers/specs/2026-06-23-khazana-design.md`.
+**Cost model ($0):** static **Astro** on **GitHub Pages**; one free **Cloudflare Worker + KV**;
+**GitHub Actions** cron for the pure pipeline; **Claude routines** (founder's subscription) for the
+LLM/agentic work (Reads + Scout credibility). Full spec:
+`docs/superpowers/specs/2026-06-23-khazana-design.md`.
 
 ---
 
 ## 3. Architecture (pnpm workspaces, TS strict, zod contracts)
 
 ```
-packages/core      @khazana/core    — contracts: FeedItem, Source, Format, registry, vocab (zod = source of truth)
-packages/ingest    @khazana/ingest  — fetch → normalize → FeedItem; full-text extraction; podcast Whisper transcripts; YouTube transcripts (proxy/Actions); bounded-parallel + per-host rate limiting (concurrency.ts)
-packages/curate    @khazana/curate  — enrich → cluster/dedup → HARD-GATE full-text reads (drop teasers/snippets/abstracts/bare-links/transcript-less media) → rank (read-time Gaussian peak 15; readTime weight 2) → diversity floor
-packages/generate  @khazana/generate— assignment → grounded brief → validate draft (AI-author harness)
-packages/scout     @khazana/scout   — source discovery/eval/prune
-apps/site          @khazana/site    — Astro static site (the product UI)
-apps/worker        @khazana/worker  — Cloudflare Worker + KV (POST /event · GET /events auth'd · GET /summary public per-device — powers the Taste live layer)
-packages/ingest/src/tts/            — build-time Kokoro TTS (kokoro/chunk/render/voices); render via `packages/ingest/scripts/render-audio.mts` → apps/site/public/audio/reads (gitignored)
-packages/core/src/{scoring,taste-model,dedupe,retention}.ts — shared pure cores (ranking parity · taste aggregation · mirror-dedup · 3-day retention via scripts/prune-history.mts)
-apps/site/src/components/{taste,reads,nav}/ — Calibration Bench islands · reads index (FeaturedRead/ReadGalleryCard/ReadsFilter + lib/build-reads.ts) · ReadPlayer narration · SiteNav
-apps/site/src/components/mdx/        — the interactive Reads component kit (MDX islands): Chart, Scrolly, DataTable, Timeline, ScrollyTimeline (NEW — scroll/scrub narrative timeline), Map (choropleth + latitude graticule), KellyChart/ControlledChart, DrawChart (multi-series), RunnableCode, Annotation (tap-toggle), Sidenote, StatBand (NEW — count-up figures), Pullquote (NEW — primary-source block). NarrativeScene was built then RETIRED (broken/forced — see §4a; file may remain unused, do NOT use). Pure logic lives in `lib/*.ts` (all TDD'd).
-apps/site/src/components/Wordmark.astro — bilingual liquid-glass-gold title (खज़ाना / khazana), self-hosted Rozha One (OFL) in src/styles/fonts/
-.claude/skills/writers/*            — per-format writer SKILLS (kits + length targets rewritten: target the ~15-min peak; "components must be EARNED, never forced"; NarrativeScene marked do-not-use)
-data/sources.seed.json              — source registry (722 sources incl. +17 GitHub this session, tracked). data/sources.json = live cache (gitignored; DELETE it to pick up new seed sources)
-data/feed/{raw,curated}.json        — GENERATED (gitignored; produced by ingest+curate)
-scripts/real-ingest.mts             — the ingest runner (see §6)
-docs/superpowers/{specs,plans}/     — spec + per-phase plans
-.superpowers/sdd/progress.md        — THE LEDGER (read first)
-.superpowers/sdd/*-report.md        — each subagent's report (gitignored, on disk)
+packages/core      @khazana/core    — contracts (FeedItem, Source, Format, registry, vocab), plus:
+                                       citation-ledger, candidate-slate (Reads ideation), candidate-source
+                                       (discovery), youtube-credibility, scoring, taste-model, source-verify
+packages/ingest    @khazana/ingest  — fetch→normalize→FeedItem; ON-DISK CACHING (conditional-GET/304,
+                                       transcript cache, full-text cache — cache/*); transcript-DISCOVERY
+                                       (podcast:transcript RSS → PodcastIndex → YouTube captions; Whisper
+                                       opt-in only via ALLOW_WHISPER); YouTube meta+credibility (youtube*.ts);
+                                       structured fetch-results (permanent vs transient); concurrency.ts gates
+packages/curate    @khazana/curate  — enrich → cluster/dedup → HARD-GATE full-text → rank → diversity floor
+packages/generate  @khazana/generate— Reads harness: select → buildBrief (full-text + research dossier +
+                                       CITATION LEDGER) → validateDraft (grounds vs curated ∪ ledger) →
+                                       factChecker gate (≥90% cited, ≥60% load-bearing corroborated);
+                                       reads-ledger (past-reads index for novelty)
+packages/scout     @khazana/scout    — source discovery (link-mining, domain-freq, OPML, YouTube channels) +
+                                       evaluate/apply + self-healing prune (strike-count/status/rediscovery)
+apps/site          @khazana/site     — Astro static site (the product UI)
+apps/worker        @khazana/worker    — Cloudflare Worker + KV (POST /event · GET /events auth'd · GET /summary
+                                       public per-device)
+scripts/           — real-ingest.mts, recurate.mts, prune-history.mts, fetch-events.mts (Worker /events →
+                     data/events.json), record-build-day.mts (history.json), ideation-eval.mts (freeze the
+                     ideation board to a snapshot for drilling the survey agent)
+.claude/agents/reads-survey.md       — the SURVEY subagent (Sonnet 5) — ideation half of the Reads workflow
+.claude/skills/writers/{researcher,chronicle,dispatch,field-notes,teardown,primer,build-log}/  — writer +
+                                       research-methodology SKILLS (PhD-grade; grounding = citation ledger)
+.github/workflows/  — ci.yml (tests/typecheck) + pipeline.yml / feed-refresh.yml / scout-discover.yml /
+                     deploy-worker.yml (P9 cron — see §6; the Claude steps need to move to routines)
+docs/RUNBOOK.md     — founder secrets/accounts runbook (provisioning to go live)
+.superpowers/sdd/*  — audit + build reports (gitignored, on disk)
 ```
 
-Surfaces: `/` Feed ✅ · `/reads` ✅ (redesigned: featured hero + facet filter + gallery)
-+ `/reads/[slug]` ✅ (4 deep grounded Reads, ~15-min peak, rich interactive components) ·
-`/item/[id]` (in-app reader) · `/workshop` ✅ (directed maker board) · `/graph` ✅ (the
-**Observatory** — analytics dashboard, NOT the old node-graph) · `/sources` ✅ (faceted
-source explorer) · `/taste` ✅ (the **Calibration Bench**). **NEXT: Feed "for you"
-personalization, then P9 deploy (§8).**
+**Surfaces:** `/` Feed ✅ (+ **"for you" personalization** ✅) · `/reads` ✅ + `/reads/[slug]`
+(now incl. **the-plague-wage** ✅) · `/item/[id]` · `/workshop` ✅ · `/graph` (Observatory) ✅ ·
+`/sources` ✅ · `/taste` (Calibration Bench) ✅. **TTS/narration REMOVED** (§4).
 
-### Canonical vocab (single source of truth in `@khazana/core`)
-**Channels:** history, geopolitics, politics, geography, science, tech, ai, quantum,
-data-science, ds-sports, data-strategy, finance, ideas, diy, 3d-printing, iot,
-embedded, ai-projects · **SourceType:** reddit, hn, rss, eng-blog, arxiv, x, news,
-youtube, podcast · **FeedItem.kind:** link, discussion, paper, idea, video, audio.
+**Canonical vocab (`@khazana/core`):** Channels: history, geopolitics, politics, geography, science,
+tech, ai, quantum, data-science, ds-sports, data-strategy, finance, ideas, diy, 3d-printing, iot,
+embedded, ai-projects · SourceType: reddit, hn, rss, eng-blog, arxiv, x, news, youtube, podcast ·
+FeedItem.kind: link, discussion, paper, idea, video, audio · v1 Formats: chronicle, dispatch,
+field-notes, teardown, primer, build-log.
 
 ---
 
-## 4. Current state (branch `p1-foundation`, never deployed, no git remote)
+## 4. What the 2026-07-01 session shipped (all committed on `p1-foundation`)
 
-### §4a — Sessions 2026-06-29/30: READS surface deep rebuild + polish (committed; 1116 tests green; interaction-QA verified)
-Commits (newest first): `38f1b68` wordmark + interaction-QA fixes · `568fbe5` curate full-text gate +
-readTime→2 · `4332ab3` ScrollyTimeline + Carrington wiring · `12d0986` flagship→peak · `93c3b2f` 4-persona
-review→fix pass · `242111c` retire NarrativeScene · earlier reads commits (`98bb5af` etc).
+Commits (newest first):
+- `83b3ffb` **read: "The Plague Wage"** — first research-grade Read (E2E pipeline validation).
+- `c0ca1dc` **tts: remove all narration** (Kokoro/ReadPlayer/render-audio/kokoro-js gone; Whisper kept).
+- `2a3ec40` **youtube: first-class source** — $0 metadata (subs/likes/views/captions via yt-dlp),
+  deterministic credibility scoring, channel discovery generator. **Live-verified** on real channels.
+- `9b0fd03` **generate: Reads ideation** — survey agent, CandidateSlate schema, past-reads ledger,
+  ideation-eval harness.
+- `fc0068d` **ci: use Claude Sonnet 5** for reads + scout appraisal (there IS a Sonnet 5, `claude-sonnet-5`,
+  launched 2026-06-30 — my/older tooling was cached before it).
+- `cb2084b` **ci: P9 orchestration** — cron workflows + fetch-events + record-build-day + actions/cache + RUNBOOK.
+- `0f83593` **scout: no-AI candidate generation** — link-mining, domain-frequency, OPML.
+- `f513a62` **sources: self-healing verification** — strike-count, status persistence, transient/permanent,
+  auto-prune, moved-feed rediscovery.
+- `ff87f47` reads: ReadsFilter null-guard (unblocks astro check).
+- `b310a1e` **writers: PhD-grade research methodology skills** (researcher skill + Research phase in 6 writers).
+- `e0f06e5` **generate: research-grounded harness** — citation ledger, factChecker gate, full-text briefs.
+- `104fbc4` **ingest: transcript-discovery getter + on-disk caching + rate-limit hardening.**
+- `bf492dc` **feed: "for you" personalization** — affinity-weighted reorder on hydration, honest quality
+  fallback, parity-by-construction. 37/37 real-browser QA.
 
-- **Four deep, source-grounded Reads, all at the ~15-min read-time peak** (`apps/site/src/content/blog/`):
-  `the-carrington-event` (Chronicle, 1859 solar superstorm — Map + ScrollyTimeline + StatBands + period
-  Pullquotes + Timelines), `the-first-digit-law` (Primer, Benford — real World Bank data, RunnableCode
-  sandboxes, Charts), `how-a-bloom-filter-says-probably` (Teardown — runnable Bloom demo, FP-rate charts),
-  `the-arithmetic-of-ruin` (Dispatch, Kelly — KellyChart, DrawChart, Scrolly, DataTable). EVERY claim is
-  grounded in cited real sources (the HARD authoring rule); content was fact-checked (a real Bloom error,
-  2.08→1.44=log₂e, was caught & fixed; AGU links that started bot-403'ing were swapped to NASA ADS/NTRS).
-- **`/reads` index redesigned**: featured hero (owns its read's View-Transition name, excluded from the
-  grid) + a format/channel facet filter (live counts; the hero dims when it doesn't match) + a refined
-  gallery + an editorial stats readout. Pure TDD `components/reads/lib/build-reads.ts`.
-- **New interactive components** (in `components/mdx/`, all TDD libs):
-  - **ScrollyTimeline** — the marquee: a pinned timeline rail + amber playhead; scroll advances the
-    playhead AND the active event's prose in lockstep (POSITION-BASED active resolution recomputed every
-    frame — NOT scrollama crossing-events, which froze under `client:visible` late hydration); drag/scrub
-    the rail or click a tick to jump (two-way). Reduced-motion/no-JS → stacked ordered list. Wired into
-    the Carrington long-arc (8 grounded events). Authoring = serializable `events=[{date,label,prose}]`.
-  - **StatBand** — count-up figures (measured fit-to-cell so no overflow/clip at any width; rounds any
-    value; instant under reduced-motion). **Pullquote** — primary-source block (quote/document/telegram/
-    headline kinds; tap-reveal). **Annotation** now has a real tap/click toggle + Escape/outside-close
-    (math terms were dead on touch).
-- **MDX-chart bug/quality pass** (Chart): replaced an opaque flood-fill that buried data with per-series
-  strokes + axis titles + `zero:true` y (a `domain:[0,undefined]` had silently dropped all marks → bars
-  vanished); numeric-aware categorical x order; robust hydration (eager measure + ResizeObserver +
-  IntersectionObserver). **Timeline** rebuilt (adaptive ticks, label de-collision, content-sized). **Map**
-  gained an equator + latitude graticule + shade-by-latitude + a single focusable group (no 177-Tab
-  trap). **DrawChart** multi-series + legend + logY. **DataTable** mobile scroll-wrap + labels + focus.
-- **Bilingual liquid-glass-gold wordmark** (`Wordmark.astro`): खज़ाना (Rozha One, self-hosted OFL
-  Devanagari+Latin) leading + "› khazana" beneath + the amber gem; two `background-clip:text` gold
-  gradients + a slow specular sheen (freezes under reduced-motion); deeper struck-gold in light theme;
-  compact (gem + Devanagari) on mobile. $0/offline (woff2 bundled).
-- **Curate full-text HARD GATE** (`@khazana/core` scoring + `@khazana/curate`): the feed now keeps ONLY
-  genuine full-text reads — teasers/snippets/abstracts/bare-links/transcript-less media are FILTERED OUT
-  (`isFullTextRead` + `!isTranscriptlessMedia`), not just down-weighted. `RANK_WEIGHTS.readTime 3→2`,
-  `fullText 1.5→1.25` (now inert under the gate). Browser re-ranker reads `RANK_WEIGHTS` → parity holds.
-  Re-curate → **337 items** (gate is a ~no-op on today's data, confirming the feed was already clean;
-  the gate is a forward-looking invariant). Full-content RSS (long body == summary) is KEPT.
-- **Authoring policy rewritten** (`STYLE.md` + all 6 `.claude/skills/writers/*/SKILL.md` + mdx-contract
-  refs): every format targets the ~15-min reading-time peak (Field Notes exempt); **components must be
-  EARNED by the content, never forced** (the founder rejected forced/decorative components twice);
-  NarrativeScene marked "do not use — pending rebuild".
-- **NarrativeScene RETIRED**: a scrollytelling component built then rejected as "stupid, incomplete and
-  forced" (broken empty-void layout + placeholder text-cards + bolted onto data reads). Removed from all
-  reads + the kits. If a scrollytelling device is wanted, ScrollyTimeline is the good one; rebuild
-  NarrativeScene properly or leave it unused.
-- **Verification discipline (the big process lesson):** all of the above was verified by a 4-persona
-  review + interaction-QA loop (real pointer/scroll/touch on desktop AND mobile), not by automated
-  checks alone. Reports under `.superpowers/sdd/`: `review2-*.md`, `qa-scrollytimeline.md`,
-  `qa-interactions.md`, `reads-review-master.md`, `fix-*-report.md`, `scrolly-timeline-report.md`,
-  `curate-fulltext-gate-report.md`, the read reports, and the ledger.
-
-### Session 2026-06-28 additions (all committed, browser-verified by the orchestrator, 916 tests green)
-- **TASTE → "The Calibration Bench"** (`/taste`): the flat affinity bars are gone — `/taste`
-  is now a transparent, tunable instrument over the WHOLE ranking machine. 8 weight faders →
-  the real curated feed re-ranks LIVE (gsap FLIP, contained + softened); draggable read-time
-  Gaussian; a "why this item" per-term contribution breakdown (`assessRank()` — twin of Sources'
-  `assessTrust()`); the taste model (channel/format affinity, decay curve + half-life knob,
-  still-learning fuel gauges); a LIVE signal panel hydrating from the new public Worker
-  `GET /summary?deviceId=`. **Architecture spine:** the scoring + taste-aggregation math was
-  lifted into `@khazana/core` (`scoring.ts` `scoreContributions`, `taste-model.ts`
-  `aggregateProfile`/`gateState`) so the browser re-ranker == the pipeline BY CONSTRUCTION
-  (byte-identical parity test); curate delegates. Site pure libs: `components/taste/lib/{rerank,
-  assess-rank,taste-derive}.ts`. Worker `/summary` is public + read-only (returns the device's
-  raw events; the CLIENT computes affinity with the shared core — the Worker has no feed).
-- **CODE + MATH typography:** there was NO math renderer (the flagship *faked* equations with
-  inline backtick code). Added remark-math + rehype-katex (KaTeX bundled OFFLINE — 0 CDN) +
-  Shiki `css-variables` theme mapped to brand tokens (`apps/site/src/styles/code.css`, the ONE
-  source of truth — replaced duplicated per-surface code rules). Flagship math migrated to real
-  LaTeX; `Annotation` typesets its `term` via KaTeX.
-- **TTS NARRATION (build-time, $0):** Kokoro-82M (`packages/ingest/src/tts/`, reuses whisper.ts
-  ONNX/ffmpeg/cache) renders each Read's prose → ONE channel-cast voice (Fable for
-  history/geopolitics/politics/geography; Onyx otherwise — `voiceForChannels`). Player
-  (`components/reads/ReadPlayer.tsx`): play/pause, scrub + **paragraph-synced highlight** +
-  click-to-seek, speed 0.75–2×, volume; single static voice label (no picker). Integration:
-  `reads/[slug].astro` loads the manifest, a rehype plugin stamps `data-para-index` by TEXT-MATCH
-  to the manifest's `paragraphs[].text`. **Codec DEFAULT = MP3** (Opus didn't play in Safari —
-  `NARRATION_CODEC=opus` available; ~½ size). **`NARRATION_SPEED` default 0.8** (~226 wpm; Kokoro's
-  natural ~270 was too fast). Flagship rendered (Onyx MP3, 8.7 min, 4.2 MB) — audio is
-  `apps/site/public/audio/reads/*` (gitignored, deploy-not-commit). FULL RENDER (orchestrator runs
-  it, never a subagent): `pnpm --filter @khazana/ingest exec tsx scripts/render-audio.mts`.
-- **NAV:** one global `SiteNav` island in Shell.astro — history-aware back, scroll-to-top (after
-  ~1.5vh), and a near-invisible right-edge **section tick-rail** (active = amber "you are here",
-  reveals labels on hover/focus, hidden on <2-section pages). Reuses the site Lenis.
-- **INGEST DEDUP:** mirror-source near-duplicates (same publisher via two source ids — Import AI
-  via substack+jack-clark.net; Quanta news+regular) were appearing twice (clustering only TAGS).
-  Pure `dedupeItems` in `@khazana/core` (norm-title+publishedAt-window OR exact-url → best-extracted
-  representative, merge topics/entities + max metrics), wired into `runCurate` before clustering.
-  Local recurate: 340→337.
-- **RETENTION (additive, P9-forward):** `selectExpired` in `@khazana/core` + `scripts/prune-history.mts`
-  (DRY-RUN default; `--apply` deletes expired Read MDX + audio), 3-day window. NOTE: pin the seed
-  flagship (`pinned:true`) when P9 wires the cron (it's age>3 → would be pruned).
-- **17 GitHub sources** added to `data/sources.seed.json` (722 total): workshop firmware-release
-  feeds (Marlin/OctoPrint/ESPHome/Prusa/MicroPython…) + research (vLLM/DuckDB/Polars/GitHub Blog).
-  All flow through the generic RSS path. Re-ingest deferred to P9 (release feeds are short → Workshop,
-  not the main Feed's 5-min floor).
-- **node_modules dedupe 4.2G→1.2G:** a pnpm `override` forces `@huggingface/transformers` to 4.2.0
-  (kokoro-js pinned 3.8.1; verified kokoro synthesizes fine on 4.2.0). Dev-only; shipped site unaffected.
-
-**DONE earlier + committed + browser-verified: Feed, Workshop, the Observatory (`/graph`),
-Sources (`/sources`), and an ingestion-robustness pass (reddit / arxiv / youtube / generic
-fetcher).** Recent commits (newest first):
-- `cf1f37f` ingest: fetcher robustness — browser UA, Accept headers, explicit redirects
-- `c268ad4` ingest(youtube): yt-dlp transcripts with a process-level rate-limit gate
-- `aca395b` Sources: lazy/windowed rendering for smoothness
-- `f7c5241` ingest(reddit): .rss + browser-UA primary, generous pacing, OAuth optional
-- `d8ba8b5` ingest(arxiv): full-text via ar5iv/arxiv-HTML mirrors
-- `be7d65c` Sources: explain trust scores + distinguish 'deferred' from disabled
-- `8e23988` Sources: replace the unreadable name-wall with a faceted source explorer
-- `74b186d` / `5a02368` Observatory: replace the dead node-link /graph with a data/chart dashboard + freshness affordance
-- (earlier) `745760d` Workshop maker floor · `66c2e40` P0 fixes · `710fba7` Feed deep pass · `553e6a1` ingest base
-
-**Observatory (`/graph`) — the old d3-force node-link graph was REJECTED ("the
-graph is shit") and DELETED.** Root cause was structural: it leaned on `entities`,
-empty across all 340 items. Rebuilt as **THE OBSERVATORY**: a dense, scroll-through
-analytics dashboard over the dimensions that ARE populated (topics co-occurrence,
-tasteScore, trustScore, clusterId, read-time, sources, time). Pure TDD lib
-`apps/site/src/components/observatory/lib/build-analytics.ts`; 7 sections (stat band,
-treemap+chord, trust×taste scatter, read-time dist w/ 15-min peak, provenance,
-streamgraph+calendar, clusters); 6 `client:visible` d3 islands. It updates at BUILD
-cadence (re-runs `analyze()` over live `curated.json`/`taste.json` each deploy); a
-masthead "snapshot · refreshes daily" line makes that legible. The LIVE personal/taste
-layer is deferred to the Taste page's Worker endpoint (see §8 + founder memory
-`observatory-live-data-decision`).
-
-**Sources (`/sources`) — was an unreadable wall of 705 names; rebuilt as a faceted,
-searchable source explorer.** Pure TDD lib
-`apps/site/src/components/sources/lib/build-sources.ts` joins the registry to the
-curated feed (`item.source === entry.id`) → `EnrichedSource` (live itemCount /
-read-time / last-seen / produced-channels / status) + facets + health. Island
-`SourcesExplorer.tsx` (`client:load`): instant search, facet chips (status · type ·
-channel · provenance), sort, **lazy/windowed rows** (page 60, IntersectionObserver),
-and a slide-in **per-source dossier drawer**. The dossier shows a **TRUST BASIS**
-(`assessTrust()` — tier + plain-English rationale + evidenced factors), and the 208
-YouTube sources read **"deferred · runs in Actions"** (a `deferred` status, cool
-`--info` token) — cloud-gated, not dead. Health band surfaces the 122 failing feeds.
-URL-synced (`?source=<id>` deep-link). NOTE: registry shows **682** (live
-`data/sources.json` cache); the 705 seed lands on `rm data/sources.json` + re-ingest.
-
-**Ingestion-robustness pass (the handoff's "IP hard-blocked" notes are now STALE —
-verified live from this machine):** the unifying lesson is **a browser User-Agent +
-proper pacing/impersonation is the unlock.**
-- **reddit** — was failing because the dispatcher did `res.json()` on `.rss` URLs with
-  a bot UA. Now: `.rss` (Atom via `parseRssFeed`) + a **browser UA** + generous per-host
-  pacing (`REDDIT_MIN_GAP_MS`, default 4000ms) + 429 backoff; optional OAuth
-  client-credentials JSON behind `REDDIT_CLIENT_ID/SECRET`. **Verified: pulls real items**
-  (it's a UA+rate block, NOT an IP ban). Reddit's per-IP `.rss` budget is tight — pace it.
-- **arxiv** — abstract-only feeds (<5min) → all 43 dormant. Added a full-text mirror chain
-  `ar5iv.org → ar5iv.labs → arxiv.org/html` (`packages/ingest/src/arxiv-fulltext.ts`,
-  wired as step-0 of the arxiv extract chain). **Verified: papers now 24–132 min** (clear
-  the 5-min floor). Per-host limited; `ARXIV_HTML_MIRRORS`/`ARXIV_HOST_*` knobs.
-- **youtube** — yt-dlp now extracts real captions FROM THIS IP (the watch page/endpoints
-  return 200 with a browser UA; legacy timedtext is empty + InnerTube is signature-gated, so
-  yt-dlp is required). Reworked `youtube.ts`: lean invocation (`--sub-langs "en,en-orig"`
-  only — the broad glob caused 429s — plus `--sleep-*`, retries, optional `--impersonate
-  chrome`), async `execFile`, and a **`YtDlpGate`** (concurrency 1 + min-gap
-  `YT_DLP_MIN_GAP_MS` default 4000ms). yt-dlp runs FIRST (proxies are dead) when
-  `ALLOW_DIRECT_YOUTUBE=1`. **Verified: 3/3 real transcripts, paced ≥4s apart.** yt-dlp is a
-  pip `--user` module here → run via a `python3 -m yt_dlp` shim on PATH; `pip install
-  "yt-dlp[default,curl-cffi]"` enables impersonation (curl_cffi installed locally).
-- **generic fetcher** (`build-source.ts`) — now sends a browser UA + feed `Accept` header +
-  explicit `redirect:"follow"` + a header-override seam. **Honest:** this is hygiene; the 122
-  "failing" feeds are mostly genuinely dead / moved / mis-registered (404 / DNS / HTML-as-feed)
-  → a **Scout (P8) / registry-triage** problem, NOT a fetcher one (a robust re-probe recovered ~1/12).
-
-**Workshop (`/workshop`) is now a directed maker board** ("the bench"): a
-deterministic, $0, **source-anchored** maker scorer (`packages/core/src/maker.ts` —
-`PURE_MAKER_ALLOWLIST` = `HANDS_ON_MAKER_SOURCES` ∪ `MAKER_INDUSTRY_SOURCES`,
-`MAKER_EXCLUDE`, `makerScore`, `titleBuildSignal`, `isMakerCandidate`,
-`MAKER_THRESHOLD=3`, `MAKER_MIN_READ_MINUTES=3`) replaced the old loose
-"any maker-channel tag" filter that pulled 156 items (~116 op-eds). The bar is
-lowered for maker items only (curate keeps `readTime>=5 OR (isMakerCandidate AND
-readTime>=3)`); the Feed's ≥5-min bar is preserved by an explicit register floor
-(`dropBelowFeedFloor`), Feed membership byte-identical 328→328. `BuildCard.astro` +
-channel-filter chips + an intentional "stocking the bench" sparse state. On local
-data the board is **10 genuine builds** (thin by design — see §7). The maker logic
-is shared in `@khazana/core` so curate and the site enforce ONE definition.
-
-**What the Feed now is (the model for quality/feel — match it on Workshop):**
-- Bento (top 30 by score, ≥7-min gate) → **▶ WATCH** + **◉ LISTEN** rails → "browse
-  by topic" **category rows** → the firehose register. Header = **hierarchical
-  tabbed filter** (`all · world · science · data · make` group tabs → sub-channel
-  chips) that live-filters every section via the `khz:channelchange` event. Cards
-  redesigned with apparent stats (source-type, read-time, channel, source link).
-- **Quality bars (HARD — memory `feed-quality-bars`):** read-time is the dominant
-  score (Gaussian peak @ 15 min, `W_READTIME=3`); **anything < 5-min rendered read is
-  auto-REJECTED**; **featured (bento) requires ≥7-min** rendered read; transcripts
-  must be REAL (not summaries).
-
-**Real data (local):** careful re-ingest → 328 ≥5-min curated items, all full-text,
-avg read 14.8 min (rss 194, eng-blog 42, podcast 62, news 30). A later curate-only
-re-run (`scripts/recurate.mts`, no network/key) added **12 short (3–5 min) maker
-items** under the new two-tier floor → **340 curated total**; the 12 shorts are
-Workshop-only (the Feed register floor keeps them out). arXiv/Reddit/HN still drop
-out of the Feed (abstracts/snippets < 5 min — correct per the rule).
-**Re-curate vs re-ingest:** `scripts/recurate.mts` re-runs ONLY curate over the
-existing `data/feed/raw.json` (which already carries enrichment topics) — fast, no
-network, no LLM key, and the Feed stays intact. Use it after a curate-logic change.
-Do NOT do a full local re-ingest without an enrichment key (GEMINI/NVIDIA/NIM): it
-would strip `topics` from the whole feed and degrade the verified Feed.
-
-**Transcript reality (IMPORTANT):**
-- **Podcasts: working locally, quality being fixed.** Whisper via
-  `@huggingface/transformers` (whisper-tiny ONNX, pure Node) + **ffmpeg** on the audio
-  enclosure → transcript → read-time (`packages/ingest/src/whisper.ts`). ⚠️ whisper-
-  **tiny** hallucinates repetition loops (e.g. a phrase repeated 100×) and transcribes
-  **ads** verbatim → currently unreadable. A `podcast-quality` agent is/was fixing
-  this: repetition-suppression decoding + drop degenerate chunks, **whisper-base**
-  default, ad/sponsor-block stripping + repetition collapse in sanitize, prefer real
-  published transcripts, and an OPTIONAL **Groq** tier (free Whisper-large-v3 behind
-  `GROQ_API_KEY`) the founder may enable. **Check `.superpowers/sdd/phase1-podcast-
-  quality-report.md` and re-ingest before trusting podcast bodies.**
-- **YouTube: NOW WORKS LOCALLY via yt-dlp** (the old "IP hard-blocked" claim is STALE —
-  re-verified 2026-06-28). The watch page + endpoints return 200 with a browser UA; legacy
-  timedtext is empty and InnerTube is signature-gated, so **yt-dlp is required** and it
-  extracts real captions here (3/3 verified). `youtube.ts` reworked: yt-dlp FIRST (the
-  Invidious/Piped proxies ARE dead) when `ALLOW_DIRECT_YOUTUBE=1`, lean
-  `--sub-langs "en,en-orig"` invocation + `--sleep-*` + optional `--impersonate chrome`, and a
-  `YtDlpGate` (concurrency 1 + `YT_DLP_MIN_GAP_MS` default 4000ms) so bulk runs pace politely.
-  Run yt-dlp via a `python3 -m yt_dlp` shim on PATH; `pip install "yt-dlp[default,curl-cffi]"`
-  for impersonation. The WATCH rail can populate locally now if you enable `ALLOW_DIRECT_YOUTUBE=1`
-  + run a youtube ingest (paced) — but a full enriched re-ingest still belongs to P9.
-- **Sources: 705 in the seed, 682 in the live `data/sources.json` cache.** `/sources` reads the
-  live cache (so it shows 682). `rm data/sources.json` + re-ingest to pick up the full 705 seed.
-  Status split (local): ~209 producing · 143 dormant (mostly arxiv/hn <5min + LIMIT-starved) ·
-  208 deferred (all YouTube) · 122 failing (mostly dead/moved/mis-registered → Scout/registry).
-
-**History worth knowing:** a WebGL "constellation" hero was built and **REJECTED**
-("looks shit") and removed — don't bring it back. Effect-stacking gets rejected; a
-strong concept + real interactivity wins. Keep the "Observatory/first light" identity.
-
-**Nothing is running** except possibly a preview on `:4321` (restart per §6).
+Verification: **1307 tests pass** (down from 1318 only because TTS tests were removed), `pnpm -r
+typecheck` clean across all 8 projects, `pnpm --filter @khazana/site build` clean (348 pages).
 
 ---
 
-## 5. MUST READ before doing anything (in order)
-1. **`.superpowers/sdd/progress.md`** — THE LEDGER. Full chronology + every decision.
+## 5. The Reads workflow (the centerpiece — orchestrator-worker Claude routine)
+
+**Design (founder decision — memory `reads-generation-orchestration`):** a **single Claude routine,
+2×/day**, is an **Opus orchestrator** that NEVER writes prose. It drives **Sonnet-5 subagents**:
+
+```
+Opus orchestrator (the routine)
+├─ 1. SURVEY subagent (Sonnet 5)  ── BUILT: .claude/agents/reads-survey.md
+│     reads sources + curated feed + taste + past-reads ledger → ranked CandidateSlate.
+│     Scored on groundability (the GATE), novelty, taste-fit, interestingness, IMPORTANCE.
+│     TWO LANES: feed-grounded synthesis + INTEREST-DRIVEN world topics (no feed seed — the thin,
+│       AI-skewed feed is a SIGNAL, not a ceiling). WebSearch groundability pre-check.
+│     DIVERSITY MANDATE: ≤~2/channel + a GUARANTEED evergreen anchor (history/geopolitics/geography/
+│       science/ideas) every slate, because the feed would never seed those.
+├─ 2. Opus CURATES the slate (editorial pick — the high-judgment step Opus owns)
+├─ 3. WRITER agents (Sonnet 5, parallel)  ── PROVEN ad-hoc, NOT YET a .claude/agents def
+│     full research → citation ledger → draft → self-verify, via writers/{researcher,<format>} skills
+├─ 4. VERIFY agents (Sonnet 5, FRESH context)  ── PROVEN ad-hoc, NOT YET a .claude/agents def
+│     adversarial fact-check vs the ledger (re-fetch sources, factChecker gate)
+└─ 5. Opus FINAL QC + publish (commit passing MDX, drop the rest — quality bar gates volume)
+```
+
+**What's BUILT + committed:**
+- The **survey agent** (`.claude/agents/reads-survey.md`), the **CandidateSlate schema**
+  (`packages/core/src/candidate-slate.ts` — scores incl. `importance`, `origin: feed-grounded |
+  interest-driven`, blended weights: groundability .30 / importance .20 / interestingness .20 /
+  tasteFit .17 / novelty .13), the **past-reads ledger** (`packages/generate/src/reads-ledger.ts`),
+  the **ideation eval harness** (`scripts/ideation-eval.mts`).
+- The **generation harness** (citation ledger + factChecker gate + full-text briefs) and the
+  **writer + researcher SKILLS**.
+
+**What's PROVEN (end-to-end, this session):** I ran the survey agent live over the real board — it
+produced a **varied, importance-weighted, evergreen-anchored slate** (9 channels across 8 ideas;
+interest-driven picks the feed couldn't seed). I then ran a **Writer** (Sonnet 5) on the top
+interest-driven pick and an independent **Verify** (fresh Sonnet 5). Result: **"The Plague Wage"**
+(`apps/site/src/content/blog/the-plague-wage.mdx`, committed `83b3ffb`) — ~3,600 words, 13-source
+ledger (9 high-tier), 100% claims cited, 0 fabrications, earned components (StatBand/Scrolly/
+DataTable/Chart/Pullquote). The verify pass caught a factual error + 2 misattributions the writer
+missed; all fixed. Reports: `reads-ideation-report.md`, `survey-variety-report.md`,
+`read-black-death-report.md`, `verify-plague-wage-report.md`.
+
+**What's LEFT (your next build — §9):**
+1. **Formalize the writer + verify subagent definitions** (`.claude/agents/reads-writer.md`,
+   `reads-verify.md`), model-pinned to `claude-sonnet-5`, wired to the writer/researcher skills +
+   the factChecker gate + the right toolsets (writer: WebSearch/WebFetch/Read/Write/Edit; verify:
+   WebFetch/Read). They were run ad-hoc as general-purpose agents this session — make them
+   first-class like the survey agent.
+2. **Build the Opus orchestrator routine** that chains survey → curate → write → verify → publish,
+   and register it as a **Claude routine, 2×/day** (§6 has the rate-limit facts).
+
+---
+
+## 6. P9 back-end pipeline + the **routines pivot**
+
+**Built + committed** (all local, NEVER deployed): the four subsystems (ingestion w/ caching +
+transcript discovery; research-grade generation; self-healing source verification; no-AI discovery)
++ GitHub Actions workflows (`pipeline.yml` daily, `feed-refresh.yml` 3-hourly, `scout-discover.yml`
+weekly, `deploy-worker.yml`) + `fetch-events.mts` + `record-build-day.mts` + actions/cache +
+`docs/RUNBOOK.md`.
+
+**THE PIVOT (founder decision):** LLM/agentic work runs on **Claude routines**, NOT the
+GitHub-Actions Claude step. Why it matters (verified 2026-07-01):
+- **Routines draw from your subscription pool** (not the separate $100/mo non-interactive credit that
+  Agent-SDK/`claude -p`/GitHub-Actions use since 2026-06-15).
+- **Max 5x limits:** **15 routine runs/day** (per account; each scheduled OR manual fire = 1 run;
+  resets midnight UTC), **min 1-hour interval**. A single routine 2×/day = 2 runs — trivially inside 15.
+  Runs ≠ Reads: one run can author several Reads. Token ceiling = the weekly **Sonnet** cap (reads are
+  Sonnet 5) — comfortable for a few Reads/day. (Open: whether routine *token* usage debits the main
+  pool vs the separate credit — confirm in-app after first runs.)
+- **So restructure:** keep the **$0 code pipeline on GitHub Actions** (events → ingest → curate →
+  build → deploy — no Claude); **move the generate + scout-appraise steps OUT of `pipeline.yml` into
+  a Claude routine.** The Actions workflows currently invoke `claude-code-action@v1` (Sonnet 5) —
+  that step is the thing to replace.
+
+**To go live the founder must provision secrets** (`docs/RUNBOOK.md`): `CLAUDE_CODE_OAUTH_TOKEN`
+(or the routine equivalent), Cloudflare token + KV namespace id (fills the `wrangler.toml`
+placeholder that blocks deploy), `PUBLIC_WORKER_URL`, `EXPORT_TOKEN`, a free-LLM enrichment key
+(`GEMINI_API_KEY` or NVIDIA/NIM — without it the feed loses topics). Optional: `PODCASTINDEX_API_KEY/
+SECRET` (podcast transcripts work without it via the RSS tag), `REDDIT_CLIENT_ID/SECRET`,
+`GROQ_API_KEY`.
+
+---
+
+## 7. MUST READ before doing anything (in order)
+1. **`.superpowers/sdd/progress.md`** — the ledger (append your work here).
 2. **This file.**
-3. Founder memories: `~/.claude/projects/-Users-arnavmarda-Desktop-Dev-khazana/memory/`
-   (`MEMORY.md`, `ui-feel-and-animation`, `khazana-authoring-system`,
-   `operating-mode-subagents`, `feed-quality-bars`, `khazana-page-by-page-roadmap`).
-4. `docs/superpowers/specs/2026-06-23-khazana-design.md` (vision), `CLAUDE.md`, `STYLE.md`.
-5. Recent reports in `.superpowers/sdd/` (newest work first) —
-   **2026-06-29/30 Reads rebuild (§4a):** `reads-review-master.md` (the consolidated 4-persona issue
-   list), `review2-{artdirector,engineer,mobile,a11y}.md` (re-verification verdicts), `qa-scrollytimeline.md`
-   + `qa-interactions.md` (interaction-QA bug hunts), `scrolly-timeline-report.md`, `curate-fulltext-gate-report.md`,
-   `narrative-components-report.md`, the read reports (`read-carrington/-benford/-bloom`), `reads-index-redesign-report.md`,
-   `authoring-policy-update-report.md`, and the `fix-*-report.md` set (chart/statband/timeline/map/responsive/interactives/drawscrolly).
-   **2026-06-28:** `taste-design-report.md` (the Calibration Bench design),
-   `taste-foundation-report.md` (core scoring/taste extraction), `taste-worker-summary-report.md`,
-   `taste-libs-report.md`, `taste-bench-ui-report.md` (incl. the #418 hydration fix);
-   `code-math-revamp-report.md`; `tts-research-report.md`, `tts-pipeline-report.md`,
-   `tts-player-report.md`, `tts-integration-report.md`; `nav-ux-report.md`; `dedup-report.md`;
-   `retention-design.md`; `github-sources-proposal.md`; and **the ledger `progress.md`** has the
-   full chronology of decisions (read it first). **older:**
-   `observatory-foundation-report.md` + `observatory-chart{A,B,C}-report.md`;
-   `sources-foundation-report.md`, `sources-island-report.md`,
-   `sources-trust-deferred-report.md`, `sources-lazyload-report.md`;
-   `reddit-fix-report.md`, `arxiv-fulltext-report.md`, `youtube-ytdlp-report.md`,
-   `fetcher-robustness-report.md`; plus older Workshop `workshop-*.md` + `phase1-*.md`.
+3. Founder memories (`~/.claude/projects/-Users-arnavmarda-Desktop-Dev-khazana/memory/`): `MEMORY.md`,
+   **`reads-generation-orchestration`**, `khazana-authoring-system`, `operating-mode-subagents`,
+   `ui-feel-and-animation`, `feed-quality-bars`, `khazana-page-by-page-roadmap`.
+4. `docs/superpowers/specs/2026-06-23-khazana-design.md`, `CLAUDE.md`, `STYLE.md`, `docs/RUNBOOK.md`.
+5. This session's reports in `.superpowers/sdd/`: the four `audit-*.md`; the build reports
+   (`ingest-overhaul`, `generate-harness`, `reads-skills`, `source-verify`, `source-discovery`,
+   `orchestration`, `reads-ideation`, `survey-variety`, `youtube-drill`, `tts-removal`,
+   `feed-foryou`); and the Reads-workflow proof (`read-black-death-report`, `verify-plague-wage-report`).
 
 ---
 
-## 6. How to run / verify
+## 8. How to run / verify
 
 ```bash
-pnpm install                                 # includes @huggingface/transformers + onnxruntime (podcast Whisper)
-pnpm test                                    # 726 tests
-pnpm -r typecheck
-pnpm --filter @khazana/site build
-cd apps/site && pnpm exec astro preview --port 4321   # ONE preview; kill stale ones first: pkill -9 -f astro
+pnpm install
+pnpm test                 # 1307 tests
+pnpm -r typecheck         # clean across all 8 projects
+pnpm --filter @khazana/site build     # astro build + pagefind → dist/ (348 pages)
+cd apps/site && pnpm exec astro dev --port 4321 --host   # dev server (hot-reload)
+#   or: astro preview (serves a production build). Kill stale first: pkill -9 -f astro
 ```
-**Browser-verify harness scripts** live in `/tmp/khz-shot/*.mjs` (the recent ones:
-`OBS-*`/`obs-final.mjs` Observatory, `src-*.mjs` Sources). **Network verify harnesses** for the
-ingestion fixes (run YOURSELF, never via a subagent): `packages/ingest/scripts/verify-reddit.mts`
-(`REDDIT_MIN_GAP_MS=6000 …`), `verify-arxiv.mts`, `verify-ytdlp.mts`
-(`ALLOW_DIRECT_YOUTUBE=1 YT_DLP_MIN_GAP_MS=4000 YT_DLP_IMPERSONATE=1 …`, needs the yt-dlp shim).
-**Browser verify harness:** `playwright-core` at `/tmp/khz-shot`; system Chrome via
-`chromium.launch({ channel: "chrome", headless: true })`. Load each page, collect
-`console`(error)+`pageerror`, scroll, screenshot fullPage, assert **0 errors in BOTH**
-`reducedMotion:'no-preference'` and `'reduce'`. (Headless can't load YouTube
-thumbnails → grey; fine.) **Rebuild + restart the preview after any code change.**
+**A dev server IS currently running on http://localhost:4321** (started this session for the founder
+to review `/reads/the-plague-wage`). `/taste` + `/graph` fall back to the build snapshot locally
+(no `PUBLIC_WORKER_URL`) — expected, 0 errors.
 
-**Re-ingest (run YOURSELF in a background shell, never via an agent):**
-```bash
-rm -f data/sources.json     # so the 705-source seed is used (not the stale 682 cache)
-SOURCE_TYPES=rss,news,podcast,arxiv,eng-blog,reddit,hn LIMIT=2 \
-  pnpm exec tsx scripts/real-ingest.mts
-# Writes data/feed/{raw,curated}.json. ~60-80 min (podcast Whisper is the bottleneck, ~40s/episode at whisper-tiny).
-# Knobs (concurrency.ts / whisper.ts): INGEST_CONCURRENCY=6, PER_HOST_MAX_CONCURRENT=2,
-#   PER_HOST_MIN_GAP_MS=200, WHISPER_CONCURRENCY=1, WHISPER_MODEL, WHISPER_MAX_AUDIO_BYTES=25MB,
-#   optional GROQ_API_KEY (hosted transcription).
-# NEW (rate-limit knobs — ADHERE TO THESE; the founder stressed it repeatedly):
-#   REDDIT_MIN_GAP_MS (default 4000, raise to 6000+ if 429s), optional REDDIT_CLIENT_ID/SECRET (OAuth),
-#   ARXIV_HOST_MIN_GAP_MS (arxiv mirrors), and for youtube: ALLOW_DIRECT_YOUTUBE=1 +
-#   YT_DLP_MIN_GAP_MS (default 4000) + YT_DLP_IMPERSONATE=1 (needs curl_cffi) + the python3 -m yt_dlp shim.
-```
-⚠️ **A full local re-ingest is DESTRUCTIVE + degrading without an enrichment key.** `real-ingest.mts`
-`writeFeed` **OVERWRITES** `raw.json` (does NOT merge), and a run WITHOUT a free-LLM key
-(GEMINI/NVIDIA/NIM) strips `topics` from the whole feed → degrades the verified Feed/Observatory.
-The reddit/arxiv/youtube fixes are **verified at the fetcher level** (harnesses above) but are NOT
-yet reflected in the committed `curated.json` — that lands at the **P9 enriched Actions run**. To
-re-curate after a curate-logic change WITHOUT re-fetching, use `scripts/recurate.mts` (no network/key).
+**YouTube / yt-dlp (run YOURSELF, paced, never bulk):** no `yt-dlp` binary — use `python3 -m yt_dlp`
+(v2026.06.09). `curl_cffi` 0.15.0 present → `--impersonate chrome` works; ffmpeg 8.1.2 present.
+Live-verify pattern that did NOT get blocked: 3 channels, one video each, `--playlist-items 1
+--impersonate chrome`, 6s apart, in a background shell (see `/tmp/yt-verify/` from this session).
+`yt-dlp -J` yields `channel_follower_count`, `view_count`, `like_count`, captions — all $0.
+
+**Re-ingest (run YOURSELF in a background shell, never via an agent):** `rm -f data/sources.json;
+SOURCE_TYPES=... LIMIT=2 pnpm exec tsx scripts/real-ingest.mts`. ⚠️ DESTRUCTIVE + degrading without a
+free-LLM enrichment key (strips `topics`). To re-curate after a curate-logic change without
+re-fetching, use `scripts/recurate.mts`. Full-content caching now makes steady-state re-ingest cheap.
+
+**Browser-verify:** playwright-core + system Chrome (`chromium.launch({channel:"chrome",
+headless:true})`); assert 0 console errors in BOTH motion modes, at 390/360 mobile widths; drive real
+pointer/scroll/tap. Rebuild + restart preview after any change.
 
 ---
 
-## 7. Known issues / carry-forwards (none blocking)
-- **Reads — deferred MINORS (all non-blocking, 2026-06-30 QA):** StatBand animates only its numeric
-  stats (string-formatted ones jump to final); Sidenote shows inline on mobile (no `<details>` collapse —
-  readable, just long); DataTable sort has no "none"/unsorted state (asc↔desc only — design choice); the
-  ScrollyTimeline storm-progression is a 2-point timeline (earns it with a "+1 DAY" marker). The shared
-  `.mdx-figure` view-timeline entrance can trap TALL figures near opacity:0 on short viewports — patched
-  for `.cc` (KellyChart); if another tall figure ever ghosts on mobile, fix the root in `mdx.css`.
-- **NarrativeScene is retired but its file may still exist** — do NOT use it; it's out of the writer kits.
-- **The committed `curated.json` does NOT yet reflect the reddit/arxiv/youtube fetcher fixes** —
-  they're verified at the fetcher level (harnesses, §6) but a feed-level re-ingest is deferred to
-  the P9 enriched run (a local re-ingest without an LLM key degrades the feed — §6). So locally:
-  arxiv/reddit/youtube items are still thin in `curated.json` until P9.
-- **122 failing feeds = a Scout/registry problem, not a fetcher one.** Verified: a robust re-probe
-  (browser UA + Accept + redirects) recovered ~1/12 — the rest are dead (404), DNS-failed, moved
-  (redirect to non-feed), or mis-registered (HTML page as a feed, e.g. `linkedin-engineering`).
-  **The real fix is a Scout (P8) prune/rediscover pass or a registry triage** that disables the
-  confirmed-dead and corrects mis-registered URLs. Good standalone task.
-- **Reddit `.rss` per-IP budget is tight** — even paced, ~3rd sub in a burst can 429. Raise
-  `REDDIT_MIN_GAP_MS` (6000+) or add OAuth (`REDDIT_CLIENT_ID/SECRET`, free, founder must register
-  an app at reddit.com/prefs/apps) for the 100 QPM authenticated budget.
-- **Workshop sparse on local data (10 builds), by design** — fills on the enriched P9 ingest. One
-  marginal item ("3D Print Gallery Exhibition") slips via the `3D print` regex in `titleBuildSignal`.
-- **Podcast transcript QUALITY** — whisper-tiny hallucination + ads; see `.superpowers/sdd/phase1-
-  podcast-quality-report.md`. Optional free **Groq** tier (`GROQ_API_KEY`) the founder may enable.
-- **The Observatory's taste panels show curate's *quality* tasteScore, not personal affinity** — the
-  LIVE personal layer is the Taste page's job (§8). Build the Worker endpoint once, hydrate both.
-- P9 (orchestration/deploy) not started — everything is local, never deployed.
+## 9. Do this FIRST
+
+> **Boot:** read §7, `pnpm install`, confirm green (`pnpm test`, typecheck, site build). The dev
+> server may still be on :4321 — restart it if stale.
+
+**(A) The founder is reviewing "The Plague Wage"** (`/reads/the-plague-wage`) — the first
+research-grade Read, and the acceptance test for the writing/interaction bar. If he has feedback,
+iterate the Read and/or the writer skills before scaling.
+
+**(B) Finish the Reads workflow (§5):**
+1. Author `.claude/agents/reads-writer.md` + `.claude/agents/reads-verify.md` (model `claude-sonnet-5`,
+   wired to the writer/researcher skills, the factChecker gate, and the right toolsets) — formalizing
+   the ad-hoc runs that already worked. Keep DRY with the skills.
+2. Build the **Opus orchestrator routine**: survey → Opus-curate → parallel writers → independent
+   verifiers → Opus final-QC/publish. Quality bar gates volume; writers ABORT rather than fabricate.
+3. Register it as a **Claude routine, 2×/day** (§6). Drill it once end-to-end before trusting it.
+
+**(C) Restructure the P9 workflows for routines (§6):** strip the `claude-code-action` generate +
+scout-appraise steps out of `pipeline.yml`; keep the $0 code pipeline (events→ingest→curate→build→
+deploy) on Actions. Then it's provisioning (RUNBOOK) → a manual `workflow_dispatch` dry-run.
+
+**Backlog / carry-forwards (§10)** as time allows.
 
 ---
 
-## 8. Do this FIRST — the FEED personalization pass, then P9
+## 10. Known issues / carry-forwards (none blocking)
+- **Writer/verify are not yet `.claude/agents` defs** — they were proven as ad-hoc general-purpose
+  Sonnet runs (§5). Formalize them (§9B).
+- **Ideation data gaps (affect scoring, not correctness):** the curate **clustering is near-atomic**
+  (337 clusters / 337 items — cross-cluster synthesis is entirely the survey agent's job; consider
+  improving curate clustering); **`data/taste.json` doesn't exist** until the Worker + events flow, so
+  `tasteFit` runs on a sample (goes real once live); **`FeedItem.entities` are empty** feed-wide, so
+  novelty/taste lean on topics (enrichment fills this).
+- **YouTube live-verify done for metadata only** — a full enriched re-ingest (populating the feed with
+  YouTube items + credibility) is still the P9 run. The credibility scoring + discovery are unit-tested
+  + validated on 3 real channels; run the report's yt-dlp commands to validate at scale (paced!).
+- **Committed `curated.json` is stale** vs the ingestion/verification/YouTube changes — it lands at the
+  P9 enriched run. Local arxiv/reddit are still thin (correct per the ≥5-min rule).
+- **Podcast transcripts:** now RSS `podcast:transcript` → PodcastIndex → YouTube captions; Whisper is
+  opt-in (`ALLOW_WHISPER=1`) only. **Spotify is a dead end** (its Web API exposes no transcripts).
+- **P9 never deployed;** `wrangler.toml` KV id is a placeholder that blocks Worker deploy (RUNBOOK).
+- **The final whole-branch review + `finishing-a-development-branch`** have NOT run — do a full review
+  before any merge/deploy. 13 new commits this session touch every package.
 
-> **Boot:** read §5, `pnpm install`, `pnpm --filter @khazana/site build`, preview on :4321,
-> then USE the live site — desktop AND a 390px mobile width (§1 verify rule): the redesigned
-> `/reads` index, the 4 Reads (esp. `/reads/the-carrington-event/` — scroll + drag the
-> **ScrollyTimeline**), the bilingual gold **wordmark**, `/taste`, `/graph`, `/sources`.
-> Restart the preview after any change.
-> Re-render narration audio if missing (it's gitignored): `pnpm --filter @khazana/ingest exec
-> tsx scripts/render-audio.mts`.
+## 11. Key decisions this session
+- **Reads = orchestrator-worker Claude routine, 2×/day**; Opus orchestrates + does final QC, NEVER
+  writes; **ALL subagents (survey/writer incl. Chronicle flagship/verify) on Sonnet 5** — founder
+  judged Sonnet 5 good enough for Chronicle, overriding the old "Opus for Chronicle" tiering.
+- **Ideation must produce VARIETY + IMPORTANCE + interest-driven world topics + a guaranteed evergreen
+  anchor** — the thin feed is a signal, not a ceiling.
+- **YouTube > podcasts** — subs/likes/views/tone are measurable at $0 (yt-dlp); podcasts have almost no
+  public engagement signal. YouTube is now a first-class, credibility-scored tier.
+- **TTS removed** — not ready yet; Whisper (opt-in STT) preserved.
+- **LLM work on Claude routines, not the Actions Claude step** (subscription pool; 15 runs/day on Max 5x).
+- **Independent verify > self-verify** — proven; keep them separate.
 
-**(A) FEED personalization pass ("for you" ordering).** The Feed's bento ordering was left a
-stub pending personalization; the machinery now exists. The ranking math is shared in
-`@khazana/core` (`scoreContributions`, `aggregateProfile`) and the live per-device taste layer
-exists (Worker `GET /summary` + `taste-derive.ts` `liveProfileFromEvents`). Wire the Feed's
-"for you" ordering to the affinity-weighted score (reuse the Taste `rerank.ts` approach /
-the core scoring), with an honest fallback to the quality ranking when the taste model isn't
-`ready`. Same house pattern: a pure TDD lib + the existing Feed islands. 0 console errors both
-motion modes; verify in a real browser.
-
-**(B) P9 — Publish + full ingest + deploy.** Build the GitHub Actions cron
-(ingest→curate→generate→**render-audio**→scout→build→deploy) + the CF Worker + Pages + the
-Claude Code Action. Wire the env knobs: ingest (`ALLOW_DIRECT_YOUTUBE=1`, the `python3 -m
-yt_dlp` shim + `pip install "yt-dlp[default,curl-cffi]"`, the rate-limit gaps, a free-LLM
-enrichment key) + the **TTS render step** (`render-audio.mts`; default `NARRATION_CODEC=mp3`
-+ `NARRATION_SPEED=0.8`; cache the ~90MB Kokoro model via `actions/cache`; audio is
-generate-and-deploy, NOT committed) + the **retention prune** step (`prune-history.mts
---apply`, and add `pinned:true` to the seed flagship's frontmatter so it isn't pruned) + a
-free re-ingest to pick up the 17 new GitHub sources. **Deploy the Worker** — then the live
-`/summary` hydration on Taste/Observatory finally has real per-device data (today it falls back
-to the build snapshot, which is correct + 0-error). A copy-paste account runbook for the founder.
-
-### Open polish / decisions the founder may raise (cheap, one-knob each)
-- **TTS pace** is `NARRATION_SPEED=0.8` (~226 wpm). Founder accepted it; dial via the env if asked.
-- **TTS codec** defaults to **MP3** (Safari plays it; Opus didn't). Founder wanted the smaller
-  file — a **dual-source** (`<source>` opus + mp3, browser picks) would give small-where-supported
-  AND universal playback. Offered, not yet built — do it if the founder wants Opus's size back.
-- **Worker `/summary`** live layer is verified only against the snapshot fallback locally
-  (`PUBLIC_WORKER_URL` unset) — a real end-to-end fetch lands at the P9 Worker deploy.
-
-> ── historical Taste brief (DONE — kept for context; the Taste page is built, §4) ──────────
-
-1. **Boot:** read §5, `pnpm install`, build + preview, **look at the live site** — `/taste`
-   first, plus `/graph` (the Observatory) and `/sources` (the model for a polished,
-   pure-lib + island surface). Restart the preview after any change (§1/§6).
-2. **Taste's purpose** (spec + founder): a transparent, tunable read on the founder's
-   reading — *what he returns to, and **why he's seeing what he sees***. This is the
-   personalization/affinity surface. It must feel like an instrument readout, terminal ×
-   editorial, 0 console errors BOTH motion modes.
-3. **Current state (thin — a real build, not a polish pass):**
-   - `apps/site/src/pages/taste.astro` loads `loadTaste(repoDataDir())`
-     (`apps/site/src/lib/taste.ts` → `TastePayload {ready, topics, entities, formatAffinity}`)
-     and renders simple bars (topic / entity / format affinity), with a "still learning"
-     empty state. **`entities` is empty across the corpus** (don't lean on it). It reads
-     `taste.json` at BUILD time only.
-   - The behavior loop already exists: `apps/site/src/components/Beacon.astro` →
-     `navigator.sendBeacon` → Cloudflare **Worker** `POST /event` → KV; the daily curate run
-     exports events (`GET /events`, auth'd by `EXPORT_TOKEN`) and recomputes `taste.json`
-     (`packages/curate/src/format-affinity.ts` `buildTastePayload`). Device id:
-     `apps/worker/src/client.ts` `getDeviceId()` (localStorage `khazana:deviceId`).
-4. **The real work — TWO halves:**
-   - **(A) Make `/taste` a genuine, transparent affinity surface.** Elevate beyond flat bars:
-     topic/channel affinity with the same group-color system as the Observatory; a **"why you're
-     seeing this"** explainer (mirror the Sources `assessTrust()` *trust-basis* pattern — tier +
-     plain-English rationale + evidenced factors, but for taste/affinity); ideally **tunable**
-     (founder can nudge weights — even if it only writes to localStorage for now). Honest empty/
-     learning state. Reuse the `build-analytics`/`build-sources` house pattern: a **pure TDD lib**
-     for any derived affinity + a `client:load`/`client:visible` island for interactivity.
-   - **(B) The LIVE personal layer (the deferred decision — founder memory
-     `observatory-live-data-decision`).** Today taste is build-cadence only. Build a **public
-     per-device summary endpoint on the Worker** (`apps/worker/src/handler.ts` — add e.g.
-     `GET /summary?deviceId=…` returning that device's aggregated taste/affinity/counts; the
-     existing `/events` is auth-gated and unsuitable for a static client). Then **hydrate from it
-     client-side on BOTH `/taste` AND the Observatory's taste panels** (taste-by-channel, "highest
-     resonance", trust×taste emphasis — see `build-analytics.ts` + `graph.astro`), with the
-     build-time `taste.json` as the instant SSR fallback. Build the endpoint ONCE, consume it in
-     both places. Keep `$0` (free Worker + KV), CORS correct, fail-soft when the Worker/deviceId
-     is absent (graceful SSR fallback, no errors).
-5. **Process:** subagents do the build (foundation pure-lib + island, like Observatory/Sources;
-   `frontend-design` skill); TDD the libs + Worker handler; verify in a REAL browser (0 console
-   errors BOTH motion modes, LOOK at screenshots) AND test the Worker endpoint
-   (`apps/worker` has `handler.test.ts` + a test-KV harness); commit at clean milestones; update
-   the ledger. No destructive re-ingest needed.
-
-**Roadmap order (memory `khazana-page-by-page-roadmap`):** Feed ✅ → Workshop ✅ → Graph ✅
-(Observatory) → Sources ✅ → Taste ✅ (Calibration Bench) → **Feed final/personalization pass
-← YOU ARE HERE** → **Publish + full ingest (P9)**. Also DONE this session (not on the original
-page-by-page list): code/math typography, navigation, TTS narration, ingest dedup, retention,
-17 GitHub sources, node_modules dedupe.
-
----
-
-## 9. Idea backlog (cofounder — propose + build)
-- **Taste ✅ DONE** (the Calibration Bench, §4). Follow-up: the half-life knob only reshapes the
-  decay *curve* today (labeled "applied at next build") — a future pass could recompute the taste
-  model from raw events client-side.
-- **TTS follow-ups:** a **dual-source** Opus+MP3 player (small file where supported + universal
-  playback — the founder wanted Opus's size, MP3 is the safe default); narrate MORE Reads (run
-  `render-audio.mts` after generating each); a per-Read `narratorVoice` frontmatter override; wire
-  the render step into P9 Actions. (Pace `NARRATION_SPEED=0.8` accepted; codec default MP3.)
-- **Source health / Scout (P8):** prune-or-rediscover the 122 failing feeds (mostly dead/moved/
-  mis-registered — §7) + fix mis-registered URLs (e.g. `linkedin-engineering` points at an HTML
-  page). The `/sources` health band + `failing`/`dormant`/`deferred` statuses already surface the
-  targets. High-value, self-contained.
-- **Observatory follow-ups:** the taste panels still use curate's *quality* tasteScore — the Worker
-  `/summary` + `liveProfileFromEvents` now exist, so hydrate the Observatory's taste panels from the
-  live personal affinity too (reuse the Taste page's hydration; endpoint is built).
-- **Feed final pass (NOW the next task — §8A):** wire the "for you" bento ordering to the
-  affinity-weighted score; the shared `@khazana/core` scoring + the live taste layer now exist.
-- Workshop follow-ups: "build difficulty"/"parts list" extraction; narrow the `3D print` regex.
-- Generate more real Reads (only 1 flagship exists; each grounded in real sources).
-- Podcast transcripts: optional free **Groq** (`GROQ_API_KEY`) as primary, local Whisper fallback.
-- **P9: GitHub Actions cron** (ingest→curate→generate→scout→build→deploy) + CF Worker + Pages +
-  the Claude Code Action. The ingestion fixes (reddit/arxiv/youtube — §4) need their env knobs wired
-  here (`ALLOW_DIRECT_YOUTUBE=1`, `pip install "yt-dlp[default,curl-cffi]"`, the rate-limit gaps) +
-  a free-LLM enrichment key. A copy-paste account runbook for the founder.
-
----
-
-## 10. Git / process notes
-- Branch: **`p1-foundation`** (no remote, never deployed). Commit at clean milestones;
-  end commit messages with
-  `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
-- `data/feed/*.json` and `data/sources.json` are gitignored (regenerated). `.superpowers/`
-  reports are on-disk only.
-- The final whole-branch review + `finishing-a-development-branch` step have NOT run —
-  do a full review before any merge/deploy.
-- When you finish meaningful work, append to `.superpowers/sdd/progress.md`.
+## 12. Git / process
+- Branch **`p1-foundation`** (no remote, never deployed), HEAD `83b3ffb`. Commit at clean milestones;
+  end commit messages with `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
+- `data/feed/*.json`, `data/sources.json`, `data/scout/`, `data/taste.json`, `.superpowers/`, and
+  (removed) audio are gitignored. Generated Reads MDX under `apps/site/src/content/blog/` IS committed.
+- When you finish meaningful work, append to `.superpowers/sdd/progress.md` and update this HANDOFF.
