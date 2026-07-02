@@ -304,6 +304,23 @@
 
 /* ── mobile: compact spine, full-width prose ─────────────────────────────── */
 @media (max-width: 640px) {
+  /* Kill the negative spine bleed on mobile: the desktop `margin-inline:
+     calc(-1 * var(--s-4))` widens the frosted band past the prose column, and
+     combined with the rail's `overflow:visible` that let date pips + the active
+     label spill past the right edge (and the prose touch the left edge). On
+     mobile we keep the spine flush inside the container instead. */
+  .sctl-spine {
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+  /* The rail SVG scales to fit via viewBox, but `overflow:visible` let its
+     edge date labels (text-anchored at x≈0 / x≈RAIL_W) bleed outside the box.
+     Clip to the SVG's own width so nothing escapes the container. The date row
+     stays legible because layoutTimeline already anchors the first/last labels
+     inward (start/end) so they sit inside the box once clipped. */
+  .sctl-rail {
+    overflow: hidden;
+  }
   .sctl-readout-date {
     font-size: var(--t-lg);
   }
@@ -311,6 +328,13 @@
     flex-wrap: wrap;
     gap: var(--s-2);
     min-height: 3.4em;
+  }
+  /* The active-event label is a single mono line that can run wider than the
+     viewport ("11:18 GMT — THE FLARE" etc.). Let it wrap and never exceed the
+     container so it can't push the rail width past the right edge. */
+  .sctl-readout-label {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
   .sctl-tick-date {
     font-size: 13px; /* viewBox scales down on narrow screens; keep legible */

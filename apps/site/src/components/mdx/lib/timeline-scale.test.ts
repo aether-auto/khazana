@@ -5,6 +5,7 @@ import {
   niceYearTicks,
   deCollideLabels,
   labelAnchor,
+  labelSpan,
   layoutTimeline,
   formatGap,
   formatNodeDate,
@@ -171,6 +172,74 @@ test("deCollideLabels: honors a horizontal gutter between same-row labels", () =
   // → fits in row 0 with default gutter 0, but with gutter 40 they collide.
   expect(deCollideLabels([{ x: 0, labelPx: 100 }, { x: 120, labelPx: 100 }])).toEqual([0, 0]);
   expect(deCollideLabels([{ x: 0, labelPx: 100 }, { x: 120, labelPx: 100 }], 40)).toEqual([0, 1]);
+});
+
+// ── labelSpan (anchor-aware rendered bounds) ──────────────────────────────────
+
+test("labelSpan: 'start' extends rightward from x", () => {
+  expect(labelSpan(100, 60, "start")).toEqual({ left: 100, right: 160 });
+});
+
+test("labelSpan: 'end' extends leftward from x", () => {
+  expect(labelSpan(100, 60, "end")).toEqual({ left: 40, right: 100 });
+});
+
+test("labelSpan: 'middle' straddles x", () => {
+  expect(labelSpan(100, 60, "middle")).toEqual({ left: 70, right: 130 });
+});
+
+// ── deCollideLabels: anchor-aware spans agree with the renderer ────────────────
+
+test("deCollideLabels: an end-anchored label extending LEFT collides with its left neighbour", () => {
+  // Two labels. #1 start-anchored at x=0 spans [0,120]. #2 end-anchored at
+  // x=150 spans [30,150] — it reaches left to 30, overlapping #1's [0,120].
+  // The OLD (x-as-left-edge) logic saw #2 as [150,270] → no overlap → same row
+  // (a visible smear). Anchor-aware spans catch it and bump #2 to row 1.
+  const pts: LabeledPoint[] = [
+    { x: 0,   labelPx: 120, left: 0,  right: 120 },
+    { x: 150, labelPx: 120, left: 30, right: 150 },
+  ];
+  const rows = deCollideLabels(pts);
+  expect(rows[0]).toBe(0);
+  expect(rows[1]).toBe(1);
+});
+
+test("deCollideLabels: without explicit spans it still uses x as the left edge (back-compat)", () => {
+  const pts: LabeledPoint[] = [
+    { x: 0,   labelPx: 100 },
+    { x: 200, labelPx: 100 },
+  ];
+  expect(deCollideLabels(pts)).toEqual([0, 0]);
+});
+
+test("layoutTimeline: dense long-label arc de-collides so no two same-row labels overlap (anchor-aware)", () => {
+  // The kitchen-sink Timeline: 7 dense events, long labels, some clustered on
+  // the same day → proportional mode with mixed anchors. Every same-row pair
+  // must be clear once the true rendered spans are honoured.
+  const dense = layoutTimeline(
+    [
+      { date: "1859-08-28", label: "First auroras begin appearing at unusually low latitudes" },
+      { date: "1859-09-01", label: "11:18 GMT — Carrington observes the white-light solar flare at Redhill Observatory" },
+      { date: "1859-09-01", label: "11:20 GMT — Kew magnetometer records a sudden crochet" },
+      { date: "1859-09-02", label: "04:00 GMT — the coronal mass ejection reaches Earth after a 17.6 hour transit" },
+      { date: "1859-09-02", label: "05:00 GMT — telegraph systems across Europe and North America fail catastrophically" },
+      { date: "1859-09-03", label: "Auroras visible as far south as Cuba, Colombia, and Hawaii" },
+      { date: "1859-09-04", label: "The geomagnetic storm finally subsides" },
+    ],
+    { width: 1000 },
+  );
+  const nodes = dense.nodes;
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      if (nodes[i].row === nodes[j].row) {
+        const spanI = labelSpan(nodes[i].x, nodes[i].labelPx, nodes[i].anchor);
+        const spanJ = labelSpan(nodes[j].x, nodes[j].labelPx, nodes[j].anchor);
+        // Disjoint spans: one ends at or before the other begins.
+        const disjoint = spanI.right <= spanJ.left || spanJ.right <= spanI.left;
+        expect(disjoint).toBe(true);
+      }
+    }
+  }
 });
 
 // ── span===0 fix in buildTimelineScale ───────────────────────────────────────

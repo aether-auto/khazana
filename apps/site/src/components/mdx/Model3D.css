@@ -5,13 +5,28 @@
 .m3d-panel {
   position: relative;
   aspect-ratio: 16 / 10;
-  min-height: 280px;
+  /* Cap min-height so it can never imply a min-width wider than the container.
+     280px × 16/10 = 448px implied min-width — that overflowed 360/390 screens.
+     Clamping min-height to ~62.5% of the panel's own width (via aspect-ratio,
+     56.25vw here is a safe ceiling below the widest mobile viewport) keeps the
+     aspect-ratio in charge of width from 100% down, so the panel never exceeds
+     the column. On roomy viewports the 280px floor still applies. */
+  min-height: min(280px, 56.25vw);
   display: grid;
   place-items: center;
   overflow: hidden;
   background:
     radial-gradient(120% 90% at 50% 30%, color-mix(in oklab, var(--accent) 6%, transparent), transparent 60%),
     var(--bg-inset);
+}
+
+/* Narrow screens: drop the min-height floor entirely so aspect-ratio alone
+   drives the panel from 100% width. This removes any residual implied min-width
+   and guarantees the panel + its fallback text stay inside the mobile column. */
+@media (max-width: 640px) {
+  .m3d-panel {
+    min-height: 0;
+  }
 }
 
 /* ── live canvas ─────────────────────────────────────────────────────── */

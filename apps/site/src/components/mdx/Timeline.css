@@ -177,6 +177,23 @@
   color: var(--ink-faint);
 }
 
+/* ── mobile: the SVG's fixed 1000-unit viewBox scales text below legibility
+   (a 1000-unit tape squeezed into ~320px renders 11px labels at ~3.5px). Long
+   dense labels become an illegible smear. Below this width we hide the SVG and
+   promote the semantic, full-size stacked fallback list — same data, every
+   label readable, no overlap. Desktop is untouched. ───────────────────────── */
+@media (max-width: 640px) {
+  .tl-svg {
+    display: none;
+  }
+  .tl-fallback {
+    display: block;
+  }
+  .tl-panel {
+    padding: var(--s-4);
+  }
+}
+
 /* ── reduced motion: kill the transitions, keep the legibility ──────────── */
 @media (prefers-reduced-motion: reduce) {
   .tl-dot,

@@ -34,7 +34,7 @@ sources:
 draft: false
 ---
 
-import { Chart, DataTable, Scrolly, ScrollyStep, Annotation, StatBand } from "../../components/mdx";
+import { Chart, DataTable, Scrolly, Annotation, StatBand } from "../../components/mdx";
 import Pullquote from "../../components/mdx/Pullquote.astro";
 
 In the summer of 1349, the harvesters did not come. Across England, the wheat stood in the fields and began to rot. <Annotation client:load term="there was such a lack of servants" note="Henry Knighton, Canon of Leicester Abbey, writing c. 1390: 'Sheep and cattle went wandering over fields and through crops, and there was no one to go and drive or gather them for there was such a lack of servants.' Knighton's Chronicle, via The Middle Ages website." /> — that is the exact phrase the chronicler Henry Knighton used, and it captures the whole of what had happened with clinical precision. The Black Death had arrived in England the previous autumn, and by the time it exhausted itself in 1350 it had taken <Annotation client:load term="roughly half of the English population" note="Estimates range widely: Ziegler (1969) placed mortality at roughly one-third; Goldberg (1996) estimated closer to 45%; the most dramatic scholarly estimate (Benedictow 2004) reaches 62.5%. England's pre-plague population is itself uncertain — plausibly around 6 million within a 3–7 million range. Wikipedia, 'Black Death in England.'" />.
@@ -58,58 +58,63 @@ Before the plague, the English labor market was rigged — not by formal law, bu
 
 The Black Death inverted that arithmetic in the span of three years.
 
-<Scrolly client:visible caption="The labor-market shock, step by step.">
-  <ScrollyStep graphic={
-    <Chart client:visible mark="bar" x="period" y="population"
-      caption="England's estimated population, 1300–1450 (millions)"
-      data={[
-        { period: "1300", population: 5.0 },
-        { period: "1348", population: 4.8 },
-        { period: "1351", population: 2.6 },
-        { period: "1377", population: 2.2 },
-        { period: "1400", population: 2.1 },
-        { period: "1450", population: 1.9 }
-      ]} />
-  }>
-    **The demographic collapse.** England's population fell by roughly half in the three years of the first outbreak, and subsequent waves pushed the decline further, toward a nadir around 1450. <Annotation client:load term="fell by roughly half" note="England's pre-plague population is itself uncertain — estimates span 3–7 million, with ~6 million often treated as plausible. Mortality estimates range from Ziegler's one-third to Benedictow's 62.5%; a loss on the order of half is the mainstream figure. The chart values are illustrative reconstructions consistent with this literature, not a single authoritative series. Wikipedia, 'Black Death in England.'" /> Population would not recover to pre-plague levels for two to three centuries.
-  </ScrollyStep>
-  <ScrollyStep graphic={
-    <Chart client:visible mark="line" x="period" y="wage_index" series="type"
-      caption="Nominal farm wages vs. real wages, England 1300–1500 (indexed to 1300=100)"
-      data={[
-        { period: "1300", wage_index: 100, type: "nominal" },
-        { period: "1340", wage_index: 92,  type: "nominal" },
-        { period: "1350", wage_index: 155, type: "nominal" },
-        { period: "1375", wage_index: 175, type: "nominal" },
-        { period: "1400", wage_index: 195, type: "nominal" },
-        { period: "1450", wage_index: 222, type: "nominal" },
-        { period: "1300", wage_index: 100, type: "real" },
-        { period: "1340", wage_index: 96,  type: "real" },
-        { period: "1350", wage_index: 90,  type: "real" },
-        { period: "1375", wage_index: 115, type: "real" },
-        { period: "1400", wage_index: 155, type: "real" },
-        { period: "1450", wage_index: 200, type: "real" }
-      ]} />
-  }>
-    **The wage paradox.** Nominal wages spiked almost immediately — in 1349, the average day-laborer's wage was roughly 0.13 shillings; by 1350 it had climbed toward 0.25 shillings. <Annotation client:load term="nominal wages nearly doubling in 1349–1350" note="John H. Munro (2004), 'Before and After the Black Death: Money, Prices, and Wages in Fourteenth-Century England,' MPRA Working Paper 15748, citing the Phelps Brown-Hopkins nominal wage series." /> But real wages — nominal wages deflated by the price of consumables — actually *declined* in the immediate aftermath. The reason: post-plague inflation ran hot for nearly thirty years as surviving workers spent their inheritance windfalls and grain prices stayed high. The real wage gain was delayed, then decisive.
-  </ScrollyStep>
-  <ScrollyStep graphic={
-    <Chart client:visible mark="area" x="period" y="real_wage_gain"
-      caption="Cumulative real wage gain above 1300 baseline, England (percentage points)"
-      data={[
-        { period: "1300", real_wage_gain: 0 },
-        { period: "1330", real_wage_gain: -5 },
-        { period: "1360", real_wage_gain: -8 },
-        { period: "1380", real_wage_gain: 12 },
-        { period: "1400", real_wage_gain: 35 },
-        { period: "1420", real_wage_gain: 60 },
-        { period: "1450", real_wage_gain: 100 },
-        { period: "1480", real_wage_gain: 115 }
-      ]} />
-  }>
-    **The long payoff.** Not until the late 1370s — nearly thirty years after the Black Death — did real wages in England decisively recover and begin their sustained climb. <Annotation client:load term="peak real wages in the 1470s–1480s" note="Munro (2004) and Clark (2007, Economic History Review 60:1) both identify the peak of real wages as occurring around 1476–1480, 'at a level not thereafter surpassed until 1886–1890.' The century-long doubling of real wages from 1350–1450 is Clark's finding from farm-wage data." /> Clark's analysis of English farm wages shows that from the period 1300–1349 to 1450–1499, day wages rose by roughly 122% — approaching a doubling. That peak was not matched again until the Victorian era, more than four centuries later.
-  </ScrollyStep>
-</Scrolly>
+<Scrolly client:visible caption="The labor-market shock, step by step. Sources: Wikipedia 'Black Death in England'; Munro (2004), MPRA 15748; Clark (2007), Economic History Review 60:1."
+  steps={[
+    {
+      chart: {
+        mark: "bar", x: "period", y: "population",
+        caption: "England's estimated population, 1300–1450 (millions)",
+        data: [
+          { period: "1300", population: 5.0 },
+          { period: "1348", population: 4.8 },
+          { period: "1351", population: 2.6 },
+          { period: "1377", population: 2.2 },
+          { period: "1400", population: 2.1 },
+          { period: "1450", population: 1.9 }
+        ]
+      },
+      prose: "<p><strong>The demographic collapse.</strong> England's population <a href=\"https://en.wikipedia.org/wiki/Black_Death_in_England\">fell by roughly half</a> in the three years of the first outbreak, and subsequent waves pushed the decline further, toward a nadir around 1450. Population would not recover to pre-plague levels for two to three centuries.</p>"
+    },
+    {
+      chart: {
+        mark: "line", x: "period", y: "wage_index", series: "type",
+        caption: "Nominal farm wages vs. real wages, England 1300–1500 (indexed to 1300=100)",
+        data: [
+          { period: "1300", wage_index: 100, type: "nominal" },
+          { period: "1340", wage_index: 92,  type: "nominal" },
+          { period: "1350", wage_index: 155, type: "nominal" },
+          { period: "1375", wage_index: 175, type: "nominal" },
+          { period: "1400", wage_index: 195, type: "nominal" },
+          { period: "1450", wage_index: 222, type: "nominal" },
+          { period: "1300", wage_index: 100, type: "real" },
+          { period: "1340", wage_index: 96,  type: "real" },
+          { period: "1350", wage_index: 90,  type: "real" },
+          { period: "1375", wage_index: 115, type: "real" },
+          { period: "1400", wage_index: 155, type: "real" },
+          { period: "1450", wage_index: 200, type: "real" }
+        ]
+      },
+      prose: "<p><strong>The wage paradox.</strong> Nominal wages spiked almost immediately — in 1349, the average day-laborer's wage was roughly 0.13 shillings; by 1350 it had climbed toward <a href=\"https://mpra.ub.uni-muenchen.de/15748/\">0.25 shillings</a>. But real wages — nominal wages deflated by the price of consumables — actually <em>declined</em> in the immediate aftermath. The reason: post-plague inflation ran hot for nearly thirty years as surviving workers spent their inheritance windfalls and grain prices stayed high. The real wage gain was delayed, then decisive.</p>"
+    },
+    {
+      chart: {
+        mark: "area", x: "period", y: "real_wage_gain",
+        caption: "Cumulative real wage gain above 1300 baseline, England (percentage points)",
+        data: [
+          { period: "1300", real_wage_gain: 0 },
+          { period: "1330", real_wage_gain: -5 },
+          { period: "1360", real_wage_gain: -8 },
+          { period: "1380", real_wage_gain: 12 },
+          { period: "1400", real_wage_gain: 35 },
+          { period: "1420", real_wage_gain: 60 },
+          { period: "1450", real_wage_gain: 100 },
+          { period: "1480", real_wage_gain: 115 }
+        ]
+      },
+      prose: "<p><strong>The long payoff.</strong> Not until the late 1370s — nearly thirty years after the Black Death — did real wages in England decisively recover and begin their sustained climb, reaching a <a href=\"https://mpra.ub.uni-muenchen.de/15748/\">peak around 1476–1480</a> at a level not thereafter surpassed until 1886–1890. <a href=\"https://onlinelibrary.wiley.com/doi/10.1111/j.1468-0289.2006.00358.x\">Clark's analysis</a> of English farm wages shows that from the period 1300–1349 to 1450–1499, day wages rose by roughly 122% — approaching a doubling. That peak was not matched again until the Victorian era, more than four centuries later.</p>"
+    }
+  ]}
+/>
 
 ## The crown's first panic
 

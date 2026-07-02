@@ -31,6 +31,34 @@ export interface LabeledPoint {
   x: number;
   /** Estimated rendered width of this label in pixels. */
   labelPx: number;
+  /**
+   * Optional explicit horizontal span [left, right] of the RENDERED label in the
+   * same coordinate space as `x`. When present, de-collision uses these bounds
+   * directly instead of assuming the label extends rightward from `x`. This is
+   * what makes de-collision agree with `text-anchor` (a middle/end-anchored
+   * label extends left of `x`, so treating `x` as its left edge under-counts the
+   * collision and lets labels visually overlap even though the packer thought
+   * they were clear). Deriving these from the anchor closes that gap.
+   */
+  left?: number;
+  right?: number;
+}
+
+/**
+ * The rendered horizontal span [left, right] of a label given the SVG
+ * `text-anchor` used to draw it. `"start"` extends rightward from x; `"end"`
+ * extends leftward; `"middle"` straddles x. Pure geometry, unit-tested — this
+ * is the single source of truth both the de-collision packer and (implicitly)
+ * the renderer agree on, so a de-collided layout can never visually overlap.
+ */
+export function labelSpan(
+  x: number,
+  labelPx: number,
+  anchor: "start" | "middle" | "end",
+): { left: number; right: number } {
+  if (anchor === "end") return { left: x - labelPx, right: x };
+  if (anchor === "middle") return { left: x - labelPx / 2, right: x + labelPx / 2 };
+  return { left: x, right: x + labelPx };
 }
 
 // ── niceYearTicks ─────────────────────────────────────────────────────────────
@@ -121,16 +149,23 @@ export function deCollideLabels(
   gutter: number = 0,
 ): number[] {
   if (points.length === 0) return [];
-  // rowRight[r] = the rightmost x reached by the last label placed in row r.
+  // Each label's TRUE rendered span. When explicit left/right are supplied
+  // (anchor-aware), use them; otherwise fall back to "extends rightward from x".
+  const spanOf = (pt: LabeledPoint): { left: number; right: number } =>
+    pt.left != null && pt.right != null
+      ? { left: pt.left, right: pt.right }
+      : { left: pt.x, right: pt.x + pt.labelPx };
+  // rowRight[r] = the rightmost edge reached by the last label placed in row r.
   const rowRight: number[] = [];
   const result: number[] = [];
   for (const pt of points) {
-    // Find the lowest row where this label fits.
+    const span = spanOf(pt);
+    // Find the lowest row whose last label clears this label's LEFT edge.
     let placed = false;
     for (let r = 0; r < rowRight.length; r++) {
-      if ((rowRight[r] ?? 0) <= pt.x) {
+      if ((rowRight[r] ?? 0) <= span.left) {
         result.push(r);
-        rowRight[r] = pt.x + pt.labelPx + gutter;
+        rowRight[r] = span.right + gutter;
         placed = true;
         break;
       }
@@ -138,7 +173,7 @@ export function deCollideLabels(
     if (!placed) {
       // Open a new row.
       result.push(rowRight.length);
-      rowRight.push(pt.x + pt.labelPx + gutter);
+      rowRight.push(span.right + gutter);
     }
   }
   return result;
@@ -440,8 +475,17 @@ export function layoutTimeline(
   }
 
   // ── label de-collision into stacking rows ───────────────────────────────────
+  // Compute the anchor FIRST (it decides which way each label extends), then
+  // de-collide on each label's TRUE rendered span. Doing anchor-after-collision
+  // (the old order) let the packer assume every label extended rightward from x,
+  // so middle/end-anchored labels — which reach left of x — visually overlapped
+  // even though the layout believed they were clear. Anchor-aware spans fix that.
   const labelPxs = parsed.map((e) => e.label.length * charPx);
-  const labeled: LabeledPoint[] = xs.map((x, i) => ({ x, labelPx: labelPxs[i] }));
+  const anchors = xs.map((x, i) => labelAnchor(x, width, labelPxs[i]));
+  const labeled: LabeledPoint[] = xs.map((x, i) => {
+    const span = labelSpan(x, labelPxs[i], anchors[i]);
+    return { x, labelPx: labelPxs[i], left: span.left, right: span.right };
+  });
   const rows = deCollideLabels(labeled, gutter);
   const rowCount = rows.reduce((m, r) => Math.max(m, r), 0) + 1;
 
@@ -450,7 +494,7 @@ export function layoutTimeline(
     t: ts[i],
     x: xs[i],
     row: rows[i] ?? 0,
-    anchor: labelAnchor(xs[i], width, labelPxs[i]),
+    anchor: anchors[i],
     labelPx: labelPxs[i],
     dateLabel: formatNodeDate(e.date),
   }));
