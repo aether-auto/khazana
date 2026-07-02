@@ -1,0 +1,212 @@
+/* apps/site/src/components/mdx/OrderOfBattle.css
+   Force-structure roster: side → formations → sub-units. "Lines not boxes"
+   hairline cards, a tone accent stripe per side (amber friendly / clay enemy /
+   faint neutral), native <details> disclosure for sub-units. Reflows to one
+   column at 360px; no JS required. Tokens only. */
+
+.oob {
+  max-width: min(100%, var(--maxw));
+}
+
+.oob__grid {
+  display: grid;
+  gap: var(--s-4);
+  /* two-up on desktop; auto-fit reflows to one column at 360px (no overflow). */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+}
+
+/* ── tone map ───────────────────────────────────────────────────────────────── */
+.oob-tone--friendly {
+  --oob-c: var(--accent);
+  --oob-c-dim: var(--accent-dim);
+}
+.oob-tone--enemy {
+  --oob-c: var(--editorial);
+  --oob-c-dim: var(--editorial-dim);
+}
+.oob-tone--neutral {
+  --oob-c: var(--ink-label);
+  --oob-c-dim: var(--ink-faint);
+}
+
+/* ── a side: a hairline card with a tone accent stripe on the leading edge ──── */
+.oob__side {
+  position: relative;
+  min-width: 0;
+  padding: var(--s-4) var(--s-4) var(--s-4) var(--s-5);
+  background: var(--bg-card);
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-md);
+}
+.oob__side::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border-radius: var(--r-md) 0 0 var(--r-md);
+  background: var(--oob-c);
+  opacity: 0.85;
+}
+
+.oob__side-head {
+  padding-bottom: var(--s-3);
+  margin-bottom: var(--s-3);
+  border-bottom: var(--hair) solid var(--rule);
+}
+.oob__side-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--t-md);
+  line-height: 1.15;
+  color: var(--oob-c, var(--ink));
+}
+.oob__side-cmd {
+  margin: var(--s-1) 0 0;
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  color: var(--ink-dim);
+}
+.oob__cmd-label {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  margin-right: var(--s-1);
+}
+.oob__side-count {
+  margin: var(--s-2) 0 0;
+}
+
+/* ── formations ─────────────────────────────────────────────────────────────── */
+.oob__formations {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-2);
+}
+.oob__formation {
+  margin: 0;
+}
+
+/* the formation header row (shared by <summary> and the flat variant) */
+.oob__f-summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-2) 0;
+  border-top: var(--hair) solid var(--rule);
+  cursor: default;
+}
+.oob__disc .oob__f-summary {
+  cursor: pointer;
+  list-style: none; /* hide default triangle; we draw our own marker */
+}
+.oob__disc .oob__f-summary::-webkit-details-marker {
+  display: none;
+}
+/* our own disclosure marker: a rotating caret ahead of the name */
+.oob__f-main {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  min-width: 0;
+}
+.oob__disc .oob__f-main::before {
+  content: "▸";
+  color: var(--oob-c-dim);
+  font-size: 0.7em;
+  transition: transform var(--dur-fast) var(--ease-out);
+  transform-origin: center;
+}
+.oob__disc[open] .oob__f-main::before {
+  transform: rotate(90deg);
+}
+.oob__f-name {
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--ink);
+}
+.oob__f-kind {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+.oob__f-strength {
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--oob-c);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.oob__f-summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+.oob__f-meta {
+  margin: 0 0 var(--s-1);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-3);
+  font-size: var(--t-xs);
+  color: var(--ink-dim);
+}
+.oob__f-cmd {
+  font-family: var(--font-read);
+}
+.oob__f-note {
+  font-family: var(--font-read);
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+/* ── sub-units (inside the open <details>) ─────────────────────────────────── */
+.oob__units {
+  list-style: none;
+  margin: 0 0 var(--s-1);
+  padding: 0 0 0 var(--s-4);
+  display: grid;
+  gap: var(--s-1);
+  border-left: var(--hair) solid var(--rule-bright);
+}
+.oob__unit {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-2);
+  font-size: var(--t-xs);
+}
+.oob__u-name {
+  font-family: var(--font-mono);
+  color: var(--ink-dim);
+}
+.oob__u-strength {
+  font-family: var(--font-mono);
+  color: var(--ink-label);
+  white-space: nowrap;
+}
+.oob__u-note {
+  font-family: var(--font-read);
+  color: var(--ink-faint);
+  font-style: italic;
+  flex: 1 1 100%;
+}
+
+.oob__cap {
+  text-wrap: pretty;
+}
+
+/* ── reduced motion: caret snaps, zero animation (roster is always legible) ─── */
+@media (prefers-reduced-motion: reduce) {
+  .oob__disc .oob__f-main::before {
+    transition: none;
+  }
+}

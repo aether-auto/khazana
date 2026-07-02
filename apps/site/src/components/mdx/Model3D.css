@@ -82,6 +82,39 @@
   max-width: 32ch;
   letter-spacing: 0.02em;
 }
+/* model-mode label (present only when a `src` model is loaded) — the part's
+   name sits above the descriptive note. */
+.m3d-fallback-label {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--accent);
+  text-align: center;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── suspense loading state ──────────────────────────────────────────────
+   A non-blank fallback while the lazy scene chunk / glb asset resolves. Sits
+   over the baked fallback (which stays visible beneath), so the reader never
+   sees an empty box mid-load. */
+.m3d-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  background: radial-gradient(
+    120% 90% at 50% 40%,
+    color-mix(in oklab, var(--accent) 5%, transparent),
+    transparent 65%
+  );
+  pointer-events: none;
+}
 /* once the live canvas is up, the fallback recedes (still visible faintly as
    depth, never a hard cut). */
 .m3d-panel:has(canvas) .m3d-fallback {

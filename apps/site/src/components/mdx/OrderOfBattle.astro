@@ -1,0 +1,125 @@
+---
+// apps/site/src/components/mdx/OrderOfBattle.astro
+//
+// Order of Battle — the force-structure roster for a military/strategy Read:
+// who fought, in what formations, at what strength. A hierarchy of
+//   side (label + commander + N formations) → formation (kind + strength +
+//   commander) → optional sub-units.
+//
+// STATIC ASTRO, NOT a React island — chosen deliberately (same reasoning as
+// CastGrid):
+//   • The roster is CONTENT, not state — nothing here needs client re-render.
+//   • Sub-unit expansion uses the NATIVE <details>/<summary> element, so the
+//     "all info visible with no JS" guarantee is STRUCTURAL: with JS off the
+//     user simply taps/clicks the disclosure (native), or we ship it `open` so
+//     the full roster is in the DOM and visible on load. An island would have
+//     to re-derive expand state, keyboard, and the no-JS fallback that the
+//     platform gives us for free.
+//   • reduced-motion → a media query removes the marker/lift transition; the
+//     end state (roster fully legible) is the default.
+//
+// "Lines not boxes" hairline cards; side tone → a token accent stripe (amber
+// friendly / clay enemy / faint neutral). Reflows to one column at 360px. Props
+// are fully serializable; all normalization is the pure, unit-tested
+// `normalizeOrderOfBattle`.
+import "./OrderOfBattle.css";
+import {
+  normalizeOrderOfBattle,
+  type OrderOfBattleProps,
+} from "./lib/order-of-battle.js";
+
+const { sides, caption } = Astro.props as OrderOfBattleProps;
+const parties = normalizeOrderOfBattle(sides);
+---
+
+<figure class="mdx-figure mdx-figure--wide oob" data-reveal>
+  <div class="oob__grid">
+    {
+      parties.map((side) => (
+        <section class={`oob__side oob-tone--${side.tone}`} aria-label={side.label}>
+          <header class="oob__side-head">
+            <h3 class="oob__side-name">{side.label}</h3>
+            {side.commander && (
+              <p class="oob__side-cmd">
+                <span class="oob__cmd-label">cmd</span> {side.commander}
+              </p>
+            )}
+            <p class="oob__side-count mdx-label">
+              {side.formationCount}{" "}
+              {side.formationCount === 1 ? "formation" : "formations"}
+            </p>
+          </header>
+
+          <ul class="oob__formations" role="list">
+            {side.formations.map((f) => (
+              <li class="oob__formation">
+                {f.hasUnits ? (
+                  <details class="oob__disc" open>
+                    <summary class="oob__f-summary">
+                      <span class="oob__f-main">
+                        <span class="oob__f-name">{f.name}</span>
+                        {f.kind !== "other" && (
+                          <span class="oob__f-kind">{f.kind}</span>
+                        )}
+                      </span>
+                      {f.strength && (
+                        <span class="oob__f-strength tnum">{f.strength}</span>
+                      )}
+                    </summary>
+                    {(f.commander || f.note) && (
+                      <p class="oob__f-meta">
+                        {f.commander && (
+                          <span class="oob__f-cmd">
+                            <span class="oob__cmd-label">cmd</span> {f.commander}
+                          </span>
+                        )}
+                        {f.note && <span class="oob__f-note">{f.note}</span>}
+                      </p>
+                    )}
+                    <ul class="oob__units" role="list">
+                      {f.units.map((u) => (
+                        <li class="oob__unit">
+                          <span class="oob__u-name">{u.name}</span>
+                          {u.strength && (
+                            <span class="oob__u-strength tnum">{u.strength}</span>
+                          )}
+                          {u.note && <span class="oob__u-note">{u.note}</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : (
+                  <div class="oob__f-flat">
+                    <span class="oob__f-summary">
+                      <span class="oob__f-main">
+                        <span class="oob__f-name">{f.name}</span>
+                        {f.kind !== "other" && (
+                          <span class="oob__f-kind">{f.kind}</span>
+                        )}
+                      </span>
+                      {f.strength && (
+                        <span class="oob__f-strength tnum">{f.strength}</span>
+                      )}
+                    </span>
+                    {(f.commander || f.note) && (
+                      <p class="oob__f-meta">
+                        {f.commander && (
+                          <span class="oob__f-cmd">
+                            <span class="oob__cmd-label">cmd</span> {f.commander}
+                          </span>
+                        )}
+                        {f.note && <span class="oob__f-note">{f.note}</span>}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+
+  {caption && <figcaption class="mdx-caption oob__cap">{caption}</figcaption>}
+</figure>

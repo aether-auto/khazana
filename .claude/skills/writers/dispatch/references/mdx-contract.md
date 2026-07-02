@@ -54,6 +54,7 @@ StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
 StateMachine  LayerStack  Checklist  GanttStrip  RouteMap
+Sankey  BattleMap  OrderOfBattle  ForceComparison
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -431,6 +432,29 @@ Props: `tasks: { label, start, end, note? }[]` (`start`/`end` in `unit`s, `end >
   caption="1812: the march to Moscow and the long retreat." />
 ```
 Props: `routes?: { from: [lng,lat], to: [lng,lat], label?, kind?: "march"|"arc"|"path" }[]` (`kind` default `"arc"`), `points?: { at: [lng,lat], label }[]`, `values?: Record<iso3, number>` (choropleth weight, same as `Map`), `labels?: Record<iso3, string>` (readout label), `caption?`. Coords are `[longitude, latitude]`. Great-circle arcs bow poleward. No-JS / reduced-motion → the full static map with all arcs drawn plus a semantic legend `<ol>` of every route + point (never blank).
+
+## 3e. Flow diagram — Sankey (this format's kit)
+
+### Sankey — flow / allocation diagram (island → `client:visible`)
+```jsx
+<Sankey client:visible unit="$M"
+  caption="Where the 2026 budget goes"
+  nodes={[
+    { id: "budget", label: "Budget" },
+    { id: "eng", label: "Engineering" },
+    { id: "sales", label: "Sales" },
+    { id: "salaries", label: "Salaries" },
+    { id: "cloud", label: "Cloud" }
+  ]}
+  links={[
+    { source: "budget", target: "eng", value: 60 },
+    { source: "budget", target: "sales", value: 40 },
+    { source: "eng", target: "salaries", value: 45 },
+    { source: "eng", target: "cloud", value: 15 },
+    { source: "sales", target: "salaries", value: 25 }
+  ]} />
+```
+Props: `nodes: { id, label? }[]` (`label` falls back to `id`), `links: { source, target, value }[]` (ids reference `nodes`; `value` positive finite; the graph must be a DAG — no cycles/self-loops), `unit?` (suffix on flow values, e.g. `"$M"`, `"TWh"`), `caption?`. Hover/focus a flow → its value + share of total in a stable readout. `% of total` = flow value / sum of ALL link values (shares sum to 1). No-JS / <640px → a semantic `source → target: value (unit) (pct)` list + total (never blank); reduced-motion → static end state.
 
 ## 4. Body conventions
 

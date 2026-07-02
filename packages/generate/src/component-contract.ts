@@ -55,4 +55,9 @@ export const CONTRACT_COMPONENTS = [
   "Checklist",
   "GanttStrip",
   "RouteMap",
+  // X + military/strategy wave: flow diagram + theater kit.
+  "Sankey",
+  "BattleMap",
+  "OrderOfBattle",
+  "ForceComparison",
 ] as const;

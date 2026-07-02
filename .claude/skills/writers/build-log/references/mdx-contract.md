@@ -54,6 +54,7 @@ StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
 StateMachine  LayerStack  Checklist  GanttStrip  RouteMap
+Sankey  BattleMap  OrderOfBattle  ForceComparison
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -339,6 +340,23 @@ Props: `items: { label, note?, href? }[]`, `title?` (heading; also part of the l
   ]} />
 ```
 Props: `tasks: { label, start, end, note? }[]` (`start`/`end` in `unit`s, `end >= start`), `unit?: "day" | "hr"` (default `"day"`), `caption?`. Bars + inline durations render server-side; hover/focus surfaces the note+duration (JS-only). SSR / no-JS → SVG plus a semantic `<ul>` of task — duration — note (never blank).
+
+## 3e. Real 3D part — Model3D v2 (this format's kit)
+
+### Model3D — the RARE inline 3D viewer, **v2** now loads a committed `.glb` (island → `client:visible`)
+ONE per article max, and only when the part is genuinely spatial (a printed part you built). Two modes:
+```jsx
+{/* v2: load a real committed local model of the part you built */}
+<Model3D client:visible
+  src="/_assets/_demo/model-demo.glb"
+  alt="A 12-tooth printed spur gear, viewed as a solid brass part."
+  label="reduction gear"
+  caption="Fig. 3 — the printed gear, drag to rotate." />
+
+{/* default: no src → procedural gyroid infill lattice (zero external asset) */}
+<Model3D client:visible caption="The gyroid infill a slicer generates." />
+```
+Props: `src?` (a COMMITTED local `.glb`/`.gltf` URL — pass the URL your asset pipeline emits, e.g. a Vite `?url` import of a file under `_assets/`; drei `useGLTF` needs a resolvable URL, not a bare source path), `alt?` (accessible description → drives the no-JS fallback text + `aria-label`), `label?` (short instrument label above the fallback note), `detail?` (gyroid density; default mode only), `caption?`. Keep the committed model SMALL — budget < ~1–2 MB (the demo gear is ~17 KB), low-poly, single-material, no Draco/meshopt. With `src`, loads drag-to-rotate via `useGLTF`; with no `src`, renders the procedural gyroid lattice unchanged. No-JS / mobile / reduced-motion → a baked CSS lattice fallback describing the model (never live GL server-side).
 
 ## 4. Body conventions
 

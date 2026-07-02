@@ -110,3 +110,16 @@ export type { GanttTask, GanttUnit } from "./lib/gantt-scale.js";
 export { default as RouteMap } from "./RouteMap.js";
 export type { RouteMapProps } from "./RouteMap.js";
 export type { RouteSpec, PointSpec, RouteKind } from "./lib/route-map-geo.js";
+// ── X + military/strategy wave: flow diagram + theater kit ────────────────────
+export { default as Sankey } from "./Sankey.js";
+export type { SankeyProps } from "./Sankey.js";
+export type { SankeyNodeInput, SankeyLinkInput } from "./lib/sankey-layout.js";
+export { default as BattleMap } from "./BattleMap.js";
+export type { BattleMapProps } from "./BattleMap.js";
+export type { SideSpec, UnitSpec, MovementSpec, FrontSpec, PhaseSpec } from "./lib/battle-map.js";
+export { default as OrderOfBattle } from "./OrderOfBattle.astro";
+export type { OrderOfBattleProps } from "./lib/order-of-battle.js";
+export type { OOBSide, OOBFormation, OOBUnit } from "./lib/order-of-battle.js";
+export { default as ForceComparison } from "./ForceComparison.js";
+export type { ForceComparisonProps } from "./ForceComparison.js";
+export type { ForceSide, ForceMetric } from "./lib/force-comparison.js";

@@ -1,0 +1,239 @@
+---
+title: "QA MIL: Sankey, Model3D(glb), BattleMap, OrderOfBattle, ForceComparison Under Stress"
+format: chronicle
+channels: ["history", "geopolitics"]
+summary: "A non-shipping QA harness that exercises the five new-wave components — Sankey (dispatch/teardown flow), Model3D loading a committed .glb, and the military/strategy theater kit (BattleMap phase scrubber, OrderOfBattle roster, ForceComparison paired bars) — with realistic Gettysburg/Chancellorsville props and deliberately stressful narrow-viewport cases to surface overflow, wrapping, and sizing bugs at 360px, in both motion modes, and with JS off."
+publishedAt: 2026-07-02T12:00:00.000Z
+sources:
+  - title: "Battle of Gettysburg (Wikipedia)"
+    url: "https://en.wikipedia.org/wiki/Battle_of_Gettysburg"
+draft: true
+---
+
+import {
+  Sankey,
+  Model3D,
+  BattleMap,
+  OrderOfBattle,
+  ForceComparison,
+} from "../../components/mdx";
+import { getImage } from "astro:assets";
+import terrain from "./_assets/_demo/battlemap-demo.png";
+import modelDemoUrl from "./_assets/_demo/model-demo.glb?url";
+
+export const battleMap = await getImage({ src: terrain, width: 1200 });
+
+This is a QA harness for the **new-component wave** (2 deferred + 3 military). Each component appears with realistic props, then, where relevant, stressed with long labels, many items, and narrow-viewport edge cases so wrapping and reflow can be judged at 360px, in both motion modes, and with JS off.
+
+## 1. Sankey — budget allocation (realistic) + long-label stress (mobile)
+
+<Sankey
+  client:visible
+  unit="$M"
+  caption="Where the 2026 budget goes"
+  nodes={[
+    { id: "budget", label: "Budget" },
+    { id: "eng", label: "Engineering" },
+    { id: "sales", label: "Sales" },
+    { id: "salaries", label: "Salaries" },
+    { id: "cloud", label: "Cloud" },
+    { id: "ads", label: "Ads" },
+  ]}
+  links={[
+    { source: "budget", target: "eng", value: 60 },
+    { source: "budget", target: "sales", value: 40 },
+    { source: "eng", target: "salaries", value: 45 },
+    { source: "eng", target: "cloud", value: 15 },
+    { source: "sales", target: "salaries", value: 25 },
+    { source: "sales", target: "ads", value: 15 },
+  ]}
+/>
+
+<Sankey
+  client:visible
+  unit="K"
+  caption="Operating budget FY2026 — full allocation (long labels stress 360px wrap)"
+  nodes={[
+    { id: "src", label: "Total Annual Operating Budget FY2026" },
+    { id: "a", label: "Research & Development Division" },
+    { id: "b", label: "Go-To-Market & Field Sales" },
+    { id: "c", label: "General & Administrative Overhead" },
+    { id: "a1", label: "Platform Engineering Salaries" },
+    { id: "a2", label: "Managed Cloud Infrastructure" },
+    { id: "b1", label: "Paid Acquisition & Advertising" },
+  ]}
+  links={[
+    { source: "src", target: "a", value: 5200 },
+    { source: "src", target: "b", value: 3100 },
+    { source: "src", target: "c", value: 1700 },
+    { source: "a", target: "a1", value: 3600 },
+    { source: "a", target: "a2", value: 1600 },
+    { source: "b", target: "b1", value: 3100 },
+  ]}
+/>
+
+## 2. Model3D v2 — a committed `.glb` (drag-to-rotate) + gyroid default
+
+<Model3D
+  client:visible
+  src={modelDemoUrl}
+  alt="A 12-tooth printed spur gear, viewed as a solid brass part."
+  label="reduction gear"
+  caption="Fig. 1 — the printed gear from the committed demo .glb, drag to rotate."
+/>
+
+<Model3D
+  client:visible
+  detail={16}
+  caption="Fig. 2 — the default procedural gyroid infill lattice (no src)."
+/>
+
+## 3. BattleMap — Chancellorsville, 4 phases (realistic) over the committed base map
+
+<BattleMap
+  client:visible
+  src={battleMap.src}
+  width={battleMap.attributes.width}
+  height={battleMap.attributes.height}
+  alt="Operational terrain — fields, woods, a river, and roads around a crossroads"
+  caption="Chancellorsville, May 1863 — Jackson's flank march (demo base map)"
+  sides={[
+    { id: "usa", label: "Union (Hooker)", tone: "enemy" },
+    { id: "csa", label: "Confederate (Lee)", tone: "friendly" },
+  ]}
+  phases={[
+    {
+      title: "Hooker crosses the Rappahannock",
+      time: "Apr 30",
+      note: "The <strong>Army of the Potomac</strong> concentrates at the crossroads, threatening Lee's rear.",
+      units: [
+        { side: "usa", type: "infantry", label: "XI Corps", strength: "≈12,000", at: [0.28, 0.40] },
+        { side: "usa", type: "hq", label: "Hooker HQ", at: [0.44, 0.55] },
+        { side: "csa", type: "infantry", label: "Lee's main body", strength: "≈43,000", at: [0.68, 0.52] },
+        { side: "csa", type: "artillery", label: "Reserve batteries (right edge stress)", strength: "≈40 guns", at: [0.94, 0.30] },
+      ],
+      movements: [
+        { side: "usa", from: [0.12, 0.50], to: [0.40, 0.50], kind: "advance", label: "cross the river" },
+      ],
+      fronts: [{ side: "csa", kind: "line", points: [[0.60, 0.20], [0.62, 0.50], [0.60, 0.80]] }],
+    },
+    {
+      title: "Lee divides his army",
+      time: "May 1",
+      note: "Lee leaves a thin screen and sends <strong>Jackson</strong> on a wide march around the Union right.",
+      units: [
+        { side: "usa", type: "infantry", label: "XI Corps (exposed)", strength: "≈12,000", at: [0.24, 0.38] },
+        { side: "csa", type: "infantry", label: "Jackson's column", strength: "≈28,000", at: [0.55, 0.70] },
+      ],
+      movements: [
+        { side: "csa", from: [0.60, 0.55], to: [0.35, 0.78], kind: "advance", label: "Jackson's flank march" },
+      ],
+    },
+    {
+      title: "The flank attack",
+      time: "May 2, 5:15pm",
+      note: "Jackson's corps erupts from the woods onto the unguarded Union right.",
+      units: [
+        { side: "usa", type: "infantry", label: "XI Corps routed", at: [0.28, 0.34] },
+        { side: "csa", type: "infantry", label: "Jackson", at: [0.20, 0.44] },
+        { side: "csa", type: "artillery", label: "Confederate guns", at: [0.30, 0.60] },
+      ],
+      movements: [
+        { side: "csa", from: [0.20, 0.46], to: [0.34, 0.36], kind: "attack", label: "the assault" },
+        { side: "usa", from: [0.30, 0.34], to: [0.50, 0.28], kind: "retreat", label: "XI Corps flees" },
+      ],
+      fronts: [{ side: "csa", kind: "area", points: [[0.15, 0.30], [0.40, 0.30], [0.42, 0.60], [0.16, 0.60]] }],
+    },
+    {
+      title: "Union withdrawal",
+      time: "May 5-6",
+      note: "Hooker pulls the army back across the river. A costly Confederate victory.",
+      units: [{ side: "usa", type: "infantry", label: "Union rear guard", at: [0.40, 0.30] }],
+      movements: [
+        { side: "usa", from: [0.40, 0.30], to: [0.40, 0.05], kind: "retreat", label: "withdraw north" },
+        { side: "csa", from: [0.60, 0.50], to: [0.50, 0.40], kind: "supply", label: "resupply" },
+      ],
+    },
+  ]}
+/>
+
+## 4. OrderOfBattle — Gettysburg roster (static Astro, no client directive)
+
+<OrderOfBattle
+  caption="Order of battle — Gettysburg, July 1–3, 1863"
+  sides={[
+    {
+      id: "potomac",
+      label: "Army of the Potomac",
+      commander: "Maj. Gen. George G. Meade",
+      tone: "friendly",
+      formations: [
+        {
+          name: "I Corps", kind: "corps", strength: "≈12,200",
+          commander: "Maj. Gen. John F. Reynolds †",
+          note: "opened the battle west of town on July 1",
+          units: [
+            { name: "1st Division (Wadsworth)", strength: "≈3,900", note: "held McPherson's Ridge" },
+            { name: "Iron Brigade", strength: "≈1,800", note: "shattered but bought time" },
+          ],
+        },
+        {
+          name: "II Corps", kind: "corps", strength: "≈11,300",
+          commander: "Maj. Gen. Winfield S. Hancock",
+          units: [
+            { name: "2nd Division (Gibbon)", strength: "≈3,600", note: "broke Pickett's Charge at the Angle" },
+          ],
+        },
+        { name: "Cavalry Corps", kind: "corps", strength: "≈11,900", commander: "Maj. Gen. Alfred Pleasonton" },
+        {
+          name: "III Corps (long-roster stress)", kind: "corps", strength: "≈10,700",
+          commander: "Maj. Gen. Daniel E. Sickles",
+          note: "advanced to the Peach Orchard salient against orders on July 2",
+          units: [
+            { name: "1st Division (Birney)", strength: "≈5,100", note: "held the Wheatfield and Peach Orchard" },
+            { name: "2nd Division (Humphreys)", strength: "≈4,900", note: "driven back along the Emmitsburg Road" },
+            { name: "de Trobriand's Brigade", strength: "≈1,400", note: "very long sub-unit label to stress narrow-viewport wrapping and truncation behavior" },
+          ],
+        },
+      ],
+    },
+    {
+      id: "anv",
+      label: "Army of Northern Virginia",
+      commander: "Gen. Robert E. Lee",
+      tone: "enemy",
+      formations: [
+        {
+          name: "First Corps", kind: "corps", strength: "≈20,700",
+          commander: "Lt. Gen. James Longstreet",
+          note: "delivered the July 3 assault",
+          units: [
+            { name: "Pickett's Division", strength: "≈5,800", note: "≈50% losses in the charge" },
+          ],
+        },
+        { name: "Second Corps", kind: "corps", strength: "≈20,600", commander: "Lt. Gen. Richard S. Ewell" },
+        { name: "Third Corps", kind: "corps", strength: "≈22,100", commander: "Lt. Gen. A. P. Hill" },
+      ],
+    },
+  ]}
+/>
+
+## 5. ForceComparison — Gettysburg forces & losses (paired bars, `higherIsWorse`)
+
+<ForceComparison
+  client:visible
+  caption="Forces & losses — Gettysburg"
+  sides={[
+    { label: "Union", tone: "friendly" },
+    { label: "Confederate", tone: "enemy" },
+  ]}
+  metrics={[
+    { label: "Troops", values: [93921, 71699], unit: "men" },
+    { label: "Infantry", values: [77000, 56000], unit: "men" },
+    { label: "Cavalry", values: [11900, 6400], unit: "men" },
+    { label: "Artillery", values: [372, 283], unit: "guns" },
+    { label: "Casualties", values: [23049, 28063], unit: "men", higherIsWorse: true },
+  ]}
+/>
+
+The Casualties row should mark **Union** (fewer losses) as advantaged even though the Confederate bar is longer.

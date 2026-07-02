@@ -1,0 +1,143 @@
+/* apps/site/src/components/mdx/Sankey.css
+   Sankey flow / allocation diagram. Translucent amber flows on a recessed
+   --bg-inset well; mono --ink-label node labels; the SVG scales to width:100%
+   via viewBox so there is never a 360px overflow. Instrument voice throughout;
+   the only motion is the hover lift, and prose stays calm outside the figure. */
+
+.sk-panel {
+  padding: var(--s-5) var(--s-5) var(--s-4);
+  /* the recessed well the amber flows glow against */
+  background: var(--bg-inset);
+}
+
+.sk-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* ── flows ─────────────────────────────────────────────────────────────── */
+.sk-link {
+  stroke: var(--accent);
+  stroke-opacity: 0.28;
+  transition:
+    stroke-opacity var(--dur-fast) var(--ease-out),
+    stroke var(--dur-fast) var(--ease-out);
+  cursor: pointer;
+}
+.sk-link:focus {
+  outline: none;
+}
+.sk-link--active {
+  stroke: var(--accent);
+  stroke-opacity: 0.72;
+}
+.sk-link--dim {
+  stroke-opacity: 0.1;
+}
+.sk-link:focus-visible {
+  stroke-opacity: 0.72;
+  outline: none;
+}
+
+/* ── nodes ─────────────────────────────────────────────────────────────── */
+.sk-node-rect {
+  fill: var(--accent-dim);
+  stroke: var(--bg-inset);
+  stroke-width: 1;
+}
+.sk-node-label {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  fill: var(--ink-label);
+}
+
+/* ── stable readout strip ──────────────────────────────────────────────── */
+.sk-readout {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.01em;
+}
+.sk-readout-node {
+  fill: var(--ink);
+  font-weight: 600;
+}
+.sk-readout-arrow {
+  fill: var(--ink-faint);
+}
+.sk-readout-val {
+  fill: var(--accent);
+  font-weight: 600;
+}
+.sk-readout-pct {
+  fill: var(--ink);
+  font-weight: 600;
+}
+.sk-readout-of {
+  fill: var(--ink-faint);
+}
+.sk-readout-sep {
+  fill: var(--ink-faint);
+}
+.sk-readout--hint {
+  fill: var(--ink-faint);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── SSR / no-JS fallback list ─────────────────────────────────────────── */
+.sk-fallback {
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: var(--s-3) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--ink-dim);
+}
+.sk-fallback li {
+  padding: var(--s-1) 0;
+  /* long labels wrap rather than overflow the 360px column */
+  overflow-wrap: anywhere;
+}
+.sk-fallback-total {
+  color: var(--ink);
+  border-bottom: var(--hair) solid var(--rule);
+  padding-bottom: var(--s-2);
+  margin-bottom: var(--s-1);
+}
+.sk-fallback-node {
+  color: var(--ink);
+}
+.sk-fallback-val {
+  color: var(--accent);
+  font-weight: 600;
+}
+.sk-fallback-pct {
+  color: var(--ink-faint);
+}
+
+/* ── mobile: a 720-unit viewBox squeezed to ~320px renders the node labels
+   below legibility and lets them collide. Below 640px hide the SVG and show
+   the full-size flow list (same data, readable, no overflow). ───────────── */
+@media (max-width: 640px) {
+  .sk-svg {
+    display: none;
+  }
+  .sk-fallback {
+    display: block;
+  }
+  .sk-panel {
+    padding: var(--s-4);
+  }
+}
+
+/* ── reduced motion: no transitions, render the end state. ─────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .sk-link {
+    transition: none;
+  }
+}

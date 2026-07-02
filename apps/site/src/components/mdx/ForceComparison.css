@@ -1,0 +1,305 @@
+/* apps/site/src/components/mdx/ForceComparison.css
+   Head-to-head diverging paired bars. Side A grows LEFT, side B grows RIGHT from
+   a shared center baseline that carries the ratio. Amber (friendly) vs clay
+   (enemy) vs faint (neutral). Bars are width:100% of their half → no 360px
+   overflow; the SVG-free layout is pure flex/CSS. Tokens only. */
+
+.fc-panel {
+  padding: var(--s-5);
+}
+
+/* ── tone map (drives every colored surface) ───────────────────────────────── */
+.fc-tone--friendly {
+  --fc-c: var(--accent);
+  --fc-c-dim: var(--accent-dim);
+}
+.fc-tone--enemy {
+  --fc-c: var(--editorial);
+  --fc-c-dim: var(--editorial-dim);
+}
+.fc-tone--neutral {
+  --fc-c: var(--ink-label);
+  --fc-c-dim: var(--ink-faint);
+}
+
+/* ── header: the two combatants ────────────────────────────────────────────── */
+.fc-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding-bottom: var(--s-4);
+  margin-bottom: var(--s-4);
+  border-bottom: var(--hair) solid var(--rule);
+}
+.fc-side {
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  line-height: 1.1;
+  color: var(--fc-c, var(--ink));
+}
+.fc-side--a {
+  text-align: left;
+}
+.fc-side--b {
+  text-align: right;
+}
+.fc-vs {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+  flex: 0 0 auto;
+}
+
+/* ── rows ──────────────────────────────────────────────────────────────────── */
+.fc-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-4);
+}
+.fc-row {
+  display: grid;
+  gap: var(--s-2);
+}
+.fc-metric {
+  text-align: center;
+}
+
+/* the diverging track: [ left half ][ ratio ][ right half ] */
+.fc-track {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.fc-half {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  /* keep every value label inside the half's box → the panel's overflow:clip
+     never trims a numeric label at the outer row edge. */
+  overflow: hidden;
+}
+.fc-half--left {
+  flex-direction: row;
+  justify-content: flex-end;
+}
+.fc-half--right {
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+/* value labels now ride INSIDE the bar, pinned to the bar's OUTER end and
+   reading inward. They can never be pushed past the row edge, so the diverging
+   design + baseline anchoring stay intact while the labels stay fully visible. */
+.fc-val {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  pointer-events: none;
+  padding: 0 var(--s-1);
+}
+/* left bar grows leftward → its outer end is the LEFT edge; anchor label there,
+   reading rightward (inward). Right bar mirrors it. */
+.fc-val--a {
+  left: 0;
+  color: var(--ink-dim);
+}
+.fc-val--b {
+  right: 0;
+}
+
+/* the bar itself — a button so it's focusable & hoverable, but visually a bar.
+   Grows from the center: left half anchors right, right half anchors left. It
+   is the positioning context for its value label (which rides its outer end). */
+.fc-bar {
+  position: relative;
+  appearance: none;
+  border: var(--hair) solid var(--fc-c-dim);
+  padding: 0;
+  height: 0.95rem;
+  min-width: 2px;
+  border-radius: var(--r-sm);
+  background: color-mix(in oklab, var(--fc-c) 62%, transparent);
+  cursor: pointer;
+  transition:
+    filter var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+  flex: 0 0 auto;
+}
+.fc-bar--a {
+  /* left bars visually originate at the center baseline (right edge) */
+  transform-origin: right center;
+}
+.fc-bar--b {
+  transform-origin: left center;
+}
+.fc-bar--adv {
+  /* the advantaged side reads brighter + a subtle glow */
+  background: color-mix(in oklab, var(--fc-c) 82%, transparent);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--fc-c) 30%, transparent);
+}
+.fc-bar:hover,
+.fc-bar:focus-visible {
+  filter: brightness(1.15);
+  background: var(--fc-c);
+  outline: none;
+}
+.fc-bar:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* the shared center baseline carrying the ratio */
+.fc-ratio {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--ink-label);
+  text-align: center;
+  min-width: 3.25rem;
+  padding: 0 var(--s-1);
+  border-left: var(--hair) solid var(--rule-bright);
+  border-right: var(--hair) solid var(--rule-bright);
+}
+
+/* per-row readout — a stable slot; empty until a bar is hovered/focused */
+.fc-readout {
+  min-height: 1.1rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.02em;
+}
+.fc-readout-side {
+  color: var(--ink);
+  font-weight: 600;
+}
+.fc-readout-val {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.fc-readout-ratio {
+  color: var(--ink-dim);
+}
+.fc-readout-sep {
+  color: var(--ink-faint);
+}
+
+/* ── SSR / no-JS fallback table (hidden when JS bars render) ────────────────── */
+/* horizontal-scroll container so a wide fallback table (many columns / big
+   numbers) scrolls INSIDE the figure, keeping the Ratio column reachable at
+   ≤400px. The right-edge fade hints at hidden width. Mirrors DataTable's
+   .dt-scroll. Only paints once the table is shown (below 520px). */
+.fc-scroll {
+  display: contents;
+}
+.fc-fallback {
+  display: none;
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+}
+.fc-fallback caption {
+  text-align: left;
+}
+.fc-fallback th,
+.fc-fallback td {
+  padding: var(--s-2) var(--s-3);
+  border-bottom: var(--hair) solid var(--rule);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.fc-fallback thead th {
+  color: var(--fc-c, var(--ink-label));
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: var(--t-xs);
+  font-weight: 600;
+}
+.fc-fallback th[scope="row"] {
+  text-align: left;
+  color: var(--ink);
+}
+.fc-fallback td:first-of-type,
+.fc-fallback thead th:first-child {
+  text-align: left;
+}
+.fc-fallback-adv {
+  color: var(--ink);
+  font-weight: 600;
+}
+.fc-fallback-ratio {
+  color: var(--ink-label);
+}
+
+/* When JS is unavailable the interactive rows never hydrate, but they DO render
+   via SSR. To guarantee a clean no-JS experience we ALSO ship the table and let
+   it be the source of truth on narrow screens. The interactive bars remain the
+   default on wider viewports. */
+
+/* ── mobile: below 520px the diverging bars get too cramped to read; stack the
+   two sides per metric and lean on the labeled table instead. No overflow. ─── */
+@media (max-width: 520px) {
+  .fc-rows {
+    display: none;
+  }
+  /* the scroll box becomes a real overflow-x container carrying the table +
+     an edge-fade, so the Ratio column is always reachable even when the table
+     is wider than the panel. */
+  .fc-scroll {
+    display: block;
+    overflow-x: auto;
+    position: relative;
+    background:
+      linear-gradient(to right, var(--bg-raised) 30%, transparent),
+      linear-gradient(to right, transparent, var(--bg-raised) 70%) 100% 0,
+      radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--ink) 18%, transparent), transparent) 100% 0;
+    background-repeat: no-repeat;
+    background-size: 2.4rem 100%, 2.4rem 100%, 1rem 100%;
+    background-attachment: local, local, scroll;
+  }
+  .fc-fallback {
+    display: table;
+    /* let the table take its natural (min-content) width so wide numeric
+       columns push it past the panel and the container scrolls, instead of the
+       Ratio column being clipped. */
+    width: auto;
+    min-width: 100%;
+  }
+  /* never wrap a numeric cell — the table stays as wide as its content so the
+     scroll container has something to reveal. */
+  .fc-fallback th,
+  .fc-fallback td {
+    white-space: nowrap;
+  }
+  .fc-head {
+    margin-bottom: 0;
+  }
+  .fc-panel {
+    padding: var(--s-4);
+  }
+}
+
+/* ── reduced motion: end state, zero animation ─────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .fc-bar {
+    transition: none;
+  }
+  .fc-bar--adv {
+    box-shadow: none;
+  }
+}

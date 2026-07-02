@@ -54,6 +54,7 @@ StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
 StateMachine  LayerStack  Checklist  GanttStrip  RouteMap
+Sankey  BattleMap  OrderOfBattle  ForceComparison
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -373,6 +374,80 @@ clock. No-JS → an ordered `<ol>` with every label + detail. Also usable in
   caption="1812: the march to Moscow and the long retreat." />
 ```
 Props: `routes?: { from: [lng,lat], to: [lng,lat], label?, kind?: "march"|"arc"|"path" }[]` (`kind` default `"arc"`), `points?: { at: [lng,lat], label }[]`, `values?: Record<iso3, number>` (choropleth weight, same as `Map`), `labels?: Record<iso3, string>` (readout label), `caption?`. Coords are `[longitude, latitude]`. Great-circle arcs bow poleward. No-JS / reduced-motion → the full static map with all arcs drawn plus a semantic legend `<ol>` of every route + point (never blank).
+
+## 3e. Military / strategy kit — BattleMap, OrderOfBattle, ForceComparison (this format's kit)
+
+> These three are the theater/history/geopolitics military kit. Provisionally documented under chronicle; a dedicated **theater** format skill will later own the full kit.
+
+### BattleMap — phase-by-phase tactical map over a committed base image (island → `client:visible`)
+BattleMap needs a committed, already-optimized base-map image; supply `src`/`width`/`height` from `getImage()` at the page level (the AnnotatedFigure pattern — the component does NOT import assets):
+```jsx
+import { getImage } from "astro:assets";
+import terrain from "./_assets/battles/chancellorsville.png";
+export const map = await getImage({ src: terrain, width: 1600 });
+
+<BattleMap client:visible
+  src={map.src} width={map.attributes.width} height={map.attributes.height}
+  alt="Terrain around Chancellorsville, Virginia, spring 1863"
+  caption="Chancellorsville, May 1863 — Jackson's flank march"
+  sides={[
+    { id: "usa", label: "Union (Hooker)", tone: "enemy" },
+    { id: "csa", label: "Confederate (Lee)", tone: "friendly" }
+  ]}
+  phases={[
+    {
+      title: "Lee divides his army", time: "May 1",
+      note: "Lee sends <strong>Jackson</strong> on a wide march around the Union right.",
+      units: [
+        { side: "usa", type: "infantry", label: "XI Corps", strength: "≈12,000", at: [0.24, 0.38] },
+        { side: "csa", type: "hq", label: "Lee HQ", at: [0.68, 0.52] }
+      ],
+      movements: [{ side: "csa", from: [0.60, 0.55], to: [0.35, 0.78], kind: "advance", label: "flank march" }],
+      fronts: [{ side: "csa", kind: "line", points: [[0.60, 0.20], [0.62, 0.50], [0.60, 0.80]] }]
+    }
+  ]} />
+```
+Props: `src` (optimized base-map URL from `getImage()`), `width`/`height` (intrinsic px — reserve aspect ratio AND set the SVG viewBox), `alt`, `caption?`, `sides: { id, label, tone?: "friendly"|"enemy"|"neutral" }[]`, `phases: PhaseSpec[]`. Each phase: `{ title, time?, note?` (short HTML string, NOT MDX children)`, units?, movements?, fronts? }`. `units: { side, type: "infantry"|"armor"|"cavalry"|"artillery"|"naval"|"air"|"hq", label?, strength?, at: [x,y] }` (coords 0..1 over the image). `movements: { side, from: [x,y], to: [x,y], kind?: "advance"|"attack"|"retreat"|"supply", label? }`. `fronts: { side?, kind?: "line"|"area", points: [x,y][] }`. A phase scrubber (‹/›, clickable ticks, arrow/Home/End) walks phases; unit glyphs are NATO-style. No-JS / reduced-motion → base image + first phase overlay + legend + a semantic phase-by-phase `<ol>` (never blank).
+
+### OrderOfBattle — force-structure roster (**static Astro — NO client directive**)
+```jsx
+<OrderOfBattle
+  caption="Order of battle — Gettysburg, July 1–3, 1863"
+  sides={[
+    {
+      id: "potomac", label: "Army of the Potomac",
+      commander: "Maj. Gen. George G. Meade", tone: "friendly",
+      formations: [
+        {
+          name: "I Corps", kind: "corps", strength: "≈12,200",
+          commander: "Maj. Gen. John F. Reynolds †",
+          note: "opened the battle west of town on July 1",
+          units: [
+            { name: "1st Division (Wadsworth)", strength: "≈3,900", note: "held McPherson's Ridge" },
+            { name: "Iron Brigade", strength: "≈1,800", note: "shattered but bought time" }
+          ]
+        }
+      ]
+    }
+  ]} />
+```
+Props: `sides: { id, label, commander?, tone?: "friendly"|"enemy"|"neutral", formations: Formation[] }[]`, `caption?`. `Formation: { name, kind?: "army"|"corps"|"division"|"brigade"|"regiment"|"fleet"|"wing"|"other", strength?, commander?, note?, units?: { name, strength?, note? }[] }`. STATIC Astro — do NOT add `client:*`. Sub-units live in native `<details open>`, so the full roster is visible with zero JS. Reflows to one column at 360px.
+
+### ForceComparison — head-to-head forces & casualties (island → `client:visible`)
+```jsx
+<ForceComparison client:visible
+  caption="Forces & losses — Gettysburg"
+  sides={[
+    { label: "Union", tone: "friendly" },
+    { label: "Confederate", tone: "enemy" }
+  ]}
+  metrics={[
+    { label: "Troops",     values: [93921, 71699], unit: "men" },
+    { label: "Artillery",  values: [372, 283],     unit: "guns" },
+    { label: "Casualties", values: [23049, 28063], unit: "men", higherIsWorse: true }
+  ]} />
+```
+Props: `sides: { label, tone?: "friendly"|"enemy"|"neutral" }[]`, `metrics: { label, values: number[]` (one per side, same order)`, unit?, higherIsWorse? }[]`, `caption?`. Each metric = diverging paired bars sharing a center baseline that carries the ratio; bars normalized per metric. `higherIsWorse` (e.g. casualties) flips the advantaged side to the smaller value. Hover/focus a bar → exact value + ratio. No-JS / ≤520px → a labeled comparison table (never blank); reduced-motion → static end state.
 
 ## 4. Body conventions
 

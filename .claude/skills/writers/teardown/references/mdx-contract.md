@@ -54,6 +54,7 @@ StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
 StateMachine  LayerStack  Checklist  GanttStrip  RouteMap
+Sankey  BattleMap  OrderOfBattle  ForceComparison
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -391,6 +392,41 @@ Props: `states: { id, label, x, y }[]` (x/y = author grid coords, like Diagram),
   ]} />
 ```
 Props: `layers: { label, note, detail? }[]` (top-to-bottom as authored), `orientation?: "vertical"` (only value in v1), `caption?`. Click/hover/focus expands a slab; arrow/Home/End move the active layer. No-JS / reduced-motion → every layer expanded as a semantic `<ol>` (never blank).
+
+## 3e. Flow diagram + real 3D part — Sankey, Model3D (this format's kit)
+
+### Sankey — flow / allocation diagram (island → `client:visible`)
+```jsx
+<Sankey client:visible unit="W"
+  caption="Power budget across the board's rails"
+  nodes={[
+    { id: "usb", label: "USB-C 5V" },
+    { id: "reg", label: "Buck regulator" },
+    { id: "mcu", label: "MCU" },
+    { id: "radio", label: "Radio" }
+  ]}
+  links={[
+    { source: "usb", target: "reg", value: 5 },
+    { source: "reg", target: "mcu", value: 2 },
+    { source: "reg", target: "radio", value: 2.5 }
+  ]} />
+```
+Props: `nodes: { id, label? }[]`, `links: { source, target, value }[]` (ids reference `nodes`; positive finite `value`; must be a DAG), `unit?` (suffix on values), `caption?`. Hover/focus a flow → value + share of total; `% of total` = flow value / sum of all links. No-JS / <640px → a semantic `source → target: value (unit) (pct)` list + total (never blank); reduced-motion → static end state.
+
+### Model3D — the RARE inline 3D viewer, **v2** now loads a committed `.glb` (island → `client:visible`)
+ONE per article max, and only when the subject is genuinely spatial. Two modes:
+```jsx
+{/* v2: load a real committed local model (a teardown/build part) */}
+<Model3D client:visible
+  src="/_assets/_demo/model-demo.glb"
+  alt="A 12-tooth printed spur gear, viewed as a solid brass part."
+  label="reduction gear"
+  caption="Fig. 3 — the printed gear, drag to rotate." />
+
+{/* default: no src → procedural gyroid infill lattice (zero external asset) */}
+<Model3D client:visible detail={16} caption="The gyroid infill a slicer generates." />
+```
+Props: `src?` (a COMMITTED local `.glb`/`.gltf` URL — pass the URL your asset pipeline emits, e.g. a Vite `?url` import of a file under `_assets/`; drei `useGLTF` needs a resolvable URL, not a bare source path), `alt?` (accessible description → drives the no-JS fallback text + `aria-label`), `label?` (short instrument label above the fallback note), `detail?` (gyroid density; default mode only), `caption?`. Keep the committed model SMALL — budget < ~1–2 MB (the demo gear is ~17 KB), low-poly, single-material, no Draco/meshopt. With `src`, loads drag-to-rotate via `useGLTF` (auto-framed by drei `<Center>`+`<Bounds>`); with no `src`, renders the procedural gyroid lattice unchanged. No-JS / mobile / reduced-motion → a baked CSS lattice fallback describing the model (never live GL server-side).
 
 ## 4. Body conventions
 
