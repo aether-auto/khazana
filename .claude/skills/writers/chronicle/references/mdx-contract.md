@@ -53,6 +53,7 @@ RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
 StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
+StateMachine  LayerStack  Checklist  GanttStrip  RouteMap
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -98,6 +99,7 @@ trend, bar for comparison, area for cumulative, dot for relationship.
 ```
 `columns` = `{ key, label, type, align? }` (`type`: `"string" | "number"`;
 `align: "right"` for numerics). `rows` = objects keyed by column `key`.
+Optional `total?: string` = a numeric column `key` to sum in a right-aligned amber footer row (bills-of-materials); omit for no footer.
 
 ### `<Timeline>` — horizontal SVG timeline
 ```jsx
@@ -352,6 +354,25 @@ Props: `nodes: { label: string, detail: string, kind?: "cause"|"effect"|"turning
 `caption?`. The amber spine carries labeled *reasoning* — distinct from `Timeline`'s
 clock. No-JS → an ordered `<ol>` with every label + detail. Also usable in
 **teardown** (failure cascades) and **dispatch** (mechanisms).
+
+## 3d. P3 components — RouteMap (this format's kit)
+
+### RouteMap — choropleth world map with great-circle routes + points (island → `client:visible`)
+```jsx
+<RouteMap client:visible
+  routes={[
+    { from: [2.35, 48.85], to: [37.62, 55.75], label: "Paris → Moscow (advance)", kind: "march" },
+    { from: [37.62, 55.75], to: [2.35, 48.85], label: "Moscow → Paris (retreat)", kind: "path" }
+  ]}
+  points={[
+    { at: [37.62, 55.75], label: "Moscow (burned)" },
+    { at: [23.35, 53.13], label: "Vilnius" }
+  ]}
+  values={{ RUS: 100, POL: 55, FRA: 25 }}
+  labels={{ RUS: "Russian Empire", FRA: "France" }}
+  caption="1812: the march to Moscow and the long retreat." />
+```
+Props: `routes?: { from: [lng,lat], to: [lng,lat], label?, kind?: "march"|"arc"|"path" }[]` (`kind` default `"arc"`), `points?: { at: [lng,lat], label }[]`, `values?: Record<iso3, number>` (choropleth weight, same as `Map`), `labels?: Record<iso3, string>` (readout label), `caption?`. Coords are `[longitude, latitude]`. Great-circle arcs bow poleward. No-JS / reduced-motion → the full static map with all arcs drawn plus a semantic legend `<ol>` of every route + point (never blank).
 
 ## 4. Body conventions
 

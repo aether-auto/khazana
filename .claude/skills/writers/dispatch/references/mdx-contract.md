@@ -53,6 +53,7 @@ RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
 StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
+StateMachine  LayerStack  Checklist  GanttStrip  RouteMap
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -98,6 +99,7 @@ trend, bar for comparison, area for cumulative, dot for relationship.
 ```
 `columns` = `{ key, label, type, align? }` (`type`: `"string" | "number"`;
 `align: "right"` for numerics). `rows` = objects keyed by column `key`.
+Optional `total?: string` = a numeric column `key` to sum in a right-aligned amber footer row (bills-of-materials); omit for no footer.
 
 ### `<Timeline>` — horizontal SVG timeline
 ```jsx
@@ -397,6 +399,38 @@ Props: `nodes: { label: string, detail: string, kind?: "cause"|"effect"|"turning
 `caption?`. Distinct from `Timeline`: the amber spine carries labeled *reasoning*
 ("therefore" / "which drives" / "and so"), not elapsed time. No-JS → an ordered
 `<ol>` with every label + detail visible.
+
+## 3d. P3 components — GanttStrip, RouteMap (this format's kit)
+
+### GanttStrip — a phase/timeline strip of bars (island → `client:visible`)
+```jsx
+<GanttStrip client:visible unit="day"
+  caption="how long each phase took"
+  tasks={[
+    { label: "Design + BOM", start: 0, end: 3, note: "most time was sourcing the sensor" },
+    { label: "PCB fab wait", start: 3, end: 17, note: "JLCPCB, cheapest shipping" },
+    { label: "Assembly", start: 17, end: 19 },
+    { label: "Firmware", start: 19, end: 24 }
+  ]} />
+```
+Props: `tasks: { label, start, end, note? }[]` (`start`/`end` in `unit`s, `end >= start`), `unit?: "day" | "hr"` (default `"day"`), `caption?`. Bars + inline durations render server-side; hover/focus surfaces the note+duration (JS-only). SSR / no-JS → SVG plus a semantic `<ul>` of task — duration — note (never blank).
+
+### RouteMap — choropleth world map with great-circle routes + points (island → `client:visible`)
+```jsx
+<RouteMap client:visible
+  routes={[
+    { from: [2.35, 48.85], to: [37.62, 55.75], label: "Paris → Moscow (advance)", kind: "march" },
+    { from: [37.62, 55.75], to: [2.35, 48.85], label: "Moscow → Paris (retreat)", kind: "path" }
+  ]}
+  points={[
+    { at: [37.62, 55.75], label: "Moscow (burned)" },
+    { at: [23.35, 53.13], label: "Vilnius" }
+  ]}
+  values={{ RUS: 100, POL: 55, FRA: 25 }}
+  labels={{ RUS: "Russian Empire", FRA: "France" }}
+  caption="1812: the march to Moscow and the long retreat." />
+```
+Props: `routes?: { from: [lng,lat], to: [lng,lat], label?, kind?: "march"|"arc"|"path" }[]` (`kind` default `"arc"`), `points?: { at: [lng,lat], label }[]`, `values?: Record<iso3, number>` (choropleth weight, same as `Map`), `labels?: Record<iso3, string>` (readout label), `caption?`. Coords are `[longitude, latitude]`. Great-circle arcs bow poleward. No-JS / reduced-motion → the full static map with all arcs drawn plus a semantic legend `<ol>` of every route + point (never blank).
 
 ## 4. Body conventions
 

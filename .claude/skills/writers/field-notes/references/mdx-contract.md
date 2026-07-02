@@ -53,6 +53,7 @@ RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
 StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
+StateMachine  LayerStack  Checklist  GanttStrip  RouteMap
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -98,6 +99,7 @@ trend, bar for comparison, area for cumulative, dot for relationship.
 ```
 `columns` = `{ key, label, type, align? }` (`type`: `"string" | "number"`;
 `align: "right"` for numerics). `rows` = objects keyed by column `key`.
+Optional `total?: string` = a numeric column `key` to sum in a right-aligned amber footer row (bills-of-materials); omit for no footer.
 
 ### `<Timeline>` — horizontal SVG timeline
 ```jsx

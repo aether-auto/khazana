@@ -53,6 +53,7 @@ RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
 StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
+StateMachine  LayerStack  Checklist  GanttStrip  RouteMap
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -98,6 +99,7 @@ trend, bar for comparison, area for cumulative, dot for relationship.
 ```
 `columns` = `{ key, label, type, align? }` (`type`: `"string" | "number"`;
 `align: "right"` for numerics). `rows` = objects keyed by column `key`.
+Optional `total?: string` = a numeric column `key` to sum in a right-aligned amber footer row (bills-of-materials); omit for no footer.
 
 ### `<Timeline>` — horizontal SVG timeline
 ```jsx
@@ -301,6 +303,39 @@ Props: `code: string` (full listing, any language, need not run), `lang?` (Shiki
 id; default `"text"`), `steps: { lines: [start,end], note }[]` (1-based inclusive
 range focused per step), `caption?`. **Static Astro** — no `client:` directive;
 Shiki highlights at build. Distinct from `RunnableCode` (editable/executable JS).
+
+## 3d. P3 components — StateMachine, LayerStack (this format's kit)
+
+### StateMachine — a token walked through states/transitions (island → `client:visible`)
+```jsx
+<StateMachine client:visible
+  caption="The TCP three-way handshake."
+  start="closed"
+  states={[
+    { id: "closed", label: "CLOSED", x: 0, y: 0 },
+    { id: "syn-sent", label: "SYN-SENT", x: 1, y: -1 },
+    { id: "established", label: "ESTABLISHED", x: 2, y: 0 }
+  ]}
+  transitions={[
+    { from: "closed", to: "syn-sent", on: "send SYN" },
+    { from: "syn-sent", to: "established", on: "recv SYN-ACK / send ACK" }
+  ]}
+  sequence={["closed>syn-sent", "syn-sent>established"]} />
+```
+Props: `states: { id, label, x, y }[]` (x/y = author grid coords, like Diagram), `transitions: { from, to, on }[]` (`on` = the edge/event label), `start: string` (id the token starts on), `sequence?: string[]` (scripted walk; refs are `"<idx>"` | `"from>to"` | `"from>to:on"` — omit for free-click mode), `caption?`. No-JS / reduced-motion → the fully-labeled SVG plus a semantic States/Transitions/Walk list (never blank).
+
+### LayerStack — a stack of expandable layers (island → `client:visible`)
+```jsx
+<LayerStack client:visible
+  caption="The four layers of the TCP/IP model."
+  layers={[
+    { label: "Application", note: "The protocols the user speaks — HTTP, DNS, SMTP.", detail: "L7." },
+    { label: "Transport", note: "End-to-end delivery: TCP stream or UDP datagrams.", detail: "L4." },
+    { label: "Internet", note: "Addressing and routing across networks — IP.", detail: "L3." },
+    { label: "Link", note: "Framing bits onto a physical segment.", detail: "L2/L1." }
+  ]} />
+```
+Props: `layers: { label, note, detail? }[]` (top-to-bottom as authored), `orientation?: "vertical"` (only value in v1), `caption?`. Click/hover/focus expands a slab; arrow/Home/End move the active layer. No-JS / reduced-motion → every layer expanded as a semantic `<ol>` (never blank).
 
 ## 4. Body conventions
 

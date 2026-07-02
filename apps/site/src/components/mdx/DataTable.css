@@ -57,3 +57,19 @@
 .dt-td { padding: var(--s-2) var(--s-4); border-bottom: var(--hair) solid var(--rule); color: var(--ink-dim); height: 2.4em; }
 .dt-td--right { text-align: right; font-variant-numeric: tabular-nums; }
 .dt-table tbody tr:hover .dt-td { color: var(--ink); background: color-mix(in oklab, var(--accent) 5%, transparent); }
+/* summable footer (bills-of-materials): a single bright rule above, the summed
+   value in amber, right-aligned + tabular so it lines up under its column. */
+.dt-total-row .dt-td {
+  border-bottom: none;
+  border-top: var(--hair) solid var(--rule-bright);
+  color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em;
+  font-size: var(--t-xs);
+}
+/* the summed value must out-specify `.dt-total-row .dt-td` (0,2,0), which would
+   otherwise paint it --ink-faint — so scope the amber rule to the total row too. */
+.dt-total-row .dt-total-value {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-sm);
+  text-transform: none; letter-spacing: 0;
+}

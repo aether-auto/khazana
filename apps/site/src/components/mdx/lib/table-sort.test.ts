@@ -1,6 +1,6 @@
 // apps/site/src/components/mdx/lib/table-sort.test.ts
 import { expect, test } from "vitest";
-import { sortRows, filterRows, type Column, type Row } from "./table-sort.js";
+import { sortRows, filterRows, sumColumn, type Column, type Row } from "./table-sort.js";
 
 const columns: Column[] = [
   { key: "name", label: "Name", type: "string" },
@@ -47,4 +47,24 @@ test("empty query returns all rows unchanged", () => {
 
 test("no match returns empty", () => {
   expect(filterRows(rows, columns, "zzz")).toHaveLength(0);
+});
+
+test("sumColumn sums numeric cells for a summable footer", () => {
+  expect(sumColumn(rows, "score")).toBe(28); // 8 + 12 + 8
+});
+
+test("sumColumn coerces numeric strings and skips non-numeric/empty/null", () => {
+  const bom: Row[] = [
+    { part: "Pi 5", cost: 80 },
+    { part: "NVMe HAT", cost: "18" }, // numeric string counts
+    { part: "Freebie", cost: "n/a" }, // non-numeric skipped
+    { part: "Missing", cost: null }, // null skipped
+    { part: "Blank", cost: "" }, // empty skipped
+  ];
+  expect(sumColumn(bom, "cost")).toBe(98); // 80 + 18
+});
+
+test("sumColumn of an empty set or unknown key is 0", () => {
+  expect(sumColumn([], "score")).toBe(0);
+  expect(sumColumn(rows, "nope")).toBe(0);
 });

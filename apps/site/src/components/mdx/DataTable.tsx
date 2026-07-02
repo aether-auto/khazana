@@ -1,6 +1,6 @@
 // apps/site/src/components/mdx/DataTable.tsx
 import { useMemo, useState } from "react";
-import { sortRows, filterRows, type Column, type Row, type SortDir } from "./lib/table-sort.js";
+import { sortRows, filterRows, sumColumn, type Column, type Row, type SortDir } from "./lib/table-sort.js";
 import "./mdx.css";
 import "./DataTable.css";
 
@@ -10,6 +10,12 @@ export interface DataTableProps {
   caption?: string;
   /** Show the filter input (default true). */
   filterable?: boolean;
+  /**
+   * Optional numeric column `key` to sum in a footer row (bills-of-materials).
+   * When set, a right-aligned amber total of that column (over the visible rows)
+   * is rendered under the table. Absent → no footer (identical to before).
+   */
+  total?: string;
 }
 
 /**
@@ -17,7 +23,7 @@ export interface DataTableProps {
  * <button>s inside <th> with aria-sort. SSR renders the full table unsorted,
  * so no-JS readers get every row.
  */
-export default function DataTable({ columns, rows, caption, filterable = true }: DataTableProps) {
+export default function DataTable({ columns, rows, caption, filterable = true, total }: DataTableProps) {
   const [sort, setSort] = useState<{ key: string; dir: SortDir } | null>(null);
   const [query, setQuery] = useState("");
 
@@ -33,6 +39,12 @@ export default function DataTable({ columns, rows, caption, filterable = true }:
 
   const ariaSort = (key: string): "ascending" | "descending" | "none" =>
     sort?.key === key ? (sort.dir === "asc" ? "ascending" : "descending") : "none";
+
+  // Summable footer (bills-of-materials): sum the `total` column over the visible
+  // rows. Only render when `total` names a real column.
+  const totalCol = total ? columns.find((c) => c.key === total) : undefined;
+  const totalValue = totalCol ? sumColumn(view, totalCol.key) : 0;
+  const totalIndex = totalCol ? columns.findIndex((c) => c.key === totalCol.key) : -1;
 
   return (
     <figure className="mdx-figure dt">
@@ -84,6 +96,41 @@ export default function DataTable({ columns, rows, caption, filterable = true }:
               </tr>
             ))}
           </tbody>
+          {totalCol ? (
+            <tfoot>
+              <tr className="dt-total-row">
+                {columns.map((c, i) => {
+                  if (i === totalIndex) {
+                    return (
+                      <td
+                        key={c.key}
+                        className="dt-td dt-td--right dt-total-value"
+                      >
+                        {totalValue.toLocaleString()}
+                      </td>
+                    );
+                  }
+                  // Put the "Total" label in the cell just before the summed one
+                  // (or the first cell if the sum is column 0).
+                  const labelHere =
+                    (totalIndex > 0 && i === totalIndex - 1) ||
+                    (totalIndex === 0 && i === columns.length - 1);
+                  return (
+                    <td
+                      key={c.key}
+                      className={
+                        c.align === "right"
+                          ? "dt-td dt-td--right dt-total-cell"
+                          : "dt-td dt-total-cell"
+                      }
+                    >
+                      {labelHere ? "Total" : ""}
+                    </td>
+                  );
+                })}
+              </tr>
+            </tfoot>
+          ) : null}
         </table>
       </div>
     </figure>

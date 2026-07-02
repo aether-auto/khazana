@@ -1,0 +1,104 @@
+/* apps/site/src/components/mdx/RouteMap.css
+   Routes + points layered over the reused <Map> choropleth (Map.css supplies the
+   panel, land fills, graticule and focus-halo styling). Only the arc/point
+   vocabulary lives here. All color is token-driven — amber arcs over the warm
+   choropleth; clay (--editorial) for the "path" variant so kinds read apart. */
+
+/* wrapper hook (Map.css already styles .map / .map-panel / .map-svg) */
+.routemap .map-svg {
+  background: var(--bg-inset);
+}
+
+/* ── routes: great-circle arcs ────────────────────────────────────────────── */
+/* fat transparent hit-path: a real pointer moving ALONG the thin visible arc
+   would otherwise miss it (fill:none path has no area). This duplicate owns the
+   hover via pointer-events:stroke; the visible arc below opts out of hit-testing
+   (pointer-events:none) so the two never fight. Mirrors StateMachine's
+   .sm-edge-hit / GanttStrip's .gnt-hit. */
+.rm-arc-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+.rm-arc {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+  /* the draw-on-scroll reveal: a single composited stroke-dashoffset transition.
+     dasharray/offset come from the component (dashParams). */
+  transition: stroke-dashoffset var(--dur-slow, 340ms) var(--ease-out, ease) ;
+  filter: drop-shadow(0 0 4px color-mix(in oklab, var(--accent) 35%, transparent));
+}
+/* when fully drawn we lengthen the transition so the sweep is legible */
+.rm-arc.is-drawn {
+  transition: stroke-dashoffset 1400ms var(--ease-out, cubic-bezier(0.2, 0.7, 0.2, 1));
+}
+
+/* kind tints — march (solid amber), arc (default amber), path (clay, dashed) */
+.rm-route--march .rm-arc { stroke: var(--accent); }
+.rm-route--arc .rm-arc { stroke: color-mix(in oklab, var(--accent) 82%, var(--ink)); }
+.rm-route--path .rm-arc {
+  stroke: var(--editorial);
+  stroke-dasharray: 6 5; /* NOTE: overridden inline by the reveal dash math while
+                            animating; falls back to this dashed look once drawn */
+  filter: drop-shadow(0 0 4px color-mix(in oklab, var(--editorial) 35%, transparent));
+}
+
+/* active (hover / keyboard) route: bump the stroke so even a short arc reads */
+.rm-route--active .rm-arc {
+  stroke-width: 3;
+  filter: drop-shadow(0 0 7px color-mix(in oklab, var(--accent) 60%, transparent));
+}
+.rm-route--path.rm-route--active .rm-arc {
+  filter: drop-shadow(0 0 7px color-mix(in oklab, var(--editorial) 60%, transparent));
+}
+
+/* endpoints: origin faint, destination solid amber */
+.rm-endpoint {
+  stroke: var(--bg-inset);
+  stroke-width: 0.6;
+}
+.rm-endpoint--from { fill: color-mix(in oklab, var(--accent) 55%, var(--bg-raised)); }
+.rm-endpoint--to { fill: var(--accent); }
+
+/* the route's label at its midpoint when active */
+.rm-route-label {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  fill: var(--ink);
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 3.5;
+  stroke-linejoin: round;
+}
+
+/* ── standalone points ────────────────────────────────────────────────────── */
+.rm-point-dot {
+  fill: var(--accent);
+  stroke: var(--bg-inset);
+  stroke-width: 0.8;
+}
+.rm-point-label {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  fill: var(--ink-dim);
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+/* ── reduced motion: arcs are drawn instantly, zero animation ─────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .rm-arc,
+  .rm-arc.is-drawn {
+    transition: none;
+  }
+}

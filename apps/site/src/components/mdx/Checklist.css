@@ -1,0 +1,186 @@
+/* apps/site/src/components/mdx/Checklist.css
+   Interactive reproduce-this checklist. Amber checkmarks; done items strike
+   through and dim. "Lines not boxes" — hairline rows on --rule, no box per item.
+   Fluid to width:100%, never overflows 360px. Reduced-motion → no transitions. */
+
+.ckl-panel {
+  padding: var(--s-4) var(--s-5) var(--s-5);
+}
+
+/* ── header: title + progress readout ──────────────────────────────────── */
+.ckl-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  padding-bottom: var(--s-3);
+  border-bottom: var(--hair) solid var(--rule);
+  margin-bottom: var(--s-2);
+}
+.ckl-title {
+  font-family: var(--font-display);
+  font-size: var(--t-md);
+  color: var(--ink);
+  line-height: var(--lh-tight);
+}
+.ckl-title--default {
+  color: var(--ink-dim);
+}
+/* the progress readout only carries meaning once interactive */
+.ckl-progress {
+  white-space: nowrap;
+}
+.ckl:not(.ckl--hydrated) .ckl-progress {
+  visibility: hidden;
+}
+
+/* ── interactive list (default hidden; shown only when hydrated) ───────── */
+.ckl-list {
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ckl--hydrated .ckl-list {
+  display: block;
+}
+.ckl--hydrated .ckl-fallback {
+  display: none;
+}
+
+.ckl-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-3) 0;
+  border-bottom: var(--hair) solid var(--rule);
+}
+.ckl-item:last-child {
+  border-bottom: none;
+}
+
+/* the checkbox — custom amber tick via accent-color (native, a11y-preserving) */
+.ckl-check {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border: var(--hair) solid var(--rule-bright);
+  border-radius: var(--r-sm);
+  background: var(--bg-inset);
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+.ckl-check::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  transform: scale(0);
+  transform-origin: center;
+  background: var(--bg-inset);
+  /* an amber checkmark, drawn with clip-path so it needs no glyph/font */
+  clip-path: polygon(14% 44%, 0 60%, 40% 100%, 100% 22%, 84% 8%, 38% 66%);
+  transition: transform var(--dur-fast) var(--ease-spring);
+}
+.ckl-check:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.ckl-check:checked::before {
+  transform: scale(1);
+}
+.ckl-check:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.ckl-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-3);
+  cursor: pointer;
+  line-height: var(--lh-read);
+}
+.ckl-label {
+  color: var(--read);
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    text-decoration-color var(--dur-fast) var(--ease-out);
+}
+.ckl-note {
+  color: var(--ink-faint);
+  font-size: var(--t-sm);
+  flex-basis: 100%;
+}
+.ckl-link {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-dim);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ckl-link:hover {
+  color: var(--accent);
+}
+
+/* done → strike through + dim (amber strike, the "signal" completing) */
+.ckl-item--done .ckl-label {
+  color: var(--ink-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--accent-dim);
+}
+.ckl-item--done .ckl-note {
+  opacity: 0.7;
+}
+
+/* ── SSR / no-JS fallback list (shown until hydrated) ──────────────────── */
+.ckl-fallback {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ckl-fallback-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-3) 0;
+  border-bottom: var(--hair) solid var(--rule);
+}
+.ckl-fallback-item:last-child {
+  border-bottom: none;
+}
+.ckl-fallback-box {
+  flex: 0 0 auto;
+  color: var(--ink-faint);
+  font-size: 18px;
+  line-height: 1.4;
+}
+.ckl-fallback-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-3);
+  line-height: var(--lh-read);
+}
+.ckl-fallback-body .ckl-label {
+  color: var(--read);
+}
+
+/* ── reduced motion: no transitions; tick is an instant end-state ──────── */
+@media (prefers-reduced-motion: reduce) {
+  .ckl-check,
+  .ckl-check::before,
+  .ckl-label {
+    transition: none;
+  }
+}

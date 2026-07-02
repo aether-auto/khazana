@@ -1,0 +1,240 @@
+/* apps/site/src/components/mdx/StateMachine.css
+   A steppable finite state machine — states are rounded hairline node boxes on
+   the warm ground, transitions are labeled edges (reusing Diagram's routing),
+   and an amber token rides the active state. The active state GLOWS amber; spent
+   transitions DIM; the next scripted / fireable transition lights up. All
+   geometry comes from layoutDiagram; this file is purely the visual voice.
+   The SVG scales to width:100% so a wide machine shrinks to fit 360px. */
+
+.sm-panel {
+  padding: var(--s-5);
+}
+
+.sm-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* ── transitions (edges) ─────────────────────────────────────────────────── */
+.sm-edge-line {
+  stroke: var(--rule-bright);
+  stroke-width: 1.5;
+  transition:
+    stroke var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+.sm-arrowhead {
+  fill: var(--rule-bright);
+  transition: fill var(--dur-fast) var(--ease-out);
+}
+.sm-arrowhead--lit {
+  fill: var(--accent);
+}
+
+/* fat transparent hit-target so a thin edge is easy to click on touch */
+.sm-edge-hit {
+  stroke: transparent;
+  stroke-width: 16;
+  cursor: pointer;
+}
+
+/* spent transition → dimmed (already walked) */
+.sm-edge--spent .sm-edge-line {
+  stroke: var(--rule);
+  opacity: 0.45;
+}
+
+/* the next scripted step (sequence mode) or a fireable edge (free mode) lights */
+.sm-edge--next .sm-edge-line,
+.sm-edge--fireable .sm-edge-line {
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--accent) 40%, transparent));
+}
+.sm-edge--next .sm-edge-label {
+  fill: var(--ink);
+}
+
+/* ── edge labels: the transition event, mono on --ink-label ──────────────── */
+.sm-edge-labelbg {
+  fill: var(--bg-raised);
+  opacity: 0.9;
+}
+.sm-edge-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  fill: var(--ink-label);
+  transition: fill var(--dur-fast) var(--ease-out);
+}
+
+/* ── states (nodes): rounded hairline boxes ──────────────────────────────── */
+.sm-node-box {
+  fill: var(--bg-inset);
+  stroke: var(--rule-bright);
+  stroke-width: 1.25;
+  transition:
+    stroke var(--dur-fast) var(--ease-out),
+    fill var(--dur-fast) var(--ease-out);
+}
+.sm-node-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  fill: var(--ink-label);
+  transition: fill var(--dur-fast) var(--ease-out);
+}
+
+/* the start state carries a subtle amber hairline so the reader knows the entry */
+.sm-node--start .sm-node-box {
+  stroke: color-mix(in oklab, var(--accent) 40%, var(--rule-bright));
+}
+
+/* ── active state: GLOWS amber, token dot rides its corner ────────────────── */
+.sm-node--active .sm-node-box {
+  fill: color-mix(in oklab, var(--accent) 8%, var(--bg-inset));
+  stroke: var(--accent);
+  stroke-width: 1.75;
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--accent) 45%, transparent));
+}
+.sm-node--active .sm-node-label {
+  fill: var(--ink);
+}
+.sm-token {
+  fill: var(--accent);
+  filter: drop-shadow(0 0 4px color-mix(in oklab, var(--accent) 60%, transparent));
+  transition: opacity var(--dur) var(--ease-out);
+}
+
+/* ── controls (only shown once JS is live) ───────────────────────────────── */
+.sm-controls {
+  display: none;
+}
+.sm--js .sm-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-4);
+  padding-top: var(--s-3);
+  border-top: var(--hair) solid var(--rule);
+}
+.sm-btn {
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  letter-spacing: 0.04em;
+  color: var(--bg-inset);
+  background: var(--accent);
+  border: none;
+  border-radius: var(--r-sm);
+  padding: var(--s-2) var(--s-4);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+.sm-btn:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--accent) 88%, var(--ink));
+}
+.sm-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.sm-btn--ghost {
+  color: var(--ink-dim);
+  background: transparent;
+  border: var(--hair) solid var(--rule-bright);
+}
+.sm-btn--ghost:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--accent);
+  background: transparent;
+}
+.sm-btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.sm-hint,
+.sm-status {
+  margin: 0;
+}
+.sm-status strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── SSR / no-JS fallback (semantic state + transition + walk list) ───────── */
+.sm-fallback {
+  display: none;
+  padding: var(--s-2) 0 0;
+}
+.sm-fallback .mdx-label {
+  display: block;
+  margin: var(--s-3) 0 var(--s-1);
+}
+.sm-fallback ul,
+.sm-fallback ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--ink-dim);
+}
+.sm-fallback li {
+  padding: var(--s-1) 0;
+}
+.sm-fallback-start,
+.sm-fallback-tag {
+  color: var(--accent);
+}
+.sm-fallback-on {
+  color: var(--ink-label);
+}
+.sm-fallback-walk {
+  counter-reset: sm-walk;
+}
+.sm-fallback-walk li {
+  counter-increment: sm-walk;
+}
+.sm-fallback-walk li::before {
+  content: counter(sm-walk) ". ";
+  color: var(--ink-label);
+}
+
+/* ── mobile: a wide machine squeezed into ~320px is an illegible smear. Below
+   this width we hide the SVG (+ its controls) and promote the semantic
+   state/transition/walk list — same data, every label readable. Mirrors the
+   Diagram/Timeline mobile strategy exactly. ── */
+@media (max-width: 640px) {
+  .sm-svg,
+  .sm--js .sm-controls {
+    display: none;
+  }
+  .sm-fallback {
+    display: block;
+  }
+  .sm-panel {
+    padding: var(--s-4);
+  }
+}
+
+/* ── reduced motion: no transitions, no glow filter; render the end state ─── */
+@media (prefers-reduced-motion: reduce) {
+  .sm-edge-line,
+  .sm-arrowhead,
+  .sm-node-box,
+  .sm-node-label,
+  .sm-edge-label,
+  .sm-token,
+  .sm-btn {
+    transition: none;
+  }
+  .sm-node--active .sm-node-box,
+  .sm-token,
+  .sm-edge--next .sm-edge-line,
+  .sm-edge--fireable .sm-edge-line {
+    filter: none;
+  }
+}

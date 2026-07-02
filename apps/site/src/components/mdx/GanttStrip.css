@@ -1,0 +1,155 @@
+/* apps/site/src/components/mdx/GanttStrip.css
+   Compact build-timeline strip: task → duration. Hairline lanes, amber bars.
+   The SVG scales to width:100% via viewBox and is content-fitted (height grows
+   with lane count), so there is no horizontal overflow at any width including
+   360px. Hover/focus lifts a bar and surfaces its duration + note in a reserved
+   readout row (no layout shift). Reduced-motion → no transitions. */
+
+.gnt-panel {
+  padding: var(--s-5) var(--s-5) var(--s-4);
+}
+
+.gnt-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* ── hairline lanes (the track each bar sits on) ───────────────────────── */
+.gnt-lane {
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+
+/* ── task rows ─────────────────────────────────────────────────────────── */
+.gnt-task {
+  cursor: pointer;
+}
+.gnt-task:focus {
+  outline: none;
+}
+.gnt-hit {
+  fill: transparent;
+}
+
+/* the amber bar — the phase duration made visible */
+.gnt-bar {
+  fill: var(--accent);
+  opacity: 0.82;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    filter var(--dur-fast) var(--ease-out);
+}
+
+/* task label in the left gutter */
+.gnt-task-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  fill: var(--ink-dim);
+  transition: fill var(--dur-fast) var(--ease-out);
+}
+
+/* inline duration to the right of each bar */
+.gnt-dur {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--ink-faint);
+  transition: fill var(--dur-fast) var(--ease-out);
+}
+
+/* ── active (hover/focus): lift the bar, brighten its labels ───────────── */
+.gnt-task--active .gnt-bar {
+  opacity: 1;
+  filter: drop-shadow(0 0 5px color-mix(in oklab, var(--accent) 40%, transparent));
+}
+.gnt-task--active .gnt-task-label {
+  fill: var(--ink);
+}
+.gnt-task--active .gnt-dur {
+  fill: var(--ink-dim);
+}
+.gnt-task:focus-visible .gnt-bar {
+  outline: none;
+  filter: drop-shadow(0 0 0 2px var(--focus));
+  stroke: var(--focus);
+  stroke-width: 1.5;
+}
+
+/* ── stable readout row (reserved height → no layout shift) ────────────── */
+.gnt-readout {
+  min-height: 1.6em;
+  margin-top: var(--s-3);
+  padding-top: var(--s-2);
+  border-top: var(--hair) solid var(--rule);
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--ink-dim);
+  line-height: 1.5;
+}
+.gnt-readout-name {
+  color: var(--ink);
+  font-weight: 600;
+}
+.gnt-readout-dur {
+  color: var(--accent);
+}
+.gnt-readout-sep {
+  color: var(--ink-faint);
+}
+.gnt-readout-note {
+  color: var(--ink-dim);
+}
+.gnt-readout--hint {
+  color: var(--ink-faint);
+}
+
+/* ── SSR / no-JS fallback list ─────────────────────────────────────────── */
+.gnt-fallback {
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: var(--s-3) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--ink-dim);
+}
+.gnt-fallback li {
+  padding: var(--s-1) 0;
+}
+.gnt-fallback-name {
+  color: var(--ink);
+  font-weight: 600;
+}
+.gnt-fallback-note {
+  color: var(--ink-faint);
+}
+
+/* ── mobile: a 720-unit viewBox squeezed under ~520px renders the mono
+   labels illegibly small and long task names collide with the bars. Below
+   520px hide the SVG and promote the full-size stacked fallback list (same
+   data, every label readable). No horizontal overflow at any width. ─────── */
+@media (max-width: 520px) {
+  .gnt-svg,
+  .gnt-readout {
+    display: none;
+  }
+  .gnt-fallback {
+    display: block;
+  }
+  .gnt-panel {
+    padding: var(--s-4);
+  }
+}
+
+/* ── reduced motion: no transitions, render the end state ──────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .gnt-bar,
+  .gnt-task-label,
+  .gnt-dur {
+    transition: none;
+  }
+  .gnt-task--active .gnt-bar {
+    filter: none;
+  }
+}

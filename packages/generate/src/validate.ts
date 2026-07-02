@@ -65,6 +65,12 @@ export const KNOWN_COMPONENTS = [
   "CompareSlider",
   "CastGrid",
   "EventCascade",
+  // P3 wave: teardown/primer + build-log + chronicle/dispatch kit.
+  "StateMachine",
+  "LayerStack",
+  "Checklist",
+  "GanttStrip",
+  "RouteMap",
 ] as const;
 
 export interface DraftResult {

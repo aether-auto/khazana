@@ -53,6 +53,7 @@ RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
 StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
+StateMachine  LayerStack  Checklist  GanttStrip  RouteMap
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -98,6 +99,7 @@ trend, bar for comparison, area for cumulative, dot for relationship.
 ```
 `columns` = `{ key, label, type, align? }` (`type`: `"string" | "number"`;
 `align: "right"` for numerics). `rows` = objects keyed by column `key`.
+Optional `total?: string` = a numeric column `key` to sum in a right-aligned amber footer row (bills-of-materials); omit for no footer.
 
 ### `<Timeline>` — horizontal SVG timeline
 ```jsx
@@ -309,6 +311,34 @@ imports), `width: number`, `height: number` (intrinsic px), `alt: string` (requi
 `beforeLabel?` (default `"before"`), `afterLabel?` (default `"after"`), `caption?`,
 `orientation?: "h"|"v"` (default `h`). No-JS / reduced-motion → both images stacked
 with labels (never blank).
+
+## 3d. P3 components — Checklist, GanttStrip (this format's kit)
+
+### Checklist — interactive, persistent build steps (island → `client:visible`)
+```jsx
+<Checklist client:visible
+  title="Reproduce the desk sensor node"
+  caption="one evening, start to first reading"
+  items={[
+    { label: "Flash MicroPython to the ESP32", note: "hold BOOT while connecting", href: "https://micropython.org/download/ESP32_GENERIC/" },
+    { label: "Wire the BME280 to I²C (SDA=21, SCL=22)" },
+    { label: "Confirm a reading appears in the serial console" }
+  ]} />
+```
+Props: `items: { label, note?, href? }[]`, `title?` (heading; also part of the localStorage identity key), `caption?`. Ticks persist in localStorage per checklist content; SSR / no-JS → a static `<ul>` with a ☐ glyph per item (never blank). Reduced-motion handled in CSS.
+
+### GanttStrip — a phase/timeline strip of bars (island → `client:visible`)
+```jsx
+<GanttStrip client:visible unit="day"
+  caption="how long each phase took"
+  tasks={[
+    { label: "Design + BOM", start: 0, end: 3, note: "most time was sourcing the sensor" },
+    { label: "PCB fab wait", start: 3, end: 17, note: "JLCPCB, cheapest shipping" },
+    { label: "Assembly", start: 17, end: 19 },
+    { label: "Firmware", start: 19, end: 24 }
+  ]} />
+```
+Props: `tasks: { label, start, end, note? }[]` (`start`/`end` in `unit`s, `end >= start`), `unit?: "day" | "hr"` (default `"day"`), `caption?`. Bars + inline durations render server-side; hover/focus surfaces the note+duration (JS-only). SSR / no-JS → SVG plus a semantic `<ul>` of task — duration — note (never blank).
 
 ## 4. Body conventions
 

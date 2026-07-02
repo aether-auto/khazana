@@ -35,6 +35,26 @@ export function sortRows(rows: ReadonlyArray<Row>, key: string, dir: SortDir): R
     .map((x) => x.row);
 }
 
+/**
+ * Sum the numeric cells of one column, for a summable footer (bills-of-materials).
+ * `number` cells are added directly; string cells are coerced when they parse as a
+ * finite number (so `"80"` counts); everything else (null, booleans, non-numeric
+ * strings) is skipped. Always returns a finite number (empty → 0).
+ */
+export function sumColumn(rows: ReadonlyArray<Row>, key: string): number {
+  let total = 0;
+  for (const row of rows) {
+    const v = row[key];
+    if (typeof v === "number") {
+      if (Number.isFinite(v)) total += v;
+    } else if (typeof v === "string") {
+      const n = Number(v.trim());
+      if (v.trim() !== "" && Number.isFinite(n)) total += n;
+    }
+  }
+  return total;
+}
+
 /** Case-insensitive substring match across all column cells. */
 export function filterRows(
   rows: ReadonlyArray<Row>,
