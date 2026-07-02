@@ -57,6 +57,18 @@
 > **44 components**. Only ParameterPlay remains deferred (overlaps Simulation/ControlledChart).
 > New session reports: `.superpowers/sdd/{build-x-*,build-mil-*,integrate-mil-report,verify-mil-report,
 > theater-format-report,wave5b-*}.md`.
+>
+> **Then, on "go ahead," the session finished the interactive backlog:** built **ParameterPlay**
+> (45th component — author-formula sliders → live curve/readouts via a hand-rolled *safe* evaluator,
+> no `eval`), added a **trilateration `Simulation` kind** (satellite geometry + noise → a DOP scatter
+> cloud) and wired both into the GPS read's DOP section (no new claim), and shipped a **second theater
+> Read — Midway 1942** (`midway-carrier-battle.mdx`, ~7,500 words, a 6-phase naval/air BattleMap; it
+> actively de-mythologizes the battle per Parshall & Tully, and an independent fact-check caught &
+> fixed 7 items). Commits `b13ed8e`, `6fb5888`. **Now 45 components, 7 writer formats, and 3
+> committed Reads** (the-plague-wage, how-gps-finds-you, cannae-double-envelopment, midway-carrier-battle).
+> The deferred-component backlog is empty except by-choice items. **1901 tests green**, typecheck clean,
+> build 351 pages. New deps across the whole session: `d3-sankey` only. Reports: `wave5c-*`,
+> `build-x-parameterplay`, `build-x-sim-trilateration`, `integrate-paramplay-report`, `verify-paramplay-report`.
 
 ---
 
