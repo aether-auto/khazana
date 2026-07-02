@@ -51,6 +51,7 @@ this allow-list:
 Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  ScrollyTimeline
 RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
 StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
+Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -236,6 +237,75 @@ distinct from a citation.
 
 Props: `term: string`, `def: string`, `children?` (rich popover body).
 
+## 3b. P1 components — Diagram, Stepper, Quiz, CodeWalkthrough (this format's kit)
+
+### Diagram — node-edge architecture / flow figure (island → `client:visible`)
+
+```jsx
+<Diagram client:visible caption="Request path through the edge"
+  nodes={[
+    { id: "client", label: "Browser Client", x: 0, y: 0, kind: "input" },
+    { id: "edge", label: "Edge Worker", x: 1, y: 0, kind: "process" },
+    { id: "kv", label: "KV Store", x: 2, y: 1, kind: "store" }
+  ]}
+  edges={[
+    { from: "client", to: "edge", label: "HTTPS", kind: "data" },
+    { from: "edge", to: "kv", label: "read/write", kind: "control" }
+  ]} />
+```
+
+Props: `nodes: { id, label, x, y, kind? }[]` — `x`/`y` are **abstract-grid center
+coords** (any consistent units), `kind?`: `default|input|output|process|store|decision`
+(visual tint). `edges: { from, to, label?, kind? }[]` — `kind?`: `data|control|async`
+(solid/dashed/dotted). `caption?`, `highlightOnHover?` (default `true`). Author the
+coordinates yourself; there is no auto-layout. Hover/focus a node dims the rest;
+≤640px promotes a semantic node/edge list (no 360px overflow).
+
+### Stepper — numbered step sequence (island → `client:visible`)
+
+```jsx
+<Stepper client:visible mode="reveal" caption="casting a pewter part"
+  steps={[
+    { title: "Melt the ingot", body: "<p>Bring the crucible to 232&nbsp;°C.</p>" },
+    { title: "Prime the mould", body: "<p>Dust the cavity with graphite.</p>", figure: "<svg viewBox='0 0 100 40' width='100%'><rect x='4' y='4' width='92' height='32' fill='none' stroke='currentColor'/></svg>" }
+  ]} />
+```
+
+Props: `steps: { title, body, figure? }[]` — `body`/`figure` are **pre-rendered
+HTML strings** (an island can't take MDX children). `mode?`: `reveal` (default) |
+`tabs` | `all`. `caption?`. No-JS / reduced-motion → all steps shown as an `<ol>`.
+
+### Quiz — check-your-understanding (island → `client:visible`)
+
+```jsx
+<Quiz client:visible caption="check your understanding"
+  questions={[
+    { prompt: "Which sort is O(n log n) worst-case?", choices: ["quicksort", "mergesort", "insertion sort"], answer: 1, explain: "Mergesort is n log n worst-case." },
+    { prompt: "Bits in a byte?", answer: 8, kind: "numeric", explain: "A byte is 8 bits." }
+  ]} />
+```
+
+Props: `questions: { prompt, choices?, answer, explain, kind? }[]` — `answer` is a
+**0-based choice index** for `mc` or the **number** for `numeric`; `kind?`: `mc` |
+`numeric` (inferred: `mc` if `choices` present). `caption?`. No-JS → questions +
+answers in a `<details>`.
+
+### CodeWalkthrough — narrated, syntax-highlighted static code (static Astro; NO `client:` directive)
+
+```jsx
+<CodeWalkthrough lang="ts" caption="A tiny rate limiter, step by step"
+  steps={[
+    { lines: [1, 6], note: "The bucket holds tokens; capacity + refill are fixed." },
+    { lines: [8, 15], note: "refill() lazily adds tokens from elapsed wall-clock." }
+  ]}
+  code={`class TokenBucket { /* … full listing … */ }`} />
+```
+
+Props: `code: string` (full listing, any language, need not run), `lang?` (Shiki id,
+e.g. `"ts"`, `"python"`; default `"text"`), `steps: { lines: [start,end], note }[]`
+(1-based inclusive line range focused per step), `caption?`. **Static Astro** — no
+`client:` directive; Shiki highlights at build, a bundled script does prev/next.
+Distinct from `RunnableCode` (which is editable/executable JS).
 
 ## 4. Body conventions
 

@@ -1,0 +1,197 @@
+---
+// apps/site/src/components/mdx/CodeWalkthrough.astro
+//
+// A NARRATED code block: a static, real-syntax-highlighted listing whose
+// narration steps focus a specific line range as the reader advances. Distinct
+// from RunnableCode (editable/executable) — CodeWalkthrough is for code too
+// large or non-JS to run; its value is the STEPPING + line-focus + note.
+//
+// Highlighting approach (chosen — documented in the build report):
+//   Real syntax highlighting comes from Astro's BUILT-IN <Code> (astro:components),
+//   which runs Shiki at BUILD time — $0, no new dep, no runtime highlighter. A
+//   pure React island could not call Astro's build-time highlighter, so this is
+//   an Astro component. Shiki emits one `<span class="line">` per source line; a
+//   tiny transformer stamps each with `data-cw-line="<n>"` (1-based) so a minimal
+//   client script + CSS can focus a line RANGE per step. Dimmed non-active lines,
+//   amber active gutter, mono note — all via tokens.
+//
+// Fallbacks (never blank):
+//   • no-JS  → the full highlighted code is visible + every step note is listed
+//     below in an <ol> (the script only ENHANCES; it hides the list & shows the
+//     stepper once hydrated).
+//   • reduced-motion → the script disables the auto-scroll-into-view nicety and
+//     all transitions are CSS-suppressed; stepping is instant. On first paint the
+//     first step's range is focused and its note shown.
+import { Code } from "astro:components";
+import {
+  countLines,
+  normalizeSteps,
+  type WalkthroughStep,
+} from "./lib/code-walkthrough.js";
+import "./CodeWalkthrough.css";
+
+export interface CodeWalkthroughProps {
+  /** The full source listing (any language; need not be runnable). */
+  code: string;
+  /** Shiki language id, e.g. "ts", "python", "rust". Default "text". */
+  lang?: string;
+  /** Ordered narration steps; each focuses a 1-based inclusive [start,end] range. */
+  steps: WalkthroughStep[];
+  /** Editorial caption (Fraunces, shared .mdx-caption). */
+  caption?: string;
+}
+
+const { code, lang = "text", steps, caption } = Astro.props as CodeWalkthroughProps;
+
+const lineCount = countLines(code);
+const norm = normalizeSteps(steps ?? [], lineCount);
+
+// Stamp each Shiki `.line` span with its 1-based index so the client script and
+// CSS can address line ranges. Runs at build inside the hast tree — no runtime.
+const lineIndexTransformer = {
+  name: "cw-line-index",
+  line(node: { properties: Record<string, unknown> }, lineNumber: number) {
+    node.properties["data-cw-line"] = String(lineNumber);
+  },
+};
+
+// A stable id ties the code region to its step controls / notes.
+const uid = "cw-" + Math.random().toString(36).slice(2, 10);
+
+// Serialize the normalized steps for the client script (data-driven, no children).
+const stepsJson = JSON.stringify(norm.map((s) => ({ start: s.start, end: s.end })));
+---
+
+<figure class="mdx-figure cw" data-cw-root data-cw-id={uid} data-reveal>
+  <div class="mdx-panel cw-panel">
+    {/* Step controls — hidden until the script hydrates (progressive enhancement). */}
+    <div class="cw-bar" data-cw-bar hidden>
+      <button type="button" class="cw-nav cw-prev" data-cw-prev aria-label="Previous step">
+        ‹ prev
+      </button>
+      <span class="cw-counter" data-cw-counter aria-live="polite">
+        1 / {norm.length}
+      </span>
+      <button type="button" class="cw-nav cw-next" data-cw-next aria-label="Next step">
+        next ›
+      </button>
+    </div>
+
+    <div class="cw-code" data-cw-code>
+      <Code code={code} lang={lang as any} transformers={[lineIndexTransformer]} />
+    </div>
+
+    {/* Active-step note — populated by the script; a reserved slot avoids shift. */}
+    <p class="cw-note" data-cw-note role="note" aria-live="polite" hidden></p>
+
+    {/* SSR / no-JS fallback: every note listed. The script hides this once ready. */}
+    <ol class="cw-notes-list" data-cw-notes-list>
+      {norm.map((s, i) => (
+        <li class="cw-notes-item">
+          <span class="mdx-label cw-notes-range">
+            {s.start === s.end ? `line ${s.start}` : `lines ${s.start}–${s.end}`}
+          </span>
+          <span class="cw-notes-text">{steps[i]?.note}</span>
+        </li>
+      ))}
+    </ol>
+  </div>
+  {caption ? <figcaption class="mdx-caption">{caption}</figcaption> : null}
+
+  <script
+    type="application/json"
+    data-cw-steps
+    set:html={stepsJson}
+  />
+</figure>
+
+<script>
+  // CodeWalkthrough client enhancement. Vanilla, no framework, bundled by Astro.
+  // Idempotent per-root. Adds prev/next stepping + line-range focus over the
+  // build-time Shiki output. If anything is missing it leaves the static
+  // fallback untouched (never blank).
+  type Step = { start: number; end: number };
+
+  function initRoot(root: HTMLElement) {
+    if (root.dataset.cwInit === "1") return;
+    const bar = root.querySelector<HTMLElement>("[data-cw-bar]");
+    const noteEl = root.querySelector<HTMLElement>("[data-cw-note]");
+    const list = root.querySelector<HTMLElement>("[data-cw-notes-list]");
+    const counter = root.querySelector<HTMLElement>("[data-cw-counter]");
+    const prevBtn = root.querySelector<HTMLButtonElement>("[data-cw-prev]");
+    const nextBtn = root.querySelector<HTMLButtonElement>("[data-cw-next]");
+    const codeWrap = root.querySelector<HTMLElement>("[data-cw-code]");
+    const stepsScript = root.querySelector<HTMLElement>("[data-cw-steps]");
+    if (!bar || !noteEl || !list || !codeWrap || !stepsScript) return;
+
+    let steps: Step[] = [];
+    try {
+      steps = JSON.parse(stepsScript.textContent || "[]");
+    } catch {
+      return;
+    }
+    if (!steps.length) return;
+
+    // Collect note text from the fallback list (already sanitized, no re-render).
+    const notes = Array.from(list.querySelectorAll<HTMLElement>(".cw-notes-text")).map(
+      (n) => n.textContent || "",
+    );
+    const lineEls = Array.from(
+      codeWrap.querySelectorAll<HTMLElement>("[data-cw-line]"),
+    );
+    if (!lineEls.length) return;
+
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    root.dataset.cwInit = "1";
+    root.classList.add("cw--ready");
+
+    let idx = 0;
+
+    function apply(i: number) {
+      idx = Math.min(steps.length - 1, Math.max(0, i));
+      const s = steps[idx];
+      for (const el of lineEls) {
+        const n = Number(el.getAttribute("data-cw-line"));
+        const on = n >= s.start && n <= s.end;
+        el.classList.toggle("cw-line--on", on);
+      }
+      if (noteEl) noteEl.textContent = notes[idx] || "";
+      if (counter) counter.textContent = `${idx + 1} / ${steps.length}`;
+      if (prevBtn) prevBtn.disabled = idx === 0;
+      if (nextBtn) nextBtn.disabled = idx === steps.length - 1;
+      // Bring the first active line into view (skipped under reduced-motion).
+      if (!reduce) {
+        const first = lineEls.find(
+          (el) => Number(el.getAttribute("data-cw-line")) === s.start,
+        );
+        first?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    }
+
+    prevBtn?.addEventListener("click", () => apply(idx - 1));
+    nextBtn?.addEventListener("click", () => apply(idx + 1));
+    root.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") {
+        apply(idx - 1);
+      } else if (e.key === "ArrowRight") {
+        apply(idx + 1);
+      }
+    });
+
+    // Reveal the stepper, hide the fallback list + reserved note slot in.
+    bar.hidden = false;
+    if (noteEl) noteEl.hidden = false;
+    list.hidden = true;
+    apply(0);
+  }
+
+  function boot() {
+    document
+      .querySelectorAll<HTMLElement>("[data-cw-root]")
+      .forEach((root) => initRoot(root));
+  }
+
+  boot();
+  // Re-run after Astro view transitions (client-side nav) so new roots hydrate.
+  document.addEventListener("astro:page-load", boot);
+</script>

@@ -1,0 +1,192 @@
+/* apps/site/src/components/mdx/Diagram.css
+   Node-edge architecture diagram: "lines not boxes" — hairline node frames on
+   the warm ground, mono labels in --ink-label, amber for the active node + its
+   edges. Edge KIND is encoded in the stroke: data solid, control dashed, async
+   dotted. All geometry (viewBox, routing) comes from layoutDiagram; this file
+   is purely the visual voice. The SVG scales to width:100% so a wide graph
+   shrinks to fit 360px and never widens the page. */
+
+.dg-panel {
+  padding: var(--s-5);
+}
+
+.dg-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* ── edges ──────────────────────────────────────────────────────────────── */
+.dg-edge-line {
+  stroke: var(--rule-bright);
+  stroke-width: 1.5;
+  transition:
+    stroke var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+/* edge KIND → distinct stroke pattern (the semantic of the connection) */
+.dg-edge--data .dg-edge-line {
+  stroke-dasharray: none;
+}
+.dg-edge--control .dg-edge-line {
+  stroke-dasharray: 7 4;
+}
+.dg-edge--async .dg-edge-line {
+  stroke-dasharray: 1.5 4;
+  stroke-linecap: round;
+}
+
+.dg-arrowhead {
+  fill: var(--rule-bright);
+  transition: fill var(--dur-fast) var(--ease-out);
+}
+.dg-arrowhead--lit {
+  fill: var(--accent);
+}
+
+/* ── edge labels: mono on --ink-label, backed so they read over the line ─── */
+.dg-edge-labelbg {
+  fill: var(--bg-raised);
+  opacity: 0.9;
+}
+.dg-edge-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  fill: var(--ink-label);
+}
+
+/* ── active edge (an endpoint is hovered/focused) ───────────────────────── */
+.dg-edge--lit .dg-edge-line {
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--accent) 40%, transparent));
+}
+.dg-edge--lit .dg-edge-label {
+  fill: var(--ink);
+}
+
+/* ── nodes: hairline boxes on the warm ground ───────────────────────────── */
+.dg-node {
+  cursor: default;
+}
+.dg-node[role="button"] {
+  cursor: pointer;
+}
+.dg-node:focus {
+  outline: none;
+}
+.dg-node-box {
+  fill: var(--bg-inset);
+  stroke: var(--rule-bright);
+  stroke-width: 1.25;
+  transition:
+    stroke var(--dur-fast) var(--ease-out),
+    fill var(--dur-fast) var(--ease-out);
+}
+.dg-node-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  fill: var(--ink-label);
+  transition: fill var(--dur-fast) var(--ease-out);
+}
+
+/* semantic kind tints — a single left accent hairline via stroke color, kept
+   subtle so the graph stays calm ("lines not boxes"). */
+.dg-node--input .dg-node-box { stroke: color-mix(in oklab, var(--accent) 45%, var(--rule-bright)); }
+.dg-node--output .dg-node-box { stroke: color-mix(in oklab, var(--editorial) 45%, var(--rule-bright)); }
+.dg-node--store .dg-node-box { fill: var(--bg-raised); }
+.dg-node--decision .dg-node-box { stroke-dasharray: 4 3; }
+
+/* ── dimming: when a node is active, everything else recedes ─────────────── */
+.dg-svg--dimmed .dg-node,
+.dg-svg--dimmed .dg-edge {
+  opacity: 0.32;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.dg-svg--dimmed .dg-node--active,
+.dg-svg--dimmed .dg-edge--lit {
+  opacity: 1;
+}
+
+/* ── active node emphasis ───────────────────────────────────────────────── */
+.dg-node--active .dg-node-box {
+  stroke: var(--accent);
+  stroke-width: 1.75;
+  filter: drop-shadow(0 0 5px color-mix(in oklab, var(--accent) 40%, transparent));
+}
+.dg-node--active .dg-node-label {
+  fill: var(--ink);
+}
+
+/* ── keyboard focus ring ────────────────────────────────────────────────── */
+.dg-node:focus-visible .dg-node-box {
+  stroke: var(--focus);
+  stroke-width: 2;
+}
+
+/* ── SSR / no-JS fallback (semantic node + edge list) ───────────────────── */
+.dg-fallback {
+  display: none;
+  padding: var(--s-2) 0 0;
+}
+.dg-fallback .mdx-label {
+  display: block;
+  margin: var(--s-3) 0 var(--s-1);
+}
+.dg-fallback ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--ink-dim);
+}
+.dg-fallback li {
+  padding: var(--s-1) 0;
+}
+.dg-fallback-arrow {
+  color: var(--rule-bright);
+}
+.dg-fallback-arrow--control {
+  letter-spacing: 0.2em;
+}
+.dg-fallback-arrow--async {
+  opacity: 0.7;
+}
+.dg-fallback-edgelabel {
+  color: var(--ink-label);
+}
+
+/* ── mobile: a 1000-unit graph squeezed into ~320px renders 12px labels at a
+   few px — an illegible smear. Below this width we hide the SVG and promote the
+   semantic, full-size node/edge list (same data, every label readable, no
+   overlap). Desktop is untouched — identical to Timeline's mobile strategy. ── */
+@media (max-width: 640px) {
+  .dg-svg {
+    display: none;
+  }
+  .dg-fallback {
+    display: block;
+  }
+  .dg-panel {
+    padding: var(--s-4);
+  }
+}
+
+/* ── reduced motion: no transitions; render the end state ───────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .dg-edge-line,
+  .dg-arrowhead,
+  .dg-node-box,
+  .dg-node-label,
+  .dg-svg--dimmed .dg-node,
+  .dg-svg--dimmed .dg-edge {
+    transition: none;
+  }
+  .dg-node--active .dg-node-box,
+  .dg-edge--lit .dg-edge-line {
+    filter: none;
+  }
+}

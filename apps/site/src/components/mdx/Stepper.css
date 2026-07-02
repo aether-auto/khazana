@@ -1,0 +1,173 @@
+/* apps/site/src/components/mdx/Stepper.css
+   Numbered step sequence. Amber step-number rail, Fraunces titles, "lines not
+   boxes". Tokens only. The all-steps <ol> is the SSR / no-JS / reduced-motion
+   fallback; reveal/tabs add a single cross-fade INSIDE the figure (never prose). */
+
+.mdx-stepper {
+  max-width: var(--measure);
+}
+
+/* ── Shared step chrome ─────────────────────────────────────────────────── */
+.mdx-stepper__rail,
+.mdx-stepper__tab-num {
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+.mdx-stepper__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  font-weight: 480;
+  line-height: var(--lh-tight);
+  color: var(--ink);
+  text-wrap: balance;
+}
+.mdx-stepper__body {
+  font-family: var(--font-read);
+  font-size: var(--t-md);
+  line-height: var(--lh-read);
+  color: var(--read);
+}
+.mdx-stepper__body :global(p) { margin: 0 0 var(--s-3); }
+.mdx-stepper__body :global(p:last-child) { margin-bottom: 0; }
+/* code / pre inside a step body must never force horizontal page overflow. */
+.mdx-stepper__body :global(pre),
+.mdx-stepper__figure :global(pre) {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.mdx-stepper__figure {
+  margin: 0 0 var(--s-3);
+}
+.mdx-stepper__figure :global(img),
+.mdx-stepper__figure :global(svg) {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ── ALL mode / fallback: semantic <ol> with an amber number rail ───────── */
+.mdx-stepper__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.mdx-stepper__item {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  gap: var(--s-3) var(--s-4);
+  padding: var(--s-4) 0;
+  border-top: var(--hair) solid var(--rule);
+}
+.mdx-stepper__item:first-child { border-top: none; }
+/* the rail cell holds the amber number, top-aligned with the title. */
+.mdx-stepper__item > .mdx-stepper__rail {
+  grid-row: 1 / span 2;
+  padding-top: 0.15em;
+}
+.mdx-stepper__content { min-width: 0; } /* let long code/words shrink, not overflow */
+.mdx-stepper__content .mdx-stepper__title { margin-bottom: var(--s-2); }
+
+/* ── REVEAL / TABS: number-rail tab strip + one active panel ─────────────── */
+.mdx-stepper__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  list-style: none;
+  margin: 0 0 var(--s-4);
+  padding: 0 0 var(--s-3);
+  border-bottom: var(--hair) solid var(--rule);
+}
+.mdx-stepper__tab-item { display: flex; min-width: 0; }
+.mdx-stepper__tab {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  color: var(--ink-dim);
+  cursor: default;
+}
+button.mdx-stepper__tab { cursor: pointer; }
+.mdx-stepper__tab-title {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  transition: color var(--dur) var(--ease-out);
+}
+.mdx-stepper__tab-num { color: var(--ink-faint); transition: color var(--dur) var(--ease-out); }
+.mdx-stepper__tab--active .mdx-stepper__tab-num { color: var(--accent); }
+.mdx-stepper__tab--active .mdx-stepper__tab-title { color: var(--ink); }
+button.mdx-stepper__tab:hover .mdx-stepper__tab-title { color: var(--ink-dim); }
+
+/* Active panel — a single cross-fade on step change (motion inside the figure).*/
+.mdx-stepper__panel {
+  animation: mdx-stepper-fade var(--dur) var(--ease-out) both;
+}
+@keyframes mdx-stepper-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.mdx-stepper__panel-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+.mdx-stepper__rail--active {
+  font-size: var(--t-md);
+}
+
+/* ── prev/next nav ───────────────────────────────────────────────────────── */
+.mdx-stepper__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-top: var(--s-4);
+  padding-top: var(--s-3);
+  border-top: var(--hair) solid var(--rule);
+}
+.mdx-stepper__btn {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: none;
+  border: var(--hair) solid var(--rule-bright);
+  border-radius: var(--r-sm);
+  padding: var(--s-2) var(--s-3);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+}
+.mdx-stepper__btn:hover:not(:disabled) { border-color: var(--accent); }
+.mdx-stepper__btn:disabled { color: var(--ink-faint); cursor: not-allowed; opacity: 0.5; }
+.mdx-stepper__progress {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+/* ── Mobile: no horizontal overflow at 360px ─────────────────────────────── */
+@media (max-width: 480px) {
+  .mdx-stepper__item { grid-template-columns: 2rem 1fr; gap: var(--s-2) var(--s-3); }
+  .mdx-stepper__tab-title { display: none; } /* keep just the amber numbers on the tab strip */
+  .mdx-stepper__tabs { gap: var(--s-4); }
+}
+
+/* ── Reduced motion: end state, zero animation ───────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .mdx-stepper__panel,
+  .mdx-stepper__tab-title,
+  .mdx-stepper__tab-num,
+  .mdx-stepper__btn { animation: none; transition: none; }
+}

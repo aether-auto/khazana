@@ -49,6 +49,13 @@ export const KNOWN_COMPONENTS = [
   "Callout",
   "Detail",
   "Definition",
+  // P1 wave: knowledge-carrier + teardown/build primitives.
+  "Diagram",
+  "Simulation",
+  "Stepper",
+  "Quiz",
+  "CodeWalkthrough",
+  "AnnotatedFigure",
 ] as const;
 
 export interface DraftResult {

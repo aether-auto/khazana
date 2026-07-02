@@ -1,0 +1,145 @@
+/* apps/site/src/components/mdx/Simulation.css
+   The interactive canvas sandbox — the one place motion is celebrated (amber
+   trails on the warm near-black bg). Reuses the instrument register from
+   ControlledChart.css (mono telemetry, .cc slider). This file adds only the
+   canvas, transport controls, the multi-param controls grid (collapses to one
+   column at 360px), and the SSR/no-JS fallback panel. All tokens from tokens.css
+   — never a hardcoded hex. */
+
+.sim-panel {
+  position: relative;
+  padding: var(--s-4) var(--s-4) var(--s-5);
+}
+
+/* Same scroll-entrance guard as .cc: tall interactive figures must be fully
+   visible the moment any of them is on-screen (no "ghost canvas" on mobile). */
+.sim {
+  opacity: 1 !important;
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .sim {
+      animation: sim-figure-in linear both !important;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+    @keyframes sim-figure-in {
+      from { transform: translateY(10px); }
+      to { transform: none; }
+    }
+  }
+}
+
+/* the canvas — backing store is DPR-scaled in JS; CSS keeps it width:100% so it
+   can never overflow the panel at 360px. height is set inline from the prop. */
+.sim-canvas {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  background: var(--bg);
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-sm);
+}
+
+/* transport: play/pause + reset. Sits above the controls, mono voice. */
+.sim-transport {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-3);
+}
+.sim-btn {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  background: transparent;
+  border: var(--hair) solid var(--rule-bright);
+  border-radius: var(--r-sm);
+  padding: var(--s-2) var(--s-4);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+.sim-btn:hover {
+  color: var(--ink);
+  border-color: var(--ink-faint);
+}
+.sim-btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+/* play button reads as the live control — amber when engaged */
+.sim-btn--play[aria-pressed="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 12px color-mix(in oklab, var(--accent) 30%, transparent);
+}
+.sim-static-note {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--ink-faint);
+  letter-spacing: 0.04em;
+}
+
+/* the multi-param controls grid — two columns on wide, ONE column at 360px.
+   Mirrors KellyChart's .kc-controls collapse pattern. */
+.sim-controls {
+  margin-top: var(--s-4);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-4) var(--s-5);
+}
+@media (max-width: 34rem) {
+  .sim-controls {
+    grid-template-columns: 1fr;
+  }
+}
+.sim-control {
+  margin-top: 0; /* the grid owns the spacing here, not .cc-control's margin */
+}
+
+/* ── SSR / no-JS fallback panel — meaningful, never blank ─────────────────── */
+.sim-fallback-desc {
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  line-height: var(--lh-read);
+  color: var(--read);
+  margin: 0 0 var(--s-3);
+}
+.sim-fallback-desc code {
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
+.sim-fallback-label {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-label);
+  margin: 0 0 var(--s-2);
+}
+.sim-fallback-params {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-2);
+}
+.sim-fallback-params li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding-bottom: var(--s-2);
+  border-bottom: var(--hair) solid var(--rule);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+}
+.sim-fallback-pname {
+  color: var(--ink-dim);
+}
+.sim-fallback-pval {
+  color: var(--ink-faint);
+}

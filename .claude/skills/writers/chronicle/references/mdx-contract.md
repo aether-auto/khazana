@@ -51,6 +51,7 @@ this allow-list:
 Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  ScrollyTimeline
 RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
 StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
+Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -237,6 +238,41 @@ distinct from a citation.
 
 Props: `term: string`, `def: string`, `children?` (rich popover body).
 
+## 3b. P1 components — AnnotatedFigure (this format's kit)
+
+### AnnotatedFigure — numbered pins over an image (island → `client:visible`)
+
+An island layering numbered amber annotation pins over an **already-optimized**
+image. Pins reveal a note on hover/focus/tap and are keyboard-cyclable.
+
+**Page-level image wiring (required):** the island takes an already-optimized `src`
+string + intrinsic `width`/`height` (an island cannot import an asset). Optimize the
+image once in the MDX ESM header with `getImage()`, then pass its fields:
+
+```jsx
+import { getImage } from "astro:assets";
+import plate from "./_assets/<your-image>.png";
+const opt = await getImage({ src: plate, width: 1200 });
+
+<AnnotatedFigure client:visible
+  src={opt.src}
+  width={opt.attributes.width}
+  height={opt.attributes.height}
+  alt="What the plate shows"
+  caption="What to look at in the plate"
+  credit="NASA / SDO"
+  sourceUrl="https://exact-source-url"
+  pins={[
+    { x: 0.22, y: 0.30, label: "upper-left", note: "The first thing the eye lands on." },
+    { x: 0.78, y: 0.52, label: "right-of-center", note: "A second detail." }
+  ]} />
+```
+
+Props: `src: string` (from `getImage()`, **not** a raw import), `width: number`,
+`height: number` (intrinsic px — reserves aspect ratio, prevents CLS), `alt: string`
+(required a11y), `caption?`, `credit?`, `sourceUrl?` (grounding), `pins: { x, y,
+label, note }[]` (`x`/`y` are **0..1 fractions** of the image box). No-JS /
+reduced-motion → every pin's note is listed in an `<ol>` below (never blank).
 
 ## 4. Body conventions
 

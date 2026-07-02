@@ -51,6 +51,7 @@ this allow-list:
 Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  ScrollyTimeline
 RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
 StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
+Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -236,6 +237,61 @@ distinct from a citation.
 
 Props: `term: string`, `def: string`, `children?` (rich popover body).
 
+## 3b. P1 components — Diagram, Simulation, Quiz (this format's kit)
+
+### Diagram — node-edge architecture / flow figure (island → `client:visible`)
+
+```jsx
+<Diagram client:visible caption="Request path through the edge"
+  nodes={[
+    { id: "client", label: "Browser Client", x: 0, y: 0, kind: "input" },
+    { id: "edge", label: "Edge Worker", x: 1, y: 0, kind: "process" },
+    { id: "kv", label: "KV Store", x: 2, y: 1, kind: "store" }
+  ]}
+  edges={[
+    { from: "client", to: "edge", label: "HTTPS", kind: "data" },
+    { from: "edge", to: "kv", label: "read/write", kind: "control" }
+  ]} />
+```
+
+Props: `nodes: { id, label, x, y, kind? }[]` — `x`/`y` are **abstract-grid center
+coords**, `kind?`: `default|input|output|process|store|decision`. `edges: { from,
+to, label?, kind? }[]` — `kind?`: `data|control|async` (solid/dashed/dotted).
+`caption?`, `highlightOnHover?` (default `true`). Author coordinates yourself; no
+auto-layout. ≤640px promotes a semantic node/edge list (no 360px overflow).
+
+### Simulation — interactive canvas sandbox with reader sliders (island → `client:visible`)
+
+```jsx
+<Simulation client:visible kind="sir" height={260}
+  params={[
+    { key: "beta", label: "infection rate β", min: 0, max: 0.6, default: 0.35, step: 0.01 },
+    { key: "gamma", label: "recovery rate γ", min: 0.01, max: 0.3, default: 0.08, step: 0.01 }
+  ]}
+  caption="Push β above γ and the outbreak grows." />
+```
+
+Props: `kind: string` — one of the built-in kernels: `walk` (diffusion), `sir`
+(epidemic), `wave` (interference), `life` (Game of Life). `params?: { key, label,
+min, max, default, step }[]` — reader sliders (the kernel reads them by `key`; an
+empty list still works with kernel defaults). `caption?`, `height?` (logical px).
+Pick a `kind`; you do **not** write physics. No-JS / reduced-motion → a static
+frame + a described param list.
+
+### Quiz — check-your-understanding (island → `client:visible`)
+
+```jsx
+<Quiz client:visible caption="check your understanding"
+  questions={[
+    { prompt: "Which sort is O(n log n) worst-case?", choices: ["quicksort", "mergesort", "insertion sort"], answer: 1, explain: "Mergesort is n log n worst-case." },
+    { prompt: "Bits in a byte?", answer: 8, kind: "numeric", explain: "A byte is 8 bits." }
+  ]} />
+```
+
+Props: `questions: { prompt, choices?, answer, explain, kind? }[]` — `answer` is a
+**0-based choice index** for `mc` or the **number** for `numeric`; `kind?`: `mc` |
+`numeric` (inferred: `mc` if `choices` present). `caption?`. No-JS → questions +
+answers in a `<details>`.
 
 ## 4. Body conventions
 

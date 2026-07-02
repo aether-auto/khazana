@@ -1,0 +1,193 @@
+/* apps/site/src/components/mdx/Quiz.css
+   CheckYourUnderstanding — multiple-choice / numeric comprehension checks.
+   Correct = amber check (--accent); wrong = clay (--editorial). "Lines not
+   boxes", tokens only, no horizontal overflow at 360px. */
+
+.mdx-quiz {
+  max-width: var(--measure);
+}
+.mdx-quiz__live {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── A question block ─────────────────────────────────────────────────────── */
+.mdx-quiz__q {
+  padding: var(--s-5) 0;
+  border-top: var(--hair) solid var(--rule);
+}
+.mdx-quiz__q:first-child { border-top: none; padding-top: 0; }
+
+.mdx-quiz__prompt {
+  margin: 0 0 var(--s-4);
+  font-family: var(--font-read);
+  font-size: var(--t-md);
+  line-height: var(--lh-read);
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.mdx-quiz__q-num {
+  display: inline-block;
+  margin-right: var(--s-3);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  vertical-align: 0.05em;
+}
+
+/* ── Multiple-choice ──────────────────────────────────────────────────────── */
+.mdx-quiz__choices {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.mdx-quiz__choice {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-sm);
+  padding: var(--s-3) var(--s-4);
+  font-family: var(--font-read);
+  font-size: var(--t-md);
+  line-height: var(--lh-read);
+  color: var(--read);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease-out), background var(--dur) var(--ease-out);
+}
+/* hover only applies before a verdict — never override the correct/wrong border. */
+.mdx-quiz__choice:not(.mdx-quiz__choice--correct):not(.mdx-quiz__choice--wrong):hover {
+  border-color: var(--rule-bright);
+  background: var(--bg-hover);
+}
+/* the little leading marker — an open ring that fills on verdict. */
+.mdx-quiz__choice-mark {
+  flex: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  border: var(--hair) solid var(--rule-bright);
+  border-radius: 50%;
+  transform: translateY(0.15em);
+}
+.mdx-quiz__choice-text { min-width: 0; overflow-wrap: anywhere; }
+
+/* correct answer highlighted amber; the wrong pick highlighted clay. */
+.mdx-quiz__choice--correct {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 10%, transparent);
+  color: var(--ink);
+}
+.mdx-quiz__choice--correct .mdx-quiz__choice-mark {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.mdx-quiz__choice--wrong {
+  border-color: var(--editorial);
+  background: color-mix(in oklab, var(--editorial) 10%, transparent);
+}
+.mdx-quiz__choice--wrong .mdx-quiz__choice-mark {
+  border-color: var(--editorial);
+  background: var(--editorial);
+}
+
+/* ── Numeric ──────────────────────────────────────────────────────────────── */
+.mdx-quiz__numeric {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+.mdx-quiz__input {
+  font-family: var(--font-mono);
+  font-size: var(--t-md);
+  color: var(--ink);
+  background: var(--bg-inset);
+  border: var(--hair) solid var(--rule-bright);
+  border-radius: var(--r-sm);
+  padding: var(--s-2) var(--s-3);
+  width: min(12rem, 60vw);
+}
+.mdx-quiz__input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.mdx-quiz__input--error { border-color: var(--editorial); }
+.mdx-quiz__submit,
+.mdx-quiz__fallback-answer summary {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+.mdx-quiz__submit {
+  background: none;
+  border: var(--hair) solid var(--rule-bright);
+  border-radius: var(--r-sm);
+  padding: var(--s-2) var(--s-4);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease-out);
+}
+.mdx-quiz__submit:hover { border-color: var(--accent); }
+.mdx-quiz__hint {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--editorial);
+}
+
+/* ── Verdict + explanation ────────────────────────────────────────────────── */
+.mdx-quiz__verdict {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-top: var(--s-4);
+  padding-left: var(--s-4);
+  border-left: 2px solid var(--rule-bright);
+}
+.mdx-quiz__verdict--correct { border-left-color: var(--accent); }
+.mdx-quiz__verdict--wrong { border-left-color: var(--editorial); }
+.mdx-quiz__verdict-label {
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.mdx-quiz__verdict--correct .mdx-quiz__verdict-label { color: var(--accent); }
+.mdx-quiz__verdict--wrong .mdx-quiz__verdict-label { color: var(--editorial); }
+.mdx-quiz__answer {
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  color: var(--ink);
+}
+.mdx-quiz__explain {
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  line-height: var(--lh-read);
+  color: var(--ink-dim);
+  text-wrap: pretty;
+}
+
+/* ── No-JS fallback list (inside <noscript>) ─────────────────────────────── */
+.mdx-quiz__fallback-list { padding-left: var(--s-5); }
+.mdx-quiz__fallback-q { margin-bottom: var(--s-5); }
+.mdx-quiz__fallback-choices { color: var(--read); }
+.mdx-quiz__fallback-answer summary { cursor: pointer; }
+.mdx-quiz__fallback-answer p { color: var(--ink-dim); }
+
+/* ── Mobile: no horizontal overflow at 360px ─────────────────────────────── */
+@media (max-width: 480px) {
+  .mdx-quiz__choice { padding: var(--s-3); }
+  .mdx-quiz__input { width: 100%; }
+  .mdx-quiz__numeric { gap: var(--s-2); }
+}
+
+/* ── Reduced motion: zero animation (verdict is static color + glyph) ─────── */
+@media (prefers-reduced-motion: reduce) {
+  .mdx-quiz__choice,
+  .mdx-quiz__submit { transition: none; }
+}

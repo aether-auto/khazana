@@ -51,6 +51,7 @@ this allow-list:
 Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  ScrollyTimeline
 RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
 StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
+Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -225,6 +226,59 @@ Depth for motivated readers without bloating the linear read. Native
 
 Props: `summary: string`, `defaultOpen?`, children = the expandable body (MDX).
 
+## 3b. P1 components — Diagram, Stepper, CodeWalkthrough (this format's kit)
+
+### Diagram — node-edge architecture / flow figure (island → `client:visible`)
+
+```jsx
+<Diagram client:visible caption="Ingest → curate → publish pipeline"
+  nodes={[
+    { id: "src", label: "Source Registry", x: 0, y: 0, kind: "input" },
+    { id: "norm", label: "Normalize to FeedItem", x: 1, y: 0, kind: "process" },
+    { id: "feed", label: "data/feed/*.json", x: 2, y: 0, kind: "store" }
+  ]}
+  edges={[
+    { from: "src", to: "norm", label: "read", kind: "data" },
+    { from: "norm", to: "feed", label: "commit", kind: "data" }
+  ]} />
+```
+
+Props: `nodes: { id, label, x, y, kind? }[]` — `x`/`y` are **abstract-grid center
+coords**, `kind?`: `default|input|output|process|store|decision`. `edges: { from,
+to, label?, kind? }[]` — `kind?`: `data|control|async` (solid/dashed/dotted).
+`caption?`, `highlightOnHover?` (default `true`). Author coordinates yourself; no
+auto-layout. ≤640px promotes a semantic node/edge list (no 360px overflow).
+
+### Stepper — numbered build/instruction sequence (island → `client:visible`)
+
+```jsx
+<Stepper client:visible mode="reveal" caption="provisioning the board"
+  steps={[
+    { title: "Flash the bootloader", body: "<p>Over USB-DFU.</p>" },
+    { title: "Wire the sensor bus", body: "<p>SDA→A4, SCL→A5, pull-ups 4.7k.</p><pre><code>i2cdetect -y 1</code></pre>" }
+  ]} />
+```
+
+Props: `steps: { title, body, figure? }[]` — `body`/`figure` are **pre-rendered
+HTML strings** (an island can't take MDX children; `<pre><code>` inside a body
+scrolls, not the page). `mode?`: `reveal` (default) | `tabs` | `all`. `caption?`.
+No-JS / reduced-motion → all steps shown as an `<ol>`.
+
+### CodeWalkthrough — narrated, syntax-highlighted static code (static Astro; NO `client:` directive)
+
+```jsx
+<CodeWalkthrough lang="ts" caption="A tiny rate limiter, step by step"
+  steps={[
+    { lines: [1, 6], note: "The bucket holds tokens; capacity + refill are fixed." },
+    { lines: [8, 15], note: "refill() lazily adds tokens from elapsed wall-clock." }
+  ]}
+  code={`class TokenBucket { /* … full listing … */ }`} />
+```
+
+Props: `code: string` (full listing, any language), `lang?` (Shiki id, e.g. `"ts"`,
+`"python"`; default `"text"`), `steps: { lines: [start,end], note }[]` (1-based
+inclusive range focused per step), `caption?`. **Static Astro** — no `client:`
+directive; Shiki highlights at build. Distinct from `RunnableCode` (editable JS).
 
 ## 4. Body conventions
 

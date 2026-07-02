@@ -51,6 +51,7 @@ this allow-list:
 Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  ScrollyTimeline
 RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
 StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
+Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -236,6 +237,69 @@ distinct from a citation.
 
 Props: `term: string`, `def: string`, `children?` (rich popover body).
 
+## 3b. P1 components — Simulation, Stepper, Quiz, CodeWalkthrough (this format's kit)
+
+### Simulation — interactive canvas sandbox with reader sliders (island → `client:visible`)
+
+```jsx
+<Simulation client:visible kind="walk"
+  params={[
+    { key: "walkers", label: "walkers", min: 10, max: 200, default: 60, step: 10 },
+    { key: "step", label: "step size", min: 0.005, max: 0.05, default: 0.01, step: 0.005 }
+  ]}
+  caption="A cloud of random walkers; spread grows with √time." />
+```
+
+Props: `kind: string` — a built-in kernel: `walk` (diffusion), `sir` (epidemic),
+`wave` (interference), `life` (Game of Life). `params?: { key, label, min, max,
+default, step }[]` — reader sliders (kernel reads them by `key`; empty list uses
+kernel defaults). `caption?`, `height?` (logical px). Pick a `kind`; you do **not**
+write physics. No-JS / reduced-motion → a static frame + a described param list.
+
+### Stepper — numbered scaffold / worked sequence (island → `client:visible`)
+
+```jsx
+<Stepper client:visible mode="reveal" caption="the four heats"
+  steps={[
+    { title: "First heat", body: "<p>Prose for step one.</p>" },
+    { title: "Second heat", body: "<p>Prose for step two.</p>", figure: "<svg viewBox='0 0 100 40' width='100%'><rect x='4' y='4' width='92' height='32' fill='none' stroke='currentColor'/></svg>" }
+  ]} />
+```
+
+Props: `steps: { title, body, figure? }[]` — `body`/`figure` are **pre-rendered
+HTML strings** (an island can't take MDX children). `mode?`: `reveal` (default) |
+`tabs` | `all`. `caption?`. No-JS / reduced-motion → all steps shown as an `<ol>`.
+
+### Quiz — check-your-understanding (island → `client:visible`)
+
+```jsx
+<Quiz client:visible caption="check your understanding"
+  questions={[
+    { prompt: "Which sort is O(n log n) worst-case?", choices: ["quicksort", "mergesort", "insertion sort"], answer: 1, explain: "Mergesort is n log n worst-case." },
+    { prompt: "Bits in a byte?", answer: 8, kind: "numeric", explain: "A byte is 8 bits." }
+  ]} />
+```
+
+Props: `questions: { prompt, choices?, answer, explain, kind? }[]` — `answer` is a
+**0-based choice index** for `mc` or the **number** for `numeric`; `kind?`: `mc` |
+`numeric` (inferred: `mc` if `choices` present). `caption?`. No-JS → questions +
+answers in a `<details>`.
+
+### CodeWalkthrough — narrated, syntax-highlighted static code (static Astro; NO `client:` directive)
+
+```jsx
+<CodeWalkthrough lang="python" caption="A first look at the loop"
+  steps={[
+    { lines: [1, 3], note: "Set up the accumulator." },
+    { lines: [4, 8], note: "Iterate and fold each element in." }
+  ]}
+  code={`total = 0\nfor x in xs:\n    total += x`} />
+```
+
+Props: `code: string` (full listing, any language, need not run), `lang?` (Shiki
+id; default `"text"`), `steps: { lines: [start,end], note }[]` (1-based inclusive
+range focused per step), `caption?`. **Static Astro** — no `client:` directive;
+Shiki highlights at build. Distinct from `RunnableCode` (editable/executable JS).
 
 ## 4. Body conventions
 

@@ -51,3 +51,21 @@ export type {
   ScenePanelSpec,
   NarrativeStep,
 } from "./lib/narrative-scene.js";
+// ── P1 wave: knowledge-carrier + teardown/build primitives ────────────────────
+export { default as Diagram } from "./Diagram.js";
+export type { DiagramProps } from "./Diagram.js";
+export type { DiagramNode, DiagramEdge, EdgeKind, NodeKind } from "./lib/diagram-layout.js";
+export { default as Simulation } from "./Simulation.js";
+export type { SimulationProps, SimParamSpec } from "./Simulation.js";
+export { default as Stepper } from "./Stepper.js";
+export type { StepperProps, StepperStep } from "./Stepper.js";
+export type { StepperMode } from "./lib/stepper-index.js";
+export { default as Quiz } from "./Quiz.js";
+export type { QuizProps } from "./Quiz.js";
+export type { QuizQuestion, QuizKind } from "./lib/quiz-check.js";
+export { default as CodeWalkthrough } from "./CodeWalkthrough.astro";
+export type { CodeWalkthroughProps } from "./CodeWalkthrough.astro";
+export type { WalkthroughStep } from "./lib/code-walkthrough.js";
+export { default as AnnotatedFigure } from "./AnnotatedFigure.js";
+export type { AnnotatedFigureProps } from "./AnnotatedFigure.js";
+export type { Pin } from "./lib/annotated-figure.js";

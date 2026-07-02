@@ -1,0 +1,192 @@
+/* apps/site/src/components/mdx/AnnotatedFigure.css
+   Numbered annotation pins over an image. Mirrors Figure's hairline frame +
+   credit line aesthetic (own file, Figure.css untouched). Tokens only. */
+
+.afig {
+  max-width: min(100%, var(--maxw));
+  margin-inline: auto;
+}
+
+/* ── the framed image (fluid; aspect reserved via inline aspect-ratio) ─────── */
+.afig__frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-md);
+  overflow: visible; /* pins/notes may extend just past the frame edge */
+  background: var(--bg-inset);
+}
+.afig__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--r-md);
+  /* Archival warmth (match Figure): sit photos in the warm near-black world. */
+  filter: saturate(0.92) contrast(0.98);
+  user-select: none;
+}
+
+/* ── pins ─────────────────────────────────────────────────────────────────── */
+.afig__pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+.afig__marker {
+  display: grid;
+  place-items: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--bg);
+  background: var(--accent);
+  border: var(--hair) solid color-mix(in oklab, var(--accent) 60%, var(--bg));
+  border-radius: 999px;
+  cursor: help;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--bg) 70%, transparent);
+  transition: transform var(--dur) var(--ease-out),
+    background var(--dur) var(--ease-out);
+}
+.afig__marker:hover,
+.afig__marker--on {
+  background: var(--accent);
+  transform: scale(1.12);
+}
+.afig__marker:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── the pin's popover note (Annotation mechanism) ────────────────────────── */
+.afig__note {
+  position: absolute;
+  top: 50%;
+  z-index: 6;
+  width: min(18rem, 60vw);
+  background: var(--bg-raised);
+  border: var(--hair) solid var(--rule);
+  border-left: 2px solid var(--accent);
+  border-radius: var(--r-md);
+  padding: var(--s-3) var(--s-4);
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  line-height: var(--lh-read);
+  color: var(--ink-dim);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-50%) translateX(0);
+  transition: opacity 120ms ease, transform 120ms ease, visibility 120ms;
+  pointer-events: none;
+}
+.afig__pin--right .afig__note {
+  left: calc(100% + var(--s-2));
+}
+.afig__pin--left .afig__note {
+  right: calc(100% + var(--s-2));
+}
+.afig__note--open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.afig__note-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  color: var(--accent-dim);
+  margin-bottom: var(--s-1);
+}
+
+/* ── credit line (mirror Figure) ──────────────────────────────────────────── */
+.afig__credit {
+  margin-top: var(--s-2);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  color: var(--ink-label);
+}
+.afig__src {
+  color: var(--editorial);
+  text-decoration: none;
+  border-bottom: var(--hair) solid color-mix(in oklab, var(--editorial) 30%, transparent);
+}
+.afig__src:hover {
+  color: var(--accent);
+}
+.afig__cap {
+  text-wrap: pretty;
+}
+
+/* ── fallback / reduced-motion notes list ─────────────────────────────────── */
+.afig__list {
+  list-style: none;
+  margin: var(--s-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-3);
+}
+.afig__list-item {
+  display: grid;
+  grid-template-columns: 1.55rem 1fr;
+  gap: var(--s-2);
+  align-items: start;
+}
+.afig__list-n {
+  display: grid;
+  place-items: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--bg);
+  background: var(--accent);
+  border-radius: 999px;
+}
+.afig__list-body {
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  line-height: var(--lh-read);
+  color: var(--ink-dim);
+}
+.afig__list-label {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  color: var(--accent-dim);
+}
+
+/* Once hydrated (JS on) AND motion is fine, the pins carry the notes, so hide
+   the redundant list. No-JS → never gets .afig--hydrated → list stays visible.
+   Reduced-motion → list stays visible even when hydrated (below). */
+.afig--hydrated .afig__list {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .afig__marker,
+  .afig__note {
+    transition: none;
+  }
+  .afig__marker:hover,
+  .afig__marker--on {
+    transform: none;
+  }
+  /* Static pins → keep the notes reachable in the list regardless of hydration. */
+  .afig--hydrated .afig__list {
+    display: grid;
+  }
+}
+
+/* Small screens: the popover could overflow; drop it into flow-agnostic width
+   but the list already covers reachability, so simply cap the popover width. */
+@media (max-width: 480px) {
+  .afig__note {
+    width: min(14rem, 66vw);
+  }
+}
