@@ -6,15 +6,33 @@ authoring *brief* (produced by `packages/generate`'s `buildBrief()`) into one
 publishable MDX file in `apps/site/src/content/blog/` — a deep, genuinely educational,
 data-rich, **fully-grounded, thesis-grade** interactive blog post in the founder's voice.
 
-| Skill | Format | Intent | Length | Component kit |
+| Skill | Format | Intent | Length | Component kit (full list in each format's `references/mdx-contract.md`) |
 |---|---|---|---|---|
 | `writers/researcher` | (all) | research | — (produces dossier + ledger + claims table) | WebSearch, WebFetch, fetch-data.py |
-| `writers/chronicle` | chronicle | narrate | ~3500–4500w (~15 min) | Scrolly, Annotation, Timeline, Map, Pullquote, StatBand |
-| `writers/dispatch` | dispatch | explain | ~3000–4000w + charts (~15 min) | Chart, Scrolly, DataTable, Annotation, StatBand, Pullquote |
-| `writers/teardown` | teardown | explain | ~3000–4000w + code (~15 min) | RunnableCode, Chart, Annotation, StatBand, Pullquote |
-| `writers/primer` | primer | explain | ~3000–4000w + sandboxes (~15 min) | RunnableCode, Chart, Annotation, StatBand, Pullquote |
-| `writers/field-notes` | field-notes | synthesize | ~300–500w (brief; peak target N/A) | Annotation, DataTable (sparingly StatBand/Pullquote) |
-| `writers/build-log` | build-log | build | ~2500–4000w + code (~15 min) | RunnableCode, DataTable, Annotation, StatBand, Pullquote |
+| `writers/chronicle` | chronicle | narrate | **20–25 min FLOOR (~5,000–7,000+ w)** | Scrolly/ScrollyStep/ScrollyTimeline, Timeline, EventCascade, Map/RouteMap, Figure/AnnotatedFigure/CompareSlider, CastGrid, Pullquote, StatBand, Annotation, Sidenote, + shared Callout/Detail/Definition |
+| `writers/dispatch` | dispatch | explain | **20–25 min FLOOR (~5,000–7,000+ w)** + real-data viz | Chart, SmallMultiples, Distribution, Scatter, Slopegraph, RangePlot, DrawChart, ControlledChart, Scrolly, DataTable, StatBand, Pullquote, Annotation, Sidenote, Math, + shared Callout/Detail |
+| `writers/teardown` | teardown | explain | **20–25 min FLOOR (~5,000–7,000+ w)** + code/diagrams | Diagram, StateMachine, LayerStack, CodeWalkthrough, RunnableCode, Stepper, Chart, Model3D, Math, StatBand, Pullquote, Annotation, Sidenote, + shared Callout/Detail/Definition |
+| `writers/primer` | primer | explain | **20–25 min FLOOR (~5,000–7,000+ w)** + sandboxes | Simulation, Quiz, ParameterPlay, ControlledChart, Math, Diagram, CodeWalkthrough, Stepper, Chart, RunnableCode, Figure, Definition, StatBand, Pullquote, Annotation, Sidenote, + shared Callout/Detail |
+| `writers/build-log` | build-log | build | **20–25 min FLOOR (~5,000–7,000+ w)** + code | Figure/CompareSlider, Checklist, Stepper, GanttStrip, CodeWalkthrough, RunnableCode, DataTable (BOM total footer), Model3D, StatBand, Pullquote, Annotation, Sidenote, + shared Callout |
+| `writers/field-notes` | field-notes | synthesize | **~300–500 w (short exception — floor does NOT apply)** | Annotation, DataTable (sparingly StatBand/Pullquote); the ONE expansion allowed is a single `Callout` "watch for" box |
+
+> The five long-form formats are the **20–25 min / 5,000–7,000+ word** deep reads. **field-notes
+> is the deliberate short exception** — the length floor, the density target, and the expanded kit
+> do NOT apply to it; never pad a briefing toward the floor. The kit cells above **summarize** each
+> format's expanded kit (there are now ~40 authorable components in the allow-list); the
+> authoritative, prop-exact list per format is that format's **`references/mdx-contract.md`**.
+
+### Authoring doctrine (binding for the five long-form formats)
+
+**Components carry knowledge; prose wraps around them.** A component should carry a block of
+knowledge the prose would otherwise spend 200–400 words asserting — lead with the chart / diagram /
+simulation / figure / table, then wrap prose around it to *interpret*, not to restate. Every
+long-form Read must sustain **at least one knowledge-carrying island (Chart / Diagram / Simulation /
+Figure / Stepper / Table / Scrolly / StateMachine / …) per ~800–1,000 words of prose** — so a
+6,000-word read carries ~6–8 substantive islands, not two. Reach the 20–25 min depth through *more
+knowledge-carrying components and more real material* (scenes, data layers, mechanism coverage,
+worked examples), never through padding or hedging. **Know and use the FULL per-format kit** — the
+authoritative set is each format's `references/mdx-contract.md`, not a memorized subset.
 
 ## The one rule above all others: GROUNDING (via the citation ledger)
 
@@ -89,10 +107,12 @@ Summary:
   `summary`, `publishedAt` (ISO 8601), `sources` (non-empty `{title, url}`; every
   url must be a **citation-ledger source** — curated ∪ researched), `draft: false`.
 - **Components**: import from `../../components/mdx`; use *only* names in the
-  allow-list (`Annotation, Chart, Timeline, DataTable, Scrolly, ScrollyStep,
-  RunnableCode, Map, StatBand, Pullquote`) — and within that, only this format's kit.
-  `NarrativeScene` is **retired** — do not use it. Interactive islands need a client
-  directive (`client:visible` or `client:load`); `Pullquote` is static Astro (no directive).
+  allow-list (`KNOWN_COMPONENTS` in `packages/generate/src/validate.ts`, now ~40
+  components — see each format's `references/mdx-contract.md` for the authoritative,
+  prop-exact list) — and within that, only this format's kit. `NarrativeScene` is
+  **retired** — do not use it. Interactive islands need a client directive
+  (`client:visible` or `client:load`); static Astro components (`Pullquote`, `Figure`,
+  `Callout`, `Detail`) take no directive.
 
 ## Scripts (stdlib-only, $0, no API keys)
 

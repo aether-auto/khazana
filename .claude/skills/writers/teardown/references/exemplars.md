@@ -52,7 +52,33 @@ the runnable example ("try it above"). No "and then it scatters" hand-wave.
 designers accepted it (speed on the common case) — then gives the practical rule
 (use SipHash when input is hostile). That is a teardown, not a tutorial.
 
+## Exemplar D — a structural component leads, prose interprets
+
+> <StateMachine client:visible caption="TCP connection setup — the three-way handshake"
+>   states={["CLOSED", "SYN-SENT", "ESTABLISHED"]}
+>   transitions={[
+>     { from: "CLOSED", to: "SYN-SENT", on: "send SYN" },
+>     { from: "SYN-SENT", to: "ESTABLISHED", on: "recv SYN-ACK, send ACK" }
+>   ]}
+>   note={<Annotation client:load term="three-way handshake" note="Client SYN, server SYN-ACK, client ACK — the sequence that establishes a connection, per RFC 793 §3.4." href="https://www.rfc-editor.org/rfc/rfc793#section-3.4" />} />
+>
+> The handshake is not a formality — it is how both ends agree on a starting sequence
+> number before a single byte of data moves. The client's `SYN` proposes its number; the
+> server's `SYN-ACK` acknowledges it *and* proposes its own; the client's final `ACK`
+> closes the loop. Only in `ESTABLISHED` is either side allowed to send data — which is
+> exactly why a half-open connection (server never got the final `ACK`) can silently rot.
+
+**Why it works:** the `StateMachine` arrives FIRST and carries the mechanism — three states,
+two labeled transitions — that the prose would otherwise spend 300 words asserting. The prose
+then *interprets* (why the numbers matter, what `ESTABLISHED` gates, how it rots) rather than
+restating the states. Component leads, prose wraps; the states are grounded to RFC 793 via an
+inline `<Annotation>`. This is the density move: a structural carrier per major mechanism, not
+a paragraph.
+
 ## Anti-patterns to avoid
+- **Prose-only mechanism.** Describing an architecture or protocol in paragraphs when a
+  `<Diagram>`, `<StateMachine>`, or `<LayerStack>` would carry it. A teardown averaging ~2
+  heavy islands is under-built for its length floor.
 - **Definition-first opening.** Lead with the problem and a runnable example, not a
   formula.
 - **Hand-waving the crux.** The hard part gets the most words and the key code.

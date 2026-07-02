@@ -73,4 +73,20 @@ relationship.
 - The motivating `<Chart>` (the cliff) is `client:visible`, near the top.
 - `<RunnableCode>` appears at each intuition/mechanism beat — `client:visible`.
 - One boundary-condition `<Chart>` in the trade-offs section.
-- 3–6 component blocks; the prose between is dense but readable.
+- **Density doctrine: at least one knowledge-carrying island per ~800–1000 words.** A
+  6,000-word teardown carries ~6–8 substantive islands. Reach depth through MORE
+  knowledge-carrying components (`Diagram`, `StateMachine`, `LayerStack`, `CodeWalkthrough`,
+  `Stepper`), each earned — never padding. The component LEADS and the prose wraps around it
+  to interpret, not restate.
+- **`<Diagram>`** — reach for it to show how the parts connect (an architecture, a pipeline, a
+  data-flow) instead of describing the topology in prose.
+- **`<StateMachine>`** — reach for it when the mechanism IS a protocol or parser: a token
+  walked through states and transitions (TCP handshake, a lexer).
+- **`<LayerStack>`** — reach for it for a layered system where the layering is the point (a
+  network stack, a rendering pipeline).
+- **`<CodeWalkthrough>`** — reach for it for a non-runnable or large function: narrated static
+  code whose steps highlight line ranges, complementing `<RunnableCode>`.
+- **`<Math>`** — reach for it for the derivation the mechanism rests on (KaTeX is vendored — no
+  faking equations in prose).
+- Imperative 5 ("Diagrams/charts over prose for structure") is now realized by a real
+  `<Diagram>` component, not just a `<Chart>`.

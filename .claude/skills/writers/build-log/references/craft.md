@@ -67,7 +67,21 @@ against when something misbehaves. It's the build log's executable summary.
 - Candor about failures, stated plainly. End on the reproduce-this checklist.
 
 ## Component choreography
-- `<DataTable>` for the parts list (and any results/measurements table).
+- `<DataTable>` for the parts list (and any results/measurements table); use its `total`
+  footer for the BOM cost.
 - `<RunnableCode>` only for runnable JS; fenced blocks for everything else.
-- `<Annotation>` to cite part sources, datasheet values, and key commands inline.
-- The numbered-steps spine is mostly prose + code blocks; 2–5 component blocks total.
+- `<Annotation>` / `<Sidenote>` to cite part sources, datasheet values, and key commands
+  inline (these are marginalia — they don't count toward density).
+- **Density doctrine.** At least one knowledge-carrying island per ~800–1000 words; a
+  6,000-word build-log carries **~6–8 substantive islands**. Reach depth through MORE
+  knowledge-carrying components — `Figure`, a wiring `Diagram`, a `Stepper`, a `Checklist`,
+  a `GanttStrip`, `CompareSlider` — each earned, **never padding**. The **component LEADS
+  and prose wraps around it** to interpret, not restate.
+- **`<Figure>` to SHOW the hardware** at each stage (bare board, populated board, the
+  wiring, the working rig); local committed asset, caption + credit + `sourceUrl`.
+- **`<Diagram>` for the wiring/pinout** — the pin mapping or system block diagram the prose
+  would otherwise spend paragraphs describing.
+- **`<Checklist>` for the reproduce-this list** — imperative 5 is now realized by the
+  interactive `<Checklist>` the reader ticks off, not a static bullet list.
+- **`<GanttStrip>` for build-phase durations**; **`<CompareSlider>` for before/after a
+  fix** (misrouted vs corrected wiring, dark vs lit rig).

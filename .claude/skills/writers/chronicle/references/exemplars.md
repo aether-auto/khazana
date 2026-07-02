@@ -48,6 +48,35 @@ the long arc (the siege's full length) and lands on a small, resonant, *true* im
 present-leaning. The two-year figure is cited; the metronome detail traces to a
 source.
 
+## Exemplar D — a knowledge-carrying component leads, prose interprets
+
+The component arrives *first* and carries the block of knowledge; the prose then reads
+it, rather than re-listing what it already shows. Here a `<CastGrid>` holds the cast the
+reader must track, and the beat that follows *interprets* the grid instead of
+re-introducing each name.
+
+> <CastGrid client:visible
+>   caption="The men on the ice, winter 1941–42"
+>   sourceUrl="https://archive.org/details/road-of-life-ladoga-ledger"
+>   cast={[
+>     { name: "Maj. Gen. Frolov", role: "Commands the Ladoga Military Highway", note: "Orders the first convoy onto ice barely 10 cm thick." },
+>     { name: "Nina Sokolova", role: "Diver-engineer", note: "Surveys the lakebed for the fuel pipeline laid under fire." },
+>     { name: "The GAZ-AA drivers", role: "Convoy crews", note: "Run with cab doors roped open, to jump if the ice gives." }
+>   ]}
+> />
+>
+> None of them chose the lake; the lake is simply what is left. Frolov signs for ice a
+> hand's-width thick because the alternative is a city eating its library paste, and
+> Sokolova is under it before the surface will hold a truck. The drivers keep their
+> doors roped open — a small, terrible arithmetic, one life weighed against a load of
+> flour every time the ice groans.
+
+**Why it works:** the `<CastGrid>` **leads** and carries the roster — three named actors,
+their roles, their stakes — knowledge the prose would otherwise burn 250 words
+introducing. The paragraph then *interprets* the grid (why each is on the ice, what the
+roped doors mean) instead of restating the cards. Every card's `note` traces to the
+ledger via `sourceUrl`; the beat wraps prose around the component, not the reverse.
+
 ## Anti-patterns to avoid
 
 - **Invented interiority.** "She must have felt a flicker of hope" — cut it unless a
@@ -56,3 +85,7 @@ source.
   in scene; meter the context in.
 - **Uncited specificity.** A vivid number or quote with no source is the most
   dangerous sentence in the format. Cite it or cut it.
+- **Wall-of-text minimalism.** Reaching the 20–25 min floor with prose plus a couple
+  of Annotations instead of earning depth through knowledge-carrying components. A
+  visual history with no Figures / CastGrid / RouteMap is under-built — reach the depth
+  through MORE earned components, not more paragraphs.

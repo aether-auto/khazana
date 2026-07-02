@@ -77,4 +77,17 @@ Using one mark for everything flattens the story. Match the mark to the question
   that updates per step.
 - `<DataTable>` for the "complication" — the detailed breakdown the headline chart
   hides.
-- 4–7 component blocks across the piece is typical; the prose between them is short.
+- **Density doctrine, not minimalism.** At least one knowledge-carrying island per
+  ~800–1,000 words; a 6,000-word dispatch carries ~6–8 substantive figures. Reach depth
+  through MORE data figures (SmallMultiples, Distribution, Scatter, Slopegraph,
+  RangePlot), each earned and grounded — never padding, never decorative.
+- **Reach for the newly-available data carriers by intent:**
+  - `<SmallMultiples>` when one pattern repeats (or breaks) across many categories —
+    facet the same chart rather than overplotting a dozen series on one axis.
+  - `<Distribution>` when the spread or a threshold is the point, not the mean — drop
+    the marker line where the argument lives.
+  - `<Slopegraph>` for before/after reordering — when *who moved past whom* is the story.
+  - `<RangePlot>` for honest uncertainty — a dot plus its CI/IQR beats a bar with error caps.
+  - `<Scatter>` for a relationship plus a fit line — correlation and how tight it is.
+- The figure is still the atomic unit; the prose between islands stays short. This is the
+  model for all formats now, not a dispatch quirk.

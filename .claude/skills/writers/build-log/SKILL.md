@@ -1,6 +1,6 @@
 ---
 name: writers/build-log
-description: This skill should be used to author a BUILD LOG post for khazana — a DIY/project walkthrough a maker can reproduce, with a parts list, numbered steps, runnable code, and an honest "what went wrong" section. Trigger when a brief's "Format:" line is `build-log`, or when asked to "write a build log", "walk through building X", or produce a reproducible project-build MDX post. Produces one MDX file (RunnableCode/DataTable/Annotation; optionally StatBand/Pullquote where earned) targeting ~15-min rendered depth that builds in apps/site and passes validateDraft.
+description: This skill should be used to author a BUILD LOG post for khazana — a DIY/project walkthrough a maker can reproduce, with a parts list, numbered steps, runnable code, and an honest "what went wrong" section. Trigger when a brief's "Format:" line is `build-log`, or when asked to "write a build log", "walk through building X", or produce a reproducible project-build MDX post. Produces one MDX file (RunnableCode/DataTable/Annotation; optionally StatBand/Pullquote where earned) targeting a 20–25 min rendered depth (~5,000–7,000+ words) that builds in apps/site and passes validateDraft.
 version: 1.0.0
 ---
 
@@ -56,10 +56,14 @@ Shared tier rubric, triangulation rules, and gate definitions live once in
 
 Full detail: **`references/craft.md`**.
 
-## Structural template (target ~15-min rendered read / `GAUSSIAN_DEFAULTS.peakMin`)
+## Structural template (target 20–25 min rendered read — the length FLOOR / `GAUSSIAN_DEFAULTS.peakMin`)
 
-Aim for ~2500–4000 words + code. Reach depth through more detail in build steps, a
-thorough failures section, a richer reproduce-this checklist — never padding.
+Aim for 5,000–7,000+ words + code — this is a FLOOR, not a target; go longer when the
+build supports it. Reach depth through more detail in build steps, a thorough failures
+section, a richer reproduce-this checklist — never padding — and through MORE
+knowledge-carrying components (build Figures, a wiring Diagram, a Stepper, a Checklist, a
+GanttStrip), each earned. Use Detail/Expandable to add depth for motivated readers without
+bloating the linear read.
 
 What we're building (100–150w) → parts + tools as a `<DataTable>` (with cited source
 links) → optional `<StatBand>` if key project stats (total cost, build time, measured
@@ -71,20 +75,49 @@ wrong (300–500w: real errors, real fixes) → results (150–200w: does it wor
 → "Reproduce this" checklist. Annotated skeleton: **`references/template.mdx`**. Worked
 excerpts: **`references/exemplars.md`**.
 
-## Components (this format's kit only)
+## Your interactive kit
 
-`RunnableCode`, `DataTable`, `Annotation`, `StatBand`, `Pullquote` — nothing else.
+khazana ships ~40 interactive components. Build-log's kit is the subset below — and you
+must actively **CHOOSE from the WHOLE kit**, not default to `DataTable` + `RunnableCode` +
+`Annotation`. A build is VISUAL and physical: show the hardware, diagram the wiring, let
+the reader tick off the reproduce steps. The under-used carriers (`Figure`, `Diagram`,
+`Checklist`, `Stepper`, `GanttStrip`, `CompareSlider`, `CodeWalkthrough`) exist precisely
+because build logs need them — reach for them.
 
-**Every component must be earned.** The parts table and exact commands ARE the argument.
-Reproducibility is the craft. Reach depth through more step detail, a thorough failures
-section — not by adding components. A build log with only `DataTable`, `RunnableCode`,
-and `Annotation` is often the strongest.
+**Reach for it when…** (build-log's full kit):
 
-- **`<DataTable client:load>`** — parts list (and measurements table); cited source links per row.
-- **`<RunnableCode client:visible>`** — runnable JS logic the reader can try. Non-JS commands (shell, YAML, C) go in plain fenced code blocks.
+- **`<DataTable client:load>`** — parts list (and measurements table); cited source links per row. Supports a summable **`total` footer** — use it for the BOM cost total so the reader sees the full spend at a glance.
+- **`<RunnableCode client:visible>`** — runnable JS logic the reader can try (a checksum, a parser, a small algorithm). Non-JS commands (shell, YAML, C) go in plain fenced code blocks.
 - **`<Annotation client:load>`** — cites part sources, datasheet values, and commands inline.
-- **`<StatBand client:visible>`** — earn it when key project stats set expectations before the build begins. Props: `stats=[{ value, prefix?, suffix?, decimals?, group?, label, sub?, href? }]`, `caption?`.
-- **`<Pullquote>` (static `.astro`, NO `client:` directive)** — earn it when a verbatim spec line or vendor warning is more powerful than a paraphrase. Props: `cite?`, `href?`, `kind?` (try `kind="document"` for datasheets, `kind="headline"` for a project reveal).
+- **`<StatBand client:visible>`** — key project stats that set expectations before the build begins (total cost, build time, measured output). Props: `stats=[{ value, prefix?, suffix?, decimals?, group?, label, sub?, href? }]`, `caption?`.
+- **`<Pullquote>` (static `.astro`, NO `client:` directive)** — a verbatim spec line or vendor warning more powerful than a paraphrase. Props: `cite?`, `href?`, `kind?` (`kind="document"` for datasheets, `kind="headline"` for a project reveal).
+- **`<Sidenote>`** — a margin aside / numbered footnote; the everyday marginalia primitive for a "why this, not that" or a cited datasheet value that shouldn't break the step's flow.
+- **`<Figure>`** — a build photo, wiring shot, or oscilloscope trace with caption + credit + `sourceUrl`. A build log is VISUAL: show the hardware at each stage. Local committed asset only.
+- **`<CompareSlider>`** — a before/after image: bare board vs populated, before/after a fix, misrouted vs corrected wiring.
+- **`<Checklist>`** — an interactive, persistent reproduce-this checklist the reader ticks off as they build. Perfect for the closing "Reproduce this".
+- **`<Stepper>`** — a numbered build/instruction sequence with one step visible at a time, when the reader should focus on a single action before advancing.
+- **`<GanttStrip>`** — a phase/timeline strip showing how long each phase of the build took (sourcing → assembly → flashing → debugging).
+- **`<Diagram>`** — a node-edge wiring/architecture diagram: the pinout, the bus topology, the system block diagram.
+- **`<CodeWalkthrough>`** — narrated static config/code stepping through line ranges; for non-JS config (a `mosquitto.conf`, a device tree overlay) too large to inline.
+- **`<Callout>`** — a boxed caution / gotcha note ("don't hot-plug the NVMe base").
+- **`<Detail>`** — progressive-disclosure "go deeper" for an optional aside (a spec digression, an alternate part) without bloating the linear read.
+
+**Every component must be earned — from a BIGGER, clearly-explained set.** Reproducibility
+is the craft, and you reach depth through **MORE knowledge-carrying components, each earned
+and grounded — NOT through minimalism.** A build log with only a parts table, code blocks,
+and prose is under-built: no build photos, no wiring diagram, nothing for the reader to
+tick off.
+
+**DENSITY TARGET.** At least one **knowledge-carrying island** per ~800–1000 words — a
+`Figure`, `DataTable`, `Diagram`, `Stepper`, `Checklist`, `GanttStrip`, `CompareSlider`,
+`CodeWalkthrough`, `RunnableCode`, or `Chart` (NOT merely `Annotation` / `Sidenote` /
+`Callout`, which are marginalia). A 6,000-word build-log → **~6–8 substantive islands**.
+The anti-pattern to beat: published Reads averaged ~2 heavy islands. Beat that decisively.
+
+**COMPONENTS CARRY KNOWLEDGE.** A component should carry a block of knowledge the prose
+would otherwise spend 200–400 words asserting. **LEAD with the component** — the parts
+`DataTable`, a wiring `Diagram`, a build `Figure` arrives BEFORE the prose that interprets
+it — then wrap prose around it to **interpret, not restate**.
 
 Exact props: **`references/mdx-contract.md`**.
 
@@ -119,15 +152,22 @@ URL — load-bearing specifics corroborated. Anything not in the table → `[UNS
 ### `<phase>Outline</phase>`
 Section-by-section against the template: the `<DataTable>` parts list, the numbered
 steps (each one completable), the failures section, the reproduce-this checklist.
-Confirm target ~2500–4000 words (~15-min rendered read), every command is exact,
-every cited source is used, and only kit components appear. For each `<StatBand>` or
-`<Pullquote>`, state in one sentence why it earns its place — if you can't, cut it.
+Confirm target 5,000–7,000+ words (20–25 min rendered read, a floor), every command is
+exact, every cited source is used, and only kit components appear. **Map each major
+section to the knowledge-carrying component that best CARRIES it, from the full kit** (the
+parts DataTable with a total, build Figures, a wiring Diagram, a Stepper, the
+reproduce-this Checklist, a GanttStrip) — not just an Annotation cite. For each
+`<StatBand>` or `<Pullquote>`, state in one sentence why it earns its place — if you
+can't, cut it.
 
 ### `<phase>Draft</phase>`
 Write the parts `<DataTable>` first (cited sources). Write numbered steps with exact
-commands (fenced blocks; `<RunnableCode>` for runnable JS, mentally executed). Write
-the honest failures section with real error messages and fixes. Close with the
-reproduce-this checklist. Cite every part/value/command. Match voice.
+commands (fenced blocks; `<RunnableCode>` for runnable JS, mentally executed).
+**Lead each section with its knowledge-carrying component** — the parts DataTable, a wiring
+Diagram, a build Figure arrives BEFORE the prose that interprets it — then wrap prose
+around it. Write the honest failures section with real error messages and fixes. Close
+with the reproduce-this list, preferring the **interactive `<Checklist>`** so the reader
+can tick each item off. Cite every part/value/command. Match voice.
 
 ### `<phase>Verify + Emit</phase>`
 Self-check against `references/mdx-contract.md` §5 **and the fact-check gates**: every

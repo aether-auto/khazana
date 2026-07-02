@@ -63,8 +63,32 @@ cause (stale bootloader firmware), the exact fix command, and the cited reason �
 plus the honest "it cost me an evening". That candor is what makes a build log
 trustworthy and reproducible.
 
+## Exemplar D — a knowledge-carrying component leads, prose interprets
+
+> <Figure client:visible
+>   src="/reads/pi-nvme/populated-base.jpg"
+>   alt="Pimoroni NVMe Base seated on the Pi 5's PCIe FPC connector, M.2 SSD screwed down"
+>   caption="The NVMe Base populated: the FPC ribbon folds under the board, so it seats before the standoffs go in — not after."
+>   credit="build ledger"
+>   sourceUrl="https://ledger.khazana.dev/pi-nvme/populated-base" />
+>
+> Seat the ribbon *first*. The standoffs look like the natural anchor, but once they're
+> torqued down the FPC connector is buried and you'll pull the whole base to reach it —
+> ask me how I know. With the ribbon home, the standoffs are the last quarter-turn.
+
+**Why it works:** the `<Figure>` LEADS — the reader sees the exact geometry (ribbon under
+the board, standoff order) before a word of prose. The photo carries the knowledge the
+prose would otherwise burn 200+ words describing ("the connector is on the underside,
+folded, and the standoffs sit at the four corners such that…"); the prose then only
+*interprets* — the assembly-order gotcha — instead of restating what the image already
+shows. Caption + credit + `sourceUrl` point to the committed ledger asset, so the visual
+is grounded like any other claim. A build log is VISUAL; show the hardware.
+
 ## Anti-patterns to avoid
 - **Vague parts.** "A Raspberry Pi and an SSD." Give exact models and a BOM table.
+- **Wall-of-commands minimalism.** Reaching the 20–25 min floor with a parts table, code
+  blocks, and prose but no `<Figure>`s, `<Diagram>`, or `<Checklist>`. A build log with no
+  build photos or wiring diagram is under-built and harder to reproduce.
 - **Paraphrased commands.** "Set the boot order." Show the exact command.
 - **Hiding the failures.** The dead ends are the value — include them with real
   errors and fixes.

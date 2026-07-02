@@ -1,6 +1,6 @@
 ---
 name: writers/teardown
-description: This skill should be used to author a TEARDOWN post for khazana — a deep "how X actually works" technical deconstruction with runnable code and interactive diagrams, for a sophisticated reader. Trigger when a brief's "Format:" line is `teardown`, or when asked to "write a teardown", "deconstruct how X works", or produce a deep technical explainer MDX post. Produces one MDX file (RunnableCode/Chart/Annotation/StatBand/Pullquote) targeting ~15-min rendered depth that builds in apps/site and passes validateDraft.
+description: This skill should be used to author a TEARDOWN post for khazana — a deep "how X actually works" technical deconstruction with runnable code and interactive diagrams, for a sophisticated reader. Trigger when a brief's "Format:" line is `teardown`, or when asked to "write a teardown", "deconstruct how X works", or produce a deep technical explainer MDX post. Produces one MDX file (RunnableCode/Chart/Annotation/StatBand/Pullquote) targeting a 20–25 min rendered depth (~5,000–7,000+ words) that builds in apps/site and passes validateDraft.
 version: 1.0.0
 ---
 
@@ -62,10 +62,14 @@ Shared tier rubric, triangulation rules, and gate definitions live once in
 
 Full detail: **`references/craft.md`**.
 
-## Structural template (target ~15-min rendered read / `GAUSSIAN_DEFAULTS.peakMin`)
+## Structural template (target 20–25 min rendered read — the length FLOOR / `GAUSSIAN_DEFAULTS.peakMin`)
 
-Aim for ~3000–4000 words + runnable code. Reach depth through deeper mechanism coverage,
-more runnable examples, more failure modes — never padding.
+Aim for 5,000–7,000+ words + runnable code — this is a FLOOR, not a target; go longer when
+the mechanism supports it. Reach depth through deeper mechanism coverage, more runnable
+examples, more failure modes — never padding — and through MORE knowledge-carrying components
+(a Diagram of the architecture, a StateMachine of the protocol, a LayerStack of the stack, a
+CodeWalkthrough of the hard function), each earned. Use Detail/Expandable to add depth for
+motivated readers without bloating the linear read.
 
 The problem (150–200w) + a `<Chart>` of the cliff/failure that motivates X → optional
 `<StatBand>` if the key constants frame why the mechanism matters (earn it: only if those
@@ -77,21 +81,50 @@ failure modes + trade-offs (400–600w) with a `<Chart>` of boundary conditions 
 takeaway (200–300w). Annotated skeleton: **`references/template.mdx`**. Worked excerpts:
 **`references/exemplars.md`**.
 
-## Components (this format's kit only)
+## Your interactive kit
 
-`RunnableCode`, `Chart`, `Annotation`, `StatBand`, `Pullquote` — nothing else.
-(A richer scrollytelling component is pending a rebuild — do not use yet.)
+khazana ships ~40 interactive components. Teardown's kit is the subset below — and you must
+actively CHOOSE from the WHOLE of it, not default to `RunnableCode`+`Chart`+`Annotation`. Most
+of these carry a block of knowledge the prose would otherwise spend paragraphs asserting; reach
+for the one that CARRIES each mechanism.
 
-**Every component must be earned.** Technical reads: the runnable code and interactive
-chart ARE the argument. Reach depth through more runnable examples, deeper mechanism
-coverage, more failure modes — not by adding components. A teardown with only
-`RunnableCode`, `Chart`, and `Annotation` is often the strongest.
+The kit — and when to reach for each:
 
-- **`<RunnableCode client:visible>`** — live JS examples; `console.log` for traces, `return` for result. Mentally execute each one before writing it.
-- **`<Chart client:visible>`** — performance/boundary data. Vary mark by intent.
-- **`<Annotation client:load>`** — cites every design decision and number inline.
+- **`<RunnableCode client:visible>`** — live JS examples; `console.log` for traces, `return` for result. Mentally execute each one before writing it. Reach for it at the moment of confusion, when running the thing beats describing it.
+- **`<Chart client:visible>`** — performance/boundary data. Vary mark by intent. Reach for it for the cliff, the distribution, the boundary condition.
+- **`<Annotation client:load>`** — cites every design decision and number inline. Reach for it to attach a source to a specific claim.
 - **`<StatBand client:visible>`** — earn it when key constants frame the stakes. Props: `stats=[{ value, prefix?, suffix?, decimals?, group?, label, sub?, href? }]`, `caption?`.
 - **`<Pullquote>` (static `.astro`, NO `client:` directive)** — earn it when a verbatim spec line or failure-mode quote is essential. Props: `cite?`, `href?`, `kind?` (try `kind="document"` for spec excerpts).
+- **`<Sidenote>`** — a margin aside / numbered footnote; the everyday marginalia primitive (heavily used, long undocumented). Reach for it to park a caveat, aside, or pointer without breaking the line of the main argument.
+- **`<Diagram>`** — a node-edge architecture/flow figure (boxes + labeled arrows); the CORE teardown primitive for showing how the parts connect. Reach for it whenever you'd otherwise describe an architecture, pipeline, or data-flow in prose.
+- **`<CodeWalkthrough>`** — narrated, syntax-highlighted STATIC code where the narration steps highlight line ranges. Reach for it for code too large or non-JS to run — it complements `RunnableCode`, which is for code small and runnable.
+- **`<Stepper>`** — a numbered step sequence for a multi-stage mechanism. Reach for it when the mechanism is "first this, then this, then this."
+- **`<StateMachine>`** — a token walked through states/transitions (TCP handshake, a parser, a protocol). Reach for it whenever the mechanism IS a set of states and transitions.
+- **`<LayerStack>`** — an exploded/stacked layer view (a network stack, OSI model, a rendering pipeline). Reach for it for any layered system where the layering is the point.
+- **`<Math>`** — a display equation / numbered derivation (KaTeX is vendored — stop faking equations in prose). Reach for it for the derivation the mechanism rests on.
+- **`<Quiz>`** — a check-your-understanding at the crux. Reach for it to lock in the one idea the reader most likely gets wrong.
+- **`<CompareSlider>`** — before/after (two profiler flamegraphs, two configs). Reach for it when the insight IS the difference between two states.
+- **`<EventCascade>`** — a failure cascade (X → because → Y). Reach for it to show a chain of consequences, especially in failure modes.
+- **`<Callout>`** — a boxed key-insight / caution. Reach for it to set apart the one line that must not be missed.
+- **`<Detail>`** — progressive-disclosure "go deeper" for a proof or caveat. Reach for it to add depth for the motivated reader without bloating the linear read.
+- **`<Definition>`** — a glossary tooltip that TEACHES a term (vs `Annotation`, which CITES). Reach for it when a domain term needs a one-line definition in place.
+- **`<Timeline>`, `<Map>`, `<Scrolly>/<ScrollyStep>`, `<DataTable>`** — reach for these when the material is genuinely temporal, spatial, scroll-driven, or tabular.
+
+**Every component must be earned** — but earn from this BIGGER, clearly-explained set. Reach
+depth through MORE knowledge-carrying components, each earned — NOT through minimalism. The
+runnable code and interactive chart are part of the argument, but so is a `Diagram` of the
+architecture, a `StateMachine` of the protocol, a `LayerStack` of the stack.
+
+**Density target.** At least one knowledge-carrying island — a `Diagram`, `CodeWalkthrough`,
+`Stepper`, `StateMachine`, `LayerStack`, `RunnableCode`, `Chart`, or `DataTable` (NOT merely
+`Annotation`/`Sidenote`/`Callout`) — per ~800–1000 words. A 6,000-word teardown → ~6–8
+substantive islands. Anti-pattern: published Reads averaged ~2 heavy islands; beat that
+decisively.
+
+**Components carry knowledge.** A component should carry a block of knowledge the prose would
+otherwise spend 200–400 words asserting. LEAD with the component (the `Diagram`/`StateMachine`/
+`LayerStack`/`CodeWalkthrough` arrives BEFORE the prose that interprets it); wrap prose around
+it to interpret, not restate.
 
 Exact props: **`references/mdx-contract.md`**.
 
@@ -125,16 +158,20 @@ table → `[UNSUPPORTED]` (research or cut). Do not write prose yet.
 
 ### `<phase>Outline</phase>`
 Section-by-section against the template: heading + intent + which component + which
-source. Confirm target ~3000–4000 words (~15-min rendered read), that the *hard part*
-gets the most space, and that every cited source appears at least once. Confirm only
-kit components. For each `<StatBand>` or `<Pullquote>`, state in one sentence why it
-earns its place — if you can't, cut it.
+source. Confirm target 5,000–7,000+ words (20–25 min rendered read, a floor), that the
+*hard part* gets the most space, and that every cited source appears at least once. Confirm
+only kit components. **Map each major section to the knowledge-carrying component that best
+CARRIES it, from the full kit (a `Diagram`, `StateMachine`, `LayerStack`, `CodeWalkthrough`,
+`Stepper`, `RunnableCode`), not just an `Annotation` cite.** For each `<StatBand>` or
+`<Pullquote>`, state in one sentence why it earns its place — if you can't, cut it.
 
 ### `<phase>Draft</phase>`
 Write each `<RunnableCode>` first and mentally execute it — it must run and produce
 the stated result. For performance charts, run `scripts/fetch-data.py` or cite a
 brief number. Then write the MDX: problem → intuition → mechanism (slowest here) →
-failure modes → takeaway. Cite every design decision with `<Annotation>`. Match
+failure modes → takeaway. The knowledge-carrying component (a `Diagram`, `StateMachine`,
+`LayerStack`, `CodeWalkthrough`) arrives BEFORE the prose that interprets it — lead with
+it, then wrap prose around it. Cite every design decision with `<Annotation>`. Match
 voice.
 
 ### `<phase>Verify + Emit</phase>`

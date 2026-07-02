@@ -73,4 +73,17 @@ read as quaint in five years, replace it.
 - Each concept that has a parameter to vary gets a `<RunnableCode>` the reader tweaks.
 - `<Chart>` visualizes the concept (a curve, a distribution) where a picture beats
   prose.
-- 4–6 component blocks; the sandbox-before-explanation rhythm is the backbone.
+- **Density doctrine.** At least one knowledge-carrying *island* per ~800–1000 words; a
+  6,000-word primer carries ~6–8 substantive islands. Reach depth through MORE
+  knowledge-carrying components (`Simulation`, `Math`, `Stepper`, `Quiz`,
+  `CodeWalkthrough`), each earned — never padding. The component LEADS and prose wraps
+  around it to interpret; keep the sandbox-before-explanation backbone as the model for
+  every carrier.
+- **`<Simulation>`** — reach for it when a system is best understood by *tuning* it: a
+  reader-tunable canvas (random walk, wave interference, SIR epidemic, gradient descent).
+  The highest-leverage carrier; lead with it, then interpret.
+- **`<Math>` / `<Quiz>`** — reach for `Math` when the concept rests on an equation or
+  derivation (set it in KaTeX, don't fake it in prose); reach for `Quiz` to test the
+  reader's mental model right after a concept lands.
+- **`<Stepper>` / `<LayerStack>` / `<StateMachine>`** — `Stepper` for a strict scaffold
+  build; `LayerStack` for a layered concept; `StateMachine` for a state-based one.

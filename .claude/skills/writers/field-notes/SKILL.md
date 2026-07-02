@@ -15,8 +15,14 @@ Input is an authoring brief on stdin: title, slug, channel, founder voice, and t
 **curated cluster** — the real seed article(s). The verifiable source of truth is the
 **citation ledger** the (light) research pass builds from that cluster. Output is one
 MDX file at the brief's path. This is the only **brief**-length format (~300–500 words).
-Field Notes is the deliberate exception to the reading-time peak target — brevity is its
-craft; do not pad to 15 minutes.
+
+**Field Notes is the explicit EXEMPTION to the long-form doctrine.** The five long-form
+formats now target a **20–25 min / 5,000–7,000-word FLOOR** with the full expanded
+component kit and a ≥1-knowledge-carrying-island-per-~800–1,000-words density target.
+**None of that applies here.** Field-notes stays a deliberately brief ~300–500-word
+synthesis/digest: the length floor does NOT apply, the density target does NOT apply, and
+the expanded kit does NOT apply. A writer must **NOT pad a field-note toward the floor** —
+padding a briefing is a failure, not a fix. Brevity is the whole craft; keep it cut.
 
 ## Grounding mandate (non-negotiable)
 
@@ -69,9 +75,15 @@ Sparingly, if — and only if — they earn their place in a tight briefing:
 - **`Pullquote` (static `.astro`, NO `client:` directive)**: one striking primary-source
   line if it anchors the lede and is more powerful verbatim than paraphrased. At most one.
   Props: `cite?`, `href?`, `kind?`.
+- **`Callout` (static `.astro`, NO `client:` directive)**: the ONE component the
+  long-form expansion adds to this format — a single `kind="key-insight"` "watch for" /
+  key-insight box, used **at most once** to frame the one thing that matters. Nothing else
+  from the expanded kit (no Chart/Diagram/Figure/Simulation/Timeline/…) belongs in a
+  field-note — those are knowledge-carriers for the long formats, and this format is a
+  briefing, not a deep read. Props: `kind`, `title?`, children = the note body (MDX).
 
-**Default: use neither.** The prose, one Annotation, and a source link are almost always
-enough. Components must be earned; brevity is this format's whole craft.
+**Default: use none of the above.** The prose, one Annotation, and a source link are almost
+always enough. Components must be earned; brevity is this format's whole craft.
 Exact props: **`references/mdx-contract.md`**.
 
 ## Reading-comfort & voice

@@ -79,8 +79,10 @@ is 0.9 is useless to the orchestrator.
   entities hit the taste model's high-affinity keys and its format hits `formatAffinity`.
   When taste is not ready, hold this near neutral (~0.5) and don't let it dominate.
 - **interestingness.** Genuine surprise, fun, or "I didn't know that" — the earned
-  ~15-minute payoff. High for non-obvious mechanisms, counterintuitive results,
-  cross-domain synthesis. Low for filler, listicles, and "here's a thing that happened."
+  **20–25-minute** payoff. High for non-obvious mechanisms, counterintuitive results,
+  cross-domain synthesis, and topics rich enough to sustain a deep, component-dense read.
+  Low for filler, listicles, "here's a thing that happened," and thin single-note topics
+  that can't carry the depth (see the depth/component-potential preference below).
 - **importance.** How consequential/significant the topic genuinely is — a major result,
   a pivotal event or anniversary, a consequential shift in a field or the world. This is
   **DISTINCT from interestingness**: a topic can be important-but-unsurprising (a landmark
@@ -88,6 +90,47 @@ is 0.9 is useless to the orchestrator.
   Score them independently. **Surface genuinely important topics even when the feed
   doesn't signal them** — importance is exactly where interest-driven ideas earn their
   slot, and where a thin feed would otherwise leave a gap.
+
+## Prefer topics that carry a long, component-rich Read (ADDITIONAL preference)
+
+Reads are now **20–25 min / 5,000–7,000+ word** deep pieces built around a dense
+**interactive component kit** — components carry blocks of knowledge, prose wraps around
+them. So beyond the five scores, **prefer topics that can actually sustain that depth and
+afford rich components.** This is an ADDITIONAL preference layered on top of — never a
+replacement for — the groundability GATE, the two-lane mandate, the diversity/variety
+mandate, and the guaranteed evergreen anchor. All of those still bind exactly as written.
+
+**Prefer topics that (a) sustain a 20–25 min deep read AND (b) afford rich interactive
+components.** Favor topics that carry one or more of these component-affording qualities —
+name the ones a candidate supports in its `rationale`:
+
+- **Real data / series** → `Chart`, `Distribution`, `Scatter`, `SmallMultiples`,
+  `RangePlot`, `Slopegraph`, `DrawChart` (public datasets, time series, measured results).
+- **Mechanisms / systems** → `Diagram`, `StateMachine`, `Simulation`, `LayerStack`,
+  `ParameterPlay` (how a thing works, a protocol, a model, an algorithm).
+- **Geography / movement** → `Map`, `RouteMap` (spatial distributions, marches, flows,
+  storm/trade paths).
+- **Chronology / causation** → `Timeline`, `EventCascade`, `Scrolly`/`ScrollyTimeline`
+  (dated events, causal chains, narrative sweeps).
+- **Primary sources / artifacts** → `Figure`, `AnnotatedFigure`, `CompareSlider`,
+  `Pullquote`, `CastGrid` (photographs, archival documents, quotes, before/after).
+- **Worked / interactive learning** → `RunnableCode`, `CodeWalkthrough`, `Quiz`, `Math`,
+  `Stepper` (derivations, runnable code, comprehension checks, step sequences).
+
+**Thin, single-note topics that can't carry depth or components should score LOWER** — a
+fresh news blip, a one-line curiosity, an opinion with no data/mechanism/chronology/artifact
+underneath cannot fill 6,000 words or anchor knowledge-carrying islands, and will strand a
+downstream writer. Reflect this mainly in **interestingness** and **importance** (a topic
+rich enough to earn a 20–25 min payoff with 6–8 substantive islands is more interesting and
+usually more important than a thin one) — and note the component potential explicitly in the
+candidate's `rationale`. The **groundability GATE is unchanged**: primary-source coverage is
+still the hard cutoff, independent of depth/component potential.
+
+*(No `CandidateSlate` schema change is required. If a distinct "depth / component potential"
+signal is ever wanted, the natural home is a new 0–1 dimension in `CandidateScoresSchema`
+(`packages/core/src/candidate-slate.ts`) with a matching `DEFAULT_SLATE_WEIGHTS` entry — but
+do not overhaul the schema for this; fold the preference into interestingness/importance and
+the `rationale` for now.)*
 
 ## Method
 
@@ -103,7 +146,10 @@ Propose ANGLES and THESES, never bare topics. "Write about the SpaceX IPO" is a 
 "The SpaceX IPO makes millions of index-fund holders involuntarily long a single
 founder's risk — quantify the concentration and what a Starlink outage would cost them"
 is a thesis. For each idea decide the channels (from CHANNELS) and the best-fit format
-(from FORMAT_NAMES, honoring each format's channel affinities in `format.ts`).
+(from FORMAT_NAMES, honoring each format's channel affinities in `format.ts`). Prefer
+theses that can **sustain a 20–25 min deep read and afford rich interactive components**
+(see the depth/component-potential preference above) — a thesis with real data, a mechanism,
+a chronology, geography, or primary artifacts underneath is worth more than a thin one.
 
 Draw candidates from **both lanes**, and tag each with its `origin`:
 

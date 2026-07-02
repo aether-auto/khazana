@@ -1,6 +1,6 @@
 ---
 name: writers/chronicle
-description: This skill should be used to author a CHRONICLE post for khazana — an immersive, present-tense historical-fiction narrative grounded in real cited sources. Trigger when a brief's "Format:" line is `chronicle`, or when asked to "write a chronicle", "narrate this history as a scene", or produce immersive narrative history MDX for the site. Produces one MDX file (Scrolly/Annotation/Timeline/Map/Pullquote/StatBand) targeting ~15-min rendered depth that builds in apps/site and passes validateDraft.
+description: This skill should be used to author a CHRONICLE post for khazana — an immersive, present-tense historical-fiction narrative grounded in real cited sources. Trigger when a brief's "Format:" line is `chronicle`, or when asked to "write a chronicle", "narrate this history as a scene", or produce immersive narrative history MDX for the site. Produces one MDX file (Scrolly/Annotation/Timeline/Map/Pullquote/StatBand) targeting a 20–25 min rendered depth (~5,000–7,000+ words) that builds in apps/site and passes validateDraft.
 version: 1.0.0
 ---
 
@@ -61,11 +61,14 @@ Shared tier rubric, triangulation rules, and the gate definitions live once in
 
 Full detail: **`references/craft.md`**.
 
-## Structural template (target ~15-min rendered read / `GAUSSIAN_DEFAULTS.peakMin`)
+## Structural template (target 20–25 min rendered read — the length FLOOR / `GAUSSIAN_DEFAULTS.peakMin`)
 
-Aim for ~3500–4500 words when source depth supports it. Reach the length through more scenes,
-more cited detail, a deeper consequence arc — never padding. The scoring Gaussian peaks at
-15 min; a 1800-word piece scores half as well as one that earns the full depth.
+Aim for 5,000–7,000+ words — this is a FLOOR, not a target; go longer when source depth supports it.
+Reach the length through more scenes, more cited detail, a deeper consequence arc — never padding —
+and through MORE knowledge-carrying components (Figures, a RouteMap, a CastGrid, an EventCascade),
+each earned. The scoring Gaussian peaks at the 20–25 min depth; a 1,800-word piece scores a fraction
+of one that earns the full depth. Use `<Detail>` (Expandable) to add depth for motivated readers
+without bloating the linear read.
 
 Hook scene (200–300w, present tense, anchor with `<Map>`) → optional `<StatBand>` with the key
 figures of the story (casualties, date, distance, cost — each cited with `href`; earn it: only
@@ -77,23 +80,47 @@ of a period primary source if one exists (`kind="telegram"`, `"document"`, `"hea
 Annotated skeleton: **`references/template.mdx`**. Worked excerpts:
 **`references/exemplars.md`**.
 
-## Components (this format's kit only)
+## Your interactive kit
 
-`Scrolly` / `ScrollyStep`, `Annotation`, `Timeline`, `Map`, `Pullquote`, `StatBand`
-— and nothing else. (A richer scrollytelling component is pending a rebuild — do not use yet.)
+The site ships **~40 interactive components**. Chronicle's kit is the subset below. Actively
+**CHOOSE from the WHOLE kit** — do not default to Annotation + Timeline + Map + Pullquote. Chronicle
+is *visual* history: reach for images, cast grids, route maps, and causal cascades, not just prose
+plus a citation.
 
-**Every component must be earned.** Don't add a component because it seems dramatic; add it
-because the story is poorer without it. Narrative reads: Map anchors geography, Timeline anchors
-chronology, Scrolly drives the peak sequence, Pullquote surfaces the primary source, StatBand
-makes the scale visceral. A Chronicle with only Annotation, Map, and Timeline is often stronger
-than one cluttered with every available component.
+**Every component must be earned** — but you reach the format's depth through *MORE*
+knowledge-carrying components, each earned, NOT through minimalism. Don't add a component because it
+seems dramatic; add it because the story is poorer without it, then choose the one that best
+*carries* that block of knowledge.
 
-- **`<Annotation>`** — carries every citation (renders as marginalia, never breaking prose).
-- **`<Map client:visible>`** — anchors geography early. Props: `values` (iso3 → number), `labels` (iso3 → name), `caption?`.
-- **`<Timeline client:load>`** — anchors chronology or shows the long-arc legacy at the end.
-- **`<Scrolly client:visible>` / `<ScrollyStep>`** — drives the peak sequence one beat per step; `graphic` prop takes a pinned `<Chart>`, `<Map>`, or `<Timeline>`.
+Reach for each when:
+
+- **`<Annotation>`** — carries every citation (renders as marginalia, never breaking prose). Reach for it: whenever a named fact needs its source.
+- **`<Sidenote>`** — margin aside / numbered footnote: the everyday marginalia primitive. Reach for it: a brief digression or gloss that would clutter the line.
+- **`<Map client:visible>`** — anchors geography early. Props: `values` (iso3 → number), `labels` (iso3 → name), `caption?`. Reach for it: the reader needs the *where* before the narrative deepens.
+- **`<RouteMap>`** — Map + great-circle routes/arcs/points. Reach for it: an army's march, a fleet's crossing, a storm's path, a supply line — motion across geography.
+- **`<Timeline client:load>`** — anchors chronology or shows the long-arc legacy at the end. Reach for it: the reader needs the *when*, or the consequence arc.
+- **`<EventCascade>`** — a causal chain X → because → Y → therefore → Z (distinct from time-scaled Timeline). Reach for it: when the point is *causality*, not calendar time.
+- **`<Scrolly client:visible>` / `<ScrollyStep>`** — drives the peak sequence one beat per step; `graphic` prop takes a pinned `<Chart>`, `<Map>`, or `<Timeline>`. Reach for it: the single climactic sequence.
+- **`<Figure>`** — a public-domain / archival image with caption + credit + `sourceUrl`. Reach for it: chronicle is VISUAL history — use real archival images, portraits, photographs.
+- **`<AnnotatedFigure>`** — pins over a photo: "here is what to look at." Reach for it: when a single image rewards guided attention (the crack in the hull, the figure in the crowd).
+- **`<CompareSlider>`** — before/after image or map wipe. Reach for it: a place, a face, or a front line transformed — then vs now.
+- **`<CastGrid>`** — cast-of-characters card grid of people / places / factions. Reach for it: when the reader must hold several named actors at once.
+- **`<Callout>`** — a boxed "key-insight" / "watch-for" note. Reach for it: to flag the thing the reader should carry into the next scene.
+- **`<Detail>`** — progressive-disclosure "go deeper" block. Reach for it: to give motivated readers extra depth without bloating the linear read.
+- **`<Definition>`** — glossary tooltip that *teaches* a term (vs Annotation, which *cites*). Reach for it: an unfamiliar term the reader needs defined, not sourced.
 - **`<Pullquote>` (static `.astro`, NO `client:` directive)**: period primary-source block — a wire dispatch, treaty line, newspaper headline. Props: `cite?`, `href?`, `kind?: "quote"|"document"|"telegram"|"headline"`. Children = the quote text. Earn it: only when the verbatim original is more powerful than a paraphrase.
 - **`<StatBand client:visible>`**: row of big figures counting up on scroll-in. Props: `stats=[{ value, prefix?, suffix?, decimals?, group?(default true), label, sub?, href? }]`, `caption?`, `duration?`. `href` cites a source. Earn it: only when the numbers genuinely set the stakes.
+- **`<Chart>` / `<DataTable>`** — carry a distribution or a structured set of figures the prose would otherwise list. Reach for them: when the shape of the data *is* the point.
+
+**Density target.** Carry at least one *knowledge-carrying island* per ~800–1000 words — where a
+knowledge-carrying island is a Figure, AnnotatedFigure, Map, RouteMap, Scrolly, Timeline,
+CompareSlider, CastGrid, EventCascade, Chart, or DataTable (NOT merely an Annotation, Sidenote, or
+Callout). A 6,000-word chronicle → **~6–8 substantive islands**. Anti-pattern to beat: published
+Reads averaged only ~2 heavy islands — beat that decisively.
+
+**Components carry knowledge.** A component should carry a block of knowledge the prose would
+otherwise spend 200–400 words asserting. **LEAD with the component** — the figure / map / cascade
+arrives BEFORE the prose that interprets it — then wrap prose around it to *interpret*, not restate.
 
 Exact props: **`references/mdx-contract.md`**.
 
@@ -130,15 +157,18 @@ cut it). If the ledger can't support real scenes, stop and plan a `FAIL`. Do not
 
 ### `<phase>Outline</phase>`
 Section-by-section against the template: heading/beat + 1-line intent + component
-placement + which source(s) each beat draws on. Confirm target ~3500–4500 words
-(~15-min rendered read) and that every cited source appears at least once. Confirm
-only kit components are used. For each `<StatBand>` or `<Pullquote>`, state why it
-earns its place — if you can't say why in one sentence, cut it.
+placement + which source(s) each beat draws on. Confirm target 5,000–7,000+ words
+(20–25 min rendered read, a floor) and that every cited source appears at least once.
+Map each major section to the knowledge-carrying component that best CARRIES it, from
+the full kit (a Figure, a RouteMap, a CastGrid, an EventCascade, a Scrolly), not just
+an Annotation cite. Confirm only kit components are used. For each `<StatBand>` or
+`<Pullquote>`, state why it earns its place — if you can't say why in one sentence, cut it.
 
 ### `<phase>Draft</phase>`
-Write the full MDX. The anchoring `<Map>`/`<Timeline>` arrives before the prose it
-grounds. Every named fact gets an inline `<Annotation term=... note=... />`. Hold
-present tense in scenes. Match founder voice. Cut any detail you cannot cite.
+Write the full MDX. Every knowledge-carrying component (Map, RouteMap, Figure, CastGrid,
+EventCascade, Scrolly) arrives BEFORE the prose that interprets it; the prose wraps around
+it to interpret, not restate. Every named fact gets an inline `<Annotation term=... note=... />`.
+Hold present tense in scenes. Match founder voice. Cut any detail you cannot cite.
 
 ### `<phase>Verify + Emit</phase>`
 Self-check against `references/mdx-contract.md` §5 **and the fact-check gates**:

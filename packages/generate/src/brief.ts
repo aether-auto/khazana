@@ -125,6 +125,10 @@ ${fmt.componentKit.map((c) => `- <${c}>`).join("\n")}
 - Use ONLY components from the kit above; do not invent component names.
 
 ## Target length
-${fmt.length === "feature" ? "Feature (~3000–4500 words, ~15-min read) with rich interactive components — depth EARNED from real research, not padding." : "Brief (~300–500 words)."}
+${
+    fmt.length === "feature"
+      ? "Feature — 20–25 min read FLOOR (~5,000–7,000+ words, can go longer) with the FULL expanded per-format component kit. The length is EARNED from more scenes / data layers / mechanism coverage / worked examples / knowledge-carrying components — never from padding or hedging. Target at least one knowledge-carrying island (Chart/Diagram/Simulation/Figure/Stepper/Table/Scrolly/StateMachine/etc.) per ~800–1,000 words: components carry blocks of knowledge, prose wraps around them to interpret."
+      : "Brief (~300–500 words). The 20–25 min feature floor does NOT apply — brevity is this format's craft; do not pad a briefing."
+  }
 `;
 }

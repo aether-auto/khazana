@@ -55,9 +55,40 @@ they personally felt.
 concrete, timeless example (the biased coin). The section ends on an earned insight
 that reframes the opening question — the reader now knows something they didn't.
 
+## Exemplar D — an interactive component leads, prose interprets
+
+> Before defining a single term, hand the reader the system itself. Let them tune the
+> transmission rate and watch the curve bend:
+>
+> <Simulation client:visible kind="sir-epidemic"
+>   params={{ beta: 0.3, gamma: 0.1, population: 1000, initialInfected: 1 }}
+>   controls={[{ key: "beta", label: "transmission rate β", min: 0.05, max: 0.6, step: 0.01 },
+>              { key: "gamma", label: "recovery rate γ", min: 0.02, max: 0.3, step: 0.01 }]}
+>   caption="Drag β and γ. Watch the infected curve rise, peak, and fall." />
+>
+> Push β up and the curve spikes early and tall; nudge γ up and it flattens. You just
+> discovered the single number epidemiologists chase — the ratio of the two. That ratio
+> has a name and an exact form:
+>
+> <Math display note="R₀ is the basic reproduction number — the average secondary infections per case in a fully susceptible population. Kermack & McKendrick, 1927."
+>   tex="R_0 = \dfrac{\beta}{\gamma}" />
+>
+> When R₀ > 1 each case more than replaces itself and the epidemic grows; at R₀ < 1 it
+> burns out. You didn't take that on faith — you *felt* it in the sliders before you saw
+> the fraction. <Annotation client:load term="R₀" note="Kermack & McKendrick, 1927 — the SIR compartmental model." />
+
+**Why it works:** the `<Simulation>` LEADS and the prose *interprets* rather than
+restates — the reader forms the intuition by tuning β and γ, and only then does the
+`<Math>` name what they felt. Each component carries a block of knowledge (the dynamics,
+the exact ratio) the prose would otherwise spend 300+ words asserting. Both are grounded:
+the Math note and the `<Annotation>` cite the canonical source.
+
 ## Anti-patterns to avoid
 - **Current-events hook.** "With AI models exploding in size…" — date-stamped. Open
   with the timeless question.
 - **Definition-first.** Concept name → worked example, never definition in a vacuum.
 - **Sandbox as a bonus.** Put it before the explanation, not after.
 - **Unbroken misconception.** If you don't surface the wrong model, readers keep it.
+- **Explainer-with-one-sandbox.** Reaching the 20–25 min floor with prose and a single
+  `RunnableCode` instead of earning depth with a `Simulation`, a `Math` derivation, a
+  `Quiz`, and multiple sandboxes. A primer averaging ~2 heavy islands is under-built.

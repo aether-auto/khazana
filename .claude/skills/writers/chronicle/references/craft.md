@@ -41,8 +41,9 @@ has no citeable detail, it is probably invented color; tighten or cut it.
 Alternate. An immersive present-tense scene (300–400w) earns a short third-person
 context beat (100–200w) that tells the reader where they are in time and why this
 matters causally — then drop back into scene. Context beats are fast and factual;
-scenes are slow and sensory. The rhythm is what keeps a 2000-word narrative from
-either dragging (all context) or disorienting (all scene).
+scenes are slow and sensory. The rhythm is what keeps a long narrative — this format
+runs 5,000–7,000+ words — from either dragging (all context) or disorienting (all scene);
+sustain the alternation across every scene, not just the first few.
 
 ### 5. End with consequence, not summary
 Never "In conclusion" or a recap. The last beat lifts out of the moment to the long
@@ -73,11 +74,26 @@ returns to the present tense or the enduring echo. "The city, impossibly, holds.
   use them to set off a clarifying phrase or a sharp aside.
 
 ## Component choreography
+- The component **LEADS**; prose wraps around it to *interpret*. Lead with the
+  figure / map / cascade, then let the paragraph read it — never restate what the
+  component already carries.
 - `<Map>` or `<Timeline>` appears *early*, right after the hook, so the reader has
   the geography or chronology in hand before the narrative deepens.
+- `<Figure>` / `<AnnotatedFigure>` carry archival images and portraits — chronicle is
+  visual history. Reach for a Figure when a real photograph or period image *is* the
+  evidence; reach for AnnotatedFigure when a single image rewards guided attention.
+- `<CastGrid>` holds the cast — reach for it when the reader must track several named
+  actors (people, places, factions) at once, instead of re-introducing each in prose.
+- `<CompareSlider>` shows before/after (a face, a place, a front line transformed);
+  `<EventCascade>` carries a causal chain (X → because → Y → therefore → Z) where the
+  point is causality, not calendar time; `<RouteMap>` carries a march, a crossing, or
+  a storm's path across geography.
 - `<Scrolly>` drives the single peak sequence — one `ScrollyStep` per narrative
   beat, the pinned graphic (a `<Map>`, `<Timeline>`, or a sequence of them)
   advancing as the prose steps. Use it once, at the climax, not throughout.
 - `<Timeline>` may return at the end to carry the long-arc legacy.
-- Do not over-instrument: a chronicle is mostly prose. Two to four component blocks
-  across 2000 words is right.
+- Instrument for **density, not minimalism**: carry at least one knowledge-carrying
+  island per ~800–1000 words — a 6,000-word chronicle carries ~6–8 substantive
+  islands (Figure, RouteMap, CastGrid, EventCascade, CompareSlider, Scrolly, Map,
+  Timeline, Chart, DataTable — not merely an Annotation or Callout). Reach the depth
+  through MORE knowledge-carrying components, each earned — never padding.

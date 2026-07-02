@@ -1,6 +1,6 @@
 ---
 name: writers/dispatch
-description: This skill should be used to author a DISPATCH post for khazana — a data-driven, Pudding/Distill-style interactive explainer where real charts lead the prose. Trigger when a brief's "Format:" line is `dispatch`, or when asked to "write a dispatch", "explain this with data", or produce a data-storytelling MDX post. Uses scripts/fetch-data.py for REAL numbers (FRED/World Bank/OWID). Produces one MDX file (Chart/Scrolly/DataTable/Annotation/StatBand/Pullquote) targeting ~15-min rendered depth that builds in apps/site and passes validateDraft.
+description: This skill should be used to author a DISPATCH post for khazana — a data-driven, Pudding/Distill-style interactive explainer where real charts lead the prose. Trigger when a brief's "Format:" line is `dispatch`, or when asked to "write a dispatch", "explain this with data", or produce a data-storytelling MDX post. Uses scripts/fetch-data.py for REAL numbers (FRED/World Bank/OWID). Produces one MDX file (Chart/Scrolly/DataTable/Annotation/StatBand/Pullquote) targeting a 20–25 min rendered depth (~5,000–7,000+ words) that builds in apps/site and passes validateDraft.
 version: 1.0.0
 ---
 
@@ -61,10 +61,13 @@ Shared tier rubric, triangulation rules, and gate definitions live once in
 
 Full detail: **`references/craft.md`**.
 
-## Structural template (target ~15-min rendered read / `GAUSSIAN_DEFAULTS.peakMin`)
+## Structural template (target 20–25 min rendered read — the length FLOOR / `GAUSSIAN_DEFAULTS.peakMin`)
 
-Aim for ~3000–4000 words + interactive charts. Reach depth through more data layers,
-richer methodology, deeper causal cuts — never padding.
+Aim for 5,000–7,000+ words + interactive charts — this is a FLOOR, not a target; go
+longer when the data supports it. Reach depth through more data layers, richer
+methodology, deeper causal cuts — never padding — and through MORE knowledge-carrying
+figures (SmallMultiples, a Distribution, a Slopegraph, a RangePlot), each earned. Use
+Detail/Expandable to add depth for motivated readers without bloating the linear read.
 
 Hook question + the key `<Chart>` immediately (100–150w) → optional `<StatBand>` if the
 lede IS those numbers (earn it: only when scale/rate/delta is the whole argument) →
@@ -76,14 +79,18 @@ if a verbatim finding or expert statement reframes the story (earn it: not decor
 Annotated skeleton: **`references/template.mdx`**. Worked excerpts:
 **`references/exemplars.md`**.
 
-## Components (this format's kit only)
+## Your interactive kit
 
-`Chart`, `Scrolly` / `ScrollyStep`, `DataTable`, `Annotation`, `StatBand`, `Pullquote`
-— nothing else. (A richer scrollytelling component is pending a rebuild — do not use yet.)
+khazana ships **~40 interactive components**. Dispatch's kit is the subset below — and it
+is a big kit. Actively CHOOSE from the WHOLE of it; do not reflexively default to
+Chart + DataTable + Annotation. Before you outline, scan every entry and ask which one
+best CARRIES each section.
 
-**Every component must be earned.** Data reads: the chart or table IS the argument — lead
-with it; let the prose explain what to see. Reach depth through more data layers, richer
-methodology, a deeper causal cut — not by adding components.
+**Every component must be earned** — but earn from this bigger, clearly-explained set.
+Reach depth through MORE knowledge-carrying components, each earned, NOT through
+minimalism. The chart or figure IS the argument: lead with it, let the prose interpret.
+
+Core carriers (detailed props below):
 
 - **`<Chart client:visible>`** — `mark="line|bar|area|dot"`, real `data={[...]}`. Vary by intent: line for trend, bar for comparison, area for cumulative, dot for relationship.
 - **`<Scrolly client:visible>` / `<ScrollyStep>`** — stepped reveals; each step adds one variable or filter.
@@ -91,6 +98,38 @@ methodology, a deeper causal cut — not by adding components.
 - **`<Annotation client:load>`** — inline citations; every number cited here.
 - **`<StatBand client:visible>`** — earn it when scale/rate/delta IS the lede. Props: `stats=[{ value, prefix?, suffix?, decimals?, group?, label, sub?, href? }]`, `caption?`, `duration?`.
 - **`<Pullquote>` (static `.astro`, NO `client:` directive)** — earn it when a verbatim finding or expert statement reframes the story. Props: `cite?`, `href?`, `kind?` (default `"quote"`).
+
+Reach for these when the beat calls for them (the under-used half of the kit — name them so they get used):
+
+- **`<Sidenote>`** — a margin aside / numbered footnote; the everyday marginalia primitive (heavily used, previously undocumented). Reach for it to park a caveat or provenance note beside the prose without breaking the line.
+- **`<SmallMultiples>`** — a grid of the same chart faceted by category (the Tufte staple). Reach for it when one pattern should hold or break across many series at once.
+- **`<Distribution>`** — a histogram/density, with an optional threshold marker line that IS the argument. Reach for it when the *spread* or a cutoff — not the mean — is the point.
+- **`<Scatter>`** — an x/y relationship, optional fit line. Reach for it to show a correlation and how tight it is.
+- **`<Slopegraph>`** — before/after ranking or value reordering across two columns. Reach for it when *who moved past whom* is the story.
+- **`<RangePlot>`** — dot-plus-range (CI / min–max / IQR); the honest alternative to bars-with-error-caps. Reach for it when uncertainty must be shown, not hidden.
+- **`<Math>`** — a display equation / numbered derivation (KaTeX is vendored). Reach for it instead of faking equations in prose — stop spelling math out in words.
+- **`<Diagram>`** — node-edge flow for a mechanism. Reach for it to show how the parts of a system connect.
+- **`<Simulation>`** — an interactive sandbox for a system (e.g. an SIR model). Reach for it on science cuts where the reader should *tune the parameters* and watch.
+- **`<Quiz>`** — check-your-understanding. Reach for it to make the reader commit to a prediction before the reveal.
+- **`<EventCascade>`** — a causal chain X → because → Y. Reach for it when the argument is a sequence of consequences.
+- **`<GanttStrip>`** — a project/phase timeline strip. Reach for it to lay out phases or a rollout over time.
+- **`<RouteMap>`** — Map + routes/arcs for flows. Reach for it when the story is movement between places.
+- **`<Callout>`** — a boxed key-insight / methodology note. Reach for it to set one takeaway apart from the flow.
+- **`<Detail>`** — progressive-disclosure "go deeper". Reach for it to add depth for motivated readers without bloating the linear read.
+- **`<Definition>`** — a glossary tooltip that *teaches* a term (vs `<Annotation>`, which *cites*). Reach for it the first time a term of art appears.
+
+Also available: `Timeline`, `Map`, `RunnableCode`.
+
+**Components carry knowledge.** Imperative 1's "figure before prose" rule generalizes to
+the whole kit: every knowledge-carrying component leads; the prose wraps around it to
+interpret, not restate — a component should carry a block of knowledge the prose would
+otherwise spend 200–400 words asserting.
+
+**Density target.** At least one *knowledge-carrying island* — a Chart, SmallMultiples,
+Distribution, Scatter, Slopegraph, RangePlot, DataTable, Scrolly, Diagram, Simulation,
+Map, or RouteMap (NOT merely an Annotation / Sidenote / Callout) — per ~800–1,000 words.
+A 6,000-word dispatch → ~6–8 substantive islands. Published Reads averaged only ~2 heavy
+islands; beat that decisively.
 
 Exact props: **`references/mdx-contract.md`**.
 
@@ -125,10 +164,13 @@ in the table → `[UNSUPPORTED]` (research or cut). Do not write prose yet.
 
 ### `<phase>Outline</phase>`
 Section-by-section against the template: heading + intent + which chart/component
-+ which data source. Confirm target ~3000–4000 words (~15-min rendered read), a
-methodology note is planned, and every cited source appears at least once. Confirm
-only kit components are used. For each `<StatBand>` or `<Pullquote>`, state in one
-sentence why it earns its place — if you can't, cut it.
++ which data source. **Map each major section to the knowledge-carrying component that
+best CARRIES it, from the full kit** (a Chart, SmallMultiples, Distribution, Scatter,
+Slopegraph, RangePlot, a Scrolly) — not just an Annotation cite. Confirm target
+5,000–7,000+ words (20–25 min rendered read, a floor), a methodology note is planned,
+and every cited source appears at least once. Confirm only kit components are used. For
+each `<StatBand>` or `<Pullquote>`, state in one sentence why it earns its place — if you
+can't, cut it.
 
 ### `<phase>Draft</phase>`
 **Fetch data first.** For each chart backed by a public dataset, run

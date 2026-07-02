@@ -10,6 +10,12 @@ number, point at what to watch, link the sources, stop.
 must justify itself. Padding to hit a length is a failure. If the briefing is done
 in 320 words, it's done. The reader is busy and trusts you to be done.
 
+**This format is exempt from the long-form floor.** The five long-form formats target a
+20–25 min / 5,000–7,000-word floor with a dense expanded component kit; field-notes does
+**not**. Do not pad toward that floor, do not reach for the knowledge-carrying kit, do not
+add scenes or data layers to "hit length." The exemption is deliberate doctrine — the whole
+value of a briefing is that it is short.
+
 ## The four imperatives, expanded
 
 ### 1. No preamble
@@ -56,4 +62,7 @@ is the line that makes the reader keep you in their feed.
 ## Component choreography
 - Mostly prose. `<Annotation>` for the crystallizing number and inline citations.
 - `<DataTable>` only when a small comparison earns its place — never as filler.
+- At most **one** `<Callout kind="key-insight">` "watch for" box, if a single framed
+  key insight genuinely sharpens the briefing — the only piece of the long-form expanded
+  kit this format admits. Skip the rest of that kit entirely.
 - Zero to two component blocks total. The brevity is the point.

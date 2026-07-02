@@ -1,6 +1,6 @@
 ---
 name: writers/primer
-description: This skill should be used to author a PRIMER post for khazana — an evergreen, foundational explainer that will still be valuable in five years, built on progressive scaffolding with interactive sandboxes. Trigger when a brief's "Format:" line is `primer`, or when asked to "write a primer", "explain the fundamentals of X", or produce a timeless foundational explainer MDX post. Produces one MDX file (RunnableCode/Chart/Annotation/StatBand/Pullquote) targeting ~15-min rendered depth that builds in apps/site and passes validateDraft.
+description: This skill should be used to author a PRIMER post for khazana — an evergreen, foundational explainer that will still be valuable in five years, built on progressive scaffolding with interactive sandboxes. Trigger when a brief's "Format:" line is `primer`, or when asked to "write a primer", "explain the fundamentals of X", or produce a timeless foundational explainer MDX post. Produces one MDX file (RunnableCode/Chart/Annotation/StatBand/Pullquote) targeting a 20–25 min rendered depth (~5,000–7,000+ words) that builds in apps/site and passes validateDraft.
 version: 1.0.0
 ---
 
@@ -54,10 +54,13 @@ Shared tier rubric, triangulation rules, and gate definitions live once in
 
 Full detail: **`references/craft.md`**.
 
-## Structural template (target ~15-min rendered read / `GAUSSIAN_DEFAULTS.peakMin`)
+## Structural template (target 20–25 min rendered read — the length FLOOR / `GAUSSIAN_DEFAULTS.peakMin`)
 
-Aim for ~3000–4000 words + interactive sandboxes. Reach depth through more scaffold
-layers, more worked examples, a richer synthesis — never padding.
+Aim for 5,000–7,000+ words + interactive sandboxes — this is a FLOOR, not a target; go
+longer when the concept supports it. Reach depth through more scaffold layers, more worked
+examples, a richer synthesis — never padding — and through MORE knowledge-carrying
+components (a Simulation, a Math derivation, a Stepper scaffold, a Quiz), each earned. Use
+Detail/Expandable to add depth for motivated readers without bloating the linear read.
 
 Opening question (100–150w, no jargon, no current events) → optional `<StatBand>` if
 the scale/consequence genuinely motivates the question (earn it: only when those numbers
@@ -70,21 +73,44 @@ the verbatim is more powerful than a paraphrase → concept 2 / build on foundat
 Annotated skeleton: **`references/template.mdx`**. Worked excerpts:
 **`references/exemplars.md`**.
 
-## Components (this format's kit only)
+## Your interactive kit
 
-`RunnableCode`, `Chart`, `Annotation`, `StatBand`, `Pullquote` — nothing else.
-(A richer scrollytelling component is pending a rebuild — do not use yet.)
+There are ~40 interactive components across khazana; primer's kit is the subset below.
+Actively CHOOSE from the WHOLE kit — do NOT default to `RunnableCode`+`Chart`+`Annotation`.
+Every component must be earned — but earn from this bigger, clearly-explained set: reach
+depth through MORE knowledge-carrying components, each earned, NOT through minimalism.
 
-**Every component must be earned.** The sandbox and chart ARE the argument — lead with
-intuition, let readers play, then explain. Reach depth through more scaffold layers, more
-worked examples — not by adding components. A primer with only `RunnableCode`, `Chart`,
-and `Annotation` is often the strongest.
+**COMPONENTS CARRY KNOWLEDGE.** A component should carry a block of knowledge the prose
+would otherwise spend 200–400 words asserting. **LEAD with the component** — the
+Simulation / sandbox / Math arrives BEFORE the prose that interprets it (primer already
+does "sandbox before explanation"; generalize it to every knowledge-carrier) — then wrap
+prose around it to *interpret*, not restate.
+
+**DENSITY TARGET.** At least one knowledge-carrying *island* — `Simulation`,
+`RunnableCode`, `Chart`, `Math`, `Stepper`, `Quiz`, `CodeWalkthrough`, `StateMachine`,
+`LayerStack`, `DataTable` (NOT merely `Annotation`/`Sidenote`/`Callout`/`Definition`) —
+per ~800–1000 words. A 6,000-word primer → ~6–8 substantive islands. Anti-pattern:
+published Reads averaged ~2 heavy islands. Beat that decisively.
+
+The kit — reach for each when:
 
 - **`<RunnableCode client:visible>`** — intuition sandbox; place it *before* the explanation. Mentally run it before writing.
 - **`<Chart client:visible>`** — visualizes the concept; vary mark by intent.
-- **`<Annotation client:load>`** — cites every definition and number inline.
+- **`<Annotation client:load>`** — cites every definition and number inline (CITES a source).
 - **`<StatBand client:visible>`** — earn it when the scale/consequence genuinely motivates the question. Props: `stats=[{ value, prefix?, suffix?, decimals?, group?, label, sub?, href? }]`, `caption?`.
 - **`<Pullquote>` (static `.astro`, NO `client:` directive)** — earn it when a verbatim foundational definition or literature framing is more powerful than a paraphrase. Props: `cite?`, `href?`, `kind?` (default `"quote"`).
+- **`<Sidenote>`** — the everyday marginalia primitive: a margin aside / numbered footnote. Reach for it for a tangent or citation that shouldn't interrupt the line.
+- **`<Simulation>`** — an interactive canvas sandbox with reader-tunable sliders animating a system (a random walk, wave interference, an SIR epidemic, gradient descent). The SINGLE highest-leverage primer knowledge-carrier; reach for it when a system is best UNDERSTOOD by playing with it.
+- **`<Quiz>`** — check-your-understanding: 1–N questions with explanations. Reach for it to test the reader's mental model right after a concept lands.
+- **`<Math>`** — display equation / numbered derivation with per-line notes. KaTeX is vendored; when the concept rests on an equation, set it properly instead of faking it in prose.
+- **`<Stepper>`** — a numbered scaffold / worked sequence, one step visible at a time. Reach for it for a strict build-up.
+- **`<Definition>`** — a glossary tooltip that TEACHES a term (dotted underline), distinct from `Annotation` which CITES.
+- **`<CodeWalkthrough>`** — narrated static code stepping through line ranges. Reach for it when code is too large to run live.
+- **`<StateMachine>`** — a token walked through states/transitions. Reach for it for a state-based concept.
+- **`<LayerStack>`** — an exploded, layered view. Reach for it for a layered concept.
+- **`<Callout>`** — a boxed key-insight note.
+- **`<Detail>`** — progressive-disclosure "go deeper" for a proof or aside without bloating the linear read.
+- **`<Timeline>`, `<Map>`, `<Scrolly>/<ScrollyStep>`** — timeline / geographic / scrollytelling carriers when the concept is temporal, spatial, or step-revealed.
 
 Exact props: **`references/mdx-contract.md`**.
 
@@ -118,13 +144,18 @@ the table → `[UNSUPPORTED]` (research or cut). Do not write prose yet.
 ### `<phase>Outline</phase>`
 Section-by-section against the template: heading + intent + component placement +
 source. Confirm the scaffold is strictly ordered (each section depends only on
-prior ones), target ~3000–4000 words (~15-min rendered read), no current-events
-examples, every cited source used. Confirm only kit components. For each `<StatBand>`
-or `<Pullquote>`, state in one sentence why it earns its place — if you can't, cut it.
+prior ones), target 5,000–7,000+ words (20–25 min rendered read, a floor), no
+current-events examples, every cited source used. **Map each major section to the
+knowledge-carrying component that best CARRIES it, from the full kit** (a `Simulation`,
+a `RunnableCode` sandbox, a `Math` derivation, a `Stepper`, a `Quiz`), not just an
+`Annotation` cite. Confirm only kit components. For each `<StatBand>` or `<Pullquote>`,
+state in one sentence why it earns its place — if you can't, cut it.
 
 ### `<phase>Draft</phase>`
 Write each `<RunnableCode>` sandbox first and mentally run it; place it *before* its
-explanation. Write the MDX: question → misconception (broken by a sandbox) →
+explanation. Every knowledge-carrying component (a `Simulation`, a sandbox, a `Math`
+block, a `Stepper`) arrives BEFORE the prose that interprets it. Write the MDX:
+question → misconception (broken by a sandbox) →
 concept 1 → 2 → 3 (each concrete-example-first) → synthesis. Cite every definition
 with `<Annotation>`. Use only timeless examples. Match voice.
 

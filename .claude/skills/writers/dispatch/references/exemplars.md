@@ -60,6 +60,32 @@ by scrolling.
 reserves the sharpest number for last, and cites it inline. The methodology note is
 honest about what the data omits — the credibility move.
 
+## Exemplar D — a data figure leads, prose interprets
+
+Reaching past Chart+DataTable: a `<Slopegraph>` carries the whole "who moved past whom"
+beat, then one prose line interprets it.
+
+> <Slopegraph client:visible
+>   left="2019" right="2025"
+>   caption="Share of global public-cloud AI-inference spend, by provider (%)"
+>   data={[
+>     { label: "Hyperscaler A", start: 41, end: 29 },
+>     { label: "Hyperscaler B", start: 33, end: 31 },
+>     { label: "Specialist GPU clouds", start: 6, end: 24 },
+>     { label: "Everyone else", start: 20, end: 16 }
+>   ]} />
+>
+> The specialist clouds didn't grow a lane — they took one. The two incumbents held
+> roughly flat in absolute terms while the pie quadrupled, so the *ranking* is the news:
+> the challenger crossed both by 2025.
+
+**Why it works:** the slopegraph carries a block of knowledge — four reorderings across
+six years — that prose would need 200–400 words to assert line by line. The figure leads;
+the single prose beat *interprets* (it's a rank shift, not a growth story), it does not
+restate the numbers. The mark fits the intent: reordering across two columns, not a trend
+line. In a real post these values come from `fetch-data.py` or a cited ledger source,
+never invented — a slopegraph of made-up shares fails grounding exactly like a Chart would.
+
 ## Anti-patterns to avoid
 - **Prose-first.** Explaining the pattern, then showing the chart. Always reverse.
 - **Bare numbers.** "Cost dropped a lot." Give the baseline, the unit, the
@@ -67,3 +93,7 @@ honest about what the data omits — the credibility move.
 - **One mark for everything.** Match line/bar/area/dot to the question.
 - **Invented data.** If you can't fetch or cite it, use a `<DataTable>` of sourced
   numbers, not a made-up `<Chart>`.
+- **Two-chart minimalism.** Reaching the 20–25 min floor with a couple of line charts
+  and lots of prose instead of earning depth with SmallMultiples / Distribution /
+  Slopegraph / RangePlot. A data essay averaging ~2 heavy figures is under-built — aim
+  for one knowledge-carrying island per ~800–1,000 words.
