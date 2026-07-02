@@ -41,6 +41,22 @@
 > pre-existing next-focus): formalize the writer/verify `.claude/agents` defs + build the Opus
 > orchestrator routine (§5-§6, §9B); deferred components needing a new dep (Sankey, ParameterPlay,
 > Model3D-glb); cosmetic: reads `<h1>` SplitText chars a few px past edge at 360 (no page scroll).
+>
+> **The 2026-07-02 session (cont.)** then shipped the deferred components + a **new `theater`
+> writer format** for reliving battles/campaigns/strategic contests. Built **Sankey** (d3-sankey)
+> and **Model3D v2** (loads a committed `.glb` via drei `useGLTF`, gyroid default) + a **military
+> kit — BattleMap** (image-base phase-by-phase battle replay: typed unit glyphs, movement arrows,
+> front lines, keyboard phase scrubber), **OrderOfBattle** (force-structure roster), **ForceComparison**
+> (diverging force/casualty bars + ratios) → **44 authorable components**, all independently
+> browser-verified. Added the **`theater` format** to the core vocab/FORMATS (narrate/feature; all
+> wiring derives from the vocab) + a full writer skill (BattleMap as the narrative spine + the
+> military/strategic kit, same doctrine + HARD grounding), and **proved it E2E** with
+> `cannae-double-envelopment.mdx` (~5,232 words, 5-phase BattleMap; independent fact-check caught &
+> fixed 8 items incl. the disputed Maharbal/Hanno cavalry command). Commits `d70473e`, `396ae7c`,
+> `7d36270`; **1811 tests green**, typecheck clean, build 350 pages. Now **7 writer formats** and
+> **44 components**. Only ParameterPlay remains deferred (overlaps Simulation/ControlledChart).
+> New session reports: `.superpowers/sdd/{build-x-*,build-mil-*,integrate-mil-report,verify-mil-report,
+> theater-format-report,wave5b-*}.md`.
 
 ---
 
