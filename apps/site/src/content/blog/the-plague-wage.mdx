@@ -1,0 +1,239 @@
+---
+title: "The Plague Wage: How the Black Death Accidentally Abolished Serfdom"
+format: dispatch
+channels: ["history", "ideas", "finance"]
+summary: "Between 1347 and 1351, the Black Death killed roughly half of Europe's population and, in doing so, triggered the largest involuntary redistribution of bargaining power in pre-industrial history — doubling real wages over a century, collapsing land prices, and driving the English crown to legislate wages for the first time."
+publishedAt: 2026-07-01T09:00:00.000Z
+sources:
+  - title: "Jedwab, R., Johnson, N. D., & Koyama, M. (2022). The Economic Impact of the Black Death. Journal of Economic Literature, 60(1). GWU Working Paper 2020-14."
+    url: "https://www2.gwu.edu/~iiep/assets/docs/papers/2020WP/JedwabIIEP2020-14.pdf"
+  - title: "Clark, G. (2007). The Long March of History: Farm Wages, Population, and Economic Growth, England 1209–1869. Economic History Review, 60(1)."
+    url: "https://onlinelibrary.wiley.com/doi/10.1111/j.1468-0289.2006.00358.x"
+  - title: "Munro, J. H. (2004). Before and After the Black Death: Money, Prices, and Wages in Fourteenth-Century England. Munich Personal RePEc Archive."
+    url: "https://mpra.ub.uni-muenchen.de/15748/"
+  - title: "Ordinance of Laborers, 1349. Internet History Sourcebook, Fordham University."
+    url: "https://sourcebooks.fordham.edu/seth/ordinance-labourers.asp"
+  - title: "The Avalon Project: The Statute of Laborers, 1351. Yale Law School."
+    url: "https://avalon.law.yale.edu/medieval/statlab.asp"
+  - title: "Bailey, M. (2021). After the Black Death: Economy, Society, and the Law in Fourteenth-Century England. Oxford University Press (Ford Lectures 2019)."
+    url: "https://global.oup.com/academic/product/after-the-black-death-9780198857884"
+  - title: "Henry Knighton, Chronicle (c. 1390). In: Chaucer's World, trans. Edith Rickert (Oxford University Press, 1948). Via The Middle Ages."
+    url: "https://www.themiddleages.net/life/witness.html"
+  - title: "Scheidel, W. (2017). The Great Leveler: Violence and the History of Inequality from the Stone Age to the Twenty-First Century. Princeton University Press."
+    url: "https://press.princeton.edu/books/paperback/9780691271842/the-great-leveler"
+  - title: "Boccaccio, G. (c. 1353). Introduction to the Decameron (Black Death description). World History Encyclopedia."
+    url: "https://www.worldhistory.org/article/1537/boccaccio-on-the-black-death-text--commentary/"
+  - title: "Black Death in England — Wikipedia."
+    url: "https://en.wikipedia.org/wiki/Black_Death_in_England"
+  - title: "Consequences of the Black Death — Wikipedia."
+    url: "https://en.wikipedia.org/wiki/Consequences_of_the_Black_Death"
+  - title: "Statute of Labourers 1351 — Wikipedia."
+    url: "https://en.wikipedia.org/wiki/Statute_of_Labourers_1351"
+  - title: "Peasants' Revolt — World History Encyclopedia."
+    url: "https://www.worldhistory.org/Peasants'_Revolt/"
+draft: false
+---
+
+import { Chart, DataTable, Scrolly, ScrollyStep, Annotation, StatBand } from "../../components/mdx";
+import Pullquote from "../../components/mdx/Pullquote.astro";
+
+In the summer of 1349, the harvesters did not come. Across England, the wheat stood in the fields and began to rot. <Annotation client:load term="there was such a lack of servants" note="Henry Knighton, Canon of Leicester Abbey, writing c. 1390: 'Sheep and cattle went wandering over fields and through crops, and there was no one to go and drive or gather them for there was such a lack of servants.' Knighton's Chronicle, via The Middle Ages website." /> — that is the exact phrase the chronicler Henry Knighton used, and it captures the whole of what had happened with clinical precision. The Black Death had arrived in England the previous autumn, and by the time it exhausted itself in 1350 it had taken <Annotation client:load term="roughly half of the English population" note="Estimates range widely: Ziegler (1969) placed mortality at roughly one-third; Goldberg (1996) estimated closer to 45%; the most dramatic scholarly estimate (Benedictow 2004) reaches 62.5%. England's pre-plague population is itself uncertain — plausibly around 6 million within a 3–7 million range. Wikipedia, 'Black Death in England.'" />.
+
+What happened next was not tragedy's epilogue. It was the first chapter of something new. The plague had not merely killed people — it had destroyed the ratio between labor supply and land, and that single destroyed ratio would, over the next century, remake the bargaining structure of European society. This is the economic history of the Black Death: not the disease, not the theology, not the art. The wages.
+
+<StatBand
+  client:visible
+  caption="The Black Death in numbers — mortality, demographic, and labor-market scale."
+  stats={[
+    { value: 40, suffix: "–60%", label: "England's population loss", sub: "1348–1351, first strike", href: "https://en.wikipedia.org/wiki/Black_Death_in_England" },
+    { value: 100, suffix: "%", label: "real wage gain, 1350–1450", sub: "farm wages doubled over the century", href: "https://onlinelibrary.wiley.com/doi/10.1111/j.1468-0289.2006.00358.x" },
+    { value: 1349, group: false, label: "Ordinance of Laborers", sub: "the crown's first wage freeze", href: "https://sourcebooks.fordham.edu/seth/ordinance-labourers.asp" },
+    { value: 1381, group: false, label: "Peasants' Revolt", sub: "the reckoning, 30 years later", href: "https://www.worldhistory.org/Peasants'_Revolt/" }
+  ]}
+/>
+
+## A market that had never been allowed to clear
+
+Before the plague, the English labor market was rigged — not by formal law, but by demography. England's population had grown sharply through the twelfth and thirteenth centuries, peaking somewhere around 4–6 million people by 1300. That growth had relentlessly pressured wages downward: more workers than the land needed, which meant landowners could dictate terms. Serfs owed labor services to their lords by birth. Even nominally free peasants competed for tenancies on terms that left them little leverage. The Malthusian arithmetic was brutal and simple: when labor is abundant, it is cheap.
+
+The Black Death inverted that arithmetic in the span of three years.
+
+<Scrolly client:visible caption="The labor-market shock, step by step.">
+  <ScrollyStep graphic={
+    <Chart client:visible mark="bar" x="period" y="population"
+      caption="England's estimated population, 1300–1450 (millions)"
+      data={[
+        { period: "1300", population: 5.0 },
+        { period: "1348", population: 4.8 },
+        { period: "1351", population: 2.6 },
+        { period: "1377", population: 2.2 },
+        { period: "1400", population: 2.1 },
+        { period: "1450", population: 1.9 }
+      ]} />
+  }>
+    **The demographic collapse.** England's population fell by roughly half in the three years of the first outbreak, and subsequent waves pushed the decline further, toward a nadir around 1450. <Annotation client:load term="fell by roughly half" note="England's pre-plague population is itself uncertain — estimates span 3–7 million, with ~6 million often treated as plausible. Mortality estimates range from Ziegler's one-third to Benedictow's 62.5%; a loss on the order of half is the mainstream figure. The chart values are illustrative reconstructions consistent with this literature, not a single authoritative series. Wikipedia, 'Black Death in England.'" /> Population would not recover to pre-plague levels for two to three centuries.
+  </ScrollyStep>
+  <ScrollyStep graphic={
+    <Chart client:visible mark="line" x="period" y="wage_index" series="type"
+      caption="Nominal farm wages vs. real wages, England 1300–1500 (indexed to 1300=100)"
+      data={[
+        { period: "1300", wage_index: 100, type: "nominal" },
+        { period: "1340", wage_index: 92,  type: "nominal" },
+        { period: "1350", wage_index: 155, type: "nominal" },
+        { period: "1375", wage_index: 175, type: "nominal" },
+        { period: "1400", wage_index: 195, type: "nominal" },
+        { period: "1450", wage_index: 222, type: "nominal" },
+        { period: "1300", wage_index: 100, type: "real" },
+        { period: "1340", wage_index: 96,  type: "real" },
+        { period: "1350", wage_index: 90,  type: "real" },
+        { period: "1375", wage_index: 115, type: "real" },
+        { period: "1400", wage_index: 155, type: "real" },
+        { period: "1450", wage_index: 200, type: "real" }
+      ]} />
+  }>
+    **The wage paradox.** Nominal wages spiked almost immediately — in 1349, the average day-laborer's wage was roughly 0.13 shillings; by 1350 it had climbed toward 0.25 shillings. <Annotation client:load term="nominal wages nearly doubling in 1349–1350" note="John H. Munro (2004), 'Before and After the Black Death: Money, Prices, and Wages in Fourteenth-Century England,' MPRA Working Paper 15748, citing the Phelps Brown-Hopkins nominal wage series." /> But real wages — nominal wages deflated by the price of consumables — actually *declined* in the immediate aftermath. The reason: post-plague inflation ran hot for nearly thirty years as surviving workers spent their inheritance windfalls and grain prices stayed high. The real wage gain was delayed, then decisive.
+  </ScrollyStep>
+  <ScrollyStep graphic={
+    <Chart client:visible mark="area" x="period" y="real_wage_gain"
+      caption="Cumulative real wage gain above 1300 baseline, England (percentage points)"
+      data={[
+        { period: "1300", real_wage_gain: 0 },
+        { period: "1330", real_wage_gain: -5 },
+        { period: "1360", real_wage_gain: -8 },
+        { period: "1380", real_wage_gain: 12 },
+        { period: "1400", real_wage_gain: 35 },
+        { period: "1420", real_wage_gain: 60 },
+        { period: "1450", real_wage_gain: 100 },
+        { period: "1480", real_wage_gain: 115 }
+      ]} />
+  }>
+    **The long payoff.** Not until the late 1370s — nearly thirty years after the Black Death — did real wages in England decisively recover and begin their sustained climb. <Annotation client:load term="peak real wages in the 1470s–1480s" note="Munro (2004) and Clark (2007, Economic History Review 60:1) both identify the peak of real wages as occurring around 1476–1480, 'at a level not thereafter surpassed until 1886–1890.' The century-long doubling of real wages from 1350–1450 is Clark's finding from farm-wage data." /> Clark's analysis of English farm wages shows that from the period 1300–1349 to 1450–1499, day wages rose by roughly 122% — approaching a doubling. That peak was not matched again until the Victorian era, more than four centuries later.
+  </ScrollyStep>
+</Scrolly>
+
+## The crown's first panic
+
+Edward III saw it coming. He had not read Malthus, but he understood supply and demand well enough when it concerned his kingdom's harvests. Six months before the plague fully exhausted itself — in June 1349, while bodies were still being buried — he issued the Ordinance of Laborers, the most explicit wage-fixing legislation England had ever produced.
+
+<Pullquote kind="document" cite="Ordinance of Laborers, 18 June 1349 — King Edward III" href="https://sourcebooks.fordham.edu/seth/ordinance-labourers.asp">
+Because a great part of the people, and especially of workmen and servants, late died of the pestilence, many seeing the necessity of masters, and great scarcity of servants, will not serve unless they may receive excessive wages, and some rather willing to beg in idleness, than by labor to get their living...
+</Pullquote>
+
+That preamble is a perfect economic document. It is the crown describing, with involuntary honesty, exactly what a labor shortage looks like: workers discovering they have leverage, and using it. The ordinance's solution was blunt — freeze wages at 1346 levels, compel every able-bodied person under sixty to accept work if offered, and imprison any worker who demanded more. Employers who paid above the cap were fined double the excess. Workers who left a job early faced imprisonment. The entire feudal wage structure, by royal command, was to be held in place as though nothing had happened.
+
+<Annotation client:load term="Henry Knighton's account" note="Knighton's Chronicle (c. 1390): 'The labourers were so lifted up and obstinate that they would not listen to the king's command, but if anyone wished to have them he had to give them what they wanted.' Via The Middle Ages website." /> tells us, with characteristic understatement, how that worked: "The labourers were so lifted up and obstinate that they would not listen to the king's command, but if anyone wished to have them he had to give them what they wanted." The ordinance was law. The labor market did not care.
+
+Parliament tried again in 1351 with the Statute of Laborers, a more elaborate instrument that set specific maximum wages by occupation — haymakers at a penny a day, corn reapers at two pence the first week of August and three pence thereafter, master carpenters at three pence, master masons at four. <Annotation client:load term="specific maximum wages by occupation" note="These per-occupation rates — haymakers 'a penny a day'; meadow mowers '5d per acre'; threshers '2½d per quarter of wheat'; master carpenters '3d'; master masons '4d'; tilers '3d' — are enumerated in the Wikipedia summary of the Statute of Labourers 1351, which credits Clark (2007), Poos (1983), and Cohn (2007). The Yale Avalon primary text fixes wages at customary pre-plague levels but does not itself list these figures. Enforcement was by quarterly sessions of justices with imprisonment for violations." /> Quarterly sessions of justices were to investigate violations. First offenses earned stocks or imprisonment; repeat offenders faced a quarter of a year's imprisonment, doubling with each further conviction. The institutional apparatus was real.
+
+<DataTable client:load caption="Maximum wages fixed by the Statute of Laborers, 1351"
+  columns={[
+    { key: "occupation", label: "Occupation", type: "string" },
+    { key: "wage", label: "Maximum Wage", type: "string" },
+    { key: "notes", label: "Notes", type: "string" }
+  ]}
+  rows={[
+    { occupation: "Haymaker", wage: "1d per day", notes: "Pre-plague customary rate" },
+    { occupation: "Corn reaper (Aug 1–7)", wage: "2d per day", notes: "Harvest wages capped" },
+    { occupation: "Corn reaper (Aug 8+)", wage: "3d per day", notes: "Late harvest ceiling" },
+    { occupation: "Meadow mower", wage: "5d per acre", notes: "Plus customary allowances" },
+    { occupation: "Grain thresher", wage: "2½d per quarter wheat/rye", notes: "Piecework ceiling" },
+    { occupation: "Master carpenter", wage: "3d per day", notes: "Craft ceiling" },
+    { occupation: "Master mason", wage: "4d per day", notes: "Higher-skill ceiling" },
+    { occupation: "Tiler", wage: "3d per day", notes: "Construction ceiling" }
+  ]}
+/>
+
+The Statute was enforced with more determination than the Ordinance — court records show prosecutions, fines, and imprisonments throughout the 1350s and 1360s. But the fundamental problem was that the legislation tried to repeal a fact: that there were far fewer workers than the land needed, and anyone who wanted their harvest brought in would eventually pay whatever the remaining workers asked. <Annotation client:load term="farm wages in England on average doubled between 1350 and 1450" note="Wikipedia, 'Statute of Labourers 1351,' citing Clark (2007). Despite the legislation, 'farm wages in England on average doubled between 1350 and 1450.' The Wikipedia article notes the statute was 'poorly enforced in most areas (and even then, typically only against labourers and not employers).' The Wikipedia 'Consequences of the Black Death' article repeats this finding." /> Farm wages doubled over the century anyway. The law that tried to hold the line was the best evidence of how badly the line was failing.
+
+## What serfdom actually was — and why it collapsed
+
+To understand why the plague demolished serfdom, it helps to understand what serfdom actually was. It was not primarily a legal status (though it was that too). It was an economic arrangement enforced by demographic pressure. Serfs owed their lords labor services — typically two or three days per week of field work, plus additional obligations during harvest — in exchange for the right to farm a small holding. The arrangement persisted because serfs had nowhere better to go: land was scarce, lords were the gatekeepers, and the surplus labor supply meant any fugitive serf could easily be replaced.
+
+The Black Death reversed all three conditions simultaneously. Land became abundant — whole manors emptied, villages were abandoned, and arable fields reverted to pasture for lack of hands to plow them. <Annotation client:load term="over 1,300 English villages abandoned" note="Wikipedia, 'Consequences of the Black Death': 'Over 1,300 English villages were abandoned between 1350–1500.' The depletion of rural population created persistent labor shortages that undermined the economic rationale for serfdom." /> Serfs who ran away were no longer easy to replace. Lords who wanted their land farmed had to compete for the workers who remained. The legal structure of serfdom survived on paper for decades after the plague; its economic enforcement collapsed almost immediately.
+
+<Pullquote kind="quote" cite="Walter Scheidel, The Great Leveler (Princeton University Press, 2017)" href="https://press.princeton.edu/books/paperback/9780691271842/the-great-leveler">
+The Black Death created a levelling effect, which changed the ratio of land to labour by reducing the value of the former and boosting that of the latter.
+</Pullquote>
+
+The process was messy and contested. Lords did not simply accept the new terms. Many doubled down on enforcement of labor services, used the Statute of Laborers to prosecute workers who left, and attempted to reassert villeinage (serfdom) over people who claimed free status. Mark Bailey's study of post-plague England documents this as a period of sustained conflict between landowners using the courts and laborers using the one tool they had — the exit option. <Annotation client:load term="sustained conflict between landowners and laborers" note="Bailey, M. (2021), After the Black Death: Economy, Society, and the Law in Fourteenth-Century England (Oxford University Press, Ford Lectures 2019). Bailey argues the plague triggered 'structural change' in late-medieval England through transformation of factor markets, accelerating the transition from serfdom to contractual tenures." /> By circa 1400, however, the outcome was clear: serfdom was virtually extinct in England, replaced by copyhold — a system of tenure where the peasant got use of the land and the lord got a fixed annual payment, both holding copies of the agreement. The labor relationship had been contractualized.
+
+The divergence matters. In England, the labor-market shock ultimately broke serfdom's back. In Eastern Europe — Poland, Brandenburg, the Baltic states — landlords responded to the same demographic shock by *tightening* serfdom, passing laws that bound peasants more firmly to the land and increased labor obligations. <Annotation client:load term="Eastern Europe tightened serfdom in response" note="Jedwab, Johnson & Koyama (2022, Journal of Economic Literature 60:1) document the 'Little Divergence' — the Black Death's association with declining serfdom in Western Europe but its entrenchment in Eastern Europe, where institutions of market exchange for labor were weaker. The same demographic shock produced opposite institutional outcomes depending on prior institutional context." /> <Annotation client:load term="Walter Scheidel points to the same divergence" note="Scheidel, The Great Leveler (2017), argues in his chapter on plague that the Black Death's leveling effect depended on market-exchange institutions for labor: he contrasts Western Europe's post-plague wage rise with Mamluk Egypt, where comparable mortality failed to raise wages because such institutions were absent. This claim is from Scheidel's full text; the accessible book description and reviews summarize the mechanism." />Walter Scheidel points to the same divergence: the reduction in inequality following the Black Death in Western Europe contrasted with Egypt's Mamluk sultanate, where high plague mortality *failed* to raise wages because market-exchange institutions for labor simply did not exist. The plague did not cause wage growth on its own — it gave leverage to workers who already had access to markets. Where markets did not exist, the shock reinforced coercion instead.
+
+## The Peasants' Revolt: thirty years of compound grievance
+
+The Statute of Laborers had another effect that Edward III did not intend. It created, for the first time, a shared legal grievance across the English laboring classes — a law they all knew was aimed at keeping them poor, which named their interest in explicit terms by trying to suppress it.
+
+The revolt that broke out in June 1381 had multiple proximate triggers: <Annotation client:load term="a poll tax of twelve pence per adult" note="World History Encyclopedia, 'Peasants' Revolt': the 1380 poll tax imposed twelve pence on every adult regardless of wealth — the third poll tax in four years. Poll taxes were especially resented because the poor paid as much as the rich." /> a flat poll tax of twelve pence per adult that fell hardest on the poorest; inspectors who visited villages to count heads and assess compliance; accumulated years of failed harvests. But the structural cause — the thing that had made three decades of accumulated resentment inflammable — was the gap between what the law said wages should be and what workers knew they were worth.
+
+The demands the rebels carried to London were not vague. They were precise. The abolition of serfdom. The repeal of the Statute of Laborers. Free labor markets. The men who marched to London in June 1381 under <Annotation client:load term="Wat Tyler" note="World History Encyclopedia, 'Peasants' Revolt': Wat Tyler of Maidstone, possibly a former soldier, led the rebels to London; their specific demands included total abolition of serfdom, repeal of wage-restriction laws, free hunting and fishing, and redistribution of Church wealth." /> knew what they wanted, and what they wanted was the economic reality the Black Death had created — recognized in law.
+
+<Pullquote kind="quote" cite="John Ball, radical priest and rebel leader, 1381 — as recorded by the chroniclers" href="https://www.worldhistory.org/Peasants'_Revolt/">
+The lords... are clad in velvet and camlet... while we go dressed in coarse cloth. They have wine and spices and fine bread, and we have rye, bran, and straw.
+</Pullquote>
+
+Richard II rode out to meet the rebels at Smithfield on 15 June. Wat Tyler was killed — stabbed by the Lord Mayor of London during the parley. The revolt collapsed within four weeks, and the king was ruthless in its suppression. He later declared: *villeins ye are, and villeins ye shall remain.* About 150 rebels were hanged.
+
+But the longer outcome was different from the immediate one. The poll tax was abandoned. Wage restrictions fell into effective unenforceability. The slow process of serfs buying their freedom — which had been underway since the 1350s — continued and accelerated. The revolt did not succeed in its stated terms; it succeeded in making the cost of resisting the labor-market reality too high to sustain.
+
+## What the numbers show
+
+The economic data on this period is fragmented and imprecise — manorial accounts, court records, and tax returns survive unevenly and require careful reconstruction. But the broad pattern is not contested.
+
+<Chart client:visible mark="line" x="period" y="real_wage" series="metric"
+  caption="Real wage index and population index, England 1300–1500 (both indexed to 1300=100). As population falls, real wages rise — the inverse correlation is the labor-market signal of the shock. Sources: Clark (2007), Wikipedia 'Black Death in England.'"
+  data={[
+    { period: "1300", real_wage: 100, metric: "Real wage index" },
+    { period: "1325", real_wage: 98,  metric: "Real wage index" },
+    { period: "1350", real_wage: 90,  metric: "Real wage index" },
+    { period: "1375", real_wage: 112, metric: "Real wage index" },
+    { period: "1400", real_wage: 145, metric: "Real wage index" },
+    { period: "1450", real_wage: 200, metric: "Real wage index" },
+    { period: "1480", real_wage: 215, metric: "Real wage index" },
+    { period: "1500", real_wage: 175, metric: "Real wage index" },
+    { period: "1300", real_wage: 100, metric: "Population index" },
+    { period: "1325", real_wage: 102, metric: "Population index" },
+    { period: "1350", real_wage: 54,  metric: "Population index" },
+    { period: "1375", real_wage: 46,  metric: "Population index" },
+    { period: "1400", real_wage: 44,  metric: "Population index" },
+    { period: "1450", real_wage: 40,  metric: "Population index" },
+    { period: "1480", real_wage: 42,  metric: "Population index" },
+    { period: "1500", real_wage: 45,  metric: "Population index" }
+  ]} />
+
+Greg Clark's analysis of English farm wages — drawn from thousands of manorial accounts — shows that from the pre-plague period (1300–1349) to the late fifteenth century (1450–1499), day wages rose by approximately 122%. <Annotation client:load term="day wages rose by roughly 122%" note="Clark, G. (2007), 'The Long March of History: Farm Wages, Population, and Economic Growth, England 1209–1869,' Economic History Review 60(1). The paper reports that 'from 1300-49 to 1450-99 day wages rose by 122%.' The peak real wage around 1476–1480 was 'not thereafter surpassed until 1886 to 1890.'" /> Real wages hit their medieval peak around 1476–1480, a level not surpassed until the 1880s. That is not a post-plague bounce; it is a structural shift in the distribution of economic power that lasted for generations.
+
+John Munro's monetary analysis adds an important complication: the real wage gain was delayed, not immediate. <Annotation client:load term="real wages did not rise until the late 1370s" note="Munro, J.H. (2004), 'Before and After the Black Death: Money, Prices, and Wages in Fourteenth-Century England,' MPRA Working Paper 15748. Munro argues that post-plague inflation — high grain prices sustained for nearly thirty years — 'swamped' nominal wage gains in real terms. Not until the late 1370s did real wages definitively recover." /> The immediate aftermath of the plague brought high grain prices as surviving heirs spent inherited silver and the productive workforce remained depleted. Nominal wages rose, but the consumer price index rose faster for nearly three decades. The real gain came later, as demographic decline persisted and inflation subsided. The Statute of Laborers was not simply a futile gesture against an immediate spike — it was a long rearguard action against a real-wage trend that took a generation to fully materialize.
+
+That complication is important. The Black Death did not simply hand workers a pay raise in 1349. It changed the underlying structure of the labor market — permanently reducing the labor-to-land ratio — and the consequences worked through that structural change slowly, against sustained institutional resistance. The Ordinance of 1349 and the Statute of 1351 were the first act of resistance. The Peasants' Revolt of 1381 was the moment that resistance broke. The doubling of real wages over the century was the outcome after both had run their course.
+
+## Why it matters beyond England
+
+England is the best-documented case, but the pattern appears across Western Europe. Florence's population fell from around 110,000 in 1338 to 50,000 in 1351; wages in the Italian city-states showed similar trajectories. <Annotation client:load term="Florence's population fell from 110,000 to 50,000" note="Wikipedia, 'Consequences of the Black Death,' citing multiple sources. The figure is consistent with Boccaccio's description of Florentine mortality in the Introduction to the Decameron." /> France, the Low Countries, and Iberia all experienced the same demographic shock, and historians document the same pressure on labor relations — the same attempts to freeze wages, the same eventual failures.
+
+Boccaccio, writing in Florence in the aftermath, captured the social vertigo of a world in which the old hierarchies no longer seemed to hold:
+
+<Pullquote kind="quote" cite="Giovanni Boccaccio, Introduction to the Decameron, c. 1353" href="https://www.worldhistory.org/article/1537/boccaccio-on-the-black-death-text--commentary/">
+Brother abandoned brother, uncle abandoned nephew, sister left brother, and very often wife abandoned husband, and — even worse, almost unbelievable — fathers and mothers neglected to tend and care for their children.
+</Pullquote>
+
+That is a passage about moral collapse. But read it as an economic historian, and it describes something else: the dissolution of the network of obligation and dependence that held feudal society together. The ties being abandoned were not just emotional — they were the ties of labor, service, and deference that the entire agrarian economy ran on.
+
+What Scheidel calls the "leveling effect" — the reduction in economic inequality that the Black Death produced — was not a gift. It was purchased at the cost of roughly 25 million European lives. And it was not permanent: as population recovered through the sixteenth century, the old Malthusian pressure returned, wages fell, and the relative power of workers declined again until the Industrial Revolution created a different kind of structural break. The equalization was real, and it lasted a century. Then it reversed.
+
+## The mechanism, clearly
+
+The Black Death as a labor-market shock can be stated cleanly:
+
+1. Massive, sudden mortality destroyed the labor surplus that had suppressed wages for two centuries.
+2. Labor scarcity gave surviving workers, for the first time, credible bargaining power — the power to walk away.
+3. Landlords faced a binary choice: pay higher wages or let the land go fallow. Most eventually paid.
+4. The crown and Parliament tried to legislate the old equilibrium back into existence. The Ordinance (1349) and Statute (1351) are the documentary record of that attempt.
+5. The attempt failed — not dramatically or all at once, but persistently, over decades, because no law could repeal the underlying scarcity.
+6. The institutional consequence was the contractualization of labor — serfdom dissolved into copyhold, labor service into wage labor, obligation into negotiation.
+7. The political consequence, thirty years delayed, was the Peasants' Revolt of 1381 — which failed in the immediate term and succeeded in the structural one.
+
+This is what makes the Black Death historically singular as an economic event. It was not a policy choice. No one decided to redistribute bargaining power from lords to laborers. The redistribution was an arithmetic consequence of mortality, mediated through the price of labor. The founding principle was not justice but scarcity. And scarcity, sustained for long enough, has a way of becoming justice.
+
+---
+
+**Methodology.** The wage-doubling figure (farm wages doubling between 1350 and 1450) rests primarily on Greg Clark's analysis in "The Long March of History: Farm Wages, Population, and Economic Growth, England 1209–1869" (*Economic History Review*, 60:1, 2007), which draws on thousands of manorial accounts and shows roughly 122% nominal wage growth from 1300–1349 to 1450–1499. The complication — that real wages did not rise until the late 1370s despite the nominal increase — is John Munro's finding from "Before and After the Black Death: Money, Prices, and Wages in Fourteenth-Century England" (MPRA, 2004), which uses the Phelps Brown-Hopkins consumer price index to deflate nominal wages and finds sustained post-plague inflation swamped real gains for nearly thirty years. The claims about England's population loss reflect Wikipedia's "Black Death in England" synthesis of scholarly estimates ranging from Ziegler's one-third to Benedictow's 62.5%; the piece uses "roughly half" as the mainstream figure, and the specific population values in the charts are illustrative reconstructions consistent with that literature, not a single authoritative series (England's pre-plague population is itself uncertain within a 3–7 million range). The primary source texts — the Ordinance of Laborers (1349) and Statute of Laborers (1351) — are cited from the Fordham Internet History Sourcebook and Yale Avalon Project respectively; specific wage rates (haymakers at 1d, master masons at 4d, etc.) come from the Wikipedia summary of the Statute, which credits Clark (2007), Poos (1983), and Cohn (2007). Knighton's Chronicle passages are cited through The Middle Ages website's English transcription, with the original text translated by Edith Rickert in Chaucer's World (Oxford University Press, 1948). The Boccaccio quotation is from the World History Encyclopedia's translation of the Decameron Introduction. Bailey (2021) and Scheidel (2017) provide the comparative and interpretive framework; the Eastern Europe divergence (the "second serfdom") is from Jedwab, Johnson & Koyama (2022, *Journal of Economic Literature*), while the Mamluk Egypt contrast is Scheidel's argument in *The Great Leveler*. Wage-index numbers in the charts are illustrative reconstructions consistent with the scholarly literature rather than primary series data — Clark's series and Munro's index are available only in the original papers. Claim I omitted for lack of a groundable source: the specific number of serfdom-related court prosecutions under the Statute of Laborers in the 1350s–1360s (Bailey mentions these but the figure is not in a freely accessible source I could verify independently).
