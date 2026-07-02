@@ -56,6 +56,15 @@ export const KNOWN_COMPONENTS = [
   "Quiz",
   "CodeWalkthrough",
   "AnnotatedFigure",
+  // P2 wave: dispatch data-viz depth + chronicle visuals.
+  "SmallMultiples",
+  "Distribution",
+  "Scatter",
+  "Slopegraph",
+  "RangePlot",
+  "CompareSlider",
+  "CastGrid",
+  "EventCascade",
 ] as const;
 
 export interface DraftResult {

@@ -52,6 +52,7 @@ Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  ScrollyTimeline
 RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
 StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
+SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -273,6 +274,84 @@ Props: `src: string` (from `getImage()`, **not** a raw import), `width: number`,
 (required a11y), `caption?`, `credit?`, `sourceUrl?` (grounding), `pins: { x, y,
 label, note }[]` (`x`/`y` are **0..1 fractions** of the image box). No-JS /
 reduced-motion → every pin's note is listed in an `<ol>` below (never blank).
+
+## 3c. P2 components — CompareSlider, CastGrid, EventCascade (this format's kit)
+
+### CompareSlider — before/after image wipe (island → `client:visible`)
+
+Two aligned images share one aspect-reserved frame; a draggable amber handle wipes
+between them. Like `AnnotatedFigure`, the island takes **already-optimized** `src`
+strings, so optimize each image in the MDX ESM header with `getImage()`:
+
+```jsx
+import { getImage } from "astro:assets";
+import beforeImg from "./_assets/before.png";
+import afterImg from "./_assets/after.png";
+const b = await getImage({ src: beforeImg, width: 1200 });
+const a = await getImage({ src: afterImg, width: 1200 });
+
+<CompareSlider client:visible
+  before={b.src} after={a.src}
+  width={b.attributes.width} height={b.attributes.height}
+  alt="The same corner, 118 years apart"
+  beforeLabel="1906" afterLabel="Today"
+  caption="Drag to wipe between the two." />
+```
+
+Props: `before: string`, `after: string` (both from `getImage()`, **not** raw
+imports), `width: number`, `height: number` (intrinsic px — reserves aspect ratio),
+`alt: string` (required, describes the comparison), `beforeLabel?` (default
+`"before"`), `afterLabel?` (default `"after"`), `caption?`, `orientation?: "h"|"v"`
+(default `h`). No-JS / reduced-motion → both images stacked with labels (never
+blank). Also usable in **build-log** (before/after builds) and **teardown**
+(wear/failure comparisons).
+
+### CastGrid — "cast of characters" card grid (STATIC Astro → NO client directive)
+
+A grid of people / places / factions carrying the narrative. Static Astro — the
+note reveal is pure CSS, so it needs **no client directive** and the notes are
+always readable with no-JS. Portraits are optional; when present, supply an
+optimized `img` string via `getImage()` (per-member).
+
+```jsx
+import { getImage } from "astro:assets";
+import portrait from "./_assets/carrington.png";
+const c = await getImage({ src: portrait, width: 480 });
+
+<CastGrid caption="The cast of the 1859 solar storm"
+  cast={[
+    { name: "Richard Carrington", role: "astronomer", img: c.src,
+      note: "Sketching sunspots when he saw the first solar flare ever recorded.",
+      sourceUrl: "https://en.wikipedia.org/wiki/Richard_Carrington" },
+    { name: "Balfour Stewart", role: "physicist",
+      note: "His magnetometers at Kew ran off the chart as the storm hit." }
+  ]} />
+```
+
+Props: `cast: { name, role, note, img?, sourceUrl? }[]` — `img?` is an OPTIONAL
+optimized `getImage()` string (cards render name-only without it); `note` is always
+visible. `caption?`. Reflows to one column at 360px. Also usable in **teardown**
+("the components") / **primer** ("the key ideas").
+
+### EventCascade — vertical CAUSAL chain (island → `client:visible`)
+
+```jsx
+<EventCascade client:visible caption="how one shot became a world war"
+  nodes={[
+    { kind: "cause", label: "Franz Ferdinand is assassinated in Sarajevo",
+      detail: "A single shot hands Vienna's war party the pretext it wanted." },
+    { kind: "effect", label: "Austria-Hungary issues an ultimatum to Serbia",
+      detail: "Ten demands engineered to be rejected." },
+    { kind: "turning-point", label: "The alliance system converts a local quarrel into a continental war",
+      detail: "Rigid mobilization timetables leave no room to stop." }
+  ]} />
+```
+
+Props: `nodes: { label: string, detail: string, kind?: "cause"|"effect"|"turning-point" }[]`
+(`detail` required, a plain serializable string; `kind` defaults to `effect`),
+`caption?`. The amber spine carries labeled *reasoning* — distinct from `Timeline`'s
+clock. No-JS → an ordered `<ol>` with every label + detail. Also usable in
+**teardown** (failure cascades) and **dispatch** (mechanisms).
 
 ## 4. Body conventions
 

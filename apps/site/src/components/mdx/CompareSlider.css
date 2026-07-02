@@ -1,0 +1,165 @@
+/* apps/site/src/components/mdx/CompareSlider.css
+   Before/after wipe. Two aligned images; the "after" is clipped by clip-path.
+   Mirrors Figure/AnnotatedFigure's hairline frame + archival warmth. The amber
+   handle line rides on --rule; the wipe is the only motion. Tokens only. */
+
+.cmp {
+  max-width: min(100%, var(--maxw));
+  margin-inline: auto;
+}
+
+/* ── the framed comparison box (fluid; aspect reserved inline) ─────────────── */
+.cmp__frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-md);
+  overflow: clip; /* clip-path stays inside the frame */
+  background: var(--bg-inset);
+  /* the wipe is a direct manipulation → grab affordance */
+  cursor: ew-resize;
+  touch-action: none; /* pointer-drag owns the gesture, not the page scroll */
+}
+.cmp--v .cmp__frame {
+  cursor: ns-resize;
+}
+
+.cmp__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Archival warmth: match Figure/AnnotatedFigure. */
+  filter: saturate(0.92) contrast(0.98);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+/* both images occupy the same box; before is the base, after is overlaid. */
+.cmp__img--after {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── labels (always visible) ───────────────────────────────────────────────── */
+.cmp__label {
+  position: absolute;
+  top: var(--s-2);
+  z-index: 3;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: color-mix(in oklab, var(--bg-inset) 78%, transparent);
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-sm);
+  padding: 2px var(--s-2);
+  pointer-events: none;
+}
+.cmp__label--before { left: var(--s-2); }
+.cmp__label--after { right: var(--s-2); }
+.cmp--v .cmp__label--before { top: var(--s-2); left: var(--s-2); }
+.cmp--v .cmp__label--after { top: auto; bottom: var(--s-2); right: auto; left: var(--s-2); }
+
+/* ── the amber handle line + grip ──────────────────────────────────────────── */
+.cmp__handle {
+  position: absolute;
+  z-index: 4;
+  background: var(--accent);
+  pointer-events: none;
+  box-shadow: 0 0 8px color-mix(in oklab, var(--accent) 45%, transparent);
+}
+.cmp--h .cmp__handle {
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  transform: translateX(-1px);
+}
+.cmp--v .cmp__handle {
+  left: 0;
+  right: 0;
+  height: 2px;
+  transform: translateY(-1px);
+}
+.cmp__grip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1.7rem;
+  height: 1.7rem;
+  display: grid;
+  place-items: center;
+  color: var(--bg);
+  background: var(--accent);
+  border: var(--hair) solid color-mix(in oklab, var(--accent) 60%, var(--bg));
+  border-radius: 999px;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--bg) 70%, transparent);
+}
+.cmp--h .cmp__grip::before { content: "⟺"; font-size: var(--t-sm); line-height: 1; }
+.cmp--v .cmp__grip::before { content: "⟺"; font-size: var(--t-sm); line-height: 1; transform: rotate(90deg); }
+
+/* ── the native range control drives the split (ARIA slider for free) ───────── */
+.cmp__range {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0; /* invisible but full-frame: pointer + keyboard target */
+  cursor: inherit;
+}
+.cmp--v .cmp__range { writing-mode: vertical-lr; }
+.cmp__range:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── caption ───────────────────────────────────────────────────────────────── */
+.cmp__cap { text-wrap: pretty; }
+
+/* ── SSR / no-JS stacked fallback ──────────────────────────────────────────── */
+.cmp__stack {
+  display: grid;
+  gap: var(--s-3);
+  margin-top: var(--s-3);
+}
+@media (min-width: 40rem) {
+  .cmp__stack { grid-template-columns: 1fr 1fr; }
+}
+.cmp__stack-item {
+  margin: 0;
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-md);
+  overflow: clip;
+  background: var(--bg-inset);
+}
+.cmp__stack-item img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: saturate(0.92) contrast(0.98);
+}
+.cmp__stack-label {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-label);
+  padding: var(--s-2) var(--s-3);
+}
+
+/* Once hydrated (JS on), the overlay wipe carries the comparison → hide the
+   redundant stacked pair. No-JS → never gets .cmp--hydrated → stack stays. */
+.cmp--hydrated .cmp__stack { display: none; }
+
+/* ── reduced motion: fix the split at 50%, no wipe transition. Both images and
+   both labels are already visible at 50/50, so the comparison stays complete.
+   We also keep the stacked pair reachable as an unambiguous static read. */
+@media (prefers-reduced-motion: reduce) {
+  .cmp__handle { box-shadow: none; }
+  .cmp--hydrated .cmp__stack { display: grid; }
+}

@@ -52,6 +52,7 @@ Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  ScrollyTimeline
 RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
 StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
+SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -279,6 +280,35 @@ Props: `code: string` (full listing, any language), `lang?` (Shiki id, e.g. `"ts
 `"python"`; default `"text"`), `steps: { lines: [start,end], note }[]` (1-based
 inclusive range focused per step), `caption?`. **Static Astro** — no `client:`
 directive; Shiki highlights at build. Distinct from `RunnableCode` (editable JS).
+
+## 3c. P2 components — CompareSlider (this format's kit)
+
+### CompareSlider — before/after image wipe (island → `client:visible`)
+
+For before/after builds (bare board vs assembled, prototype vs final). Two aligned
+images share one aspect-reserved frame; a draggable amber handle wipes between them.
+Optimize each image in the MDX ESM header with `getImage()`:
+
+```jsx
+import { getImage } from "astro:assets";
+import beforeImg from "./_assets/before.png";
+import afterImg from "./_assets/after.png";
+const b = await getImage({ src: beforeImg, width: 1200 });
+const a = await getImage({ src: afterImg, width: 1200 });
+
+<CompareSlider client:visible
+  before={b.src} after={a.src}
+  width={b.attributes.width} height={b.attributes.height}
+  alt="Bare board vs fully assembled"
+  beforeLabel="Rev A" afterLabel="Rev B"
+  caption="Drag to wipe between the two revisions." />
+```
+
+Props: `before: string`, `after: string` (both from `getImage()`, **not** raw
+imports), `width: number`, `height: number` (intrinsic px), `alt: string` (required),
+`beforeLabel?` (default `"before"`), `afterLabel?` (default `"after"`), `caption?`,
+`orientation?: "h"|"v"` (default `h`). No-JS / reduced-motion → both images stacked
+with labels (never blank).
 
 ## 4. Body conventions
 

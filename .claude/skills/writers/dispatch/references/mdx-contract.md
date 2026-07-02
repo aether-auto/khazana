@@ -52,6 +52,7 @@ Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  ScrollyTimeline
 RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
 StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
+SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -292,6 +293,110 @@ Props: `questions: { prompt, choices?, answer, explain, kind? }[]` — `answer` 
 **0-based choice index** for `mc` or the **number** for `numeric`; `kind?`: `mc` |
 `numeric` (inferred: `mc` if `choices` present). `caption?`. No-JS → questions +
 answers in a `<details>`.
+
+## 3c. P2 components — SmallMultiples, Distribution, Scatter, Slopegraph, RangePlot, EventCascade (this format's kit)
+
+The five data-viz components are thin Observable-Plot / hand-rolled-SVG islands
+(all `client:visible`). Data is a plain serializable array. EventCascade is a
+causal chain (a dispatch "mechanism").
+
+### SmallMultiples — one faceted chart per category (island → `client:visible`)
+
+```jsx
+<SmallMultiples client:visible mark="line" x="year" y="reqs" facet="region"
+  caption="request volume by region, 2019–2024"
+  data={[
+    { region: "us-east", year: 2019, reqs: 120 }, { region: "us-east", year: 2020, reqs: 240 },
+    { region: "eu-west", year: 2019, reqs: 80 },  { region: "eu-west", year: 2020, reqs: 150 }
+  ]} />
+```
+
+Props: `data: Record<string, unknown>[]`, `mark: "line"|"bar"|"area"|"dot"`,
+`x: string`, `y: string`, `facet: string` (distinct values → one panel each),
+`columns?` (default near-square, capped 4), `sharedY?` (default true), `caption?`,
+`height?`. Panels reflow into more rows on mobile — never widens past 360px.
+
+### Distribution — histogram / density with optional reference line (island → `client:visible`)
+
+```jsx
+<Distribution client:visible value="ms" bins={24}
+  valueLabel="response time (ms)"
+  marker={[{ at: 200, label: "SLA 200ms" }]}
+  caption="p50 latency; amber line is the 200 ms SLA"
+  data={[{ ms: 42 }, { ms: 88 }, { ms: 205 }, { ms: 480 }]} />
+```
+
+Props: `data: Record<string, unknown>[]`, `value: string` (numeric column to bin),
+`bins?` (default Sturges, clamped 5–40), `marker?: { at: number, label: string }[]`
+(amber reference line(s)), `mark?: "hist"|"density"` (default `hist`), `caption?`,
+`valueLabel?`, `height?` (default 300). No-JS → a real bin `<table>`.
+
+### Scatter — x/y points with optional linear fit (island → `client:visible`)
+
+```jsx
+<Scatter client:visible x="params" y="mmlu" fit="linear"
+  xLabel="parameters (B)" yLabel="MMLU (%)"
+  caption="Capability vs scale, with a linear fit"
+  data={[
+    { model: "GPT-3", params: 175, mmlu: 44 },
+    { model: "GPT-4", params: 1400, mmlu: 86 }
+  ]} />
+```
+
+Props: `data: Record<string, unknown>[]`, `x: string`, `y: string`, `size?: string`
+(field → dot radius), `color?: string` (field → color+legend), `fit?: "linear"|"none"`
+(default `none`), `caption?`, `xLabel?`, `yLabel?`, `height?` (default 340).
+
+### Slopegraph — before/after ranking or value reordering (island → `client:visible`)
+
+```jsx
+<Slopegraph client:visible beforeLabel="2019" afterLabel="2024"
+  data={[
+    { label: "Python", before: 1, after: 1 },
+    { label: "TypeScript", before: 7, after: 2 },
+    { label: "Rust", before: 9, after: 4 }
+  ]}
+  caption="Language-popularity reordering, 2019 → 2024 (rank)" />
+```
+
+Props: `data: { label: string, before: number, after: number }[]`, `beforeLabel:
+string`, `afterLabel: string`, `caption?`. Risers amber, fallers clay. ≤640px
+promotes a semantic list (no 360px overflow).
+
+### RangePlot — low–mid–high intervals by category (island → `client:visible`)
+
+```jsx
+<RangePlot client:visible unit="ms"
+  data={[
+    { label: "SQLite", low: 0.4, mid: 1.2, high: 3.1, n: 1000 },
+    { label: "Postgres", low: 1.1, mid: 2.8, high: 6.4, n: 1000 }
+  ]}
+  caption="Read latency by store — 95% interval, median dot" />
+```
+
+Props: `data: { label: string, low: number, mid: number, high: number, n? }[]`,
+`caption?`, `unit?` (suffix on readouts, e.g. `"ms"`, `"%"`). ≤640px promotes a
+semantic list.
+
+### EventCascade — vertical CAUSAL chain (island → `client:visible`)
+
+```jsx
+<EventCascade client:visible caption="how one misconfig cascaded"
+  nodes={[
+    { kind: "cause", label: "A threshold triggers premature scale-in",
+      detail: "The fleet drops below the connection-draining floor mid-spike." },
+    { kind: "effect", label: "Retries amplify load",
+      detail: "Each retry multiplies request rate against a shrinking pool." },
+    { kind: "turning-point", label: "Circuit breakers trip and shed load",
+      detail: "Shedding 40% of inbound traffic lets the pool recover." }
+  ]} />
+```
+
+Props: `nodes: { label: string, detail: string, kind?: "cause"|"effect"|"turning-point" }[]`
+(`detail` required — a plain serializable string; `kind` defaults to `effect`),
+`caption?`. Distinct from `Timeline`: the amber spine carries labeled *reasoning*
+("therefore" / "which drives" / "and so"), not elapsed time. No-JS → an ordered
+`<ol>` with every label + detail visible.
 
 ## 4. Body conventions
 

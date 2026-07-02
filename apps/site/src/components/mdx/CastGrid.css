@@ -1,0 +1,145 @@
+/* apps/site/src/components/mdx/CastGrid.css
+   "Cast of characters" hairline card grid. CSS-only reveal (:hover /
+   :focus-within); notes always in the DOM. "Lines not boxes" frames, Fraunces
+   names, mono --ink-label roles, subtle portrait duotone. Tokens only. */
+
+.castgrid {
+  max-width: min(100%, var(--maxw));
+  margin-inline: auto;
+}
+
+.castgrid__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-4);
+  /* auto-fit reflows to a single column at 360px (no horizontal overflow). */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+}
+.castgrid__cell { margin: 0; }
+
+/* ── the card: lines, not boxes ────────────────────────────────────────────── */
+.castcard {
+  position: relative;
+  display: grid;
+  gap: var(--s-3);
+  height: 100%;
+  margin: 0;
+  padding: var(--s-4);
+  background: var(--bg-card, var(--bg-raised));
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-md);
+  /* the "lift" on hover/focus — transform + border only, no drop-shadow box. */
+  transition: transform var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out);
+  outline: none;
+}
+.castcard:hover,
+.castcard:focus-within {
+  transform: translateY(-3px);
+  border-color: var(--rule-bright);
+}
+.castcard:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── optional portrait (duotone toward --ink / --bg) ───────────────────────── */
+.castcard__portrait {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: clip;
+  border: var(--hair) solid var(--rule);
+  border-radius: var(--r-sm);
+  background: var(--bg-inset);
+}
+.castcard__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* subtle duotone: desaturate toward the warm near-black world, lift on focus. */
+  filter: saturate(0.55) contrast(0.98) brightness(0.94);
+  transition: filter var(--dur) var(--ease-out);
+}
+.castcard:hover .castcard__img,
+.castcard:focus-within .castcard__img {
+  filter: saturate(0.85) contrast(1) brightness(1);
+}
+
+/* ── name / role / note ────────────────────────────────────────────────────── */
+.castcard__body {
+  display: grid;
+  gap: var(--s-1);
+}
+.castcard__name {
+  font-family: var(--font-display);
+  font-size: var(--t-md, 1.0625rem);
+  line-height: 1.15;
+  color: var(--ink);
+}
+.castcard__role {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-label);
+}
+.castcard__note {
+  display: block;
+  margin-top: var(--s-2);
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  line-height: var(--lh-read);
+  color: var(--ink-dim);
+  /* revealed on hover/focus when JS-capable browsers support the collapse.
+     Default (and no-JS / reduced-motion) → fully visible. See below. */
+}
+.castcard__src {
+  margin-left: var(--s-1);
+  color: var(--editorial);
+  text-decoration: none;
+  border-bottom: var(--hair) solid
+    color-mix(in oklab, var(--editorial) 30%, transparent);
+}
+.castcard__src:hover { color: var(--accent); }
+
+/* ── the reveal ────────────────────────────────────────────────────────────
+   Progressive enhancement: ONLY when the browser can animate (interaction-media
+   is a proxy for a capable, motion-OK, pointer-driven UA) do we collapse the
+   note and expand it on hover/focus. Everywhere else (no such support, reduced
+   motion, no-JS) the note stays fully visible — the invariant is the default. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (grid-template-rows: 0fr) {
+    .castcard__note {
+      overflow: hidden;
+      /* collapse via a 0fr→1fr grid row: animatable, no fixed max-height guess. */
+      display: grid;
+      grid-template-rows: 0fr;
+      margin-top: 0;
+      opacity: 0;
+      transition: grid-template-rows var(--dur) var(--ease-out),
+        opacity var(--dur) var(--ease-out), margin-top var(--dur) var(--ease-out);
+    }
+    .castcard__note > * { min-height: 0; }
+    .castcard:hover .castcard__note,
+    .castcard:focus-within .castcard__note {
+      grid-template-rows: 1fr;
+      margin-top: var(--s-2);
+      opacity: 1;
+    }
+  }
+}
+
+/* ── reduced motion: notes always visible, zero animation (end state). ──────── */
+@media (prefers-reduced-motion: reduce) {
+  .castcard,
+  .castcard__img { transition: none; }
+  .castcard:hover,
+  .castcard:focus-within { transform: none; }
+  .castcard__note { opacity: 1; }
+}
+
+.castgrid__cap { text-wrap: pretty; }

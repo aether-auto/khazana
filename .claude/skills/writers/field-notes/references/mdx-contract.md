@@ -52,6 +52,7 @@ Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  ScrollyTimeline
 RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
 StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
+SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands

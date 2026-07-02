@@ -1,0 +1,82 @@
+---
+// apps/site/src/components/mdx/CastGrid.astro
+//
+// "Cast of characters" card grid — the people / places / factions carrying a
+// chronicle's narrative (also teardown "the components", primer "the key ideas").
+//
+// STATIC ASTRO, NOT a React island — chosen deliberately. The reveal is pure CSS
+// (:hover / :focus-within), so:
+//   • no-JS   → the note is in the DOM and, without the JS-gated collapse, is
+//     ALWAYS visible (the "notes always visible" guarantee is structural, not a
+//     hydration race — the simplest way to honor the invariant).
+//   • reduced-motion → a media query pins every note open with zero transition.
+//   • keyboard → each card is tabindex=0, so :focus-within reveals its note.
+// An island would have to re-derive all three; CSS gives them for free.
+//
+// Props are serializable (name/role/img string/note/sourceUrl) — the optimized
+// portrait `img` is a getImage() string supplied at the page level (like
+// AnnotatedFigure). `img` is OPTIONAL: cards render a name-only variant without
+// a portrait. `caption?` is wrapped in the shared .mdx-figure vocabulary.
+//
+// Aesthetic: Fraunces names, --ink-label mono roles, hairline "lines not boxes"
+// card frames, an optional subtle duotone on portraits toward --ink / --bg.
+import "./CastGrid.css";
+import { normalizeCast, type CastMember } from "./lib/cast-grid.js";
+
+export interface CastGridProps {
+  /** The cast — each a name + role + note, with an optional portrait + source. */
+  cast: CastMember[];
+  /** Editorial caption (Fraunces, shared .mdx-caption). */
+  caption?: string;
+}
+
+const { cast, caption } = Astro.props as CastGridProps;
+const members = normalizeCast(cast);
+---
+
+<figure class="mdx-figure castgrid" data-reveal>
+  <ul class="castgrid__grid" role="list">
+    {
+      members.map((m) => (
+        <li class="castgrid__cell">
+          <figure
+            class={m.hasImg ? "castcard castcard--portrait" : "castcard"}
+            tabindex="0"
+            aria-label={`${m.name}${m.role ? `, ${m.role}` : ""}`}
+          >
+            {m.hasImg && (
+              <span class="castcard__portrait" aria-hidden="true">
+                <img
+                  class="castcard__img"
+                  src={m.img}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  draggable={false}
+                />
+              </span>
+            )}
+            <figcaption class="castcard__body">
+              <span class="castcard__name">{m.name}</span>
+              {m.role && <span class="castcard__role">{m.role}</span>}
+              <span class="castcard__note">
+                {m.note}
+                {m.sourceUrl && (
+                  <a
+                    class="castcard__src"
+                    href={m.sourceUrl}
+                    rel="noopener noreferrer"
+                  >
+                    source
+                  </a>
+                )}
+              </span>
+            </figcaption>
+          </figure>
+        </li>
+      ))
+    }
+  </ul>
+
+  {caption && <figcaption class="mdx-caption castgrid__cap">{caption}</figcaption>}
+</figure>

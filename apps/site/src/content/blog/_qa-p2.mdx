@@ -1,0 +1,290 @@
+---
+title: "QA P2: SmallMultiples, Distribution, Scatter, Slopegraph, RangePlot, CompareSlider, CastGrid, EventCascade Under Stress"
+format: dispatch
+channels: ["science", "tech"]
+summary: "A non-shipping QA harness that exercises the eight new P2 Reads components — the five dispatch data-viz (SmallMultiples, Distribution, Scatter, Slopegraph, RangePlot) and the three chronicle visuals (CompareSlider, CastGrid, EventCascade) — with realistic props and deliberately stressful edge cases to surface overflow, wrapping, and sizing bugs at 360px, both motion modes, and JS-off."
+publishedAt: 2026-07-01T11:00:00.000Z
+sources:
+  - title: "Edward Tufte — small multiples (Wikipedia)"
+    url: "https://en.wikipedia.org/wiki/Small_multiple"
+draft: true
+---
+
+import {
+  SmallMultiples,
+  Distribution,
+  Scatter,
+  Slopegraph,
+  RangePlot,
+  CompareSlider,
+  CastGrid,
+  EventCascade,
+} from "../../components/mdx";
+import { getImage } from "astro:assets";
+import cmpBefore from "./_assets/_demo/compare-before.png";
+import cmpAfter from "./_assets/_demo/compare-after.png";
+import cast1 from "./_assets/_demo/cast-1.png";
+import cast2 from "./_assets/_demo/cast-2.png";
+import cast3 from "./_assets/_demo/cast-3.png";
+
+export const before = await getImage({ src: cmpBefore, width: 1200 });
+export const after = await getImage({ src: cmpAfter, width: 1200 });
+export const p1 = await getImage({ src: cast1, width: 480 });
+export const p2 = await getImage({ src: cast2, width: 480 });
+export const p3 = await getImage({ src: cast3, width: 480 });
+
+This is a QA harness for the **P2 wave**. Each of the eight new components appears below first with realistic props and then, where relevant, stressed with long labels, many items, and narrow-viewport edge cases so wrapping and reflow can be judged at 360px and in both motion modes.
+
+## 1. SmallMultiples — realistic + mobile-stress (12-cohort reflow)
+
+<SmallMultiples
+  client:visible
+  mark="line"
+  x="year" y="reqs" facet="region"
+  caption="request volume by region, 2019–2022"
+  data={[
+    { region: "us-east", year: 2019, reqs: 120 }, { region: "us-east", year: 2020, reqs: 240 },
+    { region: "us-east", year: 2021, reqs: 260 }, { region: "us-east", year: 2022, reqs: 410 },
+    { region: "eu-west", year: 2019, reqs: 80 },  { region: "eu-west", year: 2020, reqs: 150 },
+    { region: "eu-west", year: 2021, reqs: 300 }, { region: "eu-west", year: 2022, reqs: 330 },
+    { region: "ap-south", year: 2019, reqs: 40 }, { region: "ap-south", year: 2020, reqs: 90 },
+    { region: "ap-south", year: 2021, reqs: 210 },{ region: "ap-south", year: 2022, reqs: 520 },
+    { region: "sa-east", year: 2019, reqs: 20 },  { region: "sa-east", year: 2020, reqs: 55 },
+    { region: "sa-east", year: 2021, reqs: 130 }, { region: "sa-east", year: 2022, reqs: 180 }
+  ]}
+/>
+
+<SmallMultiples
+  client:visible
+  mark="bar" x="quarter" y="churn" facet="cohort"
+  caption="12-cohort churn grid (stress: reflows into more rows on mobile)"
+  data={[
+    { cohort: "2021-Q1", quarter: "Q1", churn: 5 }, { cohort: "2021-Q1", quarter: "Q2", churn: 4 }, { cohort: "2021-Q1", quarter: "Q3", churn: 3 }, { cohort: "2021-Q1", quarter: "Q4", churn: 3 },
+    { cohort: "2021-Q2", quarter: "Q1", churn: 6 }, { cohort: "2021-Q2", quarter: "Q2", churn: 5 }, { cohort: "2021-Q2", quarter: "Q3", churn: 4 }, { cohort: "2021-Q2", quarter: "Q4", churn: 3 },
+    { cohort: "2021-Q3", quarter: "Q1", churn: 7 }, { cohort: "2021-Q3", quarter: "Q2", churn: 5 }, { cohort: "2021-Q3", quarter: "Q3", churn: 4 }, { cohort: "2021-Q3", quarter: "Q4", churn: 4 },
+    { cohort: "2021-Q4", quarter: "Q1", churn: 5 }, { cohort: "2021-Q4", quarter: "Q2", churn: 4 }, { cohort: "2021-Q4", quarter: "Q3", churn: 3 }, { cohort: "2021-Q4", quarter: "Q4", churn: 2 },
+    { cohort: "2022-Q1", quarter: "Q1", churn: 8 }, { cohort: "2022-Q1", quarter: "Q2", churn: 6 }, { cohort: "2022-Q1", quarter: "Q3", churn: 5 }, { cohort: "2022-Q1", quarter: "Q4", churn: 4 },
+    { cohort: "2022-Q2", quarter: "Q1", churn: 6 }, { cohort: "2022-Q2", quarter: "Q2", churn: 5 }, { cohort: "2022-Q2", quarter: "Q3", churn: 4 }, { cohort: "2022-Q2", quarter: "Q4", churn: 3 },
+    { cohort: "2022-Q3", quarter: "Q1", churn: 9 }, { cohort: "2022-Q3", quarter: "Q2", churn: 7 }, { cohort: "2022-Q3", quarter: "Q3", churn: 6 }, { cohort: "2022-Q3", quarter: "Q4", churn: 5 },
+    { cohort: "2022-Q4", quarter: "Q1", churn: 5 }, { cohort: "2022-Q4", quarter: "Q2", churn: 4 }, { cohort: "2022-Q4", quarter: "Q3", churn: 3 }, { cohort: "2022-Q4", quarter: "Q4", churn: 3 },
+    { cohort: "2023-Q1", quarter: "Q1", churn: 7 }, { cohort: "2023-Q1", quarter: "Q2", churn: 6 }, { cohort: "2023-Q1", quarter: "Q3", churn: 5 }, { cohort: "2023-Q1", quarter: "Q4", churn: 4 },
+    { cohort: "2023-Q2", quarter: "Q1", churn: 6 }, { cohort: "2023-Q2", quarter: "Q2", churn: 5 }, { cohort: "2023-Q2", quarter: "Q3", churn: 4 }, { cohort: "2023-Q2", quarter: "Q4", churn: 4 },
+    { cohort: "2023-Q3", quarter: "Q1", churn: 8 }, { cohort: "2023-Q3", quarter: "Q2", churn: 6 }, { cohort: "2023-Q3", quarter: "Q3", churn: 5 }, { cohort: "2023-Q3", quarter: "Q4", churn: 4 },
+    { cohort: "2023-Q4", quarter: "Q1", churn: 5 }, { cohort: "2023-Q4", quarter: "Q2", churn: 4 }, { cohort: "2023-Q4", quarter: "Q3", churn: 3 }, { cohort: "2023-Q4", quarter: "Q4", churn: 2 }
+  ]}
+/>
+
+## 2. Distribution — histogram (realistic) + 40-bin density (mobile-stress)
+
+<Distribution
+  client:visible
+  value="ms" bins={24}
+  valueLabel="response time (ms)"
+  marker={[{ at: 200, label: "SLA 200ms" }]}
+  caption="p50 request latency; the amber line is the 200 ms SLA the argument hangs on"
+  data={[
+    { ms: 42 }, { ms: 55 }, { ms: 61 }, { ms: 78 }, { ms: 88 }, { ms: 90 },
+    { ms: 110 }, { ms: 120 }, { ms: 133 }, { ms: 150 }, { ms: 168 }, { ms: 172 },
+    { ms: 190 }, { ms: 205 }, { ms: 210 }, { ms: 240 }, { ms: 260 }, { ms: 310 },
+    { ms: 340 }, { ms: 420 }, { ms: 480 }, { ms: 610 }, { ms: 720 }, { ms: 900 }
+  ]}
+/>
+
+<Distribution
+  client:visible
+  value="score" bins={40} mark="density"
+  marker={[{ at: 0, label: "mean" }, { at: 2, label: "+2σ" }]}
+  caption="40-bin density (stress: dense comb scales to width:100% at 360px)"
+  data={[
+    { score: -2.9 }, { score: -2.6 }, { score: -2.4 }, { score: -2.3 }, { score: -2.1 }, { score: -2.0 },
+    { score: -1.9 }, { score: -1.8 }, { score: -1.7 }, { score: -1.6 }, { score: -1.55 }, { score: -1.5 },
+    { score: -1.45 }, { score: -1.4 }, { score: -1.35 }, { score: -1.3 }, { score: -1.25 }, { score: -1.2 },
+    { score: -1.15 }, { score: -1.1 }, { score: -1.05 }, { score: -1.0 }, { score: -0.95 }, { score: -0.9 },
+    { score: -0.85 }, { score: -0.8 }, { score: -0.78 }, { score: -0.75 }, { score: -0.72 }, { score: -0.7 },
+    { score: -0.68 }, { score: -0.65 }, { score: -0.62 }, { score: -0.6 }, { score: -0.58 }, { score: -0.55 },
+    { score: -0.52 }, { score: -0.5 }, { score: -0.48 }, { score: -0.45 }, { score: -0.42 }, { score: -0.4 },
+    { score: -0.38 }, { score: -0.35 }, { score: -0.32 }, { score: -0.3 }, { score: -0.28 }, { score: -0.25 },
+    { score: -0.22 }, { score: -0.2 }, { score: -0.18 }, { score: -0.15 }, { score: -0.12 }, { score: -0.1 },
+    { score: -0.08 }, { score: -0.05 }, { score: -0.02 }, { score: 0.0 }, { score: 0.02 }, { score: 0.05 },
+    { score: 0.08 }, { score: 0.1 }, { score: 0.12 }, { score: 0.15 }, { score: 0.18 }, { score: 0.2 },
+    { score: 0.22 }, { score: 0.25 }, { score: 0.28 }, { score: 0.3 }, { score: 0.32 }, { score: 0.35 },
+    { score: 0.38 }, { score: 0.4 }, { score: 0.42 }, { score: 0.45 }, { score: 0.48 }, { score: 0.5 },
+    { score: 0.52 }, { score: 0.55 }, { score: 0.58 }, { score: 0.6 }, { score: 0.62 }, { score: 0.65 },
+    { score: 0.68 }, { score: 0.7 }, { score: 0.72 }, { score: 0.75 }, { score: 0.78 }, { score: 0.8 },
+    { score: 0.85 }, { score: 0.9 }, { score: 0.95 }, { score: 1.0 }, { score: 1.05 }, { score: 1.1 },
+    { score: 1.15 }, { score: 1.2 }, { score: 1.25 }, { score: 1.3 }, { score: 1.35 }, { score: 1.4 },
+    { score: 1.45 }, { score: 1.5 }, { score: 1.6 }, { score: 1.7 }, { score: 1.8 }, { score: 1.9 },
+    { score: 2.0 }, { score: 2.1 }, { score: 2.3 }, { score: 2.5 }, { score: 2.7 }, { score: 3.0 }
+  ]}
+/>
+
+## 3. Scatter — linear fit (realistic) + size/color long-labels (mobile-stress)
+
+<Scatter
+  client:visible
+  data={[
+    { model: "GPT-2",  params: 1.5,  mmlu: 32 },
+    { model: "GPT-3",  params: 175,  mmlu: 44 },
+    { model: "Chinchilla", params: 70, mmlu: 67 },
+    { model: "GPT-4",  params: 1400, mmlu: 86 },
+    { model: "Llama-3", params: 405, mmlu: 82 }
+  ]}
+  x="params" y="mmlu"
+  xLabel="parameters (B)" yLabel="MMLU (%)"
+  fit="linear"
+  caption="Capability vs scale, with a linear fit"
+/>
+
+<Scatter
+  client:visible
+  data={[
+    { country: "United States of America", gdpPerCapita: 76, lifeExpectancyAtBirth: 79, population: 331, continent: "North America" },
+    { country: "Democratic Republic of Congo", gdpPerCapita: 0.6, lifeExpectancyAtBirth: 60, population: 95, continent: "Africa" },
+    { country: "Luxembourg", gdpPerCapita: 128, lifeExpectancyAtBirth: 82, population: 0.6, continent: "Europe" }
+  ]}
+  x="gdpPerCapita" y="lifeExpectancyAtBirth"
+  size="population" color="continent"
+  caption="Wealth, longevity, population, and continent in one frame (stress: long labels + size + color at 360px)"
+/>
+
+## 4. Slopegraph — rank reordering (realistic) + long labels (mobile-stress)
+
+<Slopegraph
+  client:visible
+  beforeLabel="2019" afterLabel="2024"
+  data={[
+    { label: "Python",     before: 1, after: 1 },
+    { label: "JavaScript", before: 2, after: 3 },
+    { label: "TypeScript", before: 7, after: 2 },
+    { label: "Java",       before: 3, after: 5 },
+    { label: "Rust",       before: 9, after: 4 }
+  ]}
+  caption="Language-popularity reordering, 2019 → 2024 (rank)"
+/>
+
+<Slopegraph
+  client:visible
+  beforeLabel="Pre-migration" afterLabel="Post-migration"
+  data={[
+    { label: "p99 request latency (ms)", before: 840, after: 210 },
+    { label: "Monthly infrastructure cost ($k)", before: 47, after: 47 },
+    { label: "Cold-start time (ms)", before: 1200, after: 90 }
+  ]}
+  caption="What the serverless migration moved (stress: long labels force the fallback path ≤640px)"
+/>
+
+## 5. RangePlot — intervals (realistic) + long category names (mobile-stress)
+
+<RangePlot
+  client:visible
+  unit="ms"
+  data={[
+    { label: "SQLite",     low: 0.4, mid: 1.2, high: 3.1, n: 1000 },
+    { label: "Postgres",   low: 1.1, mid: 2.8, high: 6.4, n: 1000 },
+    { label: "DynamoDB",   low: 3.2, mid: 8.1, high: 22.0, n: 1000 },
+    { label: "S3 (cold)",  low: 40,  mid: 95,  high: 260, n: 1000 }
+  ]}
+  caption="Read latency by store — 95% interval, median dot"
+/>
+
+<RangePlot
+  client:visible
+  unit="%"
+  data={[
+    { label: "Retrieval-augmented generation baseline", low: 61, mid: 68, high: 74, n: 300 },
+    { label: "Fine-tuned domain model", low: 70, mid: 79, high: 85, n: 300 },
+    { label: "Zero-shot frontier model", low: 55, mid: 66, high: 77 }
+  ]}
+  caption="Answer accuracy by approach — IQR with median (stress: long category names ≤640px)"
+/>
+
+## 6. CompareSlider — horizontal (realistic) + vertical long-label (mobile-stress)
+
+<CompareSlider
+  client:visible
+  before={before.src} after={after.src}
+  width={before.attributes.width} height={before.attributes.height}
+  alt="The demo plate, faded archival vs restored"
+  beforeLabel="1906" afterLabel="Today"
+  caption="The same plate, restored — drag to wipe."
+/>
+
+<CompareSlider
+  client:visible
+  before={before.src} after={after.src}
+  width={before.attributes.width} height={before.attributes.height}
+  orientation="v"
+  alt="The demo plate before and after, vertical wipe"
+  beforeLabel="Admission (day 0)" afterLabel="Discharge (day 21)"
+  caption="Vertical wipe with long labels; verify no overflow at 360px."
+/>
+
+## 7. CastGrid — portraits (realistic) + long strings + portraitless (mobile-stress)
+
+<CastGrid
+  caption="The cast of the 1859 solar storm"
+  cast={[
+    { name: "Richard Carrington", role: "astronomer",
+      img: p1.src,
+      note: "Sketching sunspots in Redhill when he saw the white-light flare — the first solar flare ever recorded.",
+      sourceUrl: "https://en.wikipedia.org/wiki/Richard_Carrington" },
+    { name: "Balfour Stewart", role: "physicist",
+      img: p2.src,
+      note: "At Kew Observatory, his magnetometers ran off the chart as the storm hit — the instrumental record." },
+    { name: "The Telegraph Network", role: "infrastructure",
+      note: "Lines sparked, operators were shocked, some sent messages on the auroral current alone." }
+  ]}
+/>
+
+<CastGrid
+  caption="Stress: long strings + a portraitless card at 360px"
+  cast={[
+    { name: "A Very Long Personage Name Indeed", role: "quartermaster-general of the northern approaches",
+      img: p3.src,
+      note: "A deliberately long note to verify wrap, the grid-row collapse animation, and the source link. Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor.",
+      sourceUrl: "https://example.org/ledger#1" },
+    { name: "Anon", role: "witness", note: "Short." }
+  ]}
+/>
+
+## 8. EventCascade — causal chain (realistic) + long labels / many nodes (mobile-stress)
+
+<EventCascade
+  client:visible
+  caption="how one shot became a world war"
+  nodes={[
+    { kind: "cause", label: "Archduke Franz Ferdinand is assassinated in Sarajevo",
+      detail: "A single pistol shot on 28 June 1914 removes the heir to Austria-Hungary and hands the war party in Vienna the pretext it had been waiting for." },
+    { kind: "effect", label: "Austria-Hungary issues an ultimatum to Serbia",
+      detail: "Ten demands engineered to be rejected, backed by Germany's 'blank cheque' of unconditional support." },
+    { kind: "effect", label: "Russia mobilizes to protect Serbia",
+      detail: "A partial mobilization the Tsar cannot reverse without losing face — or control of his own general staff." },
+    { kind: "turning-point", label: "The alliance system converts a local quarrel into a continental war",
+      detail: "Rigid mobilization timetables leave no room to stop once the first order is given: to mobilize is to attack." },
+    { kind: "effect", label: "Germany invades Belgium; Britain declares war",
+      detail: "The Schlieffen Plan's violation of Belgian neutrality pulls the last great power in. Within six weeks a Balkan murder is a war of empires." }
+  ]}
+/>
+
+<EventCascade
+  client:visible
+  caption="mobile stress — long unbroken labels, dense chain, deep details"
+  nodes={[
+    { kind: "cause", label: "A single misconfigured autoscaling-policy-threshold-value triggers premature scale-in",
+      detail: "The policy's cooldown window (a very-long-hyphenated-identifier-that-must-wrap-gracefully-at-360px) collapses the fleet below the connection-draining floor during a traffic spike, and the load balancer keeps routing to instances that are already terminating." },
+    { kind: "effect", label: "Healthy instances are terminated mid-request while the queue backs up",
+      detail: "Retries amplify load; each retry multiplies the effective request rate against a shrinking pool, so p99 latency crosses the timeout threshold and clients begin retrying in earnest." },
+    { kind: "effect", label: "The retry storm saturates the remaining capacity",
+      detail: "https://example.com/very/long/url/that/would/overflow/a/narrow/column/if/not/wrapped shows the exact minute the cascade tipped." },
+    { kind: "turning-point", label: "Circuit breakers finally trip and shed load — the cascade is arrested",
+      detail: "Shedding 40% of inbound traffic lets the healthy pool recover; the turning point is emphasized so the reader's eye lands on the moment the failure stops propagating." },
+    { kind: "effect", label: "Post-incident: the threshold is pinned and cooldown lengthened",
+      detail: "The fix is one line; the lesson is that autoscaling and connection-draining must share a single source of truth for 'in-service'." },
+    { kind: "effect", label: "A guardrail test now fails any policy that can scale below the draining floor",
+      detail: "Codified so the same misconfiguration cannot recur silently." },
+    { kind: "effect", label: "Runbook updated; on-call training added",
+      detail: "The human layer catches what the guardrail cannot." },
+    { kind: "effect", label: "Blameless review shipped to the whole org",
+      detail: "The lesson generalizes beyond the one service that failed." }
+  ]}
+/>

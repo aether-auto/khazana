@@ -1,0 +1,260 @@
+/* apps/site/src/components/mdx/EventCascade.css
+   A vertical CAUSAL chain (not a clock). The connective tissue is a literal
+   drawn amber rule — the "spine" of the story — with a causal connector word on
+   each link. "Lines not boxes", tokens only. The semantic <ol> IS the render:
+   without JS every node + detail is fully visible; JS only toggles the reveal /
+   open classes. Reveal motion lives ONLY inside the figure, never in prose. */
+
+.ec {
+  max-width: var(--measure);
+}
+
+.ec-chain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── A node: [ rail | body ], with the incoming connector spanning above ───── */
+.ec-node {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.75rem 1fr;
+  column-gap: var(--s-4);
+  /* row 1 = connector word (link into this node), row 2 = rail + body */
+  grid-template-rows: auto auto;
+}
+.ec-node > .ec-connector {
+  grid-column: 2;
+  grid-row: 1;
+}
+.ec-node > .ec-rail {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+.ec-node > .ec-body {
+  grid-column: 2;
+  grid-row: 2;
+  padding-bottom: var(--s-5);
+}
+.ec-node:last-child > .ec-body {
+  padding-bottom: 0;
+}
+
+/* ── The spine: an amber rule down the rail + a node marker ─────────────────── */
+.ec-rail {
+  position: relative;
+  display: block;
+}
+/* The vertical line — the causal spine. It runs the full height of the node so
+   consecutive nodes' lines join into one continuous drawn spine. */
+.ec-rail-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: var(--hair);
+  background: var(--rule-bright);
+  transform: translateX(-50%);
+}
+/* First node: the spine starts at the marker, not above it. */
+.ec-node:first-child .ec-rail-line {
+  top: 0.55rem;
+}
+/* Last node: the spine ends at the marker (nothing flows out of the last node). */
+.ec-node:last-child .ec-rail-line {
+  bottom: auto;
+  height: 0.55rem;
+}
+.ec-marker {
+  position: absolute;
+  top: 0.35rem;
+  left: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--bg);
+  border: var(--hair) solid var(--rule-bright);
+  transform: translateX(-50%);
+  transition:
+    border-color var(--dur) var(--ease-out),
+    background-color var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out);
+}
+
+/* ── The causal connector word on the link into a node ─────────────────────── */
+.ec-connector {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  padding: var(--s-3) 0 var(--s-2);
+}
+.ec-connector::before {
+  content: "↓ ";
+  color: var(--accent-dim);
+}
+
+/* ── The body: label button + detail ───────────────────────────────────────── */
+.ec-body {
+  min-width: 0; /* allow long labels/details to wrap, never overflow */
+}
+.ec-label {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.ec-kind {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-label);
+  margin-bottom: var(--s-2);
+}
+.ec-label-text {
+  display: block;
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  font-weight: 480;
+  line-height: var(--lh-tight);
+  color: var(--ink);
+  text-wrap: balance;
+  overflow-wrap: break-word; /* long unbroken tokens wrap at 360px */
+}
+.ec-detail {
+  margin: var(--s-2) 0 0;
+  font-family: var(--font-read);
+  font-size: var(--t-md);
+  line-height: var(--lh-read);
+  color: var(--read);
+  overflow-wrap: break-word;
+}
+
+/* ── Kind emphasis ─────────────────────────────────────────────────────────── */
+/* turning-point is the hinge of the story — emphasize it: solid amber marker,
+   a heavier label, and an amber kind label. "Lines not boxes": no filled card. */
+.ec-node--turning-point .ec-marker {
+  background: var(--accent);
+  border-color: var(--accent);
+  width: 0.7rem;
+  height: 0.7rem;
+  top: 0.28rem;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent);
+}
+.ec-node--turning-point .ec-kind {
+  color: var(--accent);
+}
+.ec-node--turning-point .ec-label-text {
+  font-weight: 560;
+}
+.ec-node--turning-point .ec-connector::before {
+  color: var(--accent);
+}
+/* cause vs effect: a subtle hue on the kind label distinguishes the roles. */
+.ec-node--cause .ec-kind {
+  color: var(--ink-label);
+}
+.ec-node--effect .ec-kind {
+  color: var(--ink-faint);
+}
+
+/* ── Detail open state (hover / focus / tap) ───────────────────────────────── */
+/* Default (interactive path): detail is dimmed to a peek and clamped; opening
+   lifts it to full. Without JS the --open class is never toggled, so we keep the
+   detail fully legible even when "closed" (see reduced/no-JS override below). */
+@media (prefers-reduced-motion: no-preference) {
+  .ec-detail {
+    color: var(--ink-dim);
+    transition:
+      color var(--dur) var(--ease-out),
+      opacity var(--dur) var(--ease-out);
+  }
+  .ec-node--open .ec-detail {
+    color: var(--read);
+  }
+  .ec-node--open .ec-marker {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 16%, transparent);
+  }
+  .ec-label:hover .ec-label-text,
+  .ec-label:focus-visible .ec-label-text {
+    color: var(--accent);
+  }
+}
+
+/* ── Scroll reveal — motion INSIDE the figure only ─────────────────────────── */
+/* Hidden-until-revealed is scoped to `.ec--js`: the class is added ONLY after
+   the island hydrates. So the SSR / no-JS static render (no `.ec--js`) keeps
+   every node, connector and spine segment fully visible — the fallback is never
+   blank. It also sits behind `no-preference` so reduced-motion always shows the
+   end state even once hydrated. */
+@media (prefers-reduced-motion: no-preference) {
+  .ec--js .ec-node {
+    opacity: 0;
+    transform: translateY(8px);
+    transition:
+      opacity var(--dur) var(--ease-out),
+      transform var(--dur) var(--ease-out);
+  }
+  .ec--js .ec-node--revealed {
+    opacity: 1;
+    transform: none;
+  }
+  /* the connector word draws in just after its node */
+  .ec--js .ec-connector {
+    opacity: 0;
+    transition: opacity var(--dur) var(--ease-out);
+  }
+  .ec--js .ec-connector--revealed {
+    opacity: 1;
+  }
+  /* the spine segment draws downward as the node below is revealed */
+  .ec--js .ec-node .ec-rail-line {
+    transform: translateX(-50%) scaleY(0);
+    transform-origin: top;
+    transition: transform var(--dur) var(--ease-out);
+  }
+  .ec--js .ec-node--revealed .ec-rail-line {
+    transform: translateX(-50%) scaleY(1);
+  }
+}
+
+/* Reduced-motion: pin the fully-revealed end state, zero animation — even once
+   `.ec--js` is present. */
+@media (prefers-reduced-motion: reduce) {
+  .ec-node,
+  .ec-connector,
+  .ec-node .ec-rail-line {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+  .ec-node .ec-rail-line {
+    transform: translateX(-50%) !important;
+  }
+  .ec-detail {
+    color: var(--read); /* fully legible; no peek/dim in reduced mode */
+  }
+}
+
+/* ── Mobile: no horizontal overflow at 360px ───────────────────────────────── */
+@media (max-width: 480px) {
+  .ec-node {
+    grid-template-columns: 1.25rem 1fr;
+    column-gap: var(--s-3);
+  }
+  .ec-label-text {
+    font-size: var(--t-md);
+  }
+}

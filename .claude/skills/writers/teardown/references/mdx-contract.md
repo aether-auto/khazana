@@ -52,6 +52,7 @@ Annotation  Chart  Timeline  DataTable  Scrolly  ScrollyStep  ScrollyTimeline
 RunnableCode  Map  ControlledChart  KellyChart  Model3D  Sidenote  DrawChart
 StatBand  Pullquote  Figure  Math  Callout  Detail  Definition
 Diagram  Simulation  Stepper  Quiz  CodeWalkthrough  AnnotatedFigure
+SmallMultiples  Distribution  Scatter  Slopegraph  RangePlot  CompareSlider  CastGrid  EventCascade
 ```
 
 Use only the subset in **this format's kit** (see the SKILL). Interactive islands
@@ -306,6 +307,55 @@ e.g. `"ts"`, `"python"`; default `"text"`), `steps: { lines: [start,end], note }
 (1-based inclusive line range focused per step), `caption?`. **Static Astro** — no
 `client:` directive; Shiki highlights at build, a bundled script does prev/next.
 Distinct from `RunnableCode` (which is editable/executable JS).
+
+## 3c. P2 components — CompareSlider, EventCascade (this format's kit)
+
+### CompareSlider — before/after image wipe (island → `client:visible`)
+
+For wear / failure comparisons (pristine vs worn part, intact vs fractured). Two
+aligned images share one aspect-reserved frame; a draggable amber handle wipes
+between them. Optimize each image in the MDX ESM header with `getImage()`:
+
+```jsx
+import { getImage } from "astro:assets";
+import beforeImg from "./_assets/pristine.png";
+import afterImg from "./_assets/worn.png";
+const b = await getImage({ src: beforeImg, width: 1200 });
+const a = await getImage({ src: afterImg, width: 1200 });
+
+<CompareSlider client:visible
+  before={b.src} after={a.src}
+  width={b.attributes.width} height={b.attributes.height}
+  alt="The gear, pristine vs after 10k hours"
+  beforeLabel="New" afterLabel="Worn"
+  caption="Drag to wipe between the two." />
+```
+
+Props: `before: string`, `after: string` (both from `getImage()`, **not** raw
+imports), `width: number`, `height: number` (intrinsic px), `alt: string` (required),
+`beforeLabel?` (default `"before"`), `afterLabel?` (default `"after"`), `caption?`,
+`orientation?: "h"|"v"` (default `h`). No-JS / reduced-motion → both images stacked
+with labels (never blank).
+
+### EventCascade — vertical CAUSAL chain / failure cascade (island → `client:visible`)
+
+```jsx
+<EventCascade client:visible caption="how the outage cascaded"
+  nodes={[
+    { kind: "cause", label: "A misconfigured threshold triggers premature scale-in",
+      detail: "The fleet drops below the connection-draining floor mid-spike." },
+    { kind: "effect", label: "The retry storm saturates remaining capacity",
+      detail: "Each retry multiplies request rate against a shrinking pool." },
+    { kind: "turning-point", label: "Circuit breakers trip and shed load",
+      detail: "Shedding 40% of inbound traffic lets the pool recover." }
+  ]} />
+```
+
+Props: `nodes: { label: string, detail: string, kind?: "cause"|"effect"|"turning-point" }[]`
+(`detail` required, a plain serializable string; `kind` defaults to `effect`),
+`caption?`. The amber spine carries labeled *reasoning* — distinct from `Timeline`'s
+clock. Ideal for failure cascades. No-JS → an ordered `<ol>` with every label +
+detail.
 
 ## 4. Body conventions
 

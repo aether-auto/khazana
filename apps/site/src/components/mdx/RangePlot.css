@@ -1,0 +1,162 @@
+/* apps/site/src/components/mdx/RangePlot.css
+   Dot-and-range: a hairline range with an amber mid-dot per category. The range
+   is the honesty (it's drawn to scale); the dot is the point estimate. Mono
+   instrument voice; the SVG scales to width:100% via viewBox. */
+
+.rp-panel {
+  padding: var(--s-5) var(--s-5) var(--s-4);
+}
+
+.rp-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* ── value axis ticks ──────────────────────────────────────────────────── */
+.rp-tick line {
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+.rp-tick-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  fill: var(--ink-faint);
+}
+
+/* ── category rows ─────────────────────────────────────────────────────── */
+.rp-row {
+  cursor: pointer;
+}
+.rp-row:focus {
+  outline: none;
+}
+.rp-hit {
+  fill: transparent;
+}
+
+.rp-cat {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  fill: var(--ink-dim);
+  transition: fill var(--dur-fast) var(--ease-out);
+}
+
+.rp-range {
+  stroke: var(--rule-bright);
+  stroke-width: 1.5;
+}
+.rp-cap {
+  stroke: var(--ink-faint);
+  stroke-width: 1.25;
+  stroke-linecap: round;
+}
+.rp-mid {
+  fill: var(--accent);
+  stroke: var(--bg-raised);
+  stroke-width: 1.5;
+  transition: r var(--dur-fast) var(--ease-out);
+  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--accent) 30%, transparent));
+}
+
+/* ── active (hover / focus) ────────────────────────────────────────────── */
+.rp-row--active .rp-cat {
+  fill: var(--ink);
+  font-weight: 600;
+}
+.rp-row--active .rp-range {
+  stroke: var(--accent-dim);
+}
+.rp-row--active .rp-mid {
+  filter: drop-shadow(0 0 7px color-mix(in oklab, var(--accent) 55%, transparent));
+}
+
+/* keyboard focus ring */
+.rp-row:focus-visible .rp-mid {
+  stroke: var(--focus);
+  stroke-width: 2;
+}
+.rp-row:focus-visible .rp-cat {
+  fill: var(--ink);
+  font-weight: 600;
+}
+
+/* ── stable readout strip ──────────────────────────────────────────────── */
+.rp-readout {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.01em;
+}
+.rp-readout-cat {
+  fill: var(--ink);
+  font-weight: 600;
+}
+.rp-readout-mid {
+  fill: var(--accent);
+  font-weight: 600;
+}
+.rp-readout-val {
+  fill: var(--ink-dim);
+}
+.rp-readout-sep {
+  fill: var(--ink-faint);
+}
+.rp-readout-n {
+  fill: var(--ink-faint);
+}
+.rp-readout--hint {
+  fill: var(--ink-faint);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── SSR / no-JS fallback list ─────────────────────────────────────────── */
+.rp-fallback {
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: var(--s-3) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--ink-dim);
+}
+.rp-fallback li {
+  padding: var(--s-1) 0;
+}
+.rp-fallback-cat {
+  color: var(--ink);
+  font-weight: 600;
+}
+.rp-fallback-n {
+  color: var(--ink-faint);
+}
+
+/* ── mobile: a 720-unit viewBox squeezed to ~320px renders the labels below
+   legibility; long category names collide. Below 640px hide the SVG and show
+   the full-size fallback list (same data, readable, no overflow). ────────── */
+@media (max-width: 640px) {
+  .rp-svg {
+    display: none;
+  }
+  .rp-fallback {
+    display: block;
+  }
+  .rp-panel {
+    padding: var(--s-4);
+  }
+}
+
+/* ── reduced motion ────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .rp-cat,
+  .rp-mid {
+    transition: none;
+  }
+  .rp-mid,
+  .rp-row--active .rp-mid {
+    filter: none;
+  }
+}

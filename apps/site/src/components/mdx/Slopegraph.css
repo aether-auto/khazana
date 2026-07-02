@@ -1,0 +1,158 @@
+/* apps/site/src/components/mdx/Slopegraph.css
+   Tufte slopegraph: crossing lines are the story. Risers up in amber, fallers
+   down in clay (--editorial), flat in a hairline rule. Mono voice for the
+   instrument labels; the SVG scales to width:100% via viewBox. */
+
+.sg-panel {
+  padding: var(--s-5) var(--s-5) var(--s-4);
+}
+
+.sg-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* ── column headers + column rules ─────────────────────────────────────── */
+.sg-col-head {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  fill: var(--ink-faint);
+}
+.sg-col-rule {
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+
+/* ── slopes ────────────────────────────────────────────────────────────── */
+.sg-slope {
+  cursor: pointer;
+}
+.sg-slope:focus {
+  outline: none;
+}
+.sg-hit {
+  stroke: transparent;
+  stroke-width: 16;
+}
+.sg-line {
+  stroke-width: 1.5;
+  transition: stroke-width var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
+}
+.sg-dot {
+  transition: r var(--dur-fast) var(--ease-out);
+}
+
+/* direction colors */
+.sg-slope--up .sg-line,
+.sg-slope--up .sg-dot {
+  stroke: var(--accent);
+  fill: var(--accent);
+}
+.sg-slope--down .sg-line,
+.sg-slope--down .sg-dot {
+  stroke: var(--editorial);
+  fill: var(--editorial);
+}
+.sg-slope--flat .sg-line {
+  stroke: var(--rule-bright);
+}
+.sg-slope--flat .sg-dot {
+  fill: var(--ink-faint);
+  stroke: var(--ink-faint);
+}
+
+/* ── dim the field while one slope is focused; lift the active one ──────── */
+.sg-svg--dimmed .sg-slope:not(.sg-slope--active) {
+  opacity: 0.28;
+}
+.sg-slope--active .sg-line {
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 5px color-mix(in oklab, var(--accent) 35%, transparent));
+}
+.sg-slope--down.sg-slope--active .sg-line {
+  filter: drop-shadow(0 0 5px color-mix(in oklab, var(--editorial) 35%, transparent));
+}
+
+/* keyboard focus ring */
+.sg-slope:focus-visible .sg-line {
+  stroke: var(--focus);
+  stroke-width: 2.5;
+}
+
+/* ── endpoint labels ───────────────────────────────────────────────────── */
+.sg-endlabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  transition: fill var(--dur-fast) var(--ease-out);
+}
+.sg-endlabel-name {
+  fill: var(--ink-dim);
+}
+.sg-endlabel-val {
+  fill: var(--ink-faint);
+  font-weight: 600;
+}
+.sg-endlabel--active .sg-endlabel-name,
+.sg-endlabel--active .sg-endlabel-val {
+  fill: var(--ink);
+}
+
+/* ── SSR / no-JS fallback list ─────────────────────────────────────────── */
+.sg-fallback {
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: var(--s-3) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--ink-dim);
+}
+.sg-fallback li {
+  padding: var(--s-1) 0;
+}
+.sg-fallback-name {
+  color: var(--ink);
+  font-weight: 600;
+}
+.sg-fallback-arrow--up {
+  color: var(--accent);
+}
+.sg-fallback-arrow--down {
+  color: var(--editorial);
+}
+.sg-fallback-arrow--flat {
+  color: var(--ink-faint);
+}
+
+/* ── mobile: a 720-unit viewBox squeezed to ~320px renders 11px labels at
+   ~5px — an illegible smear, and long category names collide. Below 640px we
+   hide the SVG and promote the full-size stacked fallback list (same data,
+   every label readable). No horizontal overflow at any width. ───────────── */
+@media (max-width: 640px) {
+  .sg-svg {
+    display: none;
+  }
+  .sg-fallback {
+    display: block;
+  }
+  .sg-panel {
+    padding: var(--s-4);
+  }
+}
+
+/* ── reduced motion: no transitions, render the end state ──────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .sg-line,
+  .sg-dot,
+  .sg-endlabel {
+    transition: none;
+  }
+  .sg-slope--active .sg-line,
+  .sg-slope--down.sg-slope--active .sg-line {
+    filter: none;
+  }
+}

@@ -1,0 +1,60 @@
+/* apps/site/src/components/mdx/Distribution.css */
+.dist-panel { padding: var(--s-4); }
+.dist-host { width: 100%; min-height: 1px; }
+
+/* Pre-hydration: show the text fallback while the host is empty. */
+.dist-host:empty + .dist-fallback { display: block; }
+
+/*
+ * Post-hydration: visually hide the fallback but keep it in the a11y tree — the
+ * Chart.css pattern. role="img" + aria-label on the host is the primary AT view.
+ */
+.dist-host:not(:empty) + .dist-fallback {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.dist-fallback {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--ink-faint);
+  padding: var(--s-4) 0;
+}
+.dist-fallback__table {
+  border-collapse: collapse;
+  margin-top: var(--s-2);
+  width: auto;
+}
+.dist-fallback__table th,
+.dist-fallback__table td {
+  text-align: left;
+  padding: 1px var(--s-3) 1px 0;
+  color: var(--ink-dim);
+}
+.dist-fallback__table th {
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.dist-fallback__table td:last-child { text-align: right; }
+
+/* Style Plot's emitted SVG to the terminal aesthetic (mirrors Chart.css). */
+.dist-host :global(svg) { color: var(--ink-dim); }
+.dist-host :global(svg [aria-label="x-axis tick label"]),
+.dist-host :global(svg [aria-label="y-axis tick label"]) {
+  font-family: var(--font-mono);
+  fill: var(--ink-faint);
+}
+.dist-host :global(svg [aria-label="x-axis label"]),
+.dist-host :global(svg [aria-label="y-axis label"]) {
+  font-family: var(--font-mono);
+  fill: var(--ink-dim);
+  font-size: var(--t-xs, 0.75rem);
+}
