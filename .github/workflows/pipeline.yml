@@ -56,6 +56,8 @@ jobs:
       PUBLIC_WORKER_URL: ${{ vars.PUBLIC_WORKER_URL }}
       PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
       PUBLIC_BASE_PATH: ${{ vars.PUBLIC_BASE_PATH }}
+      # Optional single-password access gate (empty = no gate). Baked at build.
+      PUBLIC_SITE_GATE_HASH: ${{ vars.PUBLIC_SITE_GATE_HASH }}
       # ---- secrets (fetch/enrich/discovery; each degrades gracefully if unset) ----
       EXPORT_TOKEN: ${{ secrets.EXPORT_TOKEN }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
