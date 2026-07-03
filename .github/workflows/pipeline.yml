@@ -42,6 +42,11 @@ jobs:
       # ---- scope / retention ----
       LIMIT: ${{ github.event.inputs.limit || '12' }}
       RETENTION_DAYS: "3"
+      # Skip per-item full-text extraction: over the full registry it does not
+      # finish inside the runner budget, and nothing on the cron path needs bodies
+      # — the Feed uses the list + Gemini topics, and the Reads routine's researcher
+      # does its own deep web research. (Was implicitly ON; ingest hung >74 min.)
+      EXTRACT: "0"
       # ---- ingest knobs (see .superpowers/sdd/audit-orchestration.md §C) ----
       ALLOW_DIRECT_YOUTUBE: "1"
       REDDIT_MIN_GAP_MS: "1500"
