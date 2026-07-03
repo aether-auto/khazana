@@ -19,13 +19,8 @@ export function readCurated(dataDir: string): FeedItem[] {
   return out;
 }
 
-/**
- * Read the citation ledger (curated ∪ researched, appraised) that the research
- * phase persisted. Widens the grounding gate beyond the curated FeedItem set.
- * Invalid entries are dropped, mirroring readCurated's tolerant parse.
- */
-export function readLedger(dataDir: string): CitationLedger {
-  const path = join(dataDir, "generation", "research", "ledger.json");
+/** Parse one ledger JSON file, dropping invalid entries (tolerant parse). */
+function readLedgerFile(path: string): CitationLedger {
   if (!existsSync(path)) return [];
   let parsed: unknown;
   try {
@@ -38,6 +33,29 @@ export function readLedger(dataDir: string): CitationLedger {
   for (const candidate of raw) {
     const r = CitationLedgerEntrySchema.safeParse(candidate);
     if (r.success) out.push(r.data);
+  }
+  return out;
+}
+
+/**
+ * Read the citation ledger (curated ∪ researched, appraised) that the research
+ * phase persisted. Widens the grounding gate beyond the curated FeedItem set.
+ *
+ * Unions two sources under `data/generation/research/`:
+ *  - the legacy shared `ledger.json` (kept for back-compat), AND
+ *  - every per-slug `<slug>.ledger.json` file. Parallel writers each emit their
+ *    own per-slug ledger so they never clobber a single shared file.
+ *
+ * Missing dir/files are fine (returns whatever exists). Invalid entries are
+ * dropped per-file, mirroring readCurated's tolerant parse.
+ */
+export function readLedger(dataDir: string): CitationLedger {
+  const researchDir = join(dataDir, "generation", "research");
+  const out: CitationLedger = [...readLedgerFile(join(researchDir, "ledger.json"))];
+  if (existsSync(researchDir)) {
+    for (const f of readdirSync(researchDir)) {
+      if (f.endsWith(".ledger.json")) out.push(...readLedgerFile(join(researchDir, f)));
+    }
   }
   return out;
 }

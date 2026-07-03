@@ -47,52 +47,60 @@ NYT-editorial; reading comfort sacred; UI/feel is paramount (award-level, alive,
 
 ## 3. What's LEFT (the job, in priority order)
 
-### A. Finish the Reads generation workflow — the centerpiece
+> **STATUS (updated 2026-07-03):** A, B, and D are **DONE** (this session). The repo is
+> **push-ready and GO for the first Actions run** (go-live review verdict: GO). The only remaining
+> work is the **founder's `docs/RUNBOOK.md` provisioning + push** (§C) and then the **first routine
+> fire** (§A3) — neither can be done for you (they need your Cloudflare/GitHub/Claude accounts).
+
+### A. Reads generation workflow — the centerpiece ✅ BUILT + DRILLED
 The design (founder decision — memory `reads-generation-orchestration`): a **single Claude routine,
-2×/day**, is an **Opus orchestrator** that NEVER writes prose; it drives **Sonnet subagents**
-(survey → curate-pick → parallel writers → independent verifiers → publish). The **survey agent is
-built** (`.claude/agents/reads-survey.md`); the writers/verifiers **work** but were only ever run
-**ad-hoc** as general-purpose agents. What's left:
+2×/day**, an **Opus orchestrator** that NEVER writes prose; it drives **Sonnet subagents**
+(survey → curate-pick → parallel writers → independent verifiers → publish).
 
-1. **Formalize the writer + verify subagent definitions** — `.claude/agents/reads-writer.md` +
-   `.claude/agents/reads-verify.md`. Model-pin to Sonnet; wire the writer to the per-format
-   `writers/<format>` skills + the `writers/researcher` skill (each format now has a **gold-standard
-   canonical exemplar** under `.claude/skills/writers/<format>/references/exemplars/` — the writer
-   should study it during Internalize) and the right tools (writer: WebSearch/WebFetch/Read/Write/
-   Edit/Bash; verify: WebFetch/Read). The verify agent must be a **fresh-context adversarial fact-
-   check** against the citation ledger + the `factChecker` gate (≥90% claims cited, ≥60% load-bearing
-   corroborated). This mirrors how the survey agent was formalized — keep it DRY with the skills.
-2. **Build the Opus orchestrator routine** that chains survey → Opus-curate → parallel writers →
-   independent verifiers → Opus final-QC/publish (quality bar gates volume; writers ABORT rather than
-   fabricate). **Drill it once end-to-end** before trusting it.
-3. **Register it as a Claude routine, 2×/day.** Facts (verified 2026-07-01): routines draw from the
-   **subscription pool**; Max-5x limits = **15 routine runs/day**, **min 1-hour interval** — a routine
-   2×/day is trivially inside that. One run can author several Reads. (Open: confirm in-app after the
-   first runs whether routine *token* usage debits the main pool vs the separate credit.)
+1. ✅ **Writer + verify subagents formalized** — `.claude/agents/reads-writer.md` (Sonnet; wired to
+   `writers/<format>` + `writers/researcher`, studies the gold-standard exemplars, ABORTS rather than
+   fabricate) and `.claude/agents/reads-verify.md` (fresh-context adversarial fact-check vs the
+   citation ledger + `factChecker` gates + the high-stakes rule).
+2. ✅ **Opus orchestrator built** — `.claude/commands/reads-run.md` chains survey → Opus-curate →
+   parallel writers → independent verify → Opus final-QC → scoped deterministic backstop → commit.
+   **Drilled:** the ideation context bundle builds on the real board (150/337 items, 337 clusters,
+   682 sources, taste ready), and a live `reads-survey` run returned a diverse, groundable, novel
+   5-slate (both lanes + evergreen anchor; top-3 groundability confirmed against real primaries).
+   *A full content-producing end-to-end (author one real new Read) was deferred to the first live
+   routine fire — the plumbing is de-risked structurally + by unit tests, not yet by a full authored
+   Read.* **Gate fix landed:** the deterministic backstop now uses **per-slug ledgers**
+   (`data/generation/research/<slug>.ledger.json`, so parallel writers don't clobber) and
+   **slug-scoped `generate verify <slug>`** (never re-litigates already-published Reads). +5 tests.
+3. ⏳ **Register it as a Claude routine, 2×/day** — **founder step** (see `docs/RUNBOOK.md` →
+   "Registering the Reads routine"). Facts (verified 2026-07-01): routines draw from the
+   **subscription pool**; Max-5x limits = **15 routine runs/day**, **min 1-hour interval**. (Open:
+   confirm in-app after the first runs whether routine *token* usage debits the main pool.)
 
-### B. Restructure the P9 cloud pipeline around routines
-The pure `$0` code pipeline stays on **GitHub Actions**; the **LLM/agentic steps move to the Claude
-routine** (subscription pool, not the Actions Claude step). Concretely:
-- **`.github/workflows/pipeline.yml`** and **`scout-discover.yml`** currently invoke
-  `claude-code-action` (the generate + scout-appraise steps). **Strip those Claude steps out** and
-  keep the `$0` code pipeline on Actions: events → ingest → curate → build → deploy (no Claude).
-- Existing workflows: `ci.yml`, `pipeline.yml` (daily), `feed-refresh.yml` (3-hourly),
-  `scout-discover.yml` (weekly), `deploy-worker.yml`. Helper scripts already exist (`fetch-events`,
-  `record-build-day`, `real-ingest`, `recurate`, etc. — see `scripts/`).
+### B. Restructure the cloud pipeline around routines ✅ DONE
+- ✅ Stripped the `claude-code-action` steps out of **`pipeline.yml`** (author/plan/verify) and
+  **`scout-discover.yml`** (appraise). The `$0` code pipeline stays on Actions: events → ingest →
+  curate → record → prune → commit → build → deploy (no Claude). No `CLAUDE_CODE_OAUTH_TOKEN` in
+  Actions anymore. `scout apply` verified to degrade gracefully with no appraisal.json (auto-adds
+  nothing, prune/repair only). Reads authored by the routine go live via **`feed-refresh.yml` (3h)**.
 
-### C. Go live (founder provisions secrets, then dry-run)
-Nothing is deployed. Provisioning is in **`docs/RUNBOOK.md`**. Required secrets:
-`CLAUDE_CODE_OAUTH_TOKEN` (or the routine equivalent), **`CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`
-+ the real KV namespace id** (this is the **deploy blocker**: `apps/worker/wrangler.toml:13` is
-`id = "REPLACE_WITH_KV_NAMESPACE_ID"` — `wrangler deploy` fails until it's a real id), `PUBLIC_WORKER_URL`,
-`PUBLIC_SITE_URL`, `EXPORT_TOKEN`, and a free-LLM enrichment key **`GEMINI_API_KEY`** (or NVIDIA/NIM —
-without it the feed loses `topics`). Optional: `PODCASTINDEX_API_KEY/SECRET`, `REDDIT_CLIENT_ID/SECRET`,
-`GROQ_API_KEY`. Then: a manual `workflow_dispatch` **dry-run** of the pipeline, and a first routine fire.
+### C. Go live — ⏳ FOUNDER STEP (provision secrets, then dry-run)
+Nothing is deployed. Provisioning is in **`docs/RUNBOOK.md`** (updated this session). Required Actions
+secrets: **`CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` + the real KV namespace id** (the **deploy
+blocker**: `apps/worker/wrangler.toml:13` is `id = "REPLACE_WITH_KV_NAMESPACE_ID"` — `wrangler deploy`
+fails until it's a real id — inherently a founder step, needs your Cloudflare account), `EXPORT_TOKEN`,
+and the recommended free-LLM key **`GEMINI_API_KEY`** (without it the feed loses `topics`). Variables:
+`PUBLIC_WORKER_URL`, `PUBLIC_SITE_URL`. Optional: `PODCASTINDEX_API_KEY/SECRET`,
+`REDDIT_CLIENT_ID/SECRET`, `GROQ_API_KEY`. `CLAUDE_CODE_OAUTH_TOKEN` is **no longer an Actions secret**
+— it's only for registering the Reads routine (§A3). Then: a manual `workflow_dispatch` **dry-run** of
+the pipeline, and a first routine fire.
 
-### D. Full-branch review before any merge/deploy
-`p1-foundation` now carries **~19 commits since `f483111`** touching every package (components,
-writer skills, core vocab, reads). The **whole-branch review + `finishing-a-development-branch`** have
-**NOT run**. Do a real review (correctness + `$0`/offline + a11y/mobile) before merge or deploy.
+### D. Full-branch review ✅ DONE (go-live-scoped)
+A focused **go-live readiness review** ran over the new + changed surface (workflows, RUNBOOK, the
+`@khazana/generate` gate change, the routine defs) across correctness / `$0`-offline / a11y-mobile:
+**verdict GO**. The one SHOULD-FIX it found (verify agent calling the *unscoped* `generate verify`) is
+**fixed**. Note: a line-by-line re-review of all ~19 prior component commits was **not** repeated —
+they are test-covered (1906 tests green) + build-green; the review focused on the unreviewed new work.
+`finishing-a-development-branch` (merge/PR decision) is still the founder's call post-deploy.
 
 ---
 

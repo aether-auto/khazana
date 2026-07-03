@@ -1,13 +1,15 @@
 name: scout-discover
 
-# Weekly Source Scout: discover candidate sources → Claude appraises their
-# credibility → apply verdicts (auto-add strong, queue borderline, prune dead) →
-# commit the updated seed registry.
+# Weekly Source Scout: discover candidate sources (deterministic, no-AI) → apply
+# → commit the updated seed registry. This is a pure-$0 CODE workflow — no Claude
+# steps. Credibility appraisal now happens OUT-OF-BAND (a Claude routine, or
+# manual review of data/scout/candidate-brief.md) that can write
+# data/scout/appraisal.json for a later `scout apply` to consume. With no
+# appraisal present, `scout apply` degrades gracefully: it prunes/repairs the
+# existing registry and auto-adds nothing (candidates just wait in the queue).
 #
 # KEPT SEPARATE from the daily pipeline (not folded in) on purpose:
 #   * cadence: source discovery only needs to run weekly, not daily;
-#   * cost: the Claude appraisal step is subscription-metered — running it weekly
-#     instead of daily is a 7x saving for no freshness loss on the registry;
 #   * blast radius: it commits data/sources.seed.json (a different git artifact
 #     than the daily MDX), so isolating it keeps each commit-back focused.
 
@@ -51,40 +53,18 @@ jobs:
           EXPORT_TOKEN: ${{ secrets.EXPORT_TOKEN }}
 
       # 1. discover: writes sources.pending.json + a candidate-appraisal brief.
+      #    Credibility appraisal is a separate routine/manual step (see header) —
+      #    it may write data/scout/appraisal.json for `scout apply` to consume.
       - name: Scout discover
         run: pnpm --filter @khazana/scout scout
 
-      # 2. appraise: Claude reads the candidate brief and writes credibility
-      #    verdicts to data/scout/appraisal.json (consumed by `scout apply`).
-      - name: Appraise candidates (Claude Code)
-        uses: anthropics/claude-code-action@v1
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          prompt: |
-            You are the khazana Source Scout credibility appraiser, running
-            unattended in CI.
-            1. Read data/scout/candidate-brief.md — it lists candidate sources
-               awaiting a credibility verdict, and data/sources.pending.json holds
-               the structured candidates.
-            2. For each candidate, appraise credibility using the web: is the
-               outlet authoritative for its channel (primary/peer-reviewed >
-               reputable secondary > aggregator)? Is the feed live and on-topic?
-            3. Write verdicts to data/scout/appraisal.json as a JSON array of
-               objects matching the Appraisal shape:
-                 { "url": <candidate url>, "channels": [<channel...>],
-                   "trust": <0..1>, "decision": "approve"|"queue"|"reject"
-                   (optional), "rationale": <short string> }
-               Do not edit sources.seed.json yourself — the apply step does that.
-          claude_args: |
-            --model claude-sonnet-5
-            --max-turns 40
-            --allowedTools "WebSearch,WebFetch,Read,Write,Glob,Grep"
-
-      # 3. apply: merge verdicts, prune/repair, auto-add + queue → sources.json.
+      # 2. apply: prune/repair the registry, then (if an appraisal.json is
+      #    present) merge verdicts and auto-add + queue → sources.json. With no
+      #    appraisal present it just prunes/repairs and auto-adds nothing.
       - name: Scout apply
         run: pnpm --filter @khazana/scout scout apply
 
-      # 4. promote the applied registry to the committed seed + commit.
+      # 3. promote the applied registry to the committed seed + commit.
       #    sources.json is gitignored; sources.seed.json is the committed registry.
       - name: Commit updated seed registry
         run: |

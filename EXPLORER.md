@@ -13,15 +13,21 @@ blogs — written in your voice, hosted free, alive on every device.
 
 ## Now
 
-**Active plan: P1 — Foundation & Contracts**
+**v1 — PUSH-READY (2026-07-03).** The whole product is built: `@khazana/core` contracts, ingest +
+curate + generate + scout packages, the Astro site (351 pages), 45 interactive components, 7 writer
+formats each with a gold-standard exemplar, and 8 shipped Reads. Green baseline: **1906 tests**,
+`pnpm -r typecheck` 0 errors, site build 351 pages.
 
-- [x] T1: Monorepo skeleton + `@khazana/core` shell
-- [x] T2: Canonical vocabularies (channels, source types, kinds, formats)
-- [x] T3: `FeedItem` schema + stable id
-- [x] T4: `Source` interface + registry contract
-- [x] T5: `Format` contract + v1 format data
-- [x] T6: Cofounder scaffolding (CLAUDE/EXPLORER/STYLE) + seed source registry
-- [ ] T7: CI workflow (GitHub Actions)
+**Reads generation is now a Claude routine, not an Actions step.** This session formalized the
+orchestrator-worker pipeline (`.claude/agents/reads-{survey,writer,verify}.md` +
+`.claude/commands/reads-run.md`: Opus orchestrates, Sonnet writes/verifies), stripped all Claude
+steps out of GitHub Actions (pure-$0 code pipeline: events→ingest→curate→build→deploy), fixed the
+deterministic verify gate for parallel writers (per-slug ledgers + slug-scoped `generate verify`),
+and passed a go-live readiness review (verdict: GO). See `HANDOFF.md` §3 for the authoritative state.
+
+**What's left is founder-only:** provision secrets per `docs/RUNBOOK.md` (incl. the Cloudflare KV
+namespace id — the deploy blocker), push, then register the `reads-run` routine 2×/day. Then the
+first Actions dry-run + first routine fire.
 
 ---
 
@@ -29,15 +35,15 @@ blogs — written in your voice, hosted free, alive on every device.
 
 | Plan | Scope | Status |
 |---|---|---|
-| **P1** | Monorepo skeleton, `@khazana/core` contracts (FeedItem, Source, Format, registry), cofounder scaffolding, CI | In progress |
-| **P2** | Ingestion + normalization — `packages/ingest`: Reddit, HN, RSS, eng-blogs, arXiv, X-mirror fetchers, each returning `FeedItem[]` | Pending |
-| **P3** | Cloudflare Worker + KV + taste-profile recompute — `apps/worker` | Pending |
-| **P4** | Astro site shell — Feed / Reads / Workshop surfaces, dark-first, terminal aesthetic, ⌘K palette, Pagefind search | Pending |
-| **P5** | Interactive component library + three flagship format templates (Chronicle, Dispatch, Field Notes) | Pending |
-| **P6** | Curation pipeline: enrich (free LLM) → cluster/dedup → rank → taste profile | Pending |
-| **P7** | Claude flagship generation + grounding/verification (model tiering); `STYLE.md` must be filled before this plan | Pending |
-| **P8** | Source Scout: registry + discovery/evaluation/prune + review surface | Pending |
-| Deploy | Actions cron wiring (ingest, curate, generate, scout, build, deploy) → GitHub Pages | After P8 |
+| **P1** | Monorepo skeleton, `@khazana/core` contracts (FeedItem, Source, Format, registry), cofounder scaffolding, CI | ✅ Done |
+| **P2** | Ingestion + normalization — `packages/ingest`: Reddit, HN, RSS, eng-blogs, arXiv, X-mirror fetchers, each returning `FeedItem[]` | ✅ Done |
+| **P3** | Cloudflare Worker + KV + taste-profile recompute — `apps/worker` | ✅ Done (deploy blocked on founder KV id) |
+| **P4** | Astro site shell — Feed / Reads / Workshop surfaces, dark-first, terminal aesthetic, ⌘K palette, Pagefind search | ✅ Done |
+| **P5** | Interactive component library (45 components) + flagship format templates | ✅ Done |
+| **P6** | Curation pipeline: enrich (free LLM) → cluster/dedup → rank → taste profile | ✅ Done |
+| **P7** | Claude flagship generation + grounding/verification (model tiering); 7 writer formats + exemplars | ✅ Done |
+| **P8** | Source Scout: registry + discovery/evaluation/prune + review surface | ✅ Done |
+| **P9 / v1** | Reads-as-a-routine (Opus orchestrator + Sonnet workers), $0 Actions pipeline, go-live review | ✅ Built — push-ready; awaits founder secrets + push (RUNBOOK) |
 
 ---
 

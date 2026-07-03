@@ -92,6 +92,51 @@ Body.
   expect(report.ok).toBe(false);
 });
 
+// --- slug-scoped verify ---
+
+function draft(title: string, url: string): string {
+  return `---
+title: "${title}"
+format: field-notes
+channels:
+  - ai
+summary: "s"
+publishedAt: 2026-06-21T00:00:00.000Z
+sources:
+  - { title: "src", url: "${url}" }
+---
+<Annotation>note</Annotation>
+`;
+}
+
+test("verify <slug> only checks that slug's draft", async () => {
+  // slug-a is grounded by curated; slug-b cites an unknown url and would FAIL if checked.
+  writeFileSync(join(contentDir, "slug-a.mdx"), draft("Slug A", "https://e.com/a1"));
+  writeFileSync(join(contentDir, "slug-b.mdx"), draft("Slug B", "https://nope.example/x"));
+
+  const code = await main(["verify", "slug-a"], { dataDir, repoRoot: root, contentDir, now: NOW });
+  expect(code).toBe(0);
+  const report = JSON.parse(readFileSync(join(dataDir, "generation", "report.json"), "utf8"));
+  expect(report.ok).toBe(true);
+  expect(report.drafts).toHaveLength(1);
+  expect(report.drafts[0].file).toContain("slug-a.mdx");
+});
+
+test("verify errors when a requested slug has no matching draft", async () => {
+  writeFileSync(join(contentDir, "slug-a.mdx"), draft("Slug A", "https://e.com/a1"));
+  const code = await main(["verify", "missing-slug"], { dataDir, repoRoot: root, contentDir, now: NOW });
+  expect(code).not.toBe(0);
+});
+
+test("verify with no slugs checks all drafts (unchanged behavior)", async () => {
+  writeFileSync(join(contentDir, "slug-a.mdx"), draft("Slug A", "https://e.com/a1"));
+  writeFileSync(join(contentDir, "slug-b.mdx"), draft("Slug B", "https://nope.example/x"));
+  const code = await main(["verify"], { dataDir, repoRoot: root, contentDir, now: NOW });
+  expect(code).toBe(1); // slug-b is ungrounded and IS checked
+  const report = JSON.parse(readFileSync(join(dataDir, "generation", "report.json"), "utf8"));
+  expect(report.drafts).toHaveLength(2);
+});
+
 test("unknown subcommand returns a non-zero code", async () => {
   const code = await main(["frobnicate"], { dataDir, repoRoot: root, contentDir, now: NOW });
   expect(code).toBe(2);

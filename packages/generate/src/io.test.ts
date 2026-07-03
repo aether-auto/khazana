@@ -81,6 +81,50 @@ test("readLedger returns [] when missing and validates entries when present", ()
   expect(ledger[0]!.url).toBe("https://academic.oup.com/mnras/1859");
 });
 
+test("readLedger unions the shared ledger with per-slug ledger files", () => {
+  mkdirSync(join(dir, "generation", "research"), { recursive: true });
+  // legacy shared ledger
+  writeFileSync(
+    join(dir, "generation", "research", "ledger.json"),
+    JSON.stringify([
+      { url: "https://shared.example/legacy", title: "Legacy", tier: "med", origin: "curated" },
+    ]),
+  );
+  // per-slug ledgers (parallel writers)
+  writeFileSync(
+    join(dir, "generation", "research", "slug-a.ledger.json"),
+    JSON.stringify([
+      { url: "https://a.example/one", title: "A One", tier: "high", origin: "researched" },
+      { url: "bad-url", title: "dropped", tier: "high", origin: "researched" },
+    ]),
+  );
+  writeFileSync(
+    join(dir, "generation", "research", "slug-b.ledger.json"),
+    JSON.stringify([
+      { url: "https://b.example/two", title: "B Two", tier: "high", origin: "researched" },
+    ]),
+  );
+  const urls = readLedger(dir).map((e) => e.url).sort();
+  expect(urls).toEqual([
+    "https://a.example/one",
+    "https://b.example/two",
+    "https://shared.example/legacy",
+  ]);
+});
+
+test("readLedger returns per-slug entries even when the shared ledger is absent", () => {
+  mkdirSync(join(dir, "generation", "research"), { recursive: true });
+  writeFileSync(
+    join(dir, "generation", "research", "only.ledger.json"),
+    JSON.stringify([
+      { url: "https://only.example/x", title: "Only", tier: "high", origin: "researched" },
+    ]),
+  );
+  const ledger = readLedger(dir);
+  expect(ledger).toHaveLength(1);
+  expect(ledger[0]!.url).toBe("https://only.example/x");
+});
+
 test("writeReport writes generation/report.json", () => {
   const path = writeReport(dir, { ok: true, drafts: [], generatedAt: "2026-06-23T00:00:00.000Z" } as never);
   expect(path).toContain(join("generation", "report.json"));

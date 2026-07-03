@@ -38,6 +38,12 @@ Output is three artifacts, in the **exact shapes the generation harness expects*
    Every source the writer may cite must be in this ledger. The grounding gate accepts
    any claim citing a **ledger** URL (curated ∪ researched). `firstSeen` is the ISO
    date/round the source entered the ledger.
+
+   **Persist the ledger to `data/generation/research/<slug>.ledger.json`** (using this
+   Read's slug), as a JSON array in exactly the `CitationLedger` shape above. Write it to
+   the **per-slug** path — never the shared `data/generation/research/ledger.json` — so
+   parallel writers each own their own file and never clobber one another. The deterministic
+   verify gate unions every `<slug>.ledger.json` when grounding drafts.
 3. **`claims table`** — the explicit claim→evidence map the draft and the fact-check
    gate both consume:
    ```
@@ -165,8 +171,11 @@ count. Check, in order:
    piece beats a padded, under-sourced one).
 
 ### `<phase>Emit</phase>`
-Produce the three artifacts. Order the ledger by tier (High first) so the writer reaches
-for the strongest support. Ensure **every claims-table URL exists in the ledger**, and
+Produce the three artifacts. Write the citation ledger to the per-slug path
+`data/generation/research/<slug>.ledger.json` (JSON array, `CitationLedger` shape) — the
+per-slug file keeps parallel writers from colliding. Order the ledger by tier (High first)
+so the writer reaches for the strongest support. Ensure **every claims-table URL exists in
+the ledger**, and
 **every load-bearing claim has its corroboration marked**. Print `RESEARCH DONE: <slug>`
 with a one-line gate report (`claims: N, cited: X%, load-bearing corroborated: Y%,
 sources: H high / M med / L low`). If a gate cannot be met at the budget cap, print

@@ -42,7 +42,6 @@ Set names EXACTLY as written below (they are referenced verbatim in the YAML).
 
 | Name | Kind | Required? | Used by |
 |---|---|---|---|
-| `CLAUDE_CODE_OAUTH_TOKEN` | secret | **Yes** (authoring + scout) | Claude Code Action |
 | `CLOUDFLARE_API_TOKEN` | secret | **Yes** (worker deploy) | `deploy-worker.yml` |
 | `CLOUDFLARE_ACCOUNT_ID` | secret | **Yes** (worker deploy) | `deploy-worker.yml` |
 | `EXPORT_TOKEN` | secret | **Yes** (events fetch) | Worker + `fetch-events.mts` |
@@ -56,27 +55,40 @@ Set names EXACTLY as written below (they are referenced verbatim in the YAML).
 | `PUBLIC_SITE_URL` | **variable** | Recommended | canonical site URL in build |
 | `PUBLIC_BASE_PATH` | **variable** | If project Pages | Astro base path |
 
+> **`CLAUDE_CODE_OAUTH_TOKEN` is no longer a GitHub Actions secret.** The Actions
+> pipeline is a pure-$0 CODE pipeline (events → ingest → curate → build → deploy)
+> with no Claude steps. Reads are authored by a **Claude routine** you register in
+> the Claude app — see "Registering the Reads routine" below. `claude setup-token`
+> is still relevant there (to authenticate the routine against your subscription),
+> just not as a repo secret.
+
 Each secret's exact creation steps follow.
 
 ---
 
-### `CLAUDE_CODE_OAUTH_TOKEN` — authors Reads + appraises sources
+### Registering the Reads routine (authors the Reads)
 
-Authenticates the Claude Code Action against your **Claude Pro/Max
-subscription** (no API billing).
+Reads are **not** authored in GitHub Actions. They're authored by a **Claude
+routine** you register in the Claude app: an **Opus orchestrator** (`reads-run`)
+that runs on your **Claude Pro/Max subscription pool** (no API billing) and
+commits finished MDX to `apps/site/src/content/blog/` + pushes. The daily
+pipeline prunes old Reads; `feed-refresh.yml` (every 3h) rebuilds and redeploys,
+so newly-committed Reads go live within ~3h.
 
-1. Locally, with Claude Code installed and logged in to your subscription, run:
-   ```bash
-   claude setup-token
-   ```
-2. It opens a browser OAuth flow and prints a long-lived token
-   (`sk-ant-oat01-…`). Copy it.
-3. Add it as the repo secret **`CLAUDE_CODE_OAUTH_TOKEN`**.
+1. Make sure Claude Code is installed locally and logged in to your subscription.
+   Verify auth works: `claude -p "hello"`. (If you ever automate this outside the
+   app, `claude setup-token` mints a long-lived subscription token — but the
+   routine itself just needs your logged-in subscription.)
+2. In the Claude app, **register a scheduled routine that runs the `reads-run`
+   orchestrator twice daily** (min 1-hour interval; a 2×/day schedule is well
+   inside the subscription-pool routine limits). The orchestrator definition
+   lives at `.claude/commands/reads-run.md` — it drives survey → curate →
+   parallel writers → independent verifiers → publish, gating on the verify pass
+   before anything is committed.
 
-> Verify it works with `claude -p "hello" ` locally before relying on it in CI.
-> Anthropic has at times restricted OAuth tokens in third-party CI — if the
-> Action fails auth, re-run `claude setup-token` to refresh, and confirm your
-> subscription is active.
+> The routine runs on your subscription, so keep that subscription active. It
+> authors and pushes MDX on its own cadence — Actions only builds/deploys what's
+> committed.
 
 ---
 
@@ -195,9 +207,9 @@ bundle at build time and used by the events fetch.
 ## 2. First-run sequence (do this in order)
 
 1. **Complete §0** (public repo, Pages source = Actions, write permissions).
-2. **Add the required secrets** (§1): `CLAUDE_CODE_OAUTH_TOKEN`,
-   `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `EXPORT_TOKEN`, and the
-   recommended `GEMINI_API_KEY`.
+2. **Add the required secrets** (§1): `CLOUDFLARE_API_TOKEN`,
+   `CLOUDFLARE_ACCOUNT_ID`, `EXPORT_TOKEN`, and the recommended `GEMINI_API_KEY`.
+   (No Claude token needed in Actions — Reads come from the routine; see step 8.)
 3. **Create the KV namespace, fill `wrangler.toml`, set the Worker
    `EXPORT_TOKEN`, and deploy the Worker** (§ "Cloudflare Worker + KV").
    Verify: `curl https://<worker-origin>/health` → `{"ok":true}` (or similar
@@ -206,15 +218,21 @@ bundle at build time and used by the events fetch.
 4. **Set `PUBLIC_WORKER_URL`** (and `PUBLIC_SITE_URL` / `PUBLIC_BASE_PATH`) as
    repo variables from the deployed Worker + Pages URLs (§ build vars).
 5. **Run the pipeline manually:** `Actions → pipeline → Run workflow`
-   (`workflow_dispatch`). Watch the run:
+   (`workflow_dispatch`). It's a pure-$0 code pipeline — events → ingest+curate →
+   record build day → prune → build → deploy, **no author step**. Watch the run:
    - `Fetch engagement events` should log a count (or the fail-soft empty note).
-   - `Author Reads (Claude Code)` writes MDX; `Verify drafts` must pass.
+   - `Ingest + curate` refreshes the feed data.
    - `Deploy to GitHub Pages` publishes the site.
+   The site ships with the Reads already committed in `apps/site/src/content/blog/`.
 6. **Confirm the site is live** at `PUBLIC_SITE_URL`, then **lock the Worker
    CORS** (`ALLOWED_ORIGIN` = Pages origin) and redeploy the Worker.
 7. **Let the crons take over.** `pipeline.yml` runs daily (06:00 UTC),
    `feed-refresh.yml` every 3h, `scout-discover.yml` weekly (Mon 05:00 UTC).
    Adjust the `cron:` lines to taste.
+8. **Register the Reads routine** (§ "Registering the Reads routine"): the
+   `reads-run` Opus orchestrator, 2×/day, on your subscription. It authors NEW
+   Reads on its own cadence and commits+pushes the MDX; `feed-refresh.yml` picks
+   them up and they go live within ~3h — independent of the daily pipeline.
 
 ---
 
@@ -226,9 +244,11 @@ bundle at build time and used by the events fetch.
   `RegistrySchema`) or let `scout-discover.yml` grow it weekly.
 - **Retention:** the pipeline keeps `RETENTION_DAYS` (default 3) days of Reads;
   older ones are pruned and the removal is committed back.
+- **Reads cadence:** new Reads come from the Claude routine (2×/day), not the
+  pipeline. It commits MDX; `feed-refresh.yml` publishes it within ~3h.
 - **Costs stay $0:** public-repo Actions minutes are free; Pages + Worker + KV
-  are free tier; Claude runs on your subscription; enrichment/transcription use
-  free LLM tiers.
+  are free tier; the Reads routine runs on your Claude subscription (not Actions);
+  enrichment/transcription use free LLM tiers.
 
 ---
 
@@ -240,6 +260,6 @@ bundle at build time and used by the events fetch.
 | `GET /events` returns 503 | `EXPORT_TOKEN` not set on the Worker | `wrangler secret put EXPORT_TOKEN` |
 | Events always empty in the feed | `PUBLIC_WORKER_URL` or `EXPORT_TOKEN` repo secret missing | Set both; the fetch is fail-soft so the run won't error, just no signal |
 | Feed has no topics/tags | `GEMINI_API_KEY` unset | Add the key (enrichment is a no-op without it) |
-| Author step fails auth | OAuth token expired / restricted | Re-run `claude setup-token`, update the secret |
+| No new Reads appearing | Reads routine not firing / not authenticated | Check the routine in the Claude app; confirm your subscription is active (`claude -p "hello"`); the routine commits MDX that `feed-refresh.yml` publishes within ~3h |
 | Pages deploy 404 / wrong base | `PUBLIC_BASE_PATH` mismatch for a project site | Set `PUBLIC_BASE_PATH=/<repo>/` (project) or unset (user site) |
 | Daily commit retriggers CI | missing skip tag | The commit uses `[skip ci]`; ensure CI honors it |

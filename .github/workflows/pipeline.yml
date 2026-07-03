@@ -1,9 +1,12 @@
 name: pipeline
 
-# The main daily cron: fetch behavior → ingest+curate → author Reads (Claude) →
-# verify → record build ledger → prune → commit MDX →
-# build → deploy to GitHub Pages. All steps are also runnable by hand
-# (workflow_dispatch). Everything is $0: public-repo Actions minutes + Pages.
+# The main daily cron: fetch behavior → ingest+curate → record build ledger →
+# prune expired Reads → commit the pruned MDX → build → deploy to GitHub Pages.
+# This is a pure-$0 CODE pipeline — no Claude / LLM steps. Reads are authored
+# out-of-band by a Claude routine (subscription pool, 2×/day) that commits MDX;
+# feed-refresh.yml (every 3h) rebuilds+deploys, so new Reads go live within ~3h.
+# All steps are also runnable by hand (workflow_dispatch). Everything is $0:
+# public-repo Actions minutes + Pages.
 #
 # Auth & tuning knobs come from repo Secrets/Variables — see docs/RUNBOOK.md.
 # The pipeline is fail-soft where possible: a missing optional secret degrades a
@@ -105,50 +108,19 @@ jobs:
       - name: Ingest + curate
         run: pnpm exec tsx scripts/real-ingest.mts
 
-      # ---- 3. plan: write per-slug briefs the author step consumes ----
-      - name: Generate plan (briefs)
-        run: pnpm --filter @khazana/generate generate plan
-
-      # ---- 4. author: Claude Code authors research-grade MDX into the blog dir ----
-      # Autonomous, prompt-driven, subscription-authed (CLAUDE_CODE_OAUTH_TOKEN).
-      # Sonnet default; the writer skills escalate to Opus for Chronicle only.
-      - name: Author Reads (Claude Code)
-        uses: anthropics/claude-code-action@v1
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          prompt: |
-            You are the khazana daily author running unattended in CI.
-            1. Read every brief in data/generation/briefs/*.md — each is one Read
-               to write (its frontmatter names the format + slug).
-            2. For EACH brief, run the matching writer skill under
-               .claude/skills/writers/<format>/ (chronicle | dispatch | field-notes
-               | teardown | primer | build-log). First run the researcher skill to
-               build a web-grounded, source-appraised dossier; every load-bearing
-               claim must trace to an appraised source with >=2 independent
-               corroborations where possible.
-            3. Write the finished MDX to apps/site/src/content/blog/<slug>.mdx.
-               Match the caliber of the existing exemplars in that directory
-               (e.g. the-carrington-event.mdx). Follow STYLE.md for voice.
-            4. Do NOT touch any file outside apps/site/src/content/blog/ and the
-               research dossiers under data/. Do NOT commit — the workflow commits.
-          claude_args: |
-            --model claude-sonnet-5
-            --max-turns 60
-            --allowedTools "WebSearch,WebFetch,Read,Write,Edit,Glob,Grep,Bash(pnpm --filter @khazana/generate generate verify)"
-
-      # ---- 5. verify: fail the run if a draft is malformed / ungrounded ----
-      - name: Verify drafts
-        run: pnpm --filter @khazana/generate generate verify
-
-      # ---- 6. record build ledger so prune uses authoritative ages ----
+      # ---- 3. record build ledger so prune uses authoritative ages ----
       - name: Record build day
         run: pnpm exec tsx scripts/record-build-day.mts
 
-      # ---- 7. prune: drop Reads older than the retention window ----
+      # ---- 4. prune: drop Reads older than the retention window ----
+      # The Claude routine authors new Reads out-of-band; this daily pipeline owns
+      # retention — pruning routine-authored MDX past RETENTION_DAYS.
       - name: Prune expired history
         run: pnpm exec tsx scripts/prune-history.mts --apply
 
-      # ---- 8. commit back generated / removed MDX ([skip ci]) ----
+      # ---- 5. commit back pruned MDX ([skip ci]) ----
+      # Only removals land here (the routine commits new Reads itself); this keeps
+      # the committed blog dir bounded to the retention window.
       - name: Commit generated Reads
         run: |
           git config user.name "khazana-bot"
@@ -161,7 +133,7 @@ jobs:
             git push
           fi
 
-      # ---- 9. build the static site (Pagefind index inside build) ----
+      # ---- 6. build the static site (Pagefind index inside build) ----
       - name: Build site
         run: pnpm --filter @khazana/site build
 

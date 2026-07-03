@@ -1,4 +1,4 @@
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildBrief } from "./brief.js";
 import {
@@ -35,10 +35,32 @@ async function runPlan(deps: CliDeps): Promise<number> {
   return 0;
 }
 
-async function runVerifyCmd(deps: CliDeps): Promise<number> {
+/** filename basename without the .mdx extension — the draft's slug. */
+function slugOf(file: string): string {
+  return basename(file, ".mdx");
+}
+
+/**
+ * Slug-scoped verify. With no slugs, checks every draft (unchanged contract).
+ * With slugs, checks only the matching drafts; a requested slug with no matching
+ * file is an error so the routine knows a draft it expected is missing.
+ */
+async function runVerifyCmd(deps: CliDeps, slugs: string[] = []): Promise<number> {
   const curated = readCurated(deps.dataDir);
   const ledger = readLedger(deps.dataDir);
-  const files = listDrafts(deps.contentDir);
+  let files = listDrafts(deps.contentDir);
+
+  if (slugs.length > 0) {
+    const present = new Set(files.map(slugOf));
+    const missing = slugs.filter((s) => !present.has(s));
+    if (missing.length > 0) {
+      console.error(`[generate:verify] requested slug(s) with no draft: ${missing.join(", ")}`);
+      return 1;
+    }
+    const wanted = new Set(slugs);
+    files = files.filter((f) => wanted.has(slugOf(f)));
+  }
+
   const drafts = files.map((file) => ({ file, mdx: readDraft(file) }));
   const report = await runVerify(drafts, curated, { now: deps.now, ledger, factChecker: deps.factChecker });
   const path = writeReport(deps.dataDir, report);
@@ -52,7 +74,7 @@ async function runVerifyCmd(deps: CliDeps): Promise<number> {
 export async function main(argv: string[], deps: CliDeps): Promise<number> {
   const cmd = argv[0];
   if (cmd === "plan") return runPlan(deps);
-  if (cmd === "verify") return runVerifyCmd(deps);
+  if (cmd === "verify") return runVerifyCmd(deps, argv.slice(1));
   console.error(`[generate] unknown subcommand: ${cmd ?? "(none)"} (expected "plan" or "verify")`);
   return 2;
 }

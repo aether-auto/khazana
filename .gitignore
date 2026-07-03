@@ -18,5 +18,11 @@ data/sources.pending.json
 data/scout/
 data/feed/
 data/taste.json
+# Transient per-run generation artifacts (briefs, per-slug citation ledgers, verify
+# report). The committed output is apps/site/src/content/blog/*.mdx, never these.
+data/generation/
+# Per-package build/test caches (the committed .cache/transformers model cache above
+# is the deliberate exception, scoped via .cache/ingest/).
+packages/*/.cache/
 screenshots/
 videos/
