@@ -140,4 +140,39 @@ describe("Semaphore", () => {
     await p;
     expect(acquired).toBe(true);
   });
+
+  // Regression: the semaphore used to leak a permit on every queued hand-off
+  // (the woken waiter decremented `count` while release() skipped the increment),
+  // so `count` drifted negative under contention until a per-host semaphore was
+  // permanently exhausted — source promises then hung, the event loop drained,
+  // and the ingest process died with Node exit 13 ("unsettled top-level await").
+  it("does not leak permits under queued contention (regression: exit-13 hang)", async () => {
+    const sem = new Semaphore(2);
+
+    // 8 tasks contend for 2 permits → forces many queued acquire/release hand-offs.
+    await Promise.all(
+      Array.from({ length: 8 }, async () => {
+        const release = await sem.acquire();
+        await new Promise<void>((r) => setTimeout(r, 3));
+        release();
+      }),
+    );
+
+    // After everything settles, all `limit` permits must be free again. If any
+    // leaked, one of these acquires never resolves → we surface it as a clear
+    // assertion instead of a suite-wide timeout.
+    const acquireOrHang = (ms: number) =>
+      Promise.race([
+        sem.acquire(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("acquire hung — permit leak")), ms),
+        ),
+      ]);
+
+    const r1 = await acquireOrHang(300);
+    const r2 = await acquireOrHang(300);
+    r1();
+    r2();
+    expect(true).toBe(true); // reaching here means both permits were still available
+  });
 });

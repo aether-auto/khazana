@@ -69,18 +69,19 @@ export class Semaphore {
       this.count--;
       return () => this.release();
     }
+    // No permit available: queue. When woken by release(), the permit is handed
+    // to us directly — we must NOT decrement `count` again (release() skips the
+    // matching increment). Double-counting here leaked a permit per hand-off and
+    // eventually deadlocked the ingest pool (Node exit 13).
     return new Promise<() => void>((resolve) => {
-      this.queue.push(() => {
-        this.count--;
-        resolve(() => this.release());
-      });
+      this.queue.push(() => resolve(() => this.release()));
     });
   }
 
   private release(): void {
     const next = this.queue.shift();
     if (next) {
-      next();
+      next(); // transfer the permit to the next waiter — count is unchanged
     } else {
       this.count++;
     }
