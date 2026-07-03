@@ -95,6 +95,12 @@ export interface EnrichContentOptions {
    * publisher don't burst.
    */
   hostLimiter?: PerHostLimiter;
+  /**
+   * Optional, side-effect-free progress hook fired once per item as enrichment
+   * of that item completes. Observability only; a throwing callback is swallowed
+   * so it can never break the phase. `total` is the number of enrichment targets.
+   */
+  onProgress?: (p: { done: number; total: number }) => void;
 }
 
 // Item carries optional transient fields stashed by the RSS parser.
@@ -409,8 +415,18 @@ export async function enrichContent(
   const targets = (items as EnrichableItem[]).filter(
     (it) => ARTICLE_TYPES.has(it.sourceType) || it.sourceType === "youtube" || it.sourceType === "podcast",
   );
+  let enriched = 0;
+  const total = targets.length;
   await pooledMap(targets, opts.concurrency ?? 4, async (it) => {
     await enrichItem(it, timed, opts, caches, hostLimiter);
+    if (opts.onProgress) {
+      enriched += 1;
+      try {
+        opts.onProgress({ done: enriched, total });
+      } catch {
+        // A misbehaving progress callback must never break the phase.
+      }
+    }
   });
   // Drop transient fields so they never leak into output.
   for (const it of items as EnrichableItem[]) {

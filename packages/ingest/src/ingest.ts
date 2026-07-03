@@ -15,6 +15,32 @@ export interface SourceResult {
   count: number;
   error?: string;
 }
+
+/** Snapshot passed to `onProgress` as each source finishes. */
+export interface IngestProgress {
+  /** Sources finished so far (1..total). */
+  done: number;
+  /** Total enabled sources this run. */
+  total: number;
+  /** Sources that succeeded so far. */
+  okSoFar: number;
+  /** Sources that failed so far. */
+  failedSoFar: number;
+  /** Total items collected so far (pre-dedup). */
+  itemsSoFar: number;
+  /** Id of the source that just finished. */
+  lastId: string;
+  /** Whether the source that just finished succeeded. */
+  lastOk: boolean;
+}
+
+/** Snapshot passed to `onExtractProgress` as each item finishes enrichment. */
+export interface ExtractProgress {
+  /** Items enriched so far (1..total). */
+  done: number;
+  /** Total items targeted for enrichment. */
+  total: number;
+}
 export interface IngestResult {
   items: FeedItem[];
   results: SourceResult[];
@@ -46,6 +72,18 @@ export async function runIngest(
      * ad-hoc calls never touch the shared on-disk cache.
      */
     caches?: IngestCaches;
+    /**
+     * Optional, side-effect-free progress hook fired once as each source
+     * finishes (in completion order, so it can drive a live heartbeat in the
+     * cloud log). Observability only — never affects ingest output. Kept
+     * defensive: a throwing callback is swallowed so it can't break the run.
+     */
+    onProgress?: (p: IngestProgress) => void;
+    /**
+     * Optional progress hook for the extract/enrich phase, fired once per item
+     * enriched. Same guarantees as `onProgress`.
+     */
+    onExtractProgress?: (p: ExtractProgress) => void;
   },
 ): Promise<IngestResult> {
   const fetchFn = opts.fetchFn ?? defaultFetch;
@@ -61,6 +99,34 @@ export async function runIngest(
   const hostLimiter = new PerHostLimiter({
     hostGapMs: { "www.reddit.com": resolveRedditMinGapMs() },
   });
+
+  // Completion-ordered running tallies for the optional progress heartbeat.
+  // Mutated only from inside the (serialized-by-await) mapper below.
+  const total = enabled.length;
+  let done = 0;
+  let okSoFar = 0;
+  let failedSoFar = 0;
+  let itemsSoFar = 0;
+  const report = (r: { id: string; ok: boolean; count: number }): void => {
+    if (!opts.onProgress) return;
+    done += 1;
+    if (r.ok) okSoFar += 1;
+    else failedSoFar += 1;
+    itemsSoFar += r.count;
+    try {
+      opts.onProgress({
+        done,
+        total,
+        okSoFar,
+        failedSoFar,
+        itemsSoFar,
+        lastId: r.id,
+        lastOk: r.ok,
+      });
+    } catch {
+      // A misbehaving progress callback must never break the pipeline.
+    }
+  };
 
   const sourceResults = await pooledMap(
     enabled,
@@ -91,7 +157,7 @@ export async function runIngest(
           }
         : fetchFn;
 
-      return hostLimiter.run(hostname, async () => {
+      const result = await hostLimiter.run(hostname, async () => {
         try {
           const items = await withRetry(
             async () => {
@@ -135,6 +201,8 @@ export async function runIngest(
           } as const;
         }
       });
+      report(result);
+      return result;
     },
   );
 
@@ -160,6 +228,7 @@ export async function runIngest(
     ...opts.extract,
     caches,
     hostLimiter: new PerHostLimiter(),
+    ...(opts.onExtractProgress ? { onProgress: opts.onExtractProgress } : {}),
   });
   return { items, results, fetchResults, cacheStats: caches.stats.snapshot() };
 }
