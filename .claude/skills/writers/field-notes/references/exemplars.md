@@ -1,5 +1,42 @@
 # Field Notes — worked exemplars & annotated patterns
 
+## Canonical full-length exemplars (study these first)
+
+Field-notes is the deliberately-short format, so the canonical reference is a **set of three
+complete short briefings** — read all three as a group:
+
+- `references/exemplars/fusion-ignition-is-now-routine.mdx` (355w, science) — NIF's 10th
+  ignition; the *repeatability*, not the yield, is the story.
+- `references/exemplars/what-the-battery-papers-agree-on.mdx` (373w, science) — three unrelated
+  solid-state results converge: the *interface*, not the electrolyte, is the bottleneck.
+- `references/exemplars/the-scaling-axis-quietly-turned.mdx` (358w, ai) — two independent 2025
+  results agree: the marginal AI dollar now buys *thinking*, not parameters.
+
+Together they are the **gold standard** for the short-digest craft: complete, fact-checked
+briefings you should read in full and emulate. The annotated snippet-patterns below (Exemplars
+A–C) remain useful for individual moves; these three files are the whole shape done right.
+
+What makes them exemplary — the moves to copy:
+
+1. **~360 words, exactly TWO component types (one `Annotation` + one `Callout`).** Each hangs
+   on a single cited number and one framed "Watch for:" box — nothing from the knowledge-carrying
+   long-form kit. This *is* the demonstration of "one Callout, used once."
+2. **Synthesis, not summary.** Each lede states a *connection* no single source states ("the
+   tenth ignition was a Tuesday — that silence is the milestone"), connecting a real cluster of
+   results into one second-order insight (the frontier moved to *manufacturing* / the *interface*
+   / a *per-query cost you can dial*) — the sentence a reader screenshots.
+3. **A specific, timed, falsifiable watch-for close.** Not "it'll be interesting": a *1 Hz
+   cadence* result, the *disappearance of the stack-pressure rig*, the *"reasoning-effort" API
+   primitive* — each a concrete checkable indicator, living in the single `Callout`.
+4. **Models RESTRAINT — the anti-pattern is padding / over-componentizing.** No preamble, no
+   flourish; opens on the fact, ends on the watch-for; each could be *shorter*, never padded
+   toward 500. A future writer sees exactly how little a great briefing needs.
+
+**How to use them:** read all three during the **Internalize** phase to calibrate the bar —
+before you draft. Do **not** copy the topics; match the compression, synthesis, and grounding.
+
+---
+
 ## Exemplar A — full briefing (the whole shape, ~140 words)
 
 > The EU's AI Act enforcement body issued its first guidance on general-purpose model

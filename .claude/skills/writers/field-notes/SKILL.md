@@ -60,7 +60,9 @@ Lede (2–3 sentences: what happened, who, when) → why it matters (2–3 sente
 channel-specific, one cited source) → the number (1 sentence + `<Annotation>` or a
 small `<DataTable>`) → "Watch for:" (1 sentence, specific) → sources (the cited
 links). Annotated skeleton: **`references/template.mdx`**. Worked excerpts:
-**`references/exemplars.md`**.
+**`references/exemplars.md`** — and read the **canonical full-length exemplars** it points to
+(the three short briefings under **`references/exemplars/`**) in full during Internalize to
+calibrate the bar.
 
 ## Components (this format's kit only)
 
@@ -139,6 +141,11 @@ earned); word count in range; no preamble or closing flourish; frontmatter valid
   triangulation, the ledger + claims-table shapes, and the fact-check gates (shared).
 - `references/craft.md` — deep craft rubric (Stratechery/Axios technique).
 - `references/template.mdx` — annotated structural skeleton.
-- `references/exemplars.md` — worked exemplars and annotated patterns.
+- `references/exemplars.md` — worked exemplars and annotated patterns; leads with the
+  canonical full-length exemplars.
+- `references/exemplars/` — the **three gold-standard full-length briefings**
+  (`fusion-ignition-is-now-routine.mdx`, `what-the-battery-papers-agree-on.mdx`,
+  `the-scaling-axis-quietly-turned.mdx`) to read as a set and emulate — they model the
+  short-digest craft (topics aside — match the compression, synthesis, and grounding).
 - `references/mdx-contract.md` — exact frontmatter + component contract.
 - `scripts/check-links.py` — Verify-phase link validator (`--help`).

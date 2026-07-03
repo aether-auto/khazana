@@ -1,5 +1,41 @@
 # Dispatch — worked exemplars & annotated patterns
 
+## Canonical full-length exemplar (study this first)
+
+**Read the full piece — `references/exemplars/baumol-cost-disease.mdx`** ("Baumol's Cost
+Disease", ~6,000–6,500 reader-facing words, a full ~25-min data-led read carried by ~16 heavy
+islands). This is the **gold standard** for the format: a complete, fact-checked dispatch you
+should read in full and emulate. The annotated snippet-patterns below (Exemplars A–D) remain
+useful for individual moves; this file is the whole shape done right.
+
+What makes it exemplary — the moves to copy:
+
+1. **Data literally leads every prose beat.** The hook chart lands in the second breath before
+   any explanation; every section opens on its figure and the prose interprets, never restates.
+   Strict Pudding "the data speaks" doctrine.
+2. **Real series, honestly indexed.** The iconic diverging lines are **genuinely pulled from
+   FRED/BLS and indexed to Jan 2000 = 100** by hand (hospital +285%, tuition +185%, toys −74%,
+   CPI +93%); the cross-country table is a live World Bank pull. Nothing on a chart is invented.
+3. **A real analytical spine, not a chart dump.** One quantifiable thesis ("the gap is one
+   number: the −0.965 pass-through") stated up front, earned through a Scrolly reveal,
+   complicated by a residual table, stress-tested against three *named* critiques, and paid off
+   with a non-obvious "so what."
+4. **Illustrative axes are HONESTLY disclosed.** Where a Scatter/Distribution axis is an ordinal
+   reading around a measured central estimate rather than an independent measurement, two
+   explicit `Callout kind="caution"/"warning"` boxes + a methodology note say so. Nothing oversold.
+5. **Contested interpretations are attributed, not asserted.** Ranges and conflicts are shown
+   openly (Baumol 62%-of-income vs ~60%-of-GDP; CMS 18.0% vs World Bank 16.7% health share; the
+   CPI-window difference) — each labeled at every use, never papered over.
+6. **Density ~4× the bar with variety + founder voice.** ~16 heavy islands / ~6,000 words =
+   1 per ~375 words: line/area/facet/scatter/slope/distribution/cascade/equation, each mark
+   matched to intent; opens on a puzzle, no hedging, every number contextualized to a baseline,
+   no "in conclusion."
+
+**How to use it:** read it in full during the **Internalize** phase to calibrate the bar —
+before you draft. Do **not** copy its topic; match its rigor, density, prose, and grounding.
+
+---
+
 ## Exemplar A — the hook: question, then chart, then the answer
 
 > Three things happened this week that look unrelated until you line them up.

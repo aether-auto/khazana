@@ -1,5 +1,47 @@
 # Primer — worked exemplars & annotated patterns
 
+## Canonical full-length exemplar (study this first)
+
+**Read the full piece — `references/exemplars/central-limit-theorem.mdx`** ("The Central
+Limit Theorem: Why the Bell Curve Rules the World", ~4,760 reader-facing words, a full
+20–25+ min read carried by 14 heavy islands). This is the **gold standard** for the format:
+a complete, fact-checked primer you should read in full and emulate. The annotated
+snippet-patterns below (Exemplars A–D) remain useful for individual moves; this file is the
+whole shape done right.
+
+What makes it exemplary — the moves to copy:
+
+1. **The misconception is broken by a sandbox whose output the wrong model cannot predict.**
+   "You need a bell-ish source to get a bell" is destroyed by averaging a *perfectly flat*
+   source and watching a bell appear at n=12 — run, observed, *then* explained. This
+   flat-source-sandbox-before-explanation is the single highest-leverage primer move.
+2. **Every RunnableCode is real and was executed; prose matches actual output.** The
+   flat→bell breaker, the editable skewness sampler (2.01→0.90→0.35, matching 2/√n), and the
+   Cauchy IQR-won't-shrink demo (pinned ≈2.0 across n=1…1000) were all run in Node; the prose
+   is written to match. The Chart's 400k-sample densities are real simulation output.
+3. **The aha is made mechanical, not mystical.** "Why specifically a bell" is answered by the
+   characteristic-function argument (averaging erases all but mean+variance) in four explicit
+   moves, then a Detail proves *why exactly two moments survive* — the √n rescaling balances
+   the quadratic and crushes cubic-and-higher into the o(t²) remainder.
+4. **"What it does NOT say" carries real weight.** The n≥30 folklore is flagged as folklore
+   (Berry–Esseen ties required n to source skew); LLN is distinguished from the CLT; the
+   finite-variance and independence conditions each get a Detail; **the Cauchy failure is
+   SHOWN, not asserted**; and a "reading the world" section teaches the additive-vs-
+   multiplicative (log-normal) diagnostic — the theorem as a lens, including its misuse.
+5. **Components carry knowledge the prose would otherwise assert.** 14 heavy islands / ~4,760
+   words = 1 per ~340 words (>2× the density floor): the Stepper carries the coin→binomial→bell
+   mechanism, the Chart the convergence, the ParameterPlay the rate law as a tunable
+   relationship, six Math blocks every equation in KaTeX — each LEADS, prose interprets.
+6. **Voice + grounding.** Opens on a timeless concrete scene (heights, loaves, errors — no
+   current events); ends not on a recap but on a usable diagnostic question. Grounded in 11
+   sources (CLT, Berry–Esseen, Cauchy, de Moivre–Laplace, Galton's 1889 primary quote, Feller
+   Vol. II), all URLs verified, load-bearing claims triangulated ≥2 ways.
+
+**How to use it:** read it in full during the **Internalize** phase to calibrate the bar —
+before you draft. Do **not** copy its topic; match its rigor, density, prose, and grounding.
+
+---
+
 ## Exemplar A — opening with the underlying question (no current events)
 
 > Why does compressing a file work at all? You start with a megabyte, you run a

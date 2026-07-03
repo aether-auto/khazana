@@ -113,7 +113,9 @@ walking each phase, every named fact an `<Annotation>`; optional `<Pullquote>` o
 order / dispatch if one exists) → the turn (`<EventCascade>` or a `<BattleMap>` phase carrying the
 decisive move) → the reckoning (`<ForceComparison>` or `<Sankey>` of casualties; `<Timeline>` of
 aftermath) → the strategic verdict (300–400w). Annotated skeleton: **`references/template.mdx`**.
-Worked excerpts: **`references/exemplars.md`**.
+Worked excerpts: **`references/exemplars.md`** — and read the **canonical full-length exemplar**
+it points to, **`references/exemplars/stalingrad-uranus.mdx`**, in full during Internalize to
+calibrate the bar.
 
 ## Your interactive kit
 
@@ -300,6 +302,9 @@ fails, print `FAIL: <slug> — <reason>` and do not write.
 - `references/craft.md` — deep craft: reconstructing a battle faithfully + dramatically, grounding
   discipline for military claims, how BattleMap phases map to the narrative beats.
 - `references/template.mdx` — annotated structural skeleton.
-- `references/exemplars.md` — worked exemplars, including a BattleMap-led scene with prose interpreting.
+- `references/exemplars.md` — worked exemplars, including a BattleMap-led scene with prose
+  interpreting; leads with the canonical full-length exemplar.
+- `references/exemplars/stalingrad-uranus.mdx` — the **gold-standard full-length theater
+  reconstruction** to read in full and emulate (topic aside — match its rigor, density, and grounding).
 - `references/mdx-contract.md` — exact frontmatter + component contract (incl. the military kit props).
 - `scripts/check-links.py` — Verify-phase link validator (`--help` for usage).

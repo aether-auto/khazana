@@ -1,5 +1,45 @@
 # Theater — worked exemplars & annotated patterns
 
+## Canonical full-length exemplar (study this first)
+
+**Read the full piece — `references/exemplars/stalingrad-uranus.mdx`** ("Stalingrad: How the
+Trap Closed" — Operation Uranus → Wintergewitter → airlift → surrender, ~7,000 rendered words
+/ 25-min depth carried by 11 substantive islands). This is the **gold standard** for the
+format: a complete, fact-checked theater reconstruction you should read in full and emulate.
+The annotated snippet-patterns below (Exemplars A–D) remain useful for individual moves; this
+file is the whole shape done right.
+
+What makes it exemplary — the moves to copy:
+
+1. **The BattleMap is the spine, and its 7 phases are walked in lockstep with the prose.**
+   City-fixing → northern pincer → southern pincer → Kalach link-up → sealed Kessel →
+   Wintergewitter relief → Koltso reduction — each phase arrives *before* the beat that reads
+   it, and the prose interprets the map rather than re-listing its arrows.
+2. **The strategic thesis is carried structurally, not just stated.** One idea — *fix the
+   strong army in the city, break the weak allies on the flanks, and the ring closes without
+   fighting the strong army* — is carried by the EventCascade, the flank-mismatch
+   ForceComparison, and Phase 1's "the army that could not turn."
+3. **Contested figures are attributed ranges with a Detail explaining why.** Pocket
+   250k–290k, air-evac 25k–42k, Axis losses 800k–1.5M, Soviet >1.1M (Krivosheev vs Pereslegin)
+   — a `<Detail>` surfaces the dispute openly; single numbers only where ≥2 sources agree
+   (91k surrendered, 5–6k returned). No false precision.
+4. **Combined-arms glyphs apt to the operation.** Armor arrows for the mechanized pincers and
+   the panzer relief, an air glyph for the airlift, artillery for the bombardments — and
+   **NO naval glyph** (correctly: it's a steppe-and-air battle; naval would be a grounding
+   error). Deliberate modern contrast to naval Midway and ancient-infantry Cannae.
+5. **Human cost grounded, never exploited.** The Sankey and "5,000–6,000 ever came home"
+   land the catastrophe through sourced arithmetic (the flows sum correctly, midpoints
+   disclosed), then the closing tricolon lifts to the strategic verdict without a body-count
+   wallow.
+6. **Density + grounding.** 11 heavy islands / ~7,000 words ≈ 1 per ~640 words (beats the
+   floor and the shipped Cannae/Midway Reads); 11 sources all verified live, every OOB
+   strength and decisive map position corroborated ≥2 ways.
+
+**How to use it:** read it in full during the **Internalize** phase to calibrate the bar —
+before you draft. Do **not** copy its topic; match its rigor, density, prose, and grounding.
+
+---
+
 Three short patterns showing the craft. Each is ~100–160 words. The bracketed notes
 are annotations *about* the technique — not part of the prose. Figures are
 illustrative; in a real piece every number carries an `<Annotation>` to a ledger
