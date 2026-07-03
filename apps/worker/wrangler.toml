@@ -3,14 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2026-06-01"
 compatibility_flags = ["nodejs_compat"]
 
-# ⚠️ DEPLOY BLOCKER: the id below is a PLACEHOLDER — `wrangler deploy` fails
-# until it is a real KV namespace id. One-time founder setup (see docs/RUNBOOK.md
-# → "Cloudflare Worker + KV"):
+# KV namespace "khazana-events-KV" — created 2026-07-03 via
 #   pnpm --filter @khazana/worker exec wrangler kv namespace create KV
-# then paste the printed id in place of REPLACE_WITH_KV_NAMESPACE_ID and commit.
 [[kv_namespaces]]
 binding = "KV"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "117e5d2877a84f86a5eda2ee454913e1"
 
 [vars]
 # Set to the Cloudflare Pages origin once the site is deployed (P5).
