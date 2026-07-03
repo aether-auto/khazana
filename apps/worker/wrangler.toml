@@ -10,8 +10,9 @@ binding = "KV"
 id = "117e5d2877a84f86a5eda2ee454913e1"
 
 [vars]
-# Set to the Cloudflare Pages origin once the site is deployed (P5).
-ALLOWED_ORIGIN = "*"
+# Locked to the live GitHub Pages origin (scheme+host, no path) so only the site
+# can post behavior events. Was "*" during bring-up.
+ALLOWED_ORIGIN = "https://aether-auto.github.io"
 
 # EXPORT_TOKEN is a secret, NOT a var. Set it with:
 #   pnpm dlx wrangler secret put EXPORT_TOKEN
