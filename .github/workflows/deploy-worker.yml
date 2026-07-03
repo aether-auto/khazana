@@ -39,8 +39,10 @@ jobs:
 
       # Uses the repo's pinned wrangler (apps/worker devDependency) via the
       # package's own `deploy` script, so the CLI version matches local dev.
+      # NOTE: `run deploy` (not bare `deploy`) — `pnpm deploy` is a built-in pnpm
+      # command, so the explicit `run` is required to invoke the package script.
       - name: Deploy Worker
-        run: pnpm --filter @khazana/worker deploy
+        run: pnpm --filter @khazana/worker run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

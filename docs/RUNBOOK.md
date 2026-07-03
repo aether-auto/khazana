@@ -123,7 +123,9 @@ pnpm --filter @khazana/worker exec wrangler kv namespace create KV
 pnpm --filter @khazana/worker exec wrangler secret put EXPORT_TOKEN
 
 # 4. first deploy (or let deploy-worker.yml do it on push to apps/worker/**):
-pnpm --filter @khazana/worker deploy
+#    NOTE: `run deploy` — `pnpm deploy` is a built-in pnpm command; the explicit
+#    `run` is required to invoke the package's deploy script.
+pnpm --filter @khazana/worker run deploy
 ```
 
 After the first Pages deploy, lock the Worker's CORS: set `ALLOWED_ORIGIN` in
