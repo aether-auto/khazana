@@ -55,12 +55,13 @@ Set names EXACTLY as written below (they are referenced verbatim in the YAML).
 | `PUBLIC_SITE_URL` | **variable** | Recommended | canonical site URL in build |
 | `PUBLIC_BASE_PATH` | **variable** | If project Pages | Astro base path |
 
-> **`CLAUDE_CODE_OAUTH_TOKEN` is no longer a GitHub Actions secret.** The Actions
-> pipeline is a pure-$0 CODE pipeline (events → ingest → curate → build → deploy)
-> with no Claude steps. Reads are authored by a **Claude routine** you register in
-> the Claude app — see "Registering the Reads routine" below. `claude setup-token`
-> is still relevant there (to authenticate the routine against your subscription),
-> just not as a repo secret.
+> **No Claude token anywhere.** The Actions pipeline is a pure-$0 CODE pipeline
+> (events → ingest → curate → build → deploy) with **no Claude steps**, so it needs
+> no Claude auth. Reads are authored by a **scheduled Claude routine** (see
+> "Registering the Reads routine" below) that runs under your **logged-in Claude
+> subscription** — GitHub never touches Claude, so there is **no
+> `CLAUDE_CODE_OAUTH_TOKEN` and no `claude setup-token`** to manage. (A token would
+> only be needed to run Claude *inside CI*, which this design deliberately avoids.)
 
 Each secret's exact creation steps follow.
 
@@ -75,16 +76,14 @@ commits finished MDX to `apps/site/src/content/blog/` + pushes. The daily
 pipeline prunes old Reads; `feed-refresh.yml` (every 3h) rebuilds and redeploys,
 so newly-committed Reads go live within ~3h.
 
-1. Make sure Claude Code is installed locally and logged in to your subscription.
-   Verify auth works: `claude -p "hello"`. (If you ever automate this outside the
-   app, `claude setup-token` mints a long-lived subscription token — but the
-   routine itself just needs your logged-in subscription.)
-2. In the Claude app, **register a scheduled routine that runs the `reads-run`
-   orchestrator twice daily** (min 1-hour interval; a 2×/day schedule is well
-   inside the subscription-pool routine limits). The orchestrator definition
-   lives at `.claude/commands/reads-run.md` — it drives survey → curate →
-   parallel writers → independent verifiers → publish, gating on the verify pass
-   before anything is committed.
+1. Make sure Claude Code is logged in to your subscription (`claude -p "hello"`
+   works). That logged-in session is the only auth the routine uses — no token.
+2. Register a **scheduled routine that runs the `reads-run` orchestrator twice
+   daily** (min 1-hour interval; 2×/day is well inside the subscription-pool
+   routine limits). The orchestrator definition lives at
+   `.claude/commands/reads-run.md` — it drives survey → curate → parallel writers →
+   independent verifiers → publish, gating on the verify pass before anything is
+   committed, then commits the MDX and pushes.
 
 > The routine runs on your subscription, so keep that subscription active. It
 > authors and pushes MDX on its own cadence — Actions only builds/deploys what's
