@@ -20,8 +20,10 @@ growing collection of **gorgeous, interactive, grounded AI-authored blogs ("Read
 founder's voice (Create). **$0 recurring**, static + serverless only. Aesthetic: terminal ×
 NYT-editorial; reading comfort sacred; UI/feel is paramount (award-level, alive, not "AI-template").
 
-- **Branch:** `p1-foundation` — **no remote, never deployed.** HEAD `886a68a`. Commit at clean
-  milestones; end messages with `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
+- **Branch:** `main` on remote **`aether-auto/khazana`** (public; created 2026-07-03; was
+  `p1-foundation` locally before the go-live push). CI is green on `main`; Pages is set to the Actions
+  source; site URL is **https://aether-auto.github.io/khazana/**. Commit at clean milestones; end
+  messages with `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
 - **Green baseline:** `pnpm test` (~1900 tests), `pnpm -r typecheck` (0 errors), `pnpm --filter
   @khazana/site build` (351 pages) all pass. Keep them green.
 - **Monorepo:** `packages/{core,ingest,curate,generate,scout}` + `apps/{site,worker}`. `core` holds
@@ -139,7 +141,7 @@ positive); assert 0 console errors + no page overflow at 360/390 in **both** mot
 `/taste` + `/graph` fall back to the build snapshot locally (no `PUBLIC_WORKER_URL`) — expected.
 
 ## 6. Git / process
-- Branch **`p1-foundation`** (no remote, never deployed). Commit at clean milestones with the
+- Branch **`main`** (remote `aether-auto/khazana`, public). Commit at clean milestones with the
   co-author trailer (§1). Append meaningful work to `.superpowers/sdd/progress.md` and keep this
   HANDOFF's §3 current as items close.
 - Gitignored (local-only): `data/feed/*.json`, `data/sources.json`, `data/scout/`, `data/taste.json`,
