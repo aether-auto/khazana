@@ -73,7 +73,9 @@ result → code block or `<RunnableCode>`; gotcha callouts) → optional `<Pullq
 spec line or vendor warning if verbatim is more powerful than paraphrase → what went
 wrong (300–500w: real errors, real fixes) → results (150–200w: does it work? measurements)
 → "Reproduce this" checklist. Annotated skeleton: **`references/template.mdx`**. Worked
-excerpts: **`references/exemplars.md`**.
+excerpts: **`references/exemplars.md`** — and read the **canonical full-length exemplar**
+it points to, **`references/exemplars/air-quality-monitor.mdx`**, in full during Internalize
+to calibrate the bar.
 
 ## Your interactive kit
 
@@ -184,6 +186,9 @@ Run `python3 scripts/check-links.py <file>.mdx`. If all pass, write and print
   triangulation, the ledger + claims-table shapes, and the fact-check gates (shared).
 - `references/craft.md` — deep craft rubric (Adafruit/Hackaday technique).
 - `references/template.mdx` — annotated structural skeleton.
-- `references/exemplars.md` — worked exemplars and annotated patterns.
+- `references/exemplars.md` — worked exemplars and annotated patterns; leads with the
+  canonical full-length exemplar.
+- `references/exemplars/air-quality-monitor.mdx` — the **gold-standard full-length build
+  log** to read in full and emulate (topic aside — match its rigor, density, and grounding).
 - `references/mdx-contract.md` — exact frontmatter + component contract.
 - `scripts/check-links.py` — Verify-phase link validator (`--help`).

@@ -1,5 +1,41 @@
 # Teardown — worked exemplars & annotated patterns
 
+## Canonical full-length exemplar (study this first)
+
+**Read the full piece — `references/exemplars/how-shazam-works.mdx`** ("How Shazam
+Recognizes Any Song in Seconds", ~6,900 words). This is the **gold standard** for the
+format: a complete, fact-checked teardown you should read in full and emulate. The
+annotated snippet-patterns below (Exemplars A–D) remain useful for individual moves; this
+file is the whole shape done right.
+
+What makes it exemplary — the moves to copy:
+
+1. **The crux gets the most space and the key code.** The anchor→target-zone→pair→hash
+   mechanism — the one place every other explainer hand-waves — is derived from first
+   principles: a verbatim Pullquote, a Diagram, the 30-bit entropy Math, a *runnable*
+   32-bit `pairHash`, a narrated CodeWalkthrough, the F² speedup, and the
+   p·[1−(1−p)^F] survival-probability math — then a Quiz to lock it in.
+2. **11 heavy knowledge-carrying islands, ~1 per ~614 words** — beats the density floor
+   decisively; components LEAD, prose interprets, throughout.
+3. **Every RunnableCode is real and verified.** All four were executed in Node and the
+   prose corrected to match actual output (peaks=3, histogram spike=8); the bit-packing is
+   reversible. The discipline: *run the code, then write the sentence about its output.*
+4. **The "aha" is made crystalline.** The apparent paradox — pairing squares your per-hash
+   risk (p²) yet barely dents survival because fan-out gives F redundant pairs and
+   1−(1−p)^F≈1 — is walked through the equation line by line. That's *why* throwing away 98%
+   of hashes still works.
+5. **Robustness framed as "what you choose to ignore."** Dropping amplitude and keeping only
+   spectral peaks is presented as the *source* of noise/EQ immunity, via a causal
+   EventCascade grounded in three sources — not a detail.
+6. **Real measured data, never invented.** The noise-cliff Chart uses Wang's actual Figs 4–5
+   numbers; the failure-modes DataTable names the trade Wang *accepted* for each limit — the
+   teardown-vs-tutorial distinction.
+
+**How to use it:** read it in full during the **Internalize** phase to calibrate the bar —
+before you draft. Do **not** copy its topic; match its rigor, density, prose, and grounding.
+
+---
+
 ## Exemplar A — problem-first opening + the runnable intuition
 
 > A hash function has one job: take any input and scatter it across a fixed range so

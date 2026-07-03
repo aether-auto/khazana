@@ -79,7 +79,8 @@ only when the verbatim primary source is essential) → the actual mechanism (60
 line-by-line, `<RunnableCode>` of a real example, `<Annotation>` for each design decision →
 failure modes + trade-offs (400–600w) with a `<Chart>` of boundary conditions → practical
 takeaway (200–300w). Annotated skeleton: **`references/template.mdx`**. Worked excerpts:
-**`references/exemplars.md`**.
+**`references/exemplars.md`** — and read the **canonical full-length exemplar** it points to,
+**`references/exemplars/how-shazam-works.mdx`**, in full during Internalize to calibrate the bar.
 
 ## Your interactive kit
 
@@ -189,7 +190,10 @@ components; frontmatter valid. Run
   triangulation, the ledger + claims-table shapes, and the fact-check gates (shared).
 - `references/craft.md` — deep craft rubric (Dan Luu / 3B1B technique).
 - `references/template.mdx` — annotated structural skeleton.
-- `references/exemplars.md` — worked exemplars and annotated patterns.
+- `references/exemplars.md` — worked exemplars and annotated patterns; leads with the
+  canonical full-length exemplar.
+- `references/exemplars/how-shazam-works.mdx` — the **gold-standard full-length teardown**
+  to read in full and emulate (topic aside — match its rigor, density, and grounding).
 - `references/mdx-contract.md` — exact frontmatter + component contract.
 - `scripts/fetch-data.py` — REAL performance data from public sources (`--help`).
 - `scripts/check-links.py` — Verify-phase link validator (`--help`).

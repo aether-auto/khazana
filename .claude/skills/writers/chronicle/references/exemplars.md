@@ -1,6 +1,44 @@
 # Chronicle — worked exemplars & annotated patterns
 
-Three short patterns showing the craft. Each is ~100–140 words. The bracketed
+## Canonical full-length exemplar (study this first)
+
+**Read the full piece — `references/exemplars/year-without-a-summer.mdx`** ("The Year
+Without a Summer", ~6,300-word reading surface). This is the **gold standard** for the
+format: a complete, fact-checked chronicle you should read in full and emulate. The
+annotated snippet-patterns below (Exemplars A–D) remain useful for individual moves; this
+file is the whole shape done right.
+
+What makes it exemplary — the moves to copy:
+
+1. **A single through-line, set up in the lede and paid off at the close:** *the cause was
+   invisible — almost no one who suffered it knew what hit them.* Every section advances it;
+   the final beat lands it ("all of them were wrong about the mountain").
+2. **The opening is a scene, not a thesis** — a named actor (the Rajah of Sanggar) in a
+   fixed moment with three cited sensory details before any context. It earns the next
+   6,000 words.
+3. **Components LEAD, prose interprets.** ~12 knowledge-carrying islands (~1 per 440 words):
+   the EventCascade states the causal argument and the paragraph *reads* it; the painter-Chart
+   carries the Zerefos correlation and the prose explains why "because it tracks the
+   atmosphere it is data" — never re-listing what the component already shows.
+4. **Scene → context → scene rhythm sustained** across all ~6,000 words: immersive
+   present-tense scenes alternate with fast third-person causal beats. Numbers are
+   *dramatized, never dumped* — the oat price (12¢→92¢) is set up by a Callout and paid off
+   two sections later at the draisine, turning a statistic into a narrative hinge.
+5. **Contested figures as attributed ranges, not smoothed.** Mortality given as "~71,000 to
+   over 100,000" with an explicit note that no contemporaneous census exists; sulfur as
+   10–120 Mt; the likelihood band attributed to model choice. No invented interiority — every
+   quote is verbatim; associations (migration, Mormonism) are hedged as *association, not
+   causation*.
+6. **Consequence, not summary.** The close lifts to the two-century arc (ice cores, tree
+   rings, the 2019 attribution model, the red in Turner's paint) and ends on a short,
+   forward-facing, present-tense line.
+
+**How to use it:** read it in full during the **Internalize** phase to calibrate the bar —
+before you draft. Do **not** copy its topic; match its rigor, density, prose, and grounding.
+
+---
+
+Below: three short patterns showing the craft. Each is ~100–140 words. The bracketed
 notes are annotations *about* the technique — not part of the prose.
 
 ## Exemplar A — opening in scene (the hook)

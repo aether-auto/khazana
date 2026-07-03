@@ -78,7 +78,8 @@ of a period primary source if one exists (`kind="telegram"`, `"document"`, `"hea
 `"quote"`; earn it: only if the verbatim source is more powerful than paraphrase) → context beat
 2 (100–150w) → aftermath scene (400–600w) → consequence (300–400w, `<Timeline>` of legacy).
 Annotated skeleton: **`references/template.mdx`**. Worked excerpts:
-**`references/exemplars.md`**.
+**`references/exemplars.md`** — and read the **canonical full-length exemplar** it points to,
+**`references/exemplars/year-without-a-summer.mdx`**, in full during Internalize to calibrate the bar.
 
 ## Your interactive kit
 
@@ -187,6 +188,9 @@ write.
   triangulation, the ledger + claims-table shapes, and the fact-check gates (shared).
 - `references/craft.md` — deep craft rubric and narrative-nonfiction technique.
 - `references/template.mdx` — annotated structural skeleton.
-- `references/exemplars.md` — worked exemplars and annotated patterns.
+- `references/exemplars.md` — worked exemplars and annotated patterns; leads with the
+  canonical full-length exemplar.
+- `references/exemplars/year-without-a-summer.mdx` — the **gold-standard full-length
+  chronicle** to read in full and emulate (topic aside — match its rigor, density, and grounding).
 - `references/mdx-contract.md` — exact frontmatter + component contract.
 - `scripts/check-links.py` — Verify-phase link validator (`--help` for usage).

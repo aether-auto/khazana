@@ -1,5 +1,43 @@
 # Build Log — worked exemplars & annotated patterns
 
+## Canonical full-length exemplar (study this first)
+
+**Read the full piece — `references/exemplars/air-quality-monitor.mdx`** ("Building a $70
+Open-Source Air-Quality Monitor You Can Actually Trust", ~7,500 words). This is the
+**gold standard** for the format: a complete, fact-checked build log you should read in
+full and emulate. The annotated snippet-patterns below (Exemplars A–D) remain useful for
+individual moves; this file is the whole shape done right.
+
+What makes it exemplary — the moves to copy:
+
+1. **Three REAL integration bugs are the spine** (symptom → cause → fix): sensor
+   self-heating dragging RH low, an unchecked CRC yielding impossible CO₂, and a UART
+   frame-parser phase-lock that silently froze the node. The "what went wrong" section
+   isn't an afterthought — it's where the piece earns trust.
+2. **16 knowledge-carrying islands, ~1 per ~400 words** — roughly 2× the density floor.
+   Every heavy island (DataTable BOM, RunnableCode, Diagram, Chart, CompareSlider, Model3D)
+   **LEADS** its section; the prose interprets the one decisive number rather than restating
+   the component.
+3. **Every spec is traced to a datasheet.** ~30 grounding Annotations put a datasheet
+   section number behind nearly every pin, hex command, and coefficient — dense grounding
+   that never reads like a citation dump.
+4. **The RunnableCode actually executed.** All three JS snippets (PMS 32-byte frame
+   checksum → PM2.5=12, Sensirion CRC-8 → 0x92, EPA correction → 19.3) were run in Node and
+   produce the exact values the prose claims. Byte offsets stay internally consistent across
+   CodeWalkthrough, RunnableCode, and the C loop.
+5. **A thesis stated in numbers, then made arithmetic.** Opens on a concrete lie ("a raw
+   reading climbs on a humid morning"), frames it in a StatBand, and closes the loop with
+   code that literally computes 40 µg/m³ → ~20 µg/m³. One argument, executed end to end.
+6. **Calibration treated as the real engineering, with honest scope.** Names the
+   two-directional error, charts it, gives a co-location Checklist — and *bounds* the
+   correction's validity ("trust it in the range you co-located; flag it, don't fabricate
+   it, in dust"). Honest scope is a craft move.
+
+**How to use it:** read it in full during the **Internalize** phase to calibrate the bar —
+before you draft. Do **not** copy its topic; match its rigor, density, prose, and grounding.
+
+---
+
 ## Exemplar A — parts-first, exact and cited
 
 > Here's everything you need. Order it all before you start — half of this ships
