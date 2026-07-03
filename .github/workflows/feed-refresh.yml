@@ -4,6 +4,10 @@ name: feed-refresh
 # deploy. No generate / audio / scout / commit-back — this exists purely to keep
 # the Feed surface fresh cheaply between the heavier daily pipeline runs.
 #
+# Full-text extraction is SKIPPED here on purpose (EXTRACT=0): this run only
+# needs the fresh feed LIST, not article bodies. Deep bodies come from the daily
+# pipeline (pipeline.yml, extraction ON) and the reads routine's researcher.
+#
 # curated.json + dist are deploy-not-commit (gitignored), so this touches no git
 # history; it just rebuilds and redeploys Pages from freshly curated data.
 
@@ -29,6 +33,7 @@ jobs:
     timeout-minutes: 45
     env:
       LIMIT: "8"
+      EXTRACT: "0" # skip full-text extraction — feed-refresh only needs the fresh list
       ALLOW_DIRECT_YOUTUBE: "1"
       REDDIT_MIN_GAP_MS: "1500"
       YT_DLP_MIN_GAP_MS: "2000"

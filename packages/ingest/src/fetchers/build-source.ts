@@ -55,14 +55,37 @@ export function mergeHeaders(
   return { ...merged, ...overrides };
 }
 
+/**
+ * Default hard timeout (ms) for a single generic network fetch. A dead or
+ * hanging source must fail fast so it releases its pool worker + host slot
+ * instead of occupying them for the whole run; `withRetry` in ingest.ts treats
+ * the resulting AbortError as a source failure. Overridable via env.
+ */
+export const DEFAULT_FETCH_TIMEOUT_MS = 15_000;
+
+/**
+ * Resolve the per-fetch timeout (ms) from `INGEST_FETCH_TIMEOUT_MS`, falling
+ * back to {@link DEFAULT_FETCH_TIMEOUT_MS} when unset, empty, or non-numeric.
+ * Shared by every network fetch that bypasses `defaultFetch` (whisper audio +
+ * Groq) so timeout policy stays in one place.
+ */
+export function fetchTimeoutMs(): number {
+  const raw = process.env["INGEST_FETCH_TIMEOUT_MS"];
+  const parsed = raw === undefined || raw === "" ? NaN : Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_FETCH_TIMEOUT_MS;
+}
+
 export const defaultFetch: FetchFn = async (url, init) => {
   // redirect:"follow" is Node's default, but set it explicitly + intentionally
-  // so a moved feed (301/302) is transparently followed.
+  // so a moved feed (301/302) is transparently followed. AbortSignal.timeout
+  // caps a hung socket so a dead source fails fast (→ withRetry marks it
+  // failed) instead of pinning a pool worker forever.
   const res = await fetch(url, {
     headers: init?.headers,
     method: init?.method,
     body: init?.body,
     redirect: "follow",
+    signal: AbortSignal.timeout(fetchTimeoutMs()),
   });
   return {
     ok: res.ok,

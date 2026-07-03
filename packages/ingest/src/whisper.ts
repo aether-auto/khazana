@@ -27,7 +27,7 @@ import { execFileSync } from "node:child_process";
 import { writeFileSync, readFileSync, unlinkSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { FetchFn } from "./fetchers/build-source.js";
+import { fetchTimeoutMs, type FetchFn } from "./fetchers/build-source.js";
 import { cleanPodcastTranscript } from "./podcast.js";
 import { whisperSemaphore } from "./concurrency.js";
 
@@ -357,9 +357,10 @@ export async function transcribeWithGroq(audioUrl: string): Promise<string> {
   );
 
   try {
-    // 1. Download audio chunk
+    // 1. Download audio chunk (hard timeout so a hung CDN can't pin a worker)
     const res = await fetch(audioUrl, {
       headers: { Range: `bytes=0-${MAX_AUDIO_BYTES - 1}` },
+      signal: AbortSignal.timeout(fetchTimeoutMs()),
     });
     if (!res.ok && res.status !== 206) return "";
 
@@ -380,6 +381,7 @@ export async function transcribeWithGroq(audioUrl: string): Promise<string> {
       method: "POST",
       headers: { Authorization: `Bearer ${GROQ_API_KEY}` },
       body: form,
+      signal: AbortSignal.timeout(fetchTimeoutMs()),
     });
     if (!groqRes.ok) return "";
 
@@ -457,9 +459,11 @@ export async function transcribePodcastEpisode(audioUrl: string): Promise<string
     const tmpPcm = tmpMp3.replace(".mp3", ".pcm");
 
     try {
-      // 1. Download audio chunk — binary safe via native fetch
+      // 1. Download audio chunk — binary safe via native fetch (hard timeout
+      // so a hung CDN can't pin the whisper worker for the whole run)
       const res = await fetch(audioUrl, {
         headers: { Range: `bytes=0-${MAX_AUDIO_BYTES - 1}` },
+        signal: AbortSignal.timeout(fetchTimeoutMs()),
       });
       if (!res.ok && res.status !== 206) return "";
 

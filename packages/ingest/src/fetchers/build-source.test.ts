@@ -1,8 +1,10 @@
-import { expect, test, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import {
   buildSource,
   BROWSER_USER_AGENT,
+  defaultFetch,
   FEED_ACCEPT,
+  fetchTimeoutMs,
   mergeHeaders,
   type FetchFn,
   type FetchResult,
@@ -108,6 +110,54 @@ test("the generic fetch routes through defaultFetch with redirect:follow set exp
     rssEntry.url,
     expect.objectContaining({ redirect: "follow" }),
   );
+  globalFetchSpy.mockRestore();
+});
+
+afterEach(() => {
+  delete process.env["INGEST_FETCH_TIMEOUT_MS"];
+});
+
+test("fetchTimeoutMs defaults to 15000 when unset", () => {
+  delete process.env["INGEST_FETCH_TIMEOUT_MS"];
+  expect(fetchTimeoutMs()).toBe(15000);
+});
+
+test("fetchTimeoutMs honors INGEST_FETCH_TIMEOUT_MS", () => {
+  process.env["INGEST_FETCH_TIMEOUT_MS"] = "500";
+  expect(fetchTimeoutMs()).toBe(500);
+});
+
+test("fetchTimeoutMs falls back to 15000 on NaN / garbage", () => {
+  process.env["INGEST_FETCH_TIMEOUT_MS"] = "not-a-number";
+  expect(fetchTimeoutMs()).toBe(15000);
+  process.env["INGEST_FETCH_TIMEOUT_MS"] = "";
+  expect(fetchTimeoutMs()).toBe(15000);
+});
+
+test("defaultFetch passes an AbortSignal and aborts a hanging fetch within the timeout", async () => {
+  // Very low timeout so the test is fast + deterministic.
+  process.env["INGEST_FETCH_TIMEOUT_MS"] = "40";
+  let receivedSignal: AbortSignal | undefined;
+  const globalFetchSpy = vi
+    .spyOn(globalThis, "fetch")
+    .mockImplementation((_url, init?: RequestInit) => {
+      receivedSignal = init?.signal ?? undefined;
+      // Never resolves on its own; only rejects when the passed signal aborts,
+      // exactly like a hung network socket that native fetch would abort.
+      return new Promise<Response>((_resolve, reject) => {
+        const signal = init?.signal;
+        if (!signal) return; // no signal → would hang forever (the bug); test asserts otherwise
+        signal.addEventListener("abort", () => {
+          reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+        });
+      });
+    });
+
+  await expect(
+    defaultFetch("https://hang.example/feed", { headers: {} }),
+  ).rejects.toThrow();
+
+  expect(receivedSignal).toBeInstanceOf(AbortSignal);
   globalFetchSpy.mockRestore();
 });
 

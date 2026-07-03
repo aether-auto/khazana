@@ -11,8 +11,14 @@ const LIMIT = Number(process.env.LIMIT ?? 4);
 const SOURCE_TYPES = process.env.SOURCE_TYPES
   ? new Set(process.env.SOURCE_TYPES.split(",").map((s) => s.trim()))
   : null;
+// EXTRACT toggle: the frequent cheap refresh (feed-refresh) sets EXTRACT=0 to
+// skip full-text/transcript extraction — it only needs the fresh feed LIST;
+// article bodies come from the deep daily pipeline + the reads researcher.
+// Default ON (unset/anything else) preserves prior behavior.
+const EXTRACT = !/^(0|false)$/i.test((process.env.EXTRACT ?? "").trim());
 
 console.log(`[real-ingest] start ${now} — dataDir=${dataDir} limitPerSource=${LIMIT}`);
+console.log(`[real-ingest] extraction: ${EXTRACT ? "on" : "off"}`);
 if (SOURCE_TYPES) console.log(`[real-ingest] filtering to sourceTypes: ${[...SOURCE_TYPES].join(", ")}`);
 
 const registry = loadRegistry(dataDir);
@@ -24,7 +30,11 @@ if (SOURCE_TYPES) {
 }
 console.log(`[real-ingest] ${registry.sources.filter((s) => s.enabled).length} enabled sources`);
 
-const { items, results } = await runIngest(registry, { now, limitPerSource: LIMIT });
+const { items, results } = await runIngest(registry, {
+  now,
+  limitPerSource: LIMIT,
+  ...(EXTRACT ? {} : { extract: { enabled: false } }),
+});
 const ok = results.filter((r) => r.ok).length;
 const failed = results.filter((r) => !r.ok);
 console.log(`[real-ingest] ingested ${items.length} items from ${ok}/${results.length} sources`);
