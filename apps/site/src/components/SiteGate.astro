@@ -1,0 +1,408 @@
+---
+/**
+ * SiteGate — a full-viewport, client-side access curtain for the whole site.
+ *
+ * Rendered by Shell.astro inside <head>. It is OPTIONAL and NON-BREAKING:
+ * when `PUBLIC_SITE_GATE_HASH` is empty/undefined at build, this component
+ * emits NOTHING — the site behaves exactly as today (local dev, existing
+ * tests/build all unaffected when the var is unset).
+ *
+ * When the hash IS set, an inline <script> in <head> runs BEFORE the body
+ * paints: if the visitor has no valid unlock flag in localStorage it locks the
+ * <html> (hiding + freezing the page) and mounts an overlay with a single
+ * password field. On submit it derives PBKDF2-SHA256(password) with WebCrypto
+ * and compares (constant-time-ish) to the baked hash; a match persists the
+ * unlock flag and reveals the site. Salt/iterations/encoding come from the
+ * SAME module the hash script uses, so they can never drift.
+ *
+ * RESIDUAL LIMITATION (by design): the page HTML is pre-rendered and present in
+ * view-source. This gates the rendered *experience*, not the raw bytes — it is a
+ * considered curtain for a personal site, not a server auth boundary.
+ */
+import {
+  GATE_SALT,
+  GATE_ITERATIONS,
+  GATE_DKLEN_BITS,
+  GATE_STORAGE_KEY,
+  GATE_UNLOCK_VALUE,
+} from "../lib/gate-constants.ts";
+
+// Resolved at build time and inlined. Empty → render nothing at all.
+const expectedHash = (import.meta.env.PUBLIC_SITE_GATE_HASH ?? "").trim().toLowerCase();
+const enabled = expectedHash.length > 0;
+
+// Everything the inline head script needs, passed via define:vars (build-time
+// constants → inlined literals; nothing secret beyond the already-public hash).
+const cfg = {
+  hash: expectedHash,
+  salt: GATE_SALT,
+  iterations: GATE_ITERATIONS,
+  dklenBits: GATE_DKLEN_BITS,
+  storageKey: GATE_STORAGE_KEY,
+  unlockValue: GATE_UNLOCK_VALUE,
+};
+---
+
+{
+  enabled && (
+    <Fragment>
+      {/* Critical CSS — inline in <head> so the lock state applies BEFORE the
+          body paints. `html.khz-locked` hides + freezes the real page; the
+          overlay itself is styled here too so it never flashes unstyled. */}
+      <style is:inline set:html={`
+        html.khz-locked { overflow: hidden; }
+        html.khz-locked body { overflow: hidden; }
+        /* Hide + fully neutralize the real page while locked. The overlay lives
+           inside <body> but is EXEMPTED so it stays visible + interactive. */
+        html.khz-locked body > *:not(.khz-gate) { visibility: hidden !important; }
+        html.khz-locked body { pointer-events: none; user-select: none; }
+        html.khz-locked .khz-gate { visibility: visible; pointer-events: auto; user-select: auto; }
+
+        .khz-gate {
+          position: fixed;
+          inset: 0;
+          z-index: 2147483647;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1.5rem;
+          background:
+            radial-gradient(ellipse 90% 60% at 50% 118%, rgba(255,182,39,0.07), transparent 60%),
+            #0a0a08;
+          color: #ece6d8;
+          font-family: "Berkeley Mono","JetBrains Mono","SF Mono",ui-monospace,"IBM Plex Mono",Menlo,monospace;
+          -webkit-font-smoothing: antialiased;
+          animation: khz-gate-in 340ms cubic-bezier(0.2,0.7,0.2,1) both;
+        }
+        /* fine machined grain over the ground — matches global body::after */
+        .khz-gate::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          opacity: 0.045;
+          mix-blend-mode: overlay;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+          background-size: 140px 140px;
+        }
+
+        .khz-gate__panel {
+          position: relative;
+          width: 100%;
+          max-width: 26rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+        }
+
+        .khz-gate__eyebrow {
+          display: flex;
+          align-items: center;
+          gap: 0.6ch;
+          font-size: 0.75rem;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: #a39884;
+          margin: 0;
+        }
+        .khz-gate__dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #ffb627;
+          box-shadow: 0 0 10px rgba(255,182,39,0.7), 0 0 22px rgba(255,182,39,0.35);
+          animation: khz-gate-pulse 2.4s ease-in-out infinite;
+        }
+
+        .khz-gate__title {
+          margin: 0;
+          font-family: "Fraunces Variable","Fraunces","Iowan Old Style","Charter",Georgia,serif;
+          font-weight: 420;
+          font-size: clamp(2rem, 7vw, 2.9rem);
+          line-height: 1.02;
+          letter-spacing: -0.01em;
+          color: #ece6d8;
+        }
+        .khz-gate__title em {
+          font-style: italic;
+          color: #ffb627;
+          text-shadow: 0 0 40px rgba(255,182,39,0.28);
+        }
+        .khz-gate__sub {
+          margin: -0.4rem 0 0;
+          font-size: 0.8125rem;
+          line-height: 1.5;
+          color: #8a8070;
+          max-width: 34ch;
+        }
+
+        .khz-gate__form { display: flex; flex-direction: column; gap: 0.6rem; }
+        .khz-gate__label {
+          font-size: 0.6875rem;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: #8a8070;
+        }
+        .khz-gate__row {
+          position: relative;
+          display: flex;
+          align-items: stretch;
+          gap: 0;
+          border: 1px solid #3b3a30;
+          border-radius: 4px;
+          background: #0d0c0a;
+          transition: border-color 200ms cubic-bezier(0.2,0.7,0.2,1),
+                      box-shadow 200ms cubic-bezier(0.2,0.7,0.2,1);
+        }
+        .khz-gate__row:focus-within {
+          border-color: #ffb627;
+          box-shadow: 0 0 0 1px rgba(255,182,39,0.5), 0 0 26px rgba(255,182,39,0.14);
+        }
+        .khz-gate__row.is-error {
+          border-color: #c1554a;
+          box-shadow: 0 0 0 1px rgba(193,85,74,0.5);
+          animation: khz-gate-shake 420ms cubic-bezier(0.36,0.07,0.19,0.97);
+        }
+        .khz-gate__input {
+          flex: 1;
+          min-width: 0;
+          appearance: none;
+          background: transparent;
+          border: 0;
+          outline: none;
+          color: #ece6d8;
+          font-family: inherit;
+          font-size: 0.95rem;
+          letter-spacing: 0.14em;
+          padding: 0.85rem 0.9rem;
+        }
+        .khz-gate__input::placeholder { color: #55514a; letter-spacing: 0.02em; }
+        .khz-gate__submit {
+          flex: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5ch;
+          background: color-mix(in oklab, #ffb627 8%, #121210);
+          border: 0;
+          border-left: 1px solid #3b3a30;
+          color: #ffb627;
+          font-family: inherit;
+          font-size: 0.8125rem;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          padding: 0 1.1rem;
+          cursor: pointer;
+          transition: background 120ms cubic-bezier(0.2,0.7,0.2,1),
+                      color 120ms cubic-bezier(0.2,0.7,0.2,1);
+        }
+        .khz-gate__submit:hover { background: color-mix(in oklab, #ffb627 16%, #121210); color: #ffce6b; }
+        .khz-gate__submit:active { transform: translateY(1px); }
+        .khz-gate__submit[aria-busy="true"] { opacity: 0.6; cursor: progress; }
+
+        .khz-gate__error {
+          min-height: 1.2em;
+          font-size: 0.75rem;
+          letter-spacing: 0.04em;
+          color: #c1554a;
+        }
+        .khz-gate__error:empty { min-height: 1.2em; }
+
+        .khz-gate__foot {
+          display: flex;
+          align-items: center;
+          gap: 0.6ch;
+          font-size: 0.6875rem;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: #55514a;
+        }
+        .khz-gate__foot .khz-gate__rule {
+          flex: 1;
+          height: 1px;
+          background: #272620;
+        }
+
+        .khz-gate :focus-visible { outline: 2px solid #ffb627; outline-offset: 2px; border-radius: 2px; }
+
+        @keyframes khz-gate-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes khz-gate-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.35; }
+        }
+        @keyframes khz-gate-shake {
+          10%, 90% { transform: translateX(-1px); }
+          20%, 80% { transform: translateX(2px); }
+          30%, 50%, 70% { transform: translateX(-4px); }
+          40%, 60% { transform: translateX(4px); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .khz-gate { animation: none; }
+          .khz-gate__dot { animation: none; }
+          .khz-gate__row.is-error { animation: none; }
+        }
+        @media (prefers-color-scheme: light) {
+          .khz-gate {
+            background: radial-gradient(ellipse 90% 60% at 50% 118%, rgba(184,133,29,0.06), transparent 60%), #f4f2ec;
+            color: #1a1916;
+          }
+          .khz-gate__title { color: #1a1916; }
+          .khz-gate__title em { color: #b8851d; text-shadow: none; }
+          .khz-gate__sub, .khz-gate__label { color: #52504a; }
+          .khz-gate__eyebrow { color: #605e56; }
+          .khz-gate__row { background: #faf8f3; border-color: #c4c0b4; }
+          .khz-gate__input { color: #1a1916; }
+          .khz-gate__submit { color: #b8851d; background: color-mix(in oklab, #b8851d 10%, #faf8f3); }
+          .khz-gate__dot { background: #b8851d; }
+          .khz-gate__foot, .khz-gate__rule { color: #8a877e; }
+        }
+      `} />
+
+      {/* Inline head script — runs before body paint. Synchronous localStorage
+          check locks immediately (no flash), then mounts the overlay. */}
+      <script is:inline define:vars={{ cfg }} set:html={`
+        (function () {
+          var CFG = ${JSON.stringify(cfg)};
+          var doc = document;
+          var root = doc.documentElement;
+
+          // Already unlocked? Do nothing — site renders normally.
+          try {
+            if (localStorage.getItem(CFG.storageKey) === CFG.unlockValue) return;
+          } catch (e) { /* storage blocked → treat as locked, fall through */ }
+
+          // No WebCrypto (ancient/insecure context) → we can't verify. Fail OPEN
+          // rather than permanently lock the owner out of their own personal site.
+          if (!(window.crypto && window.crypto.subtle)) return;
+
+          // LOCK immediately, before paint.
+          root.classList.add("khz-locked");
+
+          function hex(buf) {
+            var b = new Uint8Array(buf), out = "";
+            for (var i = 0; i < b.length; i++) out += b[i].toString(16).padStart(2, "0");
+            return out;
+          }
+
+          async function derive(pw) {
+            var enc = new TextEncoder();
+            var km = await crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveBits"]);
+            var bits = await crypto.subtle.deriveBits(
+              { name: "PBKDF2", hash: "SHA-256", salt: enc.encode(CFG.salt), iterations: CFG.iterations },
+              km, CFG.dklenBits
+            );
+            return hex(bits);
+          }
+
+          // Constant-time-ish compare over the fixed-length hex digests.
+          function safeEqual(a, b) {
+            if (a.length !== b.length) return false;
+            var r = 0;
+            for (var i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
+            return r === 0;
+          }
+
+          function mount() {
+            var overlay = doc.createElement("div");
+            overlay.className = "khz-gate";
+            overlay.setAttribute("role", "dialog");
+            overlay.setAttribute("aria-modal", "true");
+            overlay.setAttribute("aria-labelledby", "khz-gate-title");
+            overlay.innerHTML = [
+              '<div class="khz-gate__panel">',
+                '<p class="khz-gate__eyebrow"><span class="khz-gate__dot" aria-hidden="true"></span>khazana \\u00b7 private</p>',
+                '<h1 class="khz-gate__title" id="khz-gate-title">A personal <em>treasury</em>.</h1>',
+                '<p class="khz-gate__sub">This surface is private. Enter the passphrase to open the instrument.</p>',
+                '<form class="khz-gate__form" novalidate>',
+                  '<label class="khz-gate__label" for="khz-gate-input">Passphrase</label>',
+                  '<div class="khz-gate__row">',
+                    '<input class="khz-gate__input" id="khz-gate-input" type="password" name="passphrase" ',
+                      'autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" ',
+                      'placeholder="\\u2022\\u2022\\u2022\\u2022\\u2022\\u2022\\u2022\\u2022\\u2022" ',
+                      'aria-describedby="khz-gate-error" />',
+                    '<button class="khz-gate__submit" type="submit">unlock</button>',
+                  '</div>',
+                  '<p class="khz-gate__error" id="khz-gate-error" role="alert" aria-live="assertive"></p>',
+                '</form>',
+                '<p class="khz-gate__foot"><span>enter</span><span class="khz-gate__rule"></span><span>to open</span></p>',
+              '</div>'
+            ].join("");
+
+            // Append to <body>; the hide rule exempts .khz-gate (see CSS) so the
+            // overlay stays visible + interactive while the rest of body is hidden.
+            doc.body.appendChild(overlay);
+
+            var form = overlay.querySelector("form");
+            var input = overlay.querySelector(".khz-gate__input");
+            var row = overlay.querySelector(".khz-gate__row");
+            var errEl = overlay.querySelector(".khz-gate__error");
+            var submit = overlay.querySelector(".khz-gate__submit");
+
+            function focusInput() { try { input.focus(); } catch (e) {} }
+            focusInput();
+
+            // Focus trap: keep Tab within the overlay while locked.
+            overlay.addEventListener("keydown", function (ev) {
+              if (ev.key !== "Tab") return;
+              var focusables = [input, submit];
+              var first = focusables[0], last = focusables[focusables.length - 1];
+              if (ev.shiftKey && doc.activeElement === first) { ev.preventDefault(); last.focus(); }
+              else if (!ev.shiftKey && doc.activeElement === last) { ev.preventDefault(); first.focus(); }
+            });
+            // If focus ever escapes (e.g. click-through attempt), pull it back.
+            doc.addEventListener("focusin", function (ev) {
+              if (!overlay.contains(ev.target)) focusInput();
+            });
+
+            function fail(msg) {
+              errEl.textContent = msg || "That passphrase didn't match.";
+              row.classList.remove("is-error");
+              // reflow to restart the shake animation
+              void row.offsetWidth;
+              row.classList.add("is-error");
+              input.value = "";
+              focusInput();
+            }
+
+            var busy = false;
+            form.addEventListener("submit", async function (ev) {
+              ev.preventDefault();
+              if (busy) return;
+              var pw = input.value;
+              if (!pw) { fail("Enter the passphrase."); return; }
+              busy = true;
+              submit.setAttribute("aria-busy", "true");
+              errEl.textContent = "";
+              try {
+                var got = await derive(pw);
+                if (safeEqual(got, CFG.hash)) {
+                  try { localStorage.setItem(CFG.storageKey, CFG.unlockValue); } catch (e) {}
+                  unlock(overlay);
+                  return;
+                }
+                fail();
+              } catch (e) {
+                fail("Could not verify — try again.");
+              } finally {
+                busy = false;
+                submit.removeAttribute("aria-busy");
+              }
+            });
+          }
+
+          function unlock(overlay) {
+            root.classList.remove("khz-locked");
+            var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (reduce) { if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay); return; }
+            overlay.style.transition = "opacity 340ms cubic-bezier(0.2,0.7,0.2,1)";
+            overlay.style.opacity = "0";
+            setTimeout(function () { if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 360);
+          }
+
+          // Body may not exist yet (we're in <head>). Mount as soon as it does.
+          if (doc.body) mount();
+          else doc.addEventListener("DOMContentLoaded", mount, { once: true });
+        })();
+      `} />
+    </Fragment>
+  )
+}

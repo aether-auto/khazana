@@ -4,6 +4,7 @@ import Wordmark from "../components/Wordmark.astro";
 import Ticker from "../components/Ticker.astro";
 import Beacon from "../components/Beacon.astro";
 import CommandPalette from "../components/cmdk/CommandPalette.tsx";
+import SiteGate from "../components/SiteGate.astro";
 import NavRail from "../components/header/NavRail.tsx";
 import SiteNav from "../components/nav/SiteNav.tsx";
 import { ClientRouter } from "astro:transitions";
@@ -79,6 +80,10 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
     <link rel="manifest" href={withBase("/manifest.webmanifest")} />
     <link rel="icon" href={withBase("/icon.svg")} type="image/svg+xml" />
     <meta name="generator" content={Astro.generator} />
+    {/* Optional client-side access gate. Renders nothing when
+        PUBLIC_SITE_GATE_HASH is unset; when set, its inline critical CSS + JS
+        run before body paint so the page never flashes before unlock. */}
+    <SiteGate />
     <ClientRouter />
     <script is:inline>
       // Gate the reveal hidden-state ASAP (before paint) so JS-on visitors
