@@ -69,6 +69,17 @@
 > The deferred-component backlog is empty except by-choice items. **1901 tests green**, typecheck clean,
 > build 351 pages. New deps across the whole session: `d3-sankey` only. Reports: `wave5c-*`,
 > `build-x-parameterplay`, `build-x-sim-trilateration`, `integrate-paramplay-report`, `verify-paramplay-report`.
+>
+> **Finally, built a gold-standard writer EXEMPLAR corpus** (commits `b660003`, `8d4c9f3`): NEW
+> dedicated PhD-grade teaching pieces — one canonical full-length exemplar per format (build-log
+> *air-quality-monitor*, teardown *how-shazam-works*, chronicle *year-without-a-summer*, primer
+> *central-limit-theorem*, dispatch *baumol-cost-disease*, theater *stalingrad-uranus*, field-notes
+> ×3) — written to a HIGHER bar (Opus, "exceed our shipped reads" mandate) and each independently
+> fact-checked + corrected. **Founder rule: exemplars must NOT be the reads the writers already wrote**
+> (circular), so they live under `.claude/skills/writers/<format>/references/exemplars/` — teaching
+> references, NOT shipped to `/reads`. Each skill's `exemplars.md` now opens with a "Canonical
+> full-length exemplar (study this first)" section citing the craft-moves; SKILL.md points to it.
+> Reports: `.superpowers/sdd/exemplar-*.md`. (Idea if continuing: add a 2nd/3rd exemplar per format.)
 
 ---
 
