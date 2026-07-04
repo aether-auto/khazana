@@ -646,8 +646,13 @@ function SourceDrawer({
     restoreRef.current = (document.activeElement as HTMLElement | null) ?? null;
     // focus the panel itself (tabIndex -1) so the dialog is the start of tab order.
     const id = window.requestAnimationFrame(() => panelRef.current?.focus());
-    const prevOverflow = document.body.style.overflow;
+    // Lock BOTH the body and the root scroller — depending on the layout the page
+    // scroll container is <html>, not <body>, so locking body alone let the source
+    // list keep scrolling behind the drawer (the reported bug).
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevRootOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
     // Belt-and-suspenders: catch Escape even in the one-frame window before focus
     // lands inside the panel (the panel's own onKeyDown covers the rest).
     const onWinKey = (e: KeyboardEvent) => {
@@ -657,7 +662,8 @@ function SourceDrawer({
     return () => {
       window.cancelAnimationFrame(id);
       window.removeEventListener("keydown", onWinKey);
-      document.body.style.overflow = prevOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevRootOverflow;
       restoreRef.current?.focus();
     };
   }, [open, onClose]);
