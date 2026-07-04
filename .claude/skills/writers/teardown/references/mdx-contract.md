@@ -432,6 +432,12 @@ Props: `src?` (a COMMITTED local `.glb`/`.gltf` URL — pass the URL your asset 
 
 - Astro MDX: prose is Markdown; components are JSX islands woven in. A blank line
   separates a component block from surrounding prose.
+- **Inline components (`Annotation`, `Sidenote`, and any phrasing-level component)
+  MUST sit on the SAME physical line as the surrounding prose — NEVER alone on their
+  own line.** MDX renders a JSX element that stands alone on a line as a *block* (flow)
+  element, which closes the surrounding `<p>` and shatters one paragraph into ragged
+  fragments. Keep the sentence continuous: `...approach — <Annotation ... /> — was sound...`,
+  never the term on a line by itself between two prose lines.
 - Cite inline with `<Annotation>` (preferred — renders as marginalia) or a normal
   Markdown link to a brief source URL.
 - Match founder voice (STYLE.md, included in the brief): open with a scene /

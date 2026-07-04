@@ -115,6 +115,14 @@ Summary:
   **retired** — do not use it. Interactive islands need a client directive
   (`client:visible` or `client:load`); static Astro components (`Pullquote`, `Figure`,
   `Callout`, `Detail`) take no directive.
+- **Inline components stay inline.** Phrasing-level components (`Annotation`,
+  `Sidenote`, and anything that lives inside a sentence) **MUST be placed on the SAME
+  line as the surrounding prose — NEVER alone on their own line.** MDX renders an
+  own-line JSX element as a *block*, which closes the enclosing `<p>` and splits one
+  paragraph into ragged fragments (visibly broken wrapping on the live site). Write
+  `...approach — <Annotation ... /> — was sound...`, not the `<Annotation />` on a line
+  by itself sandwiched between prose lines. (`scripts/reflow-inline-mdx.mts --check`
+  reports any own-line inline components in a file.)
 
 ## Scripts (stdlib-only, $0, no API keys)
 
