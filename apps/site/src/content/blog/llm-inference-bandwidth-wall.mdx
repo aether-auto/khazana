@@ -1,0 +1,313 @@
+---
+title: "The Bandwidth Wall: Why Your $30,000 GPU Sits Idle During Inference"
+format: teardown
+channels: ["ai", "tech"]
+summary: "LLM inference during single-batch decode is almost entirely memory-bandwidth-bound. An NVIDIA H100 with 989 TFLOPS of compute bottlenecks on 3.35 TB/s of HBM because every weight matrix must be re-read from memory for every generated token. The roofline model makes this precise — and shows why FlashAttention, speculative decoding, and grouped-query attention are physics responses, not mere tricks."
+publishedAt: 2026-07-04T09:00:00.000Z
+sources:
+  - title: "Williams, S., Waterman, A. & Patterson, D. (2009). Roofline: An Insightful Visual Performance Model for Multicore Architectures. CACM 52(4):65–76."
+    url: "https://dl.acm.org/doi/abs/10.1145/1498765.1498785"
+  - title: "NVIDIA H100 Tensor Core GPU — Product Page (official specifications)"
+    url: "https://www.nvidia.com/en-us/data-center/h100/"
+  - title: "NVIDIA A100 Tensor Core GPU — Product Page (official specifications)"
+    url: "https://www.nvidia.com/en-us/data-center/a100/"
+  - title: "Dao, T., Fu, D.Y., Ermon, S., Rudra, A. & Ré, C. (2022). FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness. NeurIPS 2022. arXiv:2205.14135."
+    url: "https://arxiv.org/abs/2205.14135"
+  - title: "Leviathan, Y., Kalman, M. & Matias, Y. (2023). Fast Inference from Transformers via Speculative Decoding. ICML 2023. arXiv:2211.17192."
+    url: "https://arxiv.org/abs/2211.17192"
+  - title: "Ainslie, J., Lee-Thorp, J., de Jong, M., Zemlyanskiy, Y., Lebrón, F. & Sanghai, S. (2023). GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints. EMNLP 2023. arXiv:2305.13245."
+    url: "https://arxiv.org/abs/2305.13245"
+  - title: "Shazeer, N. (2019). Fast Transformer Decoding: One Write-Head is All You Need. arXiv:1911.02150."
+    url: "https://arxiv.org/abs/1911.02150"
+  - title: "Grattafiori, A. et al. (2024). The Llama 3 Herd of Models. arXiv:2407.21783."
+    url: "https://arxiv.org/abs/2407.21783"
+  - title: "Dao, T. (2023). FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning. ICLR 2024. arXiv:2307.08691."
+    url: "https://arxiv.org/abs/2307.08691"
+  - title: "Shah, J. et al. (2024). FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision. NeurIPS 2024 (spotlight). arXiv:2407.08608."
+    url: "https://arxiv.org/abs/2407.08608"
+  - title: "Wang, H. et al. (2025). Mind the Memory Gap: Unveiling GPU Bottlenecks in Large-Batch LLM Inference. arXiv:2503.08311."
+    url: "https://arxiv.org/html/2503.08311v2"
+  - title: "NERSC Roofline Performance Model Documentation"
+    url: "https://docs.nersc.gov/tools/performance/roofline/"
+  - title: "Baseten — A Guide to LLM Inference and Performance"
+    url: "https://www.baseten.co/blog/llm-transformer-inference-guide/"
+  - title: "Spheron — AI's Memory Wall Problem: Why More GPUs Don't Fix Inference Latency (2026)"
+    url: "https://www.spheron.network/blog/ai-memory-wall-inference-latency-guide-2026/"
+draft: false
+---
+
+import { RunnableCode, Chart, Annotation, Sidenote, StatBand } from "../../components/mdx";
+
+The NVIDIA H100 SXM contains 989 teraFLOPS of dense BF16 compute — enough to perform nearly a trillion floating-point operations every millisecond.<Sidenote n={1} href="https://www.nvidia.com/en-us/data-center/h100/" source="NVIDIA H100 Product Page">The 989 TFLOPS figure is the dense (non-sparsity) BF16 Tensor Core peak for the H100 SXM variant. NVIDIA also quotes 1,979 TFLOPS with structured 2:4 sparsity enabled. For LLM weight matrices that are not explicitly sparsified, 989 TFLOPS is the relevant ceiling.</Sidenote> During a typical LLM inference session — a user sending a message, the model generating a reply token by token — the chip uses roughly 0.3% of that compute budget. The rest sits idle, not because of bugs or misconfigurations, but because of physics.
+
+The bottleneck is not silicon. It is memory bandwidth. The H100 can move data from its HBM3 memory at 3.35 terabytes per second — a staggering figure, except that generating a single token from a 70-billion-parameter model requires reading roughly 140 gigabytes of weight data from that same memory.<Sidenote n={2} href="https://www.spheron.network/blog/ai-memory-wall-inference-latency-guide-2026/" source="Spheron: AI Memory Wall">At FP16 precision: 70 × 10⁹ parameters × 2 bytes/parameter = 140 GB of weights. The full model must be read from HBM for every forward pass, which generates exactly one token in the decode phase.</Sidenote> At peak bandwidth, that transfer takes 42 milliseconds. The trillion FLOPS are fully capable of completing the associated arithmetic in 0.14 milliseconds. The arithmetic finishes 300 times before the last byte arrives.
+
+This gap — between what a GPU can compute and what its memory can supply — is the central fact of modern LLM inference. Every major optimization technique of the last three years is an engineering response to it. The roofline model makes the gap precise, the arithmetic intensity formula predicts exactly when you are on the wrong side of it, and the techniques that matter most (FlashAttention, speculative decoding, grouped-query attention) each attack a different surface of the same underlying constraint.
+
+<StatBand
+  client:visible
+  caption="The four numbers that define the bandwidth wall. H100 SXM specifications from NVIDIA's official product page; ridge point derived from peak BF16 dense TFLOPS divided by HBM3 bandwidth; arithmetic intensity at batch-1 decode from Wang et al. (2025) and the weight-loading formula."
+  stats={[
+    { value: 989, decimals: 0, suffix: " TFLOPS", label: "H100 peak BF16 (dense)", sub: "per H100 SXM5 GPU", href: "https://www.nvidia.com/en-us/data-center/h100/" },
+    { value: 3.35, decimals: 2, suffix: " TB/s", label: "HBM3 memory bandwidth", sub: "per H100 SXM5 GPU", href: "https://www.nvidia.com/en-us/data-center/h100/" },
+    { value: 295, decimals: 0, suffix: " FLOP/byte", label: "ridge point", sub: "peak ÷ bandwidth", href: "https://dl.acm.org/doi/abs/10.1145/1498765.1498785" },
+    { value: 1, decimals: 0, suffix: " FLOP/byte", label: "decode arithmetic intensity", sub: "batch size 1 — the wall", href: "https://arxiv.org/html/2503.08311v2" }
+  ]}
+/>
+
+## The Roofline Model
+
+Sam Williams, Andrew Waterman, and David Patterson introduced the roofline model in a 2009 paper in the _Communications of the ACM_.<Sidenote n={3} href="https://dl.acm.org/doi/abs/10.1145/1498765.1498785" source="Williams, Waterman & Patterson 2009">Williams, S., Waterman, A. & Patterson, D. (2009). "Roofline: An Insightful Visual Performance Model for Multicore Architectures." *Communications of the ACM* 52(4):65–76. The paper was motivated by the gap between peak compute and memory bandwidth on the Cell processor and early multicore CPUs, but the analysis applies universally to any memory-hierarchy-based architecture.</Sidenote> The core idea is a single performance bound that captures both computational and memory limits at once. The model states that any kernel's achievable performance is bounded by two ceilings:
+
+<Annotation client:load math term="\text{Perf} \leq \min\!\left(\text{AI} \times \text{BW},\;\text{Peak FLOPS}\right)" note="The roofline bound. AI = arithmetic intensity (FLOP/byte), BW = peak memory bandwidth (bytes/second), Peak FLOPS = peak compute throughput. The left term is the memory-bound ceiling; the right is the compute-bound ceiling. Whichever is smaller wins. Source: Williams, Waterman & Patterson (2009)." />
+
+**Arithmetic intensity** (AI) is the ratio of floating-point operations to bytes of DRAM traffic:<Sidenote n={4} href="https://docs.nersc.gov/tools/performance/roofline/" source="NERSC Roofline Documentation">NERSC defines arithmetic intensity as "the ratio of total floating-point operations performed by a given code, to the total data movement (bytes) required to support those FLOPs." The measurement is taken at the DRAM boundary — the traffic between main memory and the processor, not L1/L2 cache. At the HBM boundary for GPUs, this is the traffic between HBM and on-chip SRAM.</Sidenote>
+
+<Annotation client:load math term="\text{AI} = \frac{\text{FLOPs}}{\text{Bytes from DRAM}}" note="Arithmetic intensity (also called operational intensity). Higher AI = more work done per byte fetched = better memory efficiency. Source: Williams, Waterman & Patterson (2009), NERSC Roofline Documentation." />
+
+The **ridge point** is where the two ceilings meet — the minimum AI required to fully utilize the compute ceiling:<Sidenote n={5} href="https://docs.nersc.gov/tools/performance/roofline/" source="NERSC Roofline Documentation">The ridge point is called the "machine balance point" — the arithmetic intensity at which a kernel transitions from memory-bound to compute-bound. Below the ridge point, adding more FLOPS does nothing; only more bandwidth helps. Above it, adding more bandwidth does nothing; only more FLOPS help.</Sidenote>
+
+<Annotation client:load math term="\text{Ridge} = \frac{\text{Peak FLOPS}}{\text{Peak BW}}" note="The ridge point: minimum arithmetic intensity to be compute-bound. Below this value, the kernel is memory-bandwidth-bound. For the H100 SXM: 989 TFLOPS ÷ 3.35 TB/s ≈ 295 FLOP/byte. Source: Williams et al. (2009), NERSC." />
+
+For the H100 SXM, that works out to 989 / 3.35 ≈ **295 FLOP/byte**. Any workload with arithmetic intensity below 295 is memory-bound on the H100. The line below is the roofline itself — the achievable performance envelope as a function of arithmetic intensity.
+
+<Chart
+  client:visible
+  mark="line"
+  x="ai"
+  y="tflops"
+  height={280}
+  caption="The H100 SXM roofline. Below the ridge point (≈295 FLOP/byte), achievable performance scales with bandwidth × AI. Above it, performance plateaus at the compute ceiling (989 TFLOPS dense BF16). Decode at batch=1 sits at AI≈1 FLOP/byte — achieving ≈3.4 TFLOPS out of a possible 989. Training with batch≥256 sits above the ridge point, using compute-bound headroom. Data computed from H100 official specs: Peak = 989 TFLOPS, BW = 3.35 TB/s; roofline = min(AI × 3.35, 989). Source: NVIDIA H100 product page; Williams et al. (2009)."
+  data={[
+    { ai: 0.3,  tflops: 1.0 },
+    { ai: 1,    tflops: 3.4 },
+    { ai: 3,    tflops: 10.1 },
+    { ai: 10,   tflops: 33.5 },
+    { ai: 30,   tflops: 100.5 },
+    { ai: 100,  tflops: 335 },
+    { ai: 200,  tflops: 670 },
+    { ai: 295,  tflops: 989 },
+    { ai: 400,  tflops: 989 },
+    { ai: 600,  tflops: 989 },
+    { ai: 1000, tflops: 989 }
+  ]}
+/>
+
+Decode at batch size 1 sits at approximately AI = 1 FLOP/byte — the leftmost point of the chart. It achieves roughly 3.4 TFLOPS, less than 0.4% of the 989-TFLOPS ceiling. The compute is not busy. It is waiting for data.
+
+## Why Decode Collapses to 1 FLOP/byte
+
+The arithmetic intensity during decode is not a coincidence of particular model sizes. It falls out directly from the shape of the computation.
+
+A transformer linear layer has a weight matrix $W$ of shape $(d_\text{model} \times d_\text{model})$. During training or prompt processing (prefill), the input is a batch of $B$ token vectors, giving an input matrix of shape $(B \times d_\text{model})$. The operation is a matrix-matrix multiplication:
+
+- FLOPs: $2 \times B \times d_\text{model}^2$
+- Weight bytes from HBM: $2 \times d_\text{model}^2$ (FP16, amortized across the batch)
+- **Arithmetic intensity: $\approx B$ FLOP/byte**
+
+During autoregressive decoding, $B = 1$ — the model generates one token at a time. The input is a single vector of size $(1 \times d_\text{model})$. The multiplication is now matrix-vector:
+
+- FLOPs: $2 \times 1 \times d_\text{model}^2$
+- Weight bytes from HBM: $2 \times d_\text{model}^2$ (same as before — all weights still read)
+- **Arithmetic intensity: $\approx 1$ FLOP/byte**
+
+The weight matrix is loaded from HBM every single time. Generating 1 token versus 256 tokens consumes the same weight bandwidth — but 256 tokens produce 256× the compute. Batch size is the lever that shifts arithmetic intensity, and production inference at low latency cannot use large batches without incurring proportional latency per user.<Sidenote n={6} href="https://towardsdatascience.com/prefill-is-compute-bound-decode-is-memory-bound-why-your-gpu-shouldnt-do-both/" source="Prefill vs Decode: TDS">The prefill phase (processing the user's input prompt) operates on a batch of all prompt tokens simultaneously, giving matrix-matrix multiplication with high arithmetic intensity (200–400 FLOP/byte). The same GPU achieves 90–95% utilization during prefill and drops to 20–40% during decode. This asymmetry has led to disaggregated inference deployments where prefill and decode run on separate GPU pools.</Sidenote>
+
+Wang et al. (2025), in an empirical characterization of LLM inference on H100 hardware, confirm the arithmetic intensity of attention kernels holds at 0.5–1 FLOP/byte regardless of batch size, with DRAM bandwidth saturation as the dominant bottleneck and more than 50% of GPU cycles stalled waiting for data.<Sidenote n={7} href="https://arxiv.org/html/2503.08311v2" source="Wang et al. 2025">Wang, H. et al. (2025). "Mind the Memory Gap: Unveiling GPU Bottlenecks in Large-Batch LLM Inference." arXiv:2503.08311. Measured on a single-node H100 setup. Key finding: attention kernels maintain 0.5–1 FLOP/byte AI across batch sizes; DRAM read activity reaches 47–77% average with peaks near 100%; compute warp utilization stays below 35%.</Sidenote>
+
+The chart below shows how arithmetic intensity for the linear layers scales with batch size. The ridge point sits at 295 FLOP/byte. Everything below it is memory-bound.
+
+<Chart
+  client:visible
+  mark="line"
+  x="batchSize"
+  y="arithmeticIntensity"
+  height={260}
+  caption="Arithmetic intensity (FLOP/byte) vs batch size for a large linear layer (d_model = 8192, FP16 weights). AI ≈ batch size when the weight matrix dominates memory traffic — which it does for the full-model sizes used in production. The ridge point at 295 FLOP/byte requires batch size ≥ 295 to become compute-bound on H100 SXM. Single-user inference at batch=1–8 sits firmly in the memory-bound regime. Formula: AI = (2 × B × d²) / (2 × d²) = B; ridge point from NVIDIA H100 specs (989 TFLOPS ÷ 3.35 TB/s). Source: Williams et al. (2009), NVIDIA H100 product page."
+  data={[
+    { batchSize: 1,   arithmeticIntensity: 1 },
+    { batchSize: 2,   arithmeticIntensity: 2 },
+    { batchSize: 4,   arithmeticIntensity: 4 },
+    { batchSize: 8,   arithmeticIntensity: 8 },
+    { batchSize: 16,  arithmeticIntensity: 16 },
+    { batchSize: 32,  arithmeticIntensity: 32 },
+    { batchSize: 64,  arithmeticIntensity: 64 },
+    { batchSize: 128, arithmeticIntensity: 128 },
+    { batchSize: 256, arithmeticIntensity: 256 },
+    { batchSize: 295, arithmeticIntensity: 295 },
+    { batchSize: 400, arithmeticIntensity: 400 },
+    { batchSize: 512, arithmeticIntensity: 512 }
+  ]}
+/>
+
+The ridge point at 295 FLOP/byte requires batching 295 or more decode requests simultaneously before the H100's compute becomes the bottleneck. Serving a single user, or even a handful, keeps the system deeply memory-bound. The trillion FLOPS sit idle. The memory bus is full.
+
+## The Weight Tax: 140 Gigabytes Per Token
+
+For a 70-billion-parameter model running in FP16 precision, each parameter occupies two bytes. The full model requires 140 GB of HBM storage and — critically — every decode step reads nearly all of it.<Sidenote n={8} href="https://www.spheron.network/blog/ai-memory-wall-inference-latency-guide-2026/" source="Spheron: AI Memory Wall">For a 70B FP16 model: 70 × 10⁹ × 2 bytes = 140 GB. The weight matrices cannot be reused across tokens during decode because each token's activations are different. Each decode step is a fresh read of every weight matrix.</Sidenote>
+
+The H100 SXM provides 3.35 TB/s. At full bandwidth utilization, reading 140 GB takes:
+
+$$\frac{140 \text{ GB}}{3{,}350 \text{ GB/s}} \approx 42 \text{ ms per token}$$
+
+That ceiling — roughly 24 tokens per second at theoretical maximum bandwidth — is the weight tax. It is a lower bound on latency, not an upper bound on throughput, and it is enforced by physics before the first FLOP is executed. No amount of compute optimization can touch it. Only reducing the bytes read (via quantization or smaller models) or increasing bandwidth (better HBM generations, closer-coupled memory) can move the ceiling.
+
+The A100, the previous generation H100 predecessor, had 312 TFLOPS dense BF16 and 2.039 TB/s HBM bandwidth — a ridge point of about 153 FLOP/byte.<Sidenote n={9} href="https://www.nvidia.com/en-us/data-center/a100/" source="NVIDIA A100 Product Page">NVIDIA A100 SXM: BF16 Tensor Core = 312 TFLOPS (dense), memory bandwidth = 2,039 GB/s. Ridge point: 312 / 2.039 ≈ 153 FLOP/byte. The same weight-dominated decode workload was equally memory-bound on the A100.</Sidenote> Going from A100 to H100 tripled the compute ceiling (312 → 989 TFLOPS) but increased bandwidth by only 64% (2.039 → 3.35 TB/s). The ridge point rose from 153 to 295 FLOP/byte. The bandwidth-bound decode workload benefited proportionally only from the bandwidth increase — not from the compute increase.
+
+## The KV Cache: A Second Bandwidth Tax That Grows
+
+Weight reading is not the only bandwidth consumer during decode. Every token generated must also read the accumulated **key-value (KV) cache** — the stored key and value tensors for every previous token in the conversation.
+
+For each layer of a transformer, the attention mechanism computes a similarity score between the current query and all previous keys, then aggregates all values weighted by those scores. To avoid recomputing all previous tokens' keys and values from scratch, inference systems cache them. The KV cache for a single request at sequence length $S$ contains:
+
+$$\text{KV bytes} = 2 \times L \times h_{kv} \times d_\text{head} \times S \times 2 \;\text{bytes}$$
+
+where $L$ is the number of layers, $h_{kv}$ is the number of KV heads, $d_\text{head}$ is the head dimension, and the leading factor of 2 accounts for both keys and values.<Sidenote n={10} href="https://www.baseten.co/blog/llm-transformer-inference-guide/" source="Baseten: LLM Inference Guide">The Baseten guide derives this formula and computes it for Llama 2 models: kv_cache_size = 4 × n_layers × d_model bytes/token (in the standard MHA case with head_dim as part of d_model). The "4" comes from 2 (K+V) × 2 bytes per FP16 element.</Sidenote>
+
+For a Llama-3-70B-style architecture with 80 layers, 8 KV heads (GQA), and 128 head dimension<Sidenote n={21} href="https://arxiv.org/abs/2407.21783" source="Grattafiori et al. 2024 Llama 3">Grattafiori, A. et al. (2024). "The Llama 3 Herd of Models." arXiv:2407.21783. Table 3 documents the Llama 3 70B architecture: 80 transformer layers, 8 key-value heads (GQA), 128 attention head dimension, and 64 query attention heads.</Sidenote>, at a 4,096-token conversation in FP16:
+
+$$2 \times 80 \times 8 \times 128 \times 4{,}096 \times 2 = 1.34 \text{ GB}$$
+
+That 1.34 GB must be read from HBM on **every single decode step** — every token generated. The weight tax is fixed regardless of sequence length. The KV cache tax grows linearly with sequence length. For a 32K-token context window, it becomes 10 GB per step. That is 10 GB of memory reads that produce exactly one additional token.
+
+The KV cache bandwidth is additive with the weight bandwidth. At long sequences, it can dominate. And it scales with the number of KV heads — which is the architectural lever that GQA and MQA pull.
+
+## The Bandwidth Budget Calculator
+
+The following interactive code lets you compute the bandwidth-limited throughput ceiling for any model and GPU configuration. Enter a model parameter count and GPU memory bandwidth; the calculator returns the theoretical maximum tokens per second and the arithmetic intensity at different batch sizes.
+
+<RunnableCode
+  client:load
+  caption="Bandwidth-limited LLM inference throughput calculator. The compute ceiling (peak TFLOPS) is also included to show how far below the ridge point decode sits. Adjust the parameters to see how quantization (e.g., INT4 → 0.5 bytes/param) or a larger GPU shifts the ceiling. At batch=1, the bandwidth ceiling almost always dominates. At batch=ridge_point, they meet. Formula: tokens/sec = bandwidth / (2 × params × bytes_per_param); arithmetic_intensity = batch_size. Source: NVIDIA H100 specs; Williams et al. (2009)."
+  code={`// Bandwidth-limited LLM inference calculator
+// Adjust these parameters:
+const params_B = 70;           // model parameters in billions
+const bytesPerParam = 2;       // 2 = FP16, 1 = INT8, 0.5 = INT4
+const bandwidth_TBps = 3.35;  // HBM3 bandwidth (H100 SXM = 3.35 TB/s, A100 = 2.04)
+const peakTFLOPS = 989;        // Dense BF16 TFLOPS (H100 SXM = 989, A100 = 312)
+
+// ---- Derived quantities ----
+const params = params_B * 1e9;
+const weightBytes = params * bytesPerParam;          // bytes to read per token
+const bw_GBps = bandwidth_TBps * 1000;               // convert to GB/s (SI: 1 TB = 1000 GB)
+const ridgePoint = (peakTFLOPS * 1e12) / (bw_GBps * 1e9); // FLOP/byte: (FLOPS)/(bytes/s)
+
+const bwLimitedToksPerSec = bw_GBps * 1e9 / weightBytes;
+const bwLimitedMs = 1000 / bwLimitedToksPerSec;
+
+console.log("=== Model: " + params_B + "B params | " + (bytesPerParam === 2 ? "FP16" : bytesPerParam === 1 ? "INT8" : "INT4") + " ===");
+console.log("Weight bytes per token:   " + (weightBytes / 1e9).toFixed(1) + " GB");
+console.log("BW-limited throughput:    " + bwLimitedToksPerSec.toFixed(1) + " tokens/sec (theory)");
+console.log("BW-limited latency:       " + bwLimitedMs.toFixed(1) + " ms/token (theory)");
+console.log("");
+console.log("=== GPU: H100 SXM (" + bandwidth_TBps + " TB/s, " + peakTFLOPS + " TFLOPS) ===");
+console.log("Ridge point:              " + ridgePoint.toFixed(0) + " FLOP/byte");
+console.log("Need batch >= " + ridgePoint.toFixed(0) + " to be compute-bound");
+console.log("");
+
+// Show AI and achievable throughput at different batch sizes
+const batches = [1, 4, 16, 64, 256, ridgePoint, 1024];
+console.log("Batch | AI (FLOP/byte) | Regime        | Achievable TFLOPS");
+console.log("------+----------------+---------------+------------------");
+for (const b of batches) {
+  const ai = b;                                    // AI ≈ batch for weight-dominated layers
+  const achievable = Math.min(ai * bw_GBps / 1000, peakTFLOPS);
+  const regime = ai < ridgePoint ? "memory-bound " : "compute-bound";
+  console.log(
+    String(Math.round(b)).padStart(5) + " | " +
+    String(ai.toFixed(0)).padStart(14) + " | " +
+    regime + " | " +
+    achievable.toFixed(1) + " / " + peakTFLOPS
+  );
+}
+console.log("");
+console.log("At batch=1: using " + ((bw_GBps / 1000 / peakTFLOPS) * 100).toFixed(2) + "% of compute ceiling.");
+`}
+/>
+
+Run it. At batch=1 with an H100 serving a 70B FP16 model, the output will show 23.9 tokens per second as the theoretical ceiling, and less than 0.34% of the compute being utilized. Change `bytesPerParam` to 0.5 (INT4 quantization) and watch the ceiling more than triple — because INT4 reduces the weight bytes read per token fourfold, directly raising arithmetic intensity to ~4 FLOP/byte at batch=1. Change the batch size and watch the arithmetic intensity climb toward the ridge point. That is the entire story of LLM inference optimization in one interactive widget.
+
+## FlashAttention: IO-Aware Tiling
+
+The weight tax is not the only place bandwidth is wasted during decode. Standard attention computation — the softmax over the scaled dot products of queries against all keys — involves a separate and equally wasteful pattern: writing and reading large intermediate matrices to and from HBM.
+
+Standard attention for sequence length $N$ and head dimension $d$ produces a full $N \times N$ attention score matrix. Writing this matrix to HBM and reading it back for the softmax costs $O(N^2)$ bytes of HBM traffic — traffic that grows quadratically with sequence length. For $N = 8{,}192$ and $d = 128$, the attention score matrix is 8,192 × 8,192 × 2 bytes = 134 MB per head — written to HBM for the softmax, then read back, totaling 268 MB of HBM traffic per head. On the A100 (1.5 TB/s HBM, 19 TB/s SRAM bandwidth), that HBM traffic takes several times longer than the same arithmetic on chip.<Sidenote n={11} href="https://arxiv.org/abs/2205.14135" source="Dao et al. 2022 FlashAttention">Dao et al. (2022): "We propose FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory reads/writes between GPU high bandwidth memory (HBM) and GPU on-chip SRAM." Dao et al. (2022) prove (Theorem 2) that standard attention requires Θ(Nd + N²) HBM accesses, while FlashAttention requires only Θ(N²d²/M) — a reduction by factor M/d² where M is the on-chip SRAM size. For typical SRAM sizes M ≫ d², this is substantially fewer accesses. The A100 has 40 GB HBM at 1.5 TB/s and 20 MB SRAM at 19 TB/s — a 12.7× bandwidth differential exploited by the tiling.</Sidenote>
+
+Dao et al.'s 2022 FlashAttention paper identifies this as an IO-awareness problem: standard attention is not bottlenecked by the attention arithmetic, but by the data movement to and from HBM to store the intermediate results. Their solution is tiling: partition the query, key, and value matrices into blocks small enough to fit in on-chip SRAM (128–256 KB per streaming multiprocessor on H100), then execute the full softmax attention within SRAM without ever writing the intermediate $N \times N$ matrix to HBM.<Sidenote n={12} href="https://arxiv.org/abs/2205.14135" source="Dao et al. 2022 FlashAttention">FlashAttention achieves the Θ(N²d²/M) HBM access bound through a two-pass tiled algorithm: (1) compute softmax numerators and denominators in tiles without materializing the full attention matrix; (2) accumulate the weighted values using running max/sum statistics to maintain numerical stability. The result is exact (not approximate) attention with 2–4× speedup on A100 and 5–20× memory reduction compared to standard implementations.</Sidenote>
+
+The speedup is 2–4× on A100 for the attention kernel alone, reaching a 15% end-to-end wall-clock improvement on BERT-large and 3× improvement on GPT-2 (1K-token sequences).<Sidenote n={13} href="https://arxiv.org/abs/2205.14135" source="Dao et al. 2022 FlashAttention">Benchmark results from the FlashAttention paper: 15% end-to-end speedup on BERT-large (512-token sequences), 3× speedup on GPT-2 (1K tokens), 2.4× speedup on long-range arena benchmarks (1K–4K tokens). The speedup is larger for longer sequences where the $O(N^2)$ cost of the attention matrix dominates.</Sidenote> FlashAttention-2 (2023) achieves around 2× the throughput of FlashAttention-1 through better work partitioning and parallelism.<Sidenote n={14} href="https://arxiv.org/abs/2307.08691" source="Dao 2023 FlashAttention-2">Dao, T. (2023). "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning." ICLR 2024. arXiv:2307.08691. The paper reports "around 2× speedup compared to FlashAttention" on A100 GPUs through better work partitioning across thread blocks, reducing non-matmul FLOPs, and improved parallelism over both sequence length and the batch/heads dimensions.</Sidenote> FlashAttention-3 (2024) reaches 1.5–2.0× over FlashAttention-2 on H100 Hopper hardware by exploiting async warp specialization and low-precision arithmetic.<Sidenote n={15} href="https://arxiv.org/abs/2407.08608" source="Shah et al. 2024 FlashAttention-3">Shah, J. et al. (2024). "FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision." NeurIPS 2024 (spotlight). arXiv:2407.08608. Achieves 1.5–2.0× speedup over FlashAttention-2 on H100 through producer-consumer async warp specialization using WGMMA and TMA instructions, and FP8 low-precision support.</Sidenote>
+
+The key insight is the roofline again: standard attention is deeply memory-bound because its computation (computing the attention scores) is cheap but the associated HBM traffic (writing the $N \times N$ matrix) is enormous. FlashAttention does more arithmetic per byte of HBM traffic by keeping intermediate state in SRAM. It raises the arithmetic intensity of attention from deeply-bandwidth-bound to something approaching its theoretical potential — not by changing the algorithm's mathematical output, but by changing where the data lives while arithmetic is performed.
+
+## Speculative Decoding: Spending the Idle Budget
+
+Return to the roofline chart. During decode, the GPU is using 0.34% of its compute capacity. The remaining 99.66% is idle — not burning power waiting (the chip is not spinning uselessly), but available for additional arithmetic that can be overlaid on top of the bandwidth-bound operations.
+
+Leviathan, Kalman, and Matias (2023) exploit this headroom directly with **speculative decoding**.<Sidenote n={16} href="https://arxiv.org/abs/2211.17192" source="Leviathan et al. 2023">Leviathan, Y., Kalman, M. & Matias, Y. "Fast Inference from Transformers via Speculative Decoding." ICML 2023, PMLR 202:19274–19286. Originally posted arXiv:2211.17192 (November 2022). The paper demonstrates 2–3× acceleration over a standard T5X implementation while producing identically distributed outputs.</Sidenote> The approach uses two models: a small **draft model** that generates $K$ candidate tokens quickly, and the original large **target model** that verifies them.
+
+The key observation is that verifying $K$ draft tokens requires only one forward pass of the target model — a single matrix-matrix multiplication against all $K$ token vectors at once. This is a batch operation with arithmetic intensity approximately $K$ FLOP/byte. The verification step uses bandwidth proportional to one forward pass (reading all weights once), but produces up to $K$ accepted tokens instead of one.
+
+If the draft model's tokens are accepted with probability $\alpha$, the expected speedup is roughly $K \cdot \alpha$ — the number of tokens produced per target-model bandwidth cycle. In practice, Leviathan et al. report 2–3× acceleration on T5-XXL with real draft models. The mechanism works precisely because the target model's compute is 295× underutilized: the verification pass fits into the compute headroom created by the bandwidth wall, and the bandwidth cost (one full-model read) is amortized over $K$ tokens instead of one.<Sidenote n={17} href="https://bentoml.com/llm/inference-optimization/speculative-decoding" source="BentoML Speculative Decoding Guide">Speculative decoding yields maximum speedups in memory-bound settings. As batch size increases and the system shifts toward compute-bound territory, the relative benefit of parallel verification diminishes — the compute headroom that makes verification cheap shrinks. This is consistent with the roofline analysis: the technique is specifically an exploit of the bandwidth-bound regime.</Sidenote>
+
+Speculative decoding does not reduce bandwidth consumption per output token. It increases the number of tokens produced per bandwidth cycle by batching verification. The roofline gap is the slack it exploits.
+
+## GQA and MQA: Architectural Surgery on the KV Cache
+
+While FlashAttention and speculative decoding work around the KV cache bandwidth tax, grouped-query attention (GQA) and multi-query attention (MQA) attack it structurally — by reducing the number of key-value pairs that must be stored and read.
+
+Standard **multi-head attention (MHA)**, as introduced in the original Transformer paper, uses $h$ query heads, $h$ key heads, and $h$ value heads. Every decode step reads all $h$ KV heads for every layer. For a 70B-scale model using full MHA with 80 layers and 64 KV heads (h = 64), the full KV cache per token at sequence length $S$ is:
+
+$$2 \times 80 \times 64 \times 128 \times S \times 2 = 2.62 \text{ MB} \times S$$
+
+Noam Shazeer proposed **multi-query attention (MQA)** in 2019: use a single shared key head and value head across all query heads.<Sidenote n={18} href="https://arxiv.org/abs/1911.02150" source="Shazeer 2019">Shazeer, N. (2019). "Fast Transformer Decoding: One Write-Head is All You Need." arXiv:1911.02150. The reduction in KV cache size is exactly $h$×, directly translating to $h$× less memory bandwidth for attention in the decode phase.</Sidenote> With MQA, the KV cache per token becomes:
+
+$$2 \times 80 \times 1 \times 128 \times S \times 2 = 40.96 \text{ KB} \times S$$
+
+A 64× reduction in KV cache size, and therefore 64× less bandwidth consumed by attention reads. The compute remains essentially unchanged — each query head still attends over all positions, just with shared keys and values. The quality tradeoff is measurable but small for well-trained models.
+
+Ainslie et al.'s **grouped-query attention (GQA)**, presented at EMNLP 2023, generalizes this: instead of one shared KV head, use $G$ groups of KV heads, with query heads divided into $G$ groups each sharing one KV pair.<Sidenote n={19} href="https://arxiv.org/abs/2305.13245" source="Ainslie et al. 2023">Ainslie, J. et al. (2023). "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints." EMNLP 2023, pages 4895–4901. The paper proposes uptraining existing MHA checkpoints into GQA using 5% of original pre-training compute, and demonstrates that uptrained GQA achieves quality close to MHA with inference speed comparable to MQA.</Sidenote> Setting $G = h$ recovers MHA; $G = 1$ recovers MQA. In practice, $G = 8$ provides most of MQA's speed benefit while preserving most of MHA's quality.
+
+<Chart
+  client:visible
+  mark="barY"
+  x="mechanism"
+  y="kvBandwidth_GB"
+  height={260}
+  caption="KV cache bandwidth consumed per decode step (GB) for a 70B-scale model (80 layers, 128 head dimension) at 4,096-token sequence length under three attention mechanisms. MHA (64 KV heads): 10.73 GB/step. GQA-8 (8 KV heads): 1.34 GB/step. MQA (1 KV head): 0.168 GB/step. Formula: 2 × L × h_kv × d_head × S × 2 bytes. These reads are additive with the weight-reading bandwidth on every decode step. Sources: Shazeer (2019), Ainslie et al. (2023), Baseten inference guide."
+  data={[
+    { mechanism: "MHA (64 heads)", kvBandwidth_GB: 10.73 },
+    { mechanism: "GQA-8 (8 heads)", kvBandwidth_GB: 1.34 },
+    { mechanism: "MQA (1 head)", kvBandwidth_GB: 0.168 }
+  ]}
+/>
+
+At 4,096 tokens, MHA demands 10.73 GB of KV reads per decode step — on top of the 140 GB of weight reads for a 70B model. That is 150 GB of data per token, pushing the practical latency floor well above the 42 ms/token weight-only estimate. GQA-8 cuts it to 141.34 GB per token; MQA brings it to 140.17 GB — close to the theoretical weight-only floor.<Sidenote n={20} href="https://arxiv.org/abs/1911.02150" source="Shazeer 2019 MQA">The bandwidth reduction from MQA is direct: by reducing h_kv from h to 1, the KV cache size (and therefore the per-step attention bandwidth) shrinks by h×. For h=64, this is a 64× reduction. The remaining bottleneck is weight reading, which cannot be reduced by attention architecture changes.</Sidenote>
+
+This is the architecture's answer to a bandwidth problem: fewer parameters to read per step, fewer bytes per step, lower latency per token. GQA does not change the model's FLOP count in any meaningful sense — it reduces bytes. The roofline analysis predicts exactly which interventions can help and which cannot.
+
+## The Ridge Point Is Rising — But So Is the Gap
+
+The ridge point is not a fixed natural constant. It is a ratio: compute ceiling divided by bandwidth. That ratio has been moving in one direction across GPU generations.
+
+<Chart
+  client:visible
+  mark="barY"
+  x="gpu"
+  y="ridgePoint"
+  height={240}
+  caption="Ridge point (FLOP/byte) for successive NVIDIA data-center GPUs. A higher ridge point means more compute to deploy before hitting the bandwidth ceiling — but also means decode workloads (AI ≈ 1 FLOP/byte) need even larger batches to become compute-bound. The H100's 295 FLOP/byte ridge point requires batch ≥ 295 to exit the memory-bound regime. Sources: NVIDIA A100 product page (312 TFLOPS dense BF16, 2.039 TB/s), NVIDIA H100 product page (989 TFLOPS dense BF16, 3.35 TB/s)."
+  data={[
+    { gpu: "A100 SXM", ridgePoint: 153 },
+    { gpu: "H100 SXM", ridgePoint: 295 }
+  ]}
+/>
+
+A100 to H100: compute grew 3.2× (312 → 989 TFLOPS), bandwidth grew 1.64× (2.039 → 3.35 TB/s). The ridge point nearly doubled (153 → 295 FLOP/byte). For compute-intensive training workloads, this is a pure win: the H100's extra compute is accessible because training batches are large enough to stay above the ridge point. For bandwidth-bound inference, the win is proportional only to the bandwidth increase — 1.64×. The extra compute does not materially help decode throughput.
+
+This asymmetry has driven a structural rethinking of inference infrastructure. Disaggregated inference — running prefill (compute-bound) on a separate GPU pool from decode (memory-bound) — allows each phase to be sized for its actual bottleneck. Compute-rich GPUs serve prefill; bandwidth-rich or memory-capacity-rich hardware serves decode. Quantization to INT4 or INT8 halves or quarters the bytes per parameter read per token, directly attacking the weight tax without changing the hardware.
+
+The bandwidth wall is not about to disappear. Every generation of GPU brings more FLOPS than it brings bandwidth — the ratio tends to widen. The engineering responses described here (FlashAttention, speculative decoding, GQA) collectively reduce the effective bytes required per output token. They are not optimization tricks. They are responses to a physics constraint, correctly identified by the roofline model in 2009, that will constrain every generation of accelerator until either the memory hierarchy changes or the model architecture does.
+
+---
+
+**Methodology.** The H100 SXM ridge point (≈295 FLOP/byte) is computed from official NVIDIA specifications: 989 TFLOPS dense BF16 Tensor Core ÷ 3.35 TB/s HBM3 bandwidth. The A100 ridge point (≈153 FLOP/byte) is computed from 312 TFLOPS dense BF16 ÷ 2.039 TB/s HBM2e, both from NVIDIA's official A100 product page. The 140 GB per token figure for a 70B FP16 model is exact: 70 × 10⁹ parameters × 2 bytes/parameter = 140 GB. The 42 ms/token bandwidth floor is derived from 140 GB ÷ 3.35 TB/s × 1000 ms/s = 41.8 ms. The roofline formula (Perf = min(AI × BW, Peak)) and arithmetic intensity definition (FLOPs/bytes) are from Williams, Waterman & Patterson (2009). The arithmetic intensity formula for batch-B linear layers (AI ≈ B, weight-dominated) is derived from first principles: FLOPs = 2Bd², weight bytes = 2d², so AI = 2Bd²/2d² = B — exact when weight reading dominates over activation reading, which holds whenever d >> B. The KV cache bandwidth formula (2 × L × h_kv × d_head × S × 2 bytes) is standard; the numbers for 70B-scale models (80 layers, 128 head_dim) are from published Llama architecture specifications. The GQA and MQA claims trace to Ainslie et al. (EMNLP 2023) and Shazeer (2019) respectively. FlashAttention IO complexity (Θ(N²d²/M) HBM accesses vs Θ(Nd + N²) for standard attention, a reduction by factor M/d² where M is on-chip SRAM size — Theorem 2 of Dao et al. 2022) and benchmark speedups (2–4× on attention kernel, 3× end-to-end on GPT-2) are from Dao et al. (2022). The FlashAttention-2 ~2× speedup claim is from Dao (2023, arXiv:2307.08691). The FlashAttention-3 1.5–2.0× speedup on H100 is from Shah et al. (2024, arXiv:2407.08608). Speculative decoding 2–3× speedup claim is from Leviathan et al. (ICML 2023) on T5-XXL. The empirical observation that attention kernels maintain 0.5–1 FLOP/byte at batch-scale inference, with >50% of GPU cycles stalled on data, is from Wang et al. (2025), measured on H100 hardware. The interactive RunnableCode calculator derives bandwidth-limited token rates directly from the formula tokens/sec = BW_GBps × 10⁹ / weight_bytes, producing identical results to the theoretical derivation.

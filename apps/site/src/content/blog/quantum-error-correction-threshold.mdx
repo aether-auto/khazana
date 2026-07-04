@@ -1,0 +1,468 @@
+---
+title: "Below Threshold: The Theorem That Makes Quantum Computers Possible"
+format: primer
+channels:
+  - quantum
+  - science
+summary: "Fault-tolerant quantum computing rests on one counterintuitive theorem: if physical qubit error rates stay below a critical threshold, then adding more qubits makes the logical error rate fall exponentially. Google's Willow chip crossed that boundary for the first time in 2024. Here's what the theorem actually says, how surface codes enforce it one syndrome at a time, and the honest distance between today's hardware and a fault-tolerant logical qubit."
+publishedAt: 2026-07-04T09:00:00.000Z
+sources:
+  - title: "Google Quantum AI (2025). Quantum error correction below the surface code threshold. Nature 638, 920–926. arXiv:2408.13687"
+    url: "https://arxiv.org/abs/2408.13687"
+  - title: "Google Quantum AI (2025). Quantum error correction below the surface code threshold — PMC full text"
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC11864966/"
+  - title: "Shor, P.W. (1995). Scheme for reducing decoherence in quantum computer memory. Physical Review A 52, R2493."
+    url: "https://link.aps.org/doi/10.1103/PhysRevA.52.R2493"
+  - title: "Knill, E., Laflamme, R. & Zurek, W.H. (1998). Resilient quantum computation. Science 279, 342–345."
+    url: "https://science.sciencemag.org/content/279/5349/342"
+  - title: "Fowler, A.M. et al. (2012). Surface codes: Towards practical large-scale quantum computation. Physical Review A 86, 032324."
+    url: "https://arxiv.org/abs/1208.0928"
+  - title: "Dennis, E., Kitaev, A., Landahl, A. & Preskill, J. (2002). Topological quantum memory. Journal of Mathematical Physics 43, 4452."
+    url: "https://arxiv.org/abs/quant-ph/0110143"
+  - title: "Google Quantum AI (2023). Suppressing quantum errors by scaling a surface code logical qubit. Nature 614, 676–681."
+    url: "https://arxiv.org/abs/2207.06431"
+  - title: "Quanta Magazine (2024). Quantum Computers Cross Critical Error Threshold."
+    url: "https://www.quantamagazine.org/quantum-computers-cross-critical-error-threshold-20241209/"
+  - title: "Willow processor — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Willow_processor"
+  - title: "Threshold theorem — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Threshold_theorem"
+  - title: "Surface Code Explained — QuantumZeitgeist"
+    url: "https://quantumzeitgeist.com/what-is-the-surface-code/"
+  - title: "Scott Aaronson: The Google Willow thing"
+    url: "https://scottaaronson.blog/?p=8525"
+  - title: "Google Blog: Meet Willow, our state-of-the-art quantum chip"
+    url: "https://blog.google/innovation-and-ai/technology/research/google-willow-quantum-chip/"
+  - title: "Google Research Blog: Making quantum error correction work"
+    url: "https://research.google/blog/making-quantum-error-correction-work/"
+  - title: "Fault-Tolerant Quantum Computing Roadmap — EntangledFuture"
+    url: "https://entangledfuture.com/quantum-error-correction/fault-tolerant-roadmap/"
+  - title: "Bravyi, S. et al. (2024). High-threshold and low-overhead fault-tolerant quantum memory. Nature 627, 778–782. arXiv:2308.07915"
+    url: "https://arxiv.org/abs/2308.07915"
+  - title: "No-cloning theorem — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/No-cloning_theorem"
+  - title: "Majorana 1 — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Majorana_1"
+  - title: "Google Blog: Quantum hardware powering breakthroughs — Willow fidelity specifications (99.97% single-qubit, 99.88% entangling gate)"
+    url: "https://blog.google/technology/research/quantum-hardware-verifiable-advantage/"
+draft: false
+---
+
+import { RunnableCode, Chart, Annotation, StatBand, Math, Stepper, Quiz, Timeline, Definition, Callout, Detail, Pullquote, Diagram, ParameterPlay, DataTable } from "../../components/mdx";
+
+Add more qubits and you add more errors. That's the basic physics of quantum hardware. Every gate you run on a quantum processor has a small probability of introducing a mistake. Chain a thousand gates together and the mistakes accumulate. Scale to millions of gates — the depth a useful algorithm requires — and the qubit's state has long since dissolved into noise before the computation finishes.
+
+This is the central problem of quantum computing. And for three decades after Feynman first imagined a quantum machine, the problem seemed insurmountable. Noise accumulates. Qubits decohere. The longer you compute, the worse it gets.
+
+Then Peter Shor, in 1995, proved something that shouldn't have been possible: quantum information can be protected against noise using other qubits — in much the same way classical bits can be protected by redundancy. And within three years, a theorem emerged that is the real foundation of everything that follows. It says: if the physical error rate stays below a critical threshold, then adding more qubits to a carefully designed error-correcting code drives the logical error rate down *exponentially*. The relationship flips. More hardware — all other things equal — makes the system more reliable, not less.
+
+In December 2024, Google's Willow processor became the first quantum chip to demonstrate this behavior convincingly, at scale, with a real-time decoder operating within the 1.1-microsecond cycle time of the hardware. The paper, published in *Nature* in February 2025, measured an error suppression factor of<Annotation client:load term="Λ = 2.14 ± 0.02" note="Lambda (Λ) is the factor by which the logical error rate falls each time code distance increases by 2. Λ > 1 is the mathematical signature of below-threshold operation. Source: Google Quantum AI (2025), arXiv:2408.13687, Nature 638, 920–926." /> — each step up in code size cuts the logical error rate in half. A 101-qubit distance-7 code achieved a logical error rate of 0.143% per cycle, and the logical qubit outlived its best physical constituent by a factor of 2.4.
+
+This piece explains what the threshold theorem actually says, how surface codes enforce it stabilizer by stabilizer, why below-threshold operation is a phase transition rather than an incremental improvement, and what is honestly still needed before a logical qubit can run a useful computation.
+
+<StatBand client:visible caption="The four numbers that frame the threshold problem."
+  stats={[
+    { value: 1, suffix: "%", decimals: 0, label: "SURFACE CODE THRESHOLD", sub: "physical error rate the code tolerates (~1%, circuit-level noise)", group: true, href: "https://quantumzeitgeist.com/what-is-the-surface-code/" },
+    { value: 2.14, suffix: "×", decimals: 2, label: "LAMBDA (Willow d=5→7)", sub: "logical error suppression factor per code-distance step", href: "https://arxiv.org/abs/2408.13687" },
+    { value: 101, suffix: " qubits", decimals: 0, label: "PHYSICAL QUBITS", sub: "in the distance-7 surface code (49 data + 48 measure + 4 leakage)", group: true, href: "https://arxiv.org/abs/2408.13687" },
+    { value: 0.143, suffix: "%/cycle", decimals: 3, label: "LOGICAL ERROR RATE", sub: "distance-7 Willow result, at 1.1 µs per error-correction cycle", href: "https://pmc.ncbi.nlm.nih.gov/articles/PMC11864966/" }
+  ]}
+/>
+
+---
+
+## The noise problem: why quantum errors are uniquely hard
+
+Classical error correction is straightforward. If you want a bit to survive a noisy channel, copy it three times: `000` encodes a logical `0`, `111` encodes a logical `1`. If noise flips one bit and you receive `010`, majority vote corrects it back to `000`. You read the bits, check them, fix them.
+
+Three properties of quantum mechanics break every part of this approach.
+
+**No-cloning.** The<Definition client:visible term="no-cloning theorem" def="A fundamental theorem in quantum mechanics proved independently by W.K. Wootters and W.H. Zurek (Nature 299, 802, 1982) and by D. Dieks (Physics Letters A 92, 271, 1982): it is impossible to create a perfect copy of an arbitrary unknown quantum state. Unlike a classical bit, a qubit in superposition cannot be duplicated without destroying the original. Source: en.wikipedia.org/wiki/No-cloning_theorem." /> states that you cannot copy an unknown quantum state. The classical trick of storing three copies is literally forbidden by physics.
+
+**Measurement collapses the state.** To check whether a classical bit has flipped, you read it. In quantum mechanics, measuring a qubit destroys its superposition. You cannot check "is this qubit still in the right state?" without forcing it to commit to a definite answer — which erases the quantum information you were trying to protect.
+
+**Continuous errors.** Classical bits are discrete: a bit is either 0 or 1. A qubit can suffer from a continuum of errors: a tiny rotation away from the correct state, a partial phase shift, a combination of both. Correcting a continuous space of possible errors seems to require an infinite family of correction procedures.
+
+Shor's 1995 breakthrough — his<Annotation client:load term="nine-qubit code" note="Shor's [[9,1,3]] code encodes 1 logical qubit in 9 physical qubits. It is the first quantum error-correcting code, combining a 3-qubit phase-flip repetition code with a 3-qubit bit-flip repetition code. Source: Shor (1995), Physical Review A 52, R2493." /> — resolved all three problems simultaneously. The trick is indirect measurement. Instead of measuring the qubits themselves, you measure *relationships* between them — parity checks that reveal whether an error occurred without revealing the encoded information. The no-cloning theorem is circumvented by entangling the logical state across many qubits rather than copying it. And the continuous-error problem is sidestepped by the stabilizer formalism: any single-qubit error necessarily has some component along the X or Z axis, and measuring those components projects the continuous error onto a discrete set of correctable cases.
+
+The principle works. What it doesn't immediately provide is a path to *scaling*: how do you make a quantum computer that runs circuits deep enough to be useful, when every physical gate adds errors faster than you can correct them?
+
+---
+
+## The threshold theorem: what it actually says
+
+Here is the key insight, stated precisely. If the physical error rate per gate is *p*, and the surface code's threshold is *p_th*, then the logical error rate for a distance-*d* code is approximately:
+
+<Math client:visible
+  tex="\varepsilon_L(d) \approx \frac{C}{\Lambda^{(d+1)/2}}"
+  caption="The logical error rate formula for a surface code below threshold. Λ = suppression factor; d = code distance; C = fitting constant. Source: Google Quantum AI (2025), arXiv:2408.13687; Threshold theorem, Wikipedia."
+  steps={[
+    { tex: "\\Lambda \\approx \\frac{p_{th}}{p}", note: "suppression factor: ratio of threshold to physical error rate" },
+    { tex: "\\varepsilon_L(d+2) = \\frac{\\varepsilon_L(d)}{\\Lambda}", note: "each increase in d by 2 divides the logical error rate by Λ" },
+    { tex: "\\Lambda > 1 \\iff p < p_{th}", note: "the condition for below-threshold operation: the exponential drives toward zero" }
+  ]}
+/>
+
+The exponent is `(d+1)/2`. For d=3, that's 2. For d=7, it's 4. For d=25, it's 13. Every two units of code distance add one more power of suppression. If Λ = 2, the logical error rate halves each step. If Λ = 10, it drops tenfold. If Λ = 2.14 — the Willow result — it falls by a factor of 2.14 per distance step.
+
+This only works when *p < p_th*. If the physical error rate exceeds the threshold, Λ < 1, the exponent drives the logical error rate toward infinity instead of zero — and adding more qubits makes the computation less reliable, not more.
+
+The threshold theorem — proved rigorously by Aharonov & Ben-Or, by<Annotation client:load term="Knill, Laflamme & Zurek in 1998" note="Knill, Laflamme & Zurek proved that arbitrarily accurate quantum computation is possible provided that the error per operation is below a threshold value. Their 1998 Science paper established this as a formal theorem. Source: Science 279, 342–345 (1998)." />, and by Kitaev — says that if *p < p_th*, then arbitrarily long quantum computations are possible with only polynomial overhead. You can make the logical error rate as small as you like by increasing d, and the number of physical qubits required grows only as d².
+
+The surface code's threshold under realistic circuit-level noise is<Annotation client:load term="approximately 1%" note="Fowler et al. (2012) give a threshold of ~0.57% under circuit-level noise with minimum-weight perfect matching (MWPM) decoding, and ~0.9% under symmetric depolarizing noise. QuantumZeitgeist and other references cite the threshold as 'in the neighbourhood of one percent.' Source: Fowler et al. Physical Review A 86, 032324 (2012); quantumzeitgeist.com." /> — roughly ten times higher than any practical code had achieved before the surface code was invented. That relative generosity is why the surface code became the leading candidate for fault-tolerant quantum computing.
+
+<Callout kind="key-insight" title="The two regimes are qualitatively different">
+Above threshold, error correction is net harmful: every ancilla qubit and measurement you add introduces noise faster than it removes it. Below threshold, error correction is net beneficial: every additional layer of protection exponentially suppresses what remains. These are not points on a continuum — they are different physics. Crossing the threshold is not an improvement; it is a phase transition.
+</Callout>
+
+---
+
+## The surface code: a grid of interlocking parity checks
+
+The surface code is a two-dimensional square lattice of qubits. In its<Annotation client:load term="rotated surface code" note="The rotated surface code (as used by Fowler et al. 2012 and by Google's Willow experiments) encodes 1 logical qubit using d² data qubits and d²−1 measure (ancilla) qubits, for a total of 2d²−1 physical qubits at code distance d. Source: Fowler et al. PRA 86 (2012); QuantumZeitgeist surface code explainer." /> variant, a distance-*d* code uses:
+
+- **d² data qubits** — these hold the quantum information
+- **d² − 1 measure (ancilla) qubits** — these perform the parity checks
+- **Total: 2d² − 1 physical qubits** per encoded logical qubit
+
+At distance 7 — what the Willow experiment demonstrated — that's 49 data qubits, 48 measure qubits, plus 4 extra leakage-removal qubits, for 101 physical qubits encoding one logical qubit.
+
+The data and measure qubits are interlaced in a checkerboard pattern. Each measure qubit sits in the center of a group of four data qubits and performs one of two kinds of parity check:
+
+- **Z-type stabilizers** (on face/plaquette centers): measure the product of the Z operator on four neighboring data qubits. A value of −1 signals that an X error (bit flip) has occurred on an odd number of those qubits.
+- **X-type stabilizers** (on vertex centers): measure the product of the X operator on four neighboring data qubits. A value of −1 signals that a Z error (phase flip) has occurred on an odd number of those qubits.
+
+Crucially, the data qubits are never measured directly. Only the ancilla qubits are measured, and their outcome tells you *that* an error occurred and *approximately where* — without revealing or disturbing the encoded logical state.
+
+<Diagram client:visible caption="Surface code error correction cycle: from physical error to syndrome to correction. The data qubits (bottom) are never measured; ancilla qubits detect errors through entanglement, and the classical decoder maps syndrome patterns to corrections."
+  nodes={[
+    { id: "data", label: "Data qubits\n(49 in d=7 code)", x: 0, y: 2, kind: "store" },
+    { id: "error", label: "Physical error\noccurs (X or Z)", x: 0, y: 0, kind: "input" },
+    { id: "ancilla", label: "Ancilla qubits\n(48 in d=7 code)", x: 2, y: 2, kind: "process" },
+    { id: "cx", label: "CNOT gates\nentangle data\nwith ancillas", x: 2, y: 0, kind: "process" },
+    { id: "measure", label: "Measure ancillas\n→ syndrome bits\n(never data!)", x: 4, y: 1, kind: "process" },
+    { id: "decoder", label: "Classical decoder\n(min-weight matching)\nmaps syndrome→error", x: 6, y: 1, kind: "process" },
+    { id: "correction", label: "Apply correction\n(or track in software)\nlogical state intact", x: 8, y: 1, kind: "output" }
+  ]}
+  edges={[
+    { from: "error", to: "data", label: "corrupts", kind: "data" },
+    { from: "data", to: "cx", label: "entangled with", kind: "data" },
+    { from: "ancilla", to: "cx", label: "into", kind: "data" },
+    { from: "cx", to: "measure", label: "syndrome extraction", kind: "data" },
+    { from: "measure", to: "decoder", label: "syndrome bits", kind: "data" },
+    { from: "decoder", to: "correction", label: "Pauli frame update", kind: "control" }
+  ]}
+/>
+
+The outcome of each ancilla measurement is a single bit: +1 (no error detected in that check) or −1 (error detected). Taken together across all ancilla qubits in one cycle, these bits form the<Definition client:visible term="syndrome" def="The pattern of −1 outcomes across all stabilizer measurements in one error-correction cycle. The syndrome does not identify the encoded state — it only identifies where errors occurred. A decoder maps syndrome patterns to the most likely error and proposes a correction." />. A syndrome of all-+1 means either no errors occurred, or errors occurred that exactly cancel out — which is very unlikely with real noise. A syndrome with some −1 values points to one or more error locations.
+
+The<Definition client:visible term="code distance" def="The minimum number of physical qubit errors required to produce an undetected logical error — that is, a chain of errors that spans the lattice from one boundary to the opposite boundary without triggering any stabilizer. A distance-d code can correct up to ⌊(d−1)/2⌋ simultaneous errors." /> is what gives the surface code its power. A distance-7 code can correct any combination of up to 3 simultaneous single-qubit errors. A distance-11 code can correct up to 5. At some code distance, the probability of getting enough simultaneous errors to overwhelm the code becomes negligible.
+
+Here is the full syndrome extraction cycle, step by step:
+
+<Stepper client:visible mode="reveal" caption="One error-correction cycle in the surface code — from gate execution to syndrome-guided correction"
+  steps={[
+    {
+      title: "1. Run the quantum gate (and get an error)",
+      body: "<p>The processor executes one layer of quantum gates on the data qubits. With probability p per gate, a Pauli error (X, Y, or Z) is introduced — a single-qubit rotation the processor didn't intend. No alarm sounds; nothing special happens. The data qubits continue in their corrupted state.</p>"
+    },
+    {
+      title: "2. Entangle data qubits with ancilla qubits",
+      body: "<p>Each ancilla qubit is coupled to its four neighboring data qubits through a sequence of controlled-NOT (CNOT) gates. For a Z-type stabilizer: the ancilla accumulates the parity of the X errors on its four neighbors. For an X-type stabilizer: the ancilla accumulates the parity of the Z errors. These entangling operations take place over the 1.1-microsecond error-correction cycle time of the Willow hardware.</p>"
+    },
+    {
+      title: "3. Measure the ancilla qubits",
+      body: "<p>Each ancilla qubit is measured in the computational basis, yielding +1 or −1. This destroys the ancilla's entanglement but leaves the data qubits completely undisturbed. The data qubits are never measured — their quantum state survives intact. The measurement results form the <strong>syndrome</strong>: a binary pattern of 0s (for +1 outcomes) and 1s (for −1 outcomes) across all d²−1 ancilla positions.</p>"
+    },
+    {
+      title: "4. Run the classical decoder",
+      body: "<p>The syndrome is passed to a classical decoder — a software algorithm running on conventional hardware. The standard choice is minimum-weight perfect matching (MWPM): it finds the smallest set of errors consistent with the observed syndrome pattern. Google's Willow experiment used both a neural-network decoder (achieving Λ = 2.14 ± 0.02) and a real-time MWPM-based decoder that operates within the 1.1 µs cycle time constraint. The decoder produces a Pauli correction operator.</p>"
+    },
+    {
+      title: "5. Apply the correction (or track it)",
+      body: "<p>The correction is either physically applied (X and Z gates on specific data qubits) or tracked in software as a 'Pauli frame' — a running record of all corrections so far. Physical application and software tracking are equivalent, but the latter is more efficient because classical bit strings can be XORed. The logical qubit continues in its corrected state, ready for the next round.</p>"
+    },
+    {
+      title: "6. Repeat — 900,000 times per second",
+      body: "<p>The entire cycle takes 1.1 microseconds on Willow. That means roughly 900,000 error-correction cycles per second — each one detecting and correcting whatever errors accumulated during the previous gate layer. At a logical error rate of 0.143% per cycle, the distance-7 logical qubit remains valid for approximately 700 cycles on average before an uncorrected error chain reaches the opposite boundary. That's still not enough for useful computation — but it's the first demonstration that more qubits always helps.</p>"
+    }
+  ]}
+/>
+
+The repetition of syndrome extraction is what buys reliability. A single error in isolation is caught on the cycle when it occurs. Errors that span multiple cycles — a qubit that stays wrong for several rounds — leave a temporal trail of syndrome changes that the decoder can follow and correct. This is why the decoder is fundamentally a problem about spacetime, not just space: error chains extend in both spatial dimensions (across the lattice) and in time (across multiple cycles).
+
+---
+
+## Below threshold as a phase transition
+
+Here is the deepest result in the theory. In 2002, Dennis, Kitaev, Landahl, and Preskill published "Topological quantum memory," which proved that the error correction threshold is not merely a practical boundary — it is an order-disorder<Annotation client:load term="phase transition" note="Dennis, Kitaev, Landahl & Preskill (2002) showed that the threshold of the toric code maps exactly onto an order-disorder phase transition in a 3D Z₂ lattice gauge theory with quenched disorder. Below threshold = ordered phase (information protected). Above threshold = disordered phase (error chains percolate, information lost). Source: Journal of Mathematical Physics 43, 4452 (2002), arXiv:quant-ph/0110143." /> in the mathematical sense of statistical mechanics. The surface code's threshold maps exactly onto the critical point of a 3D Z₂ lattice gauge theory with quenched disorder.
+
+What this means physically: in the ordered phase (below threshold), error chains are short and isolated. A random error here or there creates a small syndrome patch; the decoder corrects it; the code survives. In the disordered phase (above threshold), error chains percolate across the lattice — they grow, connect, and eventually span the code from one boundary to the other, creating an undetectable logical error. The transition between these regimes is not continuous: below threshold, the logical information is thermodynamically stable; above threshold, it is thermodynamically unstable.
+
+This is not an analogy. The mathematics is exact. The threshold of the toric code under independent depolarizing errors equals the critical temperature of a specific random-bond Ising model. Crossing the threshold is the same mathematical event as a ferromagnet melting into a paramagnet.
+
+<Pullquote cite="Dennis, E., Kitaev, A., Landahl, A. & Preskill, J. (2002). Topological quantum memory. J. Math. Phys. 43, 4452." href="https://arxiv.org/abs/quant-ph/0110143" kind="document">
+An order-disorder phase transition occurs in this system at a nonzero critical value of the error rate; if the error rate is below the critical value (the accuracy threshold), encoded information can be protected arbitrarily well in the limit of a large code block.
+</Pullquote>
+
+This framing changes how you think about the engineering challenge. Building a fault-tolerant quantum computer is not about reducing the error rate to zero — an impossible ask. It is about reducing it below a critical value and then staying there while you scale. Once you are in the ordered phase, adding more hardware is thermodynamically favorable. The code is in a different regime. The question is no longer "can we make errors small enough?" but "can we manufacture enough below-threshold qubits?"
+
+The practical threshold under realistic circuit-level noise — where every gate, preparation, and measurement is itself noisy — lies somewhere between 0.57% (with MWPM decoding) and roughly 1% (with optimal decoding and symmetric error models). Willow's physical two-qubit gate error rate of approximately<Annotation client:load term="0.12% (two-qubit gate fidelity 99.88%)" note="Google's hardware blog reports 99.97% for single-qubit gates and 99.88% for entangling (two-qubit) gates across Willow's full 105-qubit array. Source: blog.google/technology/research/quantum-hardware-verifiable-advantage/. Note: Aaronson (2024) separately reports 99.7% for CZ gates and 99.85% for iSWAP gates, which are distinct gate types with different native fidelity; the 99.88% figure refers to the iSWAP-like entangling gate." /> is well below the 0.57% circuit-level threshold — which is precisely why Willow can operate below threshold at all.
+
+---
+
+## The Lambda suppression factor: running the numbers yourself
+
+The exponential suppression formula can be explored directly. Below, each step up in code distance divides the logical error rate by Lambda. Slide into the above-threshold regime (Lambda < 1) and watch the errors grow instead of shrink:
+
+<RunnableCode client:visible caption="Logical error rate vs. code distance: below threshold (Λ > 1) vs. above threshold (Λ < 1). Adjust Lambda on line 4 and distance_max on line 5. Source: formula from Google Quantum AI (2025), arXiv:2408.13687."
+  code={`// Surface code logical error rate formula:
+// ε_L(d) = ε_L(d=3) / Λ^((d-3)/2)
+// where Λ = suppression factor (Λ > 1 = below threshold)
+
+const Lambda = 2.14;       // ← Willow's measured suppression factor
+const distance_max = 21;   // ← maximum code distance to simulate
+const base_error = 0.655;  // ← logical error rate (%) at d=3, derived from Willow data
+
+console.log("Code distance | Logical error rate (% per cycle) | vs. physical qubit");
+console.log("─────────────────────────────────────────────────────────────────────");
+
+const physical_qubit_error = 0.12; // Willow's ~0.12% two-qubit gate error rate
+
+for (let d = 3; d <= distance_max; d += 2) {
+  const steps = (d - 3) / 2;
+  const logical_error = base_error / Math.pow(Lambda, steps);
+  const vs_physical = logical_error < physical_qubit_error
+    ? "better than physical ✓"
+    : "worse than physical";
+  console.log(
+    \`d = \${String(d).padStart(2)}: \${logical_error.toFixed(6)}%  (\${vs_physical})\`
+  );
+}
+
+// Now run the SAME calculation with Lambda = 0.6 (above threshold)
+const Lambda_above = 0.6;
+console.log("");
+console.log("ABOVE THRESHOLD (Λ = 0.6 < 1): error GROWS with distance");
+for (let d = 3; d <= 11; d += 2) {
+  const steps = (d - 3) / 2;
+  const logical_error_above = base_error / Math.pow(Lambda_above, steps);
+  console.log(\`d = \${d}: \${logical_error_above.toFixed(3)}% (more qubits = more errors)\`);
+}
+
+return \`Below threshold (Λ = \${Lambda}): d=7 gives 0.143% — exactly the Willow measurement.\`;`} />
+
+The d=7 row in the below-threshold calculation lands on exactly 0.143% — the Willow measurement from the *Nature* paper. Below threshold, each two-step increase in code distance divides the logical error rate by another factor of 2.14. Above threshold, the same steps multiply it.
+
+Now adjust Lambda continuously. When Lambda crosses 1 from above, you cross the threshold — and the entire qualitative behavior of the system switches:
+
+<ParameterPlay client:visible
+  params={[
+    { key: "Lambda", label: "Suppression factor Λ", min: 0.3, max: 5, default: 2.14, step: 0.01 },
+    { key: "base", label: "Baseline error at d=3 (%)", min: 0.1, max: 5, default: 0.655, step: 0.01 }
+  ]}
+  expr="base / pow(Lambda, (x - 3) / 2)"
+  xRange={[3, 19]}
+  xLabel="code distance d"
+  yLabel="logical error rate (%)"
+  readouts={[
+    { label: "error at d=7 (%)", expr: "base / pow(Lambda, 2)" },
+    { label: "error at d=11 (%)", expr: "base / pow(Lambda, 4)" },
+    { label: "error at d=19 (%)", expr: "base / pow(Lambda, 8)" }
+  ]}
+  caption="Drag Λ below 1.0 to see below-threshold exponential fall flip to above-threshold exponential growth — the same code distance, opposite qualitative behavior. Willow's measured Λ = 2.14 is marked as the default. Source: formula from arXiv:2408.13687."
+/>
+
+The inflection point at Lambda = 1 is the threshold. Below it, the curve falls. Above it, it rises. There is no smooth interpolation between the two regimes — the mathematics of the ordered and disordered phases differs by the sign of the exponent.
+
+<Detail summary="Go deeper: why Λ = 2.14 is lower than the theoretical p_th/p maximum">
+The formula Λ ≈ p_th/p is a leading-order approximation. With Willow's two-qubit gate error rate of ~0.12% and a surface-code circuit-level threshold of ~0.57%, the naive theoretical maximum is Λ_max ≈ 0.57/0.12 ≈ 4.75. The measured Λ = 2.14 is considerably lower — and that gap is honest physics. Real processors have correlated errors (crosstalk between neighboring qubits), leakage (population into non-computational states), time-correlated noise (low-frequency drift), and coherent errors that the simple depolarizing model misses. Each of these degrades Λ below the theoretical limit. A Λ of 2.14 is enough to demonstrate below-threshold operation — the logical error rate unambiguously falls with distance — but higher Λ will be needed to reach the code distances required for practical algorithms. The path to larger Λ runs through better physical qubits (lower and less correlated error rates) and more sophisticated decoders that handle realistic noise models.
+</Detail>
+
+---
+
+## The Willow result: what was actually measured
+
+Google's Willow chip is a<Annotation client:load term="105-qubit superconducting transmon processor" note="Willow consists of 105 superconducting transmon qubits arranged in a 2D square grid, with average connectivity of ~3.47. Single-qubit gate fidelity 99.97%; two-qubit gate fidelity ~99.88%. T1 coherence time: mean 68 µs, approaching 100 µs; T2,CPMG = 89 µs — a ~5× improvement over the previous Sycamore generation (~20 µs T1). Source: Wikipedia/Willow_processor; PMC/11864966 (direct from Nature paper)." /> operating at near absolute zero in a dilution refrigerator. The relevant physical parameters for the threshold calculation are:
+
+- **Single-qubit gate error:** 0.03% (fidelity 99.97%)
+- **Two-qubit gate error:** ~0.12% (fidelity 99.88%)
+- **Mean qubit T₁:** 68 µs (time until qubit spontaneously decays)
+- **Mean qubit T₂,CPMG:** 89 µs (phase coherence time)
+- **Error correction cycle time:** 1.1 µs
+
+The ratio of T₁ to cycle time — 68 µs / 1.1 µs ≈ 62 — sets an upper bound on how many correction cycles the qubit can run before decoherence dominates. The distance-7 code extends this to approximately 700 cycles before a logical error occurs (derived from the 0.143%/cycle logical error rate).
+
+The experiment ran surface code memories at distance-3, distance-5, and distance-7, using subgrids of two Willow processors (a 105-qubit chip for the distance-7 result; a 72-qubit chip for the real-time distance-5 demonstration). For each pair of adjacent code distances, the team measured Lambda — the ratio of logical error rates — using both a neural-network decoder and a real-time minimum-weight matching decoder. The results:
+
+<Chart client:visible mark="bar" x="configuration" y="Lambda" height={280}
+  caption="Measured Lambda (logical error suppression factor) for different surface code distances and decoders on Willow. Λ > 1 confirms below-threshold operation. Source: Google Quantum AI (2025), arXiv:2408.13687, Nature 638, 920–926."
+  data={[
+    { configuration: "d=5→7 (NN decoder)", Lambda: 2.14 },
+    { configuration: "d=5→7 (matching)", Lambda: 2.04 },
+    { configuration: "d=5 (NN decoder)", Lambda: 2.18 },
+    { configuration: "d=5 (real-time)", Lambda: 2.0 }
+  ]} />
+
+Every measurement exceeds 1 — and not by a whisker. The minimum measured value is 2.0, achieved by the real-time decoder operating under the strict 1.1-µs cycle constraint. The neural-network decoder, which has more compute budget, reaches 2.14 for the largest code. The consistency across decoder types and code distances confirms this is a genuine physical effect, not an artifact of a particular decoding strategy.
+
+<Pullquote cite="Barbara Terhal, theoretical physicist, Delft University (via Quanta Magazine, 2024)." href="https://www.quantamagazine.org/quantum-computers-cross-critical-error-threshold-20241209/" kind="quote">
+I think it's amazing. I didn't actually expect that they would fly through the threshold like this.
+</Pullquote>
+
+The other key result: the distance-7 logical qubit outlives its best physical constituent qubit by a factor of 2.4 ± 0.3. This is the "break-even" milestone inverted — the logical qubit is not just as good as the physical qubit, it is better. Error correction is providing net benefit for the first time in a surface code memory at this scale.
+
+<Detail summary="Go deeper: the 2022 precursor and why Willow is different">
+Google's 2023 Nature paper ("Suppressing quantum errors by scaling a surface code logical qubit," arXiv:2207.06431) was a milestone on the way to Willow. It demonstrated that a distance-5 logical qubit slightly outperformed an ensemble of distance-3 logical qubits: logical error rates of 2.914% ± 0.016% vs. 3.028% ± 0.023%. The improvement was tiny — less than 4% — and the system was operating very close to or at the threshold, not clearly below it. The key difference in the 2024 Willow result is threefold: (1) Willow's T₁ coherence time improved roughly 5× over the Sycamore-generation hardware used in 2022, (2) the full distance-7 code is run (not just d=3 vs. d=5), and (3) a real-time classical decoder is integrated within the 1.1-µs cycle time. The combination of better hardware and a working decoder is what put Willow unambiguously below threshold with Λ = 2.14 rather than marginally above or at it.
+</Detail>
+
+---
+
+## The honest gap: d=7 to fault-tolerant computation
+
+Demonstrating Λ = 2.14 in a surface code memory is a genuine physical milestone. It is not a fault-tolerant quantum computer.
+
+Here is the distance:
+
+<DataTable client:visible caption="The gap between the Willow demonstration and what fault-tolerant computation requires. Code distance target computed from Willow's measured Λ = 2.14 and the 10⁻¹⁰%/cycle error rate needed for an algorithm running 10⁷ cycles on 10³ logical qubits (see arithmetic below). Sources: arXiv:2408.13687; Fowler et al. (2012) arXiv:1208.0928."
+  columns={[
+    { key: "metric", label: "Metric", align: "left" },
+    { key: "willow2024", label: "Willow 2024", align: "right" },
+    { key: "needed", label: "Fault-Tolerant Target", align: "right" }
+  ]}
+  rows={[
+    { metric: "Code distance", willow2024: "d = 7", needed: "d ≈ 63 (at Λ = 2.14) †" },
+    { metric: "Physical qubits per logical qubit", willow2024: "101", needed: "~7,900" },
+    { metric: "Logical qubits demonstrated", willow2024: "1 (memory only)", needed: "~1,000–4,000" },
+    { metric: "Logical error rate / cycle", willow2024: "0.143%", needed: "< 10⁻¹⁰%" },
+    { metric: "Logical gate fidelity", willow2024: "not demonstrated", needed: "< 10⁻⁶ per gate" },
+    { metric: "Total physical qubits (RSA-2048)", willow2024: "105", needed: "~tens of millions" }
+  ]}
+/>
+
+<Callout kind="key-insight" title="† Why roadmaps cite d = 25–30">
+Industry roadmaps that target d = 25–30 implicitly assume Λ will grow to roughly 10–15 as physical error rates improve beyond Willow's current levels. At Λ = 10, reaching 10⁻¹⁰% from 0.143% requires only ~10 distance steps → d ≈ 27 and ~1,450 physical qubits per logical qubit. The d ≈ 63 figure above is honest arithmetic from today's measured Λ = 2.14 — a clear target for hardware improvement.
+</Callout>
+
+Three specific capabilities are missing entirely from the Willow result:
+
+**Logical gates.** The Willow experiment demonstrates a *memory* — a logical qubit that sits still and survives error correction for hundreds of cycles. Running a computation requires *logical gates* — operations on the encoded state that are themselves fault-tolerant. The dominant approach for the surface code is *magic state distillation*: a noisy ancilla state is purified through a distillation circuit until it reaches the precision needed to implement a non-Clifford gate (the T gate, specifically). This requires additional physical qubits — a significant overhead on top of the code distance overhead. The path from Λ = 2.14 to running a logical T gate is not trivial.
+
+**Multiple logical qubits with entanglement.** Algorithms require interaction between logical qubits. Entangling two distant logical qubits in a surface code requires a special operation (lattice surgery) that effectively creates and destroys boundaries between patches — demanding careful spatial planning and additional ancilla resources.
+
+**Code distance d ≈ 63 (at current Λ = 2.14).** At d = 7 and Λ = 2.14, the logical error rate is 0.143% per cycle. An algorithm running 10 million cycles on 1,000 logical qubits accumulates 10¹⁰ total qubit-cycle operations; to keep the total failure probability below ~1%, each qubit-cycle needs an error rate below roughly 10⁻¹⁰%. That is a factor of 1.43 × 10⁹ below today's 0.143%. Each two-unit step up in code distance multiplies the suppression by Λ = 2.14, so the number of steps required is n = ln(1.43 × 10⁹) / ln(2.14) ≈ 27.7, which rounds up to 28 steps. The arithmetic:
+
+<Math client:visible
+  tex="n = \frac{\ln(0.143\% \,/\, 10^{-10}\%)}{\ln \Lambda} = \frac{\ln(1.43 \times 10^{9})}{\ln 2.14} \approx \frac{21.08}{0.761} \approx 27.7 \to 28 \text{ steps}"
+  caption="Arithmetic for the code distance needed to reach the fault-tolerant error target from Willow's d=7 result, using Λ = 2.14. Sources: Willow Λ and 0.143%/cycle from arXiv:2408.13687; qubit count formula from Fowler et al. (2012), arXiv:1208.0928."
+  steps={[
+    { tex: "d_{\\text{target}} = 7 + 2 \\times 28 = 63", note: "28 two-unit distance steps from d = 7" },
+    { tex: "2(63)^2 - 1 = 7{,}937 \\approx 7{,}900 \\text{ physical qubits per logical qubit}", note: "rotated surface code qubit count formula (Fowler et al. 2012)" },
+    { tex: "\\varepsilon_L(d=63) = 0.143\\% \\,/\\, 2.14^{28} \\approx 8 \\times 10^{-11}\\% \\approx 10^{-10}\\%", note: "confirmed: 28 suppression steps reaches the target" }
+  ]}
+/>
+
+At d = 63, each logical qubit requires approximately 7,900 physical qubits — roughly 78× more than the 101 qubits in Willow's d = 7 demonstration. For 1,000 logical qubits, that is approximately 8 million physical qubits; for the 4,000 logical qubits Shor's algorithm requires for RSA-2048, tens of millions.
+
+The physical qubit count needed for RSA-breaking is therefore at minimum in the tens of millions — and that estimate assumes Λ remains near 2 at larger code distances, which is not guaranteed as the system scales and new correlated noise sources emerge.
+
+<Detail summary="Go deeper: quantum LDPC codes and why they might help">
+Surface codes are not the only path to fault tolerance. Quantum low-density parity-check (qLDPC) codes can encode multiple logical qubits per physical qubit and achieve lower overhead than surface codes — potentially reducing the physical qubit requirement by an order of magnitude. Bravyi et al. demonstrated bivariate bicycle codes (IBM, Nature 627, 778–782, 2024; arXiv:2308.07915) that store 12 logical qubits in 288 physical qubits with a threshold of ~0.8%, matching the surface code threshold — versus ~3,000 physical qubits needed with surface codes for equivalent error suppression. The catch is connectivity: qLDPC codes require interactions between distant qubits that are difficult to implement in a planar superconducting layout. Microsoft has taken a different approach entirely — topological qubits based on Majorana zero modes, which aim to have intrinsically lower physical error rates so the code distance requirement is smaller. Microsoft's Majorana 1 chip (Nature 638, 651–655, February 2025; en.wikipedia.org/wiki/Majorana_1) demonstrated relevant hardware milestones, though the paper itself notes the measurements "do not, by themselves, determine whether the low-energy states detected are topological" — the approach remains under active investigation. None of these alternatives is close to displacing surface codes for near-term experiments, but they may alter the architecture as systems scale.
+</Detail>
+
+The gap is large. The physics works. Whether the engineering will close the gap in five years or twenty-five is an open question — and anyone who tells you a precise timeline is confusing a roadmap with a guarantee.
+
+---
+
+## Check your understanding
+
+<Quiz client:visible caption="The threshold theorem and surface codes"
+  questions={[
+    {
+      prompt: "If a surface code's Lambda (Λ) is measured to be 0.7, what does that tell you about the system's operating regime?",
+      choices: [
+        "The system is below the error threshold — Λ < 1 means very aggressive error suppression.",
+        "The system is above the error threshold — Λ < 1 means errors grow exponentially with code distance.",
+        "The system is exactly at the threshold — Λ values near 1 are the target.",
+        "The system has not yet been calibrated — Λ < 1 is a sign of a faulty decoder."
+      ],
+      answer: 1,
+      explain: "Λ < 1 means the logical error rate grows when you increase code distance. Each added layer of protection introduces more errors than it removes. This is the above-threshold regime, where error correction is net harmful. Below threshold requires Λ > 1 (specifically, Λ > 1 means each distance step suppresses errors by a factor of Λ). Willow's measured Λ = 2.14 confirms below-threshold operation."
+    },
+    {
+      prompt: "Why can't quantum error correction work by simply copying the qubit three times and taking a majority vote — the classical repetition strategy?",
+      choices: [
+        "Three qubits aren't enough; quantum errors require at least nine copies.",
+        "The no-cloning theorem forbids copying an unknown quantum state; and measuring the copies to check them would collapse the superposition.",
+        "Majority vote doesn't work for quantum systems because quantum errors are continuous, not discrete.",
+        "Copying is allowed, but majority vote fails because quantum states interfere with each other during measurement."
+      ],
+      answer: 1,
+      explain: "The no-cloning theorem (Wootters & Zurek, 1982) forbids creating a copy of an unknown quantum state. Even if you could copy it, measuring the copies to check for errors would collapse their superpositions, destroying the information you're trying to protect. Quantum error correction works instead through indirect measurement — ancilla qubits measure parity relationships between data qubits without ever measuring the data qubits themselves."
+    },
+    {
+      prompt: "The Willow distance-7 logical qubit achieved 0.143% logical error per cycle and outlived its best physical qubit by 2.4×. What is still missing before this can run a useful algorithm?",
+      choices: [
+        "Nothing — the distance-7 result is sufficient for fault-tolerant quantum computation.",
+        "A larger qubit count; the 105-qubit Willow chip needs to scale to ~500 qubits for useful computation.",
+        "Fault-tolerant logical gates (especially the T gate), multiple interacting logical qubits, and code distances of d≈63 (at current Λ=2.14) to achieve per-cycle error rates below ~10⁻¹⁰%.",
+        "A better decoder; the minimum-weight matching decoder used in Willow is too slow for real algorithms."
+      ],
+      answer: 2,
+      explain: "The Willow result demonstrates a logical qubit memory — the ability to store quantum information reliably while error correction runs. Computation requires fault-tolerant logical gates (the T gate via magic state distillation is the key bottleneck), multiple logical qubits that can entangle with each other, and code distances high enough that the per-cycle logical error rate falls to ~10⁻¹⁰% or below. At current Λ=2.14, that requires d≈63 and ~7,900 physical qubits per logical qubit. Industry roadmaps citing d≈25–30 assume Λ will grow to ~10–15 as physical error rates improve beyond Willow's current level."
+    }
+  ]}
+/>
+
+---
+
+## Thirty years from theorem to hardware
+
+<Timeline client:load caption="From Shor's first error-correcting code to the first below-threshold surface code memory"
+  events={[
+    { date: "1994-01-01", label: "Shor's factoring algorithm", detail: "Peter Shor proves that a quantum computer can factor large integers in polynomial time — exposing the existential need for fault tolerance. Without it, the algorithm cannot run on any real hardware." },
+    { date: "1995-01-01", label: "Shor's nine-qubit code", detail: "Shor publishes the first quantum error-correcting code: a [[9,1,3]] code that encodes one logical qubit in nine physical qubits and corrects any single-qubit error. Physical Review A 52, R2493. The no-cloning theorem is bypassed by encoding rather than copying." },
+    { date: "1998-01-16", label: "Threshold theorem (KLZ)", detail: "Knill, Laflamme & Zurek prove in Science 279, 342 that if the error per operation is below a threshold value, then arbitrarily accurate quantum computation is possible with only polynomial overhead. The threshold exists; the question is how high it is." },
+    { date: "2002-01-01", label: "Topological quantum memory", detail: "Dennis, Kitaev, Landahl & Preskill prove that the error correction threshold is an order-disorder phase transition in a 3D Z₂ gauge theory with quenched disorder. The surface code's threshold is not an engineering parameter — it is a thermodynamic phase boundary. Journal of Mathematical Physics 43, 4452." },
+    { date: "2012-09-26", label: "Fowler et al. surface code review", detail: "The comprehensive analysis of surface codes by Fowler, Mariantoni, Martinis & Cleland (Physical Review A 86, 032324) establishes the surface code as the leading practical candidate: threshold ~0.57–1% under circuit-level noise, planar nearest-neighbor architecture, single logical qubit from 2d²−1 physical qubits." },
+    { date: "2023-02-01", label: "Google: d=5 outperforms d=3 (barely)", detail: "Nature 614, 676–681. Google's first surface code scaling milestone: the distance-5 logical qubit marginally outperforms the distance-3 logical qubit (2.914% vs. 3.028% error per cycle). The system is near but not clearly below threshold. The result proves scaling is possible; it does not demonstrate it unambiguously." },
+    { date: "2025-02-27", label: "Willow: first below-threshold surface code", detail: "Nature 638, 920–926. Google's Willow chip (105 superconducting transmon qubits) demonstrates Λ = 2.14 ± 0.02 across three code distances. The distance-7 logical qubit reaches 0.143% error per cycle and outlives its best physical qubit by 2.4×. Barbara Terhal: 'I didn't actually expect that they would fly through the threshold like this.'" }
+  ]}
+/>
+
+---
+
+## The mental model to take away
+
+The threshold theorem says three things in one:
+
+**The phase transition.** There exists a critical physical error rate below which more qubits always helps, and above which more qubits always hurts. Below threshold is not slightly better than above threshold — it is a thermodynamically different regime. Dennis, Kitaev, Landahl & Preskill proved this is literally an ordered phase of matter, with all the stability that implies.
+
+**The exponential.** Below threshold, the logical error rate falls exponentially with code distance. The exponent is `(d+1)/2`. At Λ = 2.14 and d = 19, the logical error rate falls to approximately 10⁻³% — eight distance steps from the d=3 baseline (0.655% / 2.14⁸ ≈ 0.0015%), each step multiplying suppression by another factor of 2.14. The same physical qubits, the same error rates, arranged in a larger lattice.
+
+**The gap.** Willow proved the physics works at d=7. The engineering challenge between d=7 and a fault-tolerant logical qubit running a useful algorithm is roughly 28 more code-distance steps — from d=7 to d≈63 at current Λ=2.14 — adding ~7,800 physical qubits per logical qubit, plus the entirely separate problem of fault-tolerant logical gates. Improving Λ beyond 2.14 (by lowering physical error rates) compresses that distance requirement: at Λ=10, d≈27 suffices. The physics is solved. The engineering is not.
+
+Shor's nine-qubit code in 1995 showed it was possible to protect quantum information. The threshold theorem in 1998 showed that protection can scale. Willow in 2024 showed — for the first time with a real processor, a real decoder, and a real-time cycle constraint — that we are on the right side of the phase transition.
+
+The dragon exists. We just crossed the boundary into the territory where fighting it is thermodynamically favorable.
+
+Sources:
+- [Google Quantum AI (2025). "Quantum error correction below the surface code threshold." Nature 638, 920–926.](https://arxiv.org/abs/2408.13687)
+- [PMC full text of the Willow Nature paper](https://pmc.ncbi.nlm.nih.gov/articles/PMC11864966/)
+- [Shor, P.W. (1995). PRA 52, R2493](https://link.aps.org/doi/10.1103/PhysRevA.52.R2493)
+- [Knill, Laflamme & Zurek (1998). Science 279, 342](https://science.sciencemag.org/content/279/5349/342)
+- [Fowler et al. (2012). PRA 86, 032324](https://arxiv.org/abs/1208.0928)
+- [Dennis, Kitaev, Landahl & Preskill (2002). J. Math. Phys. 43, 4452](https://arxiv.org/abs/quant-ph/0110143)
+- [Google QAI (2023). "Suppressing quantum errors by scaling." Nature 614.](https://arxiv.org/abs/2207.06431)
+- [Quanta Magazine (2024). Quantum Computers Cross Critical Error Threshold.](https://www.quantamagazine.org/quantum-computers-cross-critical-error-threshold-20241209/)
+- [Willow processor — Wikipedia](https://en.wikipedia.org/wiki/Willow_processor)
+- [Threshold theorem — Wikipedia](https://en.wikipedia.org/wiki/Threshold_theorem)
+- [Surface Code Explained — QuantumZeitgeist](https://quantumzeitgeist.com/what-is-the-surface-code/)
+- [Scott Aaronson: The Google Willow thing](https://scottaaronson.blog/?p=8525)
+- [Google Blog: Meet Willow](https://blog.google/innovation-and-ai/technology/research/google-willow-quantum-chip/)
+- [Google Research: Making quantum error correction work](https://research.google/blog/making-quantum-error-correction-work/)
+- [EntangledFuture: Fault-Tolerant Roadmap](https://entangledfuture.com/quantum-error-correction/fault-tolerant-roadmap/)
+- [Bravyi et al. (2024). High-threshold fault-tolerant quantum memory. Nature 627.](https://arxiv.org/abs/2308.07915)
+- [No-cloning theorem — Wikipedia](https://en.wikipedia.org/wiki/No-cloning_theorem)
+- [Majorana 1 — Wikipedia](https://en.wikipedia.org/wiki/Majorana_1)
+- [Google Blog: Quantum hardware powering breakthroughs (Willow fidelity specs)](https://blog.google/technology/research/quantum-hardware-verifiable-advantage/)
