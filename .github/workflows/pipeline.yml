@@ -43,7 +43,8 @@ jobs:
     env:
       # ---- scope / retention ----
       LIMIT: ${{ github.event.inputs.limit || '12' }}
-      RETENTION_DAYS: "3"
+      # Keep a rolling 2 weeks of Reads on the site (prune anything older).
+      RETENTION_DAYS: "14"
       # Skip per-item full-text extraction: over the full registry it does not
       # finish inside the runner budget, and nothing on the cron path needs bodies
       # — the Feed uses the list + Gemini topics, and the Reads routine's researcher
