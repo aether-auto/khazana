@@ -156,12 +156,19 @@
   }
 }
 
-/* ── SECTION TICK-RAIL ──────────────────────────────────────────────────────
-   A near-invisible vertical rail pinned to the right edge, one tick per section.
-   At rest: short faint hairline ticks (a quiet hint that it exists). The active
-   section's tick is amber + longer. On hover/focus the rail EXPANDS: ticks grow
-   and each reveals its section label in a small plate, so a reader who brushes
-   the edge instantly discovers a jump-nav. Recedes when idle. */
+/* ── SECTION RAIL — the reader's compass ─────────────────────────────────────
+   A section navigator pinned to the right edge that answers the three questions
+   a reader has mid-scroll: where am I, what else is here, and how do I get there.
+
+   REST  — a slim column of ticks (one per h2). The active section's tick runs
+           long + amber, and ITS label rides alongside as a compact chip. That
+           chip's width is clamped to the dead OUTER page margin (the calc on
+           .tick.active .tickLabel), so a persistent "you are here" can never
+           reach into the reading column or its <Sidenote> marginalia.
+   OPEN  — on hover OR keyboard focus the rail lifts into a raised instrument
+           panel: a "contents" eyebrow above every section label, each row a
+           legible jump target on a solid surface. Long outlines scroll inside
+           the panel; short ones stay compact. Recedes when idle. */
 .rail {
   position: fixed;
   right: 0;
@@ -170,31 +177,73 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: var(--s-3);
-  padding: var(--s-4) var(--s-3) var(--s-4) var(--s-5);
-  /* a faint persistent presence: the hover target is wide (padding-left), the
-     visible hint is the ticks themselves. */
+  gap: var(--s-2);
+  max-height: 82vh;
+  padding: var(--s-3) var(--s-3) var(--s-3) var(--s-5);
+  border: var(--hair) solid transparent;
+  border-radius: var(--r-md) 0 0 var(--r-md);
+  background: transparent;
+  /* the hover/focus target is wide (padding-left); the rest hint is the ticks. */
   opacity: 0;
-  transition: opacity var(--dur) var(--ease-out);
+  transition:
+    opacity var(--dur) var(--ease-out),
+    background var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out);
 }
 .rail.in {
   opacity: 1;
 }
-/* a hairline spine behind the ticks — the "there's a rail here" hint */
+/* OPEN: the rail becomes a real, legible surface floating over the page. */
+.rail:hover,
+.rail:focus-within {
+  background: color-mix(in oklab, var(--bg-raised) 94%, transparent);
+  border-color: var(--rule);
+  border-right-color: transparent;
+  box-shadow: -16px 0 44px -20px color-mix(in oklab, #000 72%, transparent);
+  backdrop-filter: blur(10px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* a hairline spine behind the ticks at rest — the "there's a rail here" hint;
+   it dissolves once the panel opens and the labels carry the structure. */
 .rail::before {
   content: "";
   position: absolute;
   right: calc(var(--s-3) + 2px);
-  top: var(--s-4);
-  bottom: var(--s-4);
+  top: var(--s-3);
+  bottom: var(--s-3);
   width: var(--hair);
-  background: var(--rule);
-  opacity: 0.5;
+  background: var(--rule-bright);
+  opacity: 0.6;
   transition: opacity var(--dur) var(--ease-out);
 }
 .rail:hover::before,
 .rail:focus-within::before {
-  opacity: 0.9;
+  opacity: 0;
+}
+
+/* the "contents" eyebrow — present only while the panel is open. */
+.railHead {
+  margin: 0 2px var(--s-1) 0;
+  align-self: flex-end;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-height var(--dur) var(--ease-out),
+    opacity var(--dur) var(--ease-out);
+}
+.rail:hover .railHead,
+.rail:focus-within .railHead {
+  max-height: 1.6rem;
+  opacity: 1;
 }
 
 .tick {
@@ -203,14 +252,16 @@
   align-items: center;
   justify-content: flex-end;
   gap: var(--s-3);
+  width: 100%;
   background: none;
   border: none;
-  padding: 0;
+  padding: 0.15rem 0;
   margin: 0;
   cursor: pointer;
   color: var(--ink-faint);
   font-family: var(--font-mono);
   font-size: var(--t-xs);
+  text-align: right;
 }
 .tick:focus-visible {
   outline: none;
@@ -221,9 +272,10 @@
 }
 /* the tick mark — a short horizontal bar. width animates on active/hover. */
 .tickMark {
+  flex: none;
   display: block;
   height: 2px;
-  width: 12px;
+  width: 14px;
   border-radius: 2px;
   background: var(--rule-bright);
   transition:
@@ -232,57 +284,75 @@
     box-shadow var(--dur-fast) var(--ease-out);
 }
 .tick:hover .tickMark {
-  width: 20px;
+  width: 22px;
   background: var(--ink-dim);
 }
 .tick.active .tickMark {
   width: 26px;
   background: var(--accent);
-  box-shadow: 0 0 8px color-mix(in oklab, var(--accent) 50%, transparent);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--accent) 55%, transparent);
+}
+/* when the panel is open the label carries the info, so the active mark relaxes */
+.rail:hover .tick.active .tickMark,
+.rail:focus-within .tick.active .tickMark {
+  width: 16px;
 }
 
-/* the label plate — hidden at rest, revealed on rail hover/focus, slides in from
-   the right. Lives left of the tick. */
+/* the label chip. Hidden at rest; the ACTIVE label persists but is clamped to
+   the dead outer margin (max() floors at 0 so it vanishes when there's no room,
+   never spilling into the column). Open → every label shows on a solid chip. */
 .tickLabel {
-  max-width: 14rem;
+  max-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
   color: var(--ink-dim);
-  padding: 0.2em 0.55em;
+  padding: 0.22em 0;
   border-radius: var(--r-sm);
-  background: color-mix(in oklab, var(--bg-raised) 88%, transparent);
-  border: var(--hair) solid var(--rule);
-  backdrop-filter: blur(6px);
+  border: var(--hair) solid transparent;
   opacity: 0;
-  transform: translateX(8px);
   transition:
+    max-width var(--dur) var(--ease-out),
     opacity var(--dur) var(--ease-out),
-    transform var(--dur) var(--ease-out),
-    color var(--dur-fast) var(--ease-out);
+    padding var(--dur) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
   pointer-events: none;
 }
-/* Reveal all labels when the rail is hovered/focused (discovery), and always
-   keep the ACTIVE one a touch more present so "where am I" is legible even at
-   rest is NOT shown — at rest we stay minimal; reveal is the discovery moment. */
+/* persistent "you are here" — amber, clamped to the outer margin so it can never
+   overlap the reading column or a floated Sidenote. */
+.tick.active .tickLabel {
+  opacity: 1;
+  color: var(--accent);
+  max-width: max(0px, calc((100vw - var(--maxw)) / 2 - var(--s-10)));
+}
+/* OPEN: reveal every label at a comfortable width on a readable chip. */
 .rail:hover .tickLabel,
 .rail:focus-within .tickLabel {
   opacity: 1;
-  transform: translateX(0);
+  max-width: 15rem;
+  padding: 0.22em 0.6em;
+  background: color-mix(in oklab, var(--bg-raised) 82%, transparent);
 }
-.tick.active .tickLabel {
-  color: var(--accent);
-}
-.tick:hover .tickLabel {
+.rail:hover .tick:hover .tickLabel,
+.rail:focus-within .tick:focus-visible .tickLabel {
   color: var(--ink);
-  border-color: color-mix(in oklab, var(--accent) 35%, var(--rule));
+  background: color-mix(in oklab, var(--accent) 12%, var(--bg-raised));
+  border-color: color-mix(in oklab, var(--accent) 32%, var(--rule));
+}
+.rail:hover .tick.active .tickLabel,
+.rail:focus-within .tick.active .tickLabel {
+  color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 14%, var(--bg-raised));
+  border-color: color-mix(in oklab, var(--accent) 34%, var(--rule));
 }
 
-/* On touch / narrow screens the section rail is dropped entirely — it's an
-   edge-hover affordance with no good touch analogue, and back + scroll-top
-   already cover the essentials there. */
-@media (max-width: 900px) {
+/* Below the layout's comfortable width the rail has no room to live beside the
+   reading column, so it's dropped entirely — back + scroll-top remain, and the
+   in-flow h2 heads carry the structure on narrow screens. */
+@media (max-width: 1180px) {
   .rail {
     display: none;
   }
@@ -305,6 +375,8 @@
   }
   .tickMark,
   .tickLabel,
+  .railHead,
+  .tick,
   .rail,
   .rail::before {
     transition: none;

@@ -282,6 +282,9 @@ export default function SiteNav({ base }: Props) {
           className={`${styles.rail} ${mounted ? styles.in : ""}`}
           aria-label="On this page"
         >
+          <p className={styles.railHead} aria-hidden="true">
+            contents
+          </p>
           {sections.map((s, i) => (
             <button
               key={s.id}
