@@ -1,211 +1,376 @@
 /* apps/site/src/components/mdx/Timeline.css
-   The Observatory timeline: an instrument tape. Amber = signal (event nodes),
-   mono = the instrument voice (labels, dates, elapsed gaps), hairline rules =
-   the axis. Everything is sized to content by layoutTimeline — no fixed void. */
+   THE CHRONOMETER — a big vertical, scroll-driven timeline. A sticky instrument
+   spine (rail + amber progress column + Fraunces active-date readout) alongside a
+   stack of per-event beats. Amber = the descending signal, clay = elapsed heat,
+   hairline = the rail, mono = instrument voice, Fraunces = the artifact date,
+   Newsreader = the reading. GPU-cheap motion (transform/opacity only).
 
-.tl-panel {
-  /* local axis colors so the gradient stops can reference tokens */
-  --tl-axis: var(--rule-bright);
-  --tl-axis-fade: color-mix(in oklab, var(--rule-bright) 0%, transparent);
-  padding: var(--s-5) var(--s-5) var(--s-4);
-}
+   TWO STATES, one markup:
+   • base (.tl2)         — SSR / no-JS / reduced-motion / narrow viewport: a
+                           single column with a continuous left rail and every
+                           beat at full opacity. The whole chronology reads
+                           without a single line of JS.
+   • .tl2--live (≥701px) — hydrated + motion-ok + wide: the two-column
+                           instrument, sticky spine, and scroll-driven focus. */
 
-.tl-svg {
-  width: 100%;
-  height: auto;
-  display: block;
-  overflow: visible;
-}
-
-/* ── axis: a hairline tape that fades at both ends ──────────────────────── */
-.tl-axis {
-  stroke: url(#tl-axis-grad);
-  stroke-width: 1.25;
+.tl2 {
+  max-width: min(100%, 60rem);
+  margin-inline: auto;
+  --rail-x: 8px; /* x of the rail centre in the base (stacked) layout */
 }
 
-/* ── broken-axis mark (a compressed dead span) ──────────────────────────── */
-.tl-break-mask {
-  fill: var(--bg-raised);
-}
-.tl-break-slash {
-  stroke: var(--ink-faint);
-  stroke-width: 1.25;
-  stroke-linecap: round;
-}
-
-/* ── year ticks (proportional mode) ─────────────────────────────────────── */
-.tl-tick line {
-  stroke: var(--ink-faint);
-  stroke-width: 1;
-}
-.tl-tick-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  fill: var(--ink-faint);
+/* ── the accessible live region (announces the active event) ──────────────── */
+.tl2-sr-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-/* ── elapsed-gap chips (sequence mode) ──────────────────────────────────── */
-.tl-gap-rule {
-  stroke: var(--editorial);
-  stroke-width: 1.25;
-  opacity: 0.7;
-}
-.tl-gap-label {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  fill: var(--editorial);
-}
-
-/* ── compact date stamp under each node (sequence mode) ─────────────────── */
-.tl-date {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.03em;
-  fill: var(--ink-faint);
-}
-
-/* ── nodes: leader stem, marker, label ──────────────────────────────────── */
-.tl-node {
-  cursor: pointer;
-}
-.tl-node:focus {
-  outline: none;
-}
-.tl-hit {
-  fill: transparent;
-}
-
-.tl-stem {
-  stroke: var(--rule-bright);
-  stroke-width: 1;
-}
-
-.tl-dot-halo {
-  fill: color-mix(in oklab, var(--accent) 14%, transparent);
-  opacity: 0;
-  transition: opacity var(--dur-fast) var(--ease-out);
-}
-.tl-dot {
-  fill: var(--bg-raised);
-  stroke: var(--accent);
-  stroke-width: 2;
-  transition: r var(--dur-fast) var(--ease-out);
-  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--accent) 35%, transparent));
-}
-
-.tl-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.01em;
-  fill: var(--ink-dim);
-  transition: fill var(--dur-fast) var(--ease-out);
-}
-
-/* ── active state (hover / focus): fill the dot, glow, lift the label ────── */
-.tl-node--active .tl-dot {
-  fill: var(--accent);
-  filter: drop-shadow(0 0 7px color-mix(in oklab, var(--accent) 60%, transparent));
-}
-.tl-node--active .tl-dot-halo {
-  opacity: 1;
-}
-.tl-node--active .tl-label {
-  fill: var(--ink);
-  font-weight: 600;
-}
-.tl-node--active .tl-stem {
-  stroke: var(--accent);
-  opacity: 0.85;
-}
-
-/* ── keyboard focus ring: a clearly visible amber halo around the marker ── */
-.tl-node:focus-visible .tl-dot-halo {
-  opacity: 1;
-  fill: transparent;
-  stroke: var(--focus);
-  stroke-width: 2;
-  stroke-dasharray: 2 2.5;
-}
-.tl-node:focus-visible .tl-dot {
-  fill: var(--accent);
-}
-.tl-node:focus-visible .tl-label {
-  fill: var(--ink);
-  font-weight: 600;
-}
-
-/* ── stable detail readout strip ────────────────────────────────────────── */
-.tl-readout {
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  letter-spacing: 0.01em;
-}
-.tl-readout-date {
-  fill: var(--accent);
-  font-weight: 600;
-}
-.tl-readout-sep {
-  fill: var(--ink-faint);
-}
-.tl-readout-text {
-  fill: var(--read);
-}
-.tl-readout--hint {
-  fill: var(--ink-faint);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-/* ── SSR / no-JS fallback list ──────────────────────────────────────────── */
-.tl-fallback {
+/* ── the sticky spine is a DESKTOP-LIVE enhancement; hidden in the base render */
+.tl2-spine {
   display: none;
-  list-style: none;
-  margin: 0;
-  padding: var(--s-3) 0 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BASE / FALLBACK LAYOUT — single column, continuous rail, everything visible
+   ══════════════════════════════════════════════════════════════════════════ */
+.tl2-beats {
+  position: relative;
+  padding-left: var(--s-5);
+}
+/* the continuous vertical rail down the left of the stack */
+.tl2-beats::before {
+  content: "";
+  position: absolute;
+  left: var(--rail-x);
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--rule-bright);
+}
+
+.tl2-beat {
+  position: relative;
+  padding-bottom: var(--s-8);
+}
+.tl2-beat:last-of-type {
+  padding-bottom: 0;
+}
+/* the node dot sitting on the continuous rail */
+.tl2-beat-node {
+  position: absolute;
+  left: calc(var(--rail-x) - 5px);
+  top: 5px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bg-raised);
+  border: 2px solid var(--accent);
+}
+
+.tl2-beat-body {
+  min-width: 0;
+}
+
+/* ── the graphic / synthesised numeric plate ──────────────────────────────── */
+.tl2-beat-graphic {
+  margin-bottom: var(--s-4);
+}
+.tl2-plate {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-5);
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-raised));
+  border: var(--hair) solid var(--rule);
+  border-left: 2px solid var(--accent);
+  border-radius: var(--r-md);
+}
+.tl2-plate-index {
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 7vw, 4rem);
+  font-weight: 600;
+  line-height: 0.9;
+  color: var(--accent);
+  text-shadow: var(--halo-star);
+  font-variant-numeric: lining-nums;
+}
+.tl2-plate-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+.tl2-plate-year {
   font-family: var(--font-mono);
-  font-size: var(--t-sm);
+  font-size: var(--t-md);
+  letter-spacing: 0.04em;
   color: var(--ink-dim);
 }
-.tl-fallback li {
-  padding: var(--s-1) 0;
+.tl2-plate-gap {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--editorial);
 }
-.tl-fallback-detail {
+/* image variant: no big numeral, just the media + optional credit */
+.tl2-plate--image {
+  display: block;
+  padding: 0;
+  border: var(--hair) solid var(--rule);
+  border-left: 2px solid var(--accent);
+  overflow: clip;
+}
+.tl2-plate--image img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.tl2-plate-credit {
+  display: block;
+  padding: var(--s-2) var(--s-4);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
   color: var(--ink-faint);
+  border-top: var(--hair) solid var(--rule);
 }
 
-/* ── mobile: the SVG's fixed 1000-unit viewBox scales text below legibility
-   (a 1000-unit tape squeezed into ~320px renders 11px labels at ~3.5px). Long
-   dense labels become an illegible smear. Below this width we hide the SVG and
-   promote the semantic, full-size stacked fallback list — same data, every
-   label readable, no overlap. Desktop is untouched. ───────────────────────── */
-@media (max-width: 640px) {
-  .tl-svg {
-    display: none;
+/* ── the beat's text ──────────────────────────────────────────────────────── */
+.tl2-beat-head {
+  margin-bottom: var(--s-2);
+}
+.tl2-beat-date {
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.tl2-beat-label {
+  margin: 0 0 var(--s-3);
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  color: var(--ink);
+}
+.tl2-beat-detail {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: var(--t-read);
+  line-height: var(--lh-read);
+  letter-spacing: var(--track-read);
+  color: var(--read);
+}
+
+.tl2-tail {
+  height: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LIVE LAYOUT — hydrated, motion-ok, and wide enough for the two-column stage
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 701px) {
+  .tl2--live .tl2-grid {
+    display: grid;
+    grid-template-columns: minmax(13rem, 15rem) minmax(0, 1fr);
+    gap: var(--s-8);
+    /* NB: do NOT use align-items:start here. The spine cell must STRETCH to the
+       full (very tall) row height so its sticky child can stay pinned through the
+       whole scroll; a start-aligned cell collapses to its content height and the
+       spine would scroll away after one viewport. */
   }
-  .tl-fallback {
+
+  /* ── the sticky instrument spine ──────────────────────────────────────── */
+  .tl2--live .tl2-spine {
     display: block;
   }
-  .tl-panel {
-    padding: var(--s-4);
+  .tl2--live .tl2-spine-sticky {
+    position: sticky;
+    top: calc(var(--tl2-top, 0px) + var(--s-5));
+    height: min(74vh, 620px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tl2-readout {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-1);
+    padding-bottom: var(--s-4);
+    margin-bottom: var(--s-2);
+    border-bottom: var(--hair) solid var(--rule);
+    min-height: 6.5em; /* reserve height so the rail never jumps as text changes */
+  }
+  .tl2-readout-seq {
+    font-family: var(--font-mono);
+    font-size: var(--t-sm);
+    letter-spacing: 0.12em;
+    color: var(--accent);
+  }
+  .tl2-readout-total {
+    color: var(--ink-faint);
+  }
+  .tl2-readout-date {
+    font-family: var(--font-display);
+    font-size: var(--t-2xl);
+    font-weight: 600;
+    line-height: 1;
+    color: var(--accent);
+    text-shadow: var(--halo-star);
+  }
+  .tl2-readout-label {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    overflow-wrap: anywhere;
+  }
+
+  /* ── the vertical rail + descending amber progress column ─────────────── */
+  .tl2-rail {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+  }
+  .tl2-rail-track,
+  .tl2-rail-fill {
+    position: absolute;
+    left: calc(var(--rail-x) - 1px);
+    top: 8%;
+    height: 84%;
+    width: 2px;
+  }
+  .tl2-rail-track {
+    background: var(--rule-bright);
+  }
+  .tl2-rail-fill {
+    background: var(--accent);
+    transform: scaleY(var(--tl-progress, 0));
+    transform-origin: top center;
+    box-shadow: 0 0 10px color-mix(in oklab, var(--accent) 55%, transparent);
+    will-change: transform;
+  }
+
+  /* ── nodes on the rail (buttons: click to jump to that beat) ───────────── */
+  .tl2-node {
+    position: absolute;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    padding: 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-align: left;
+  }
+  .tl2-node-dot {
+    flex: none;
+    margin-left: calc(var(--rail-x) - 4.5px);
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--bg-raised);
+    border: 2px solid var(--ink-faint);
+    transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
+  }
+  .tl2-node-date {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.02em;
+    color: var(--ink-faint);
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  /* reached: dim amber */
+  .tl2-node--on .tl2-node-dot {
+    border-color: var(--accent-dim);
+  }
+  .tl2-node--on .tl2-node-date {
+    color: var(--ink-dim);
+  }
+  /* active: lit */
+  .tl2-node--active .tl2-node-dot {
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: scale(1.35);
+    box-shadow: 0 0 8px color-mix(in oklab, var(--accent) 65%, transparent);
+  }
+  .tl2-node--active .tl2-node-date {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .tl2-node:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 3px;
+    border-radius: var(--r-sm);
+  }
+
+  .tl2-hint {
+    margin: var(--s-3) 0 0;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  /* ── the scrolling beats: hide the base rail, dim the inactive beats ───── */
+  .tl2--live .tl2-beats {
+    padding-left: 0;
+  }
+  .tl2--live .tl2-beats::before {
+    display: none;
+  }
+  .tl2--live .tl2-beat-node {
+    display: none;
+  }
+  .tl2--live .tl2-beat {
+    min-height: 64vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-bottom: 0;
+    opacity: 0.42;
+    transition: opacity var(--dur) var(--ease-out);
+  }
+  .tl2--live .tl2-beat--active {
+    opacity: 1;
+  }
+  /* runway so the last beat can still reach the centred trigger line */
+  .tl2--live .tl2-tail {
+    height: 42vh;
+  }
+
+  /* wider stage → let the label breathe up a size */
+  .tl2--live .tl2-beat-label {
+    font-size: var(--t-xl);
   }
 }
 
-/* ── reduced motion: kill the transitions, keep the legibility ──────────── */
+/* ── reduced motion: kill transitions, keep every glyph legible ───────────── */
 @media (prefers-reduced-motion: reduce) {
-  .tl-dot,
-  .tl-dot-halo,
-  .tl-label,
-  .tl-stem {
+  .tl2-node-dot,
+  .tl2-node-date,
+  .tl2-beat,
+  .tl2-rail-fill {
     transition: none;
   }
-  .tl-dot {
-    filter: none;
-  }
-  .tl-node--active .tl-dot {
-    filter: none;
+  .tl2-rail-fill,
+  .tl2-node--active .tl2-node-dot,
+  .tl2-plate-index {
+    box-shadow: none;
+    text-shadow: none;
   }
 }

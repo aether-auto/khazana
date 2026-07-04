@@ -1,6 +1,36 @@
 // apps/site/src/components/mdx/Timeline.tsx
-import { useState } from "react";
-import { layoutTimeline, type TimelineEvent } from "./lib/timeline-scale.js";
+//
+// THE CHRONOMETER — a big, vertical, scroll-driven narrative timeline.
+//
+// Left: a tall STICKY instrument spine — a vertical rail with dated nodes, an
+// amber progress column that descends as you scroll, and a large Fraunces
+// readout of the active date. Right: a stack of per-event "beats", one roughly
+// per viewport, each carrying its date + label + FULL detail prose (never
+// hover-gated) plus a graphic — the author's `image` if supplied, otherwise a
+// synthesised numeric "plate" (ordinal + elapsed-gap) so it's beautiful and
+// text-forward with no media. As you scroll, the active beat lights, the spine's
+// node highlights, and the progress column glides down to it — all off ONE
+// position-based `active` recomputed from live geometry every frame (the proven
+// <Scrolly>/<ScrollyTimeline> pattern: correct at any scroll position, immune to
+// the late-hydration freeze a crossing-observer suffers).
+//
+// Degradation is first-class. Without the `.tl2--live` class (SSR, no-JS,
+// reduced motion, or narrow viewports) the SAME markup collapses to a single
+// column with a continuous left rail and every beat at full opacity — a clean,
+// fully-readable vertical list. The scroll animation is pure enhancement; the
+// chronology reads completely without it.
+//
+// Data-contract: unchanged `{ date, label, detail? }` plus OPTIONAL
+// `{ image?, alt?, imageCaption? }`. Existing reads render identically.
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  layoutTimeline,
+  formatGap,
+  type TimelineEvent,
+  type TimelineNode,
+} from "./lib/timeline-scale.js";
+import { activeIndexFromScroll, sectionProgress, playheadFraction, clampIndex } from "./lib/scrolly-timeline.js";
 import "./mdx.css";
 import "./Timeline.css";
 
@@ -9,172 +39,221 @@ export interface TimelineProps {
   caption?: string;
 }
 
-// Fixed SVG coordinate width; the panel scales it to fit via viewBox. Height is
-// computed per-instance by layoutTimeline so the figure is sized to its content
-// (no dead vertical void) and the axis lift adapts to the number of label rows.
-const VIEW_W = 1000;
-const ROW_STEP = 26;
-const GUTTER = 18;
-const CHAR_PX = 6.6;
+// One centered trigger line drives BOTH the active beat and the progress column,
+// so the spine and the prose can never desync.
+const TRIGGER_OFFSET = 0.5;
 
-/**
- * Instrument-style horizontal timeline. All geometry comes from the pure,
- * unit-tested `layoutTimeline`, which picks one of two readable modes:
- *
- *   sequence     — few/clustered events laid out evenly with the real elapsed
- *                  gap written between them ("+17 hr"). The axis reports the
- *                  gap as a number instead of stretching it into whitespace.
- *   proportional — true time-x with a compressed (broken) axis so dense modern
- *                  clusters spread out and read instead of piling at one edge.
- *
- * Labels stack into de-collided rows with leader lines; hovering/focusing a
- * node reveals its detail in a stable readout strip (no layout shift). The SSR
- * / no-JS fallback is a semantic ordered list.
- */
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined" || !window.matchMedia) return true; // SSR → static
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/** The year token from a formatted date label ("22 Dec 218" → "218"). */
+function yearOf(dateLabel: string): string {
+  const parts = dateLabel.split(" ");
+  return parts[parts.length - 1] ?? dateLabel;
+}
+
 export default function Timeline({ events, caption }: TimelineProps) {
-  const layout = layoutTimeline(events, {
-    width: VIEW_W,
-    charPx: CHAR_PX,
-    rowStep: ROW_STEP,
-    gutter: GUTTER,
-  });
-  const { mode, nodes, ticks, gaps, breaks, axisY, height } = layout;
-  const [active, setActive] = useState<number | null>(null);
+  const safeEvents = Array.isArray(events) ? events : [];
+  const [active, setActive] = useState(0);
+  const [live, setLive] = useState(false); // SSR-safe default = static, fully-readable
+  const [headerOffset, setHeaderOffset] = useState(0);
 
-  const activeNode = active != null ? nodes[active] : null;
-  // Reserve the readout strip's height always, so revealing detail never shifts
-  // the layout. It sits just below the axis/date band.
-  const readoutY = axisY + 46;
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const beatsRef = useRef<HTMLDivElement | null>(null);
+  const railRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => setLive(!prefersReducedMotion()), []);
+
+  // Pin the spine just below the page's sticky global header (`.topbar`, above us
+  // in z-order) so it never hides behind it. Header height varies by breakpoint,
+  // so measure it live rather than hardcode.
+  useEffect(() => {
+    if (!live) return;
+    const measure = () => {
+      const bar = document.querySelector<HTMLElement>(".topbar");
+      setHeaderOffset(bar ? Math.round(bar.getBoundingClientRect().height) : 0);
+    };
+    measure();
+    window.addEventListener("resize", measure, { passive: true });
+    return () => window.removeEventListener("resize", measure);
+  }, [live]);
+
+  // Pure, unit-tested layout: sorts by date and hands back each node's compact
+  // date label (dateLabel) and epoch ms (t). We drive the SPINE with even
+  // vertical fractions (one beat ≈ one equal scroll interval), so the axis reads
+  // as an evenly-legible chronology rather than piling near-simultaneous events.
+  const layout = safeEvents.length > 0 ? layoutTimeline(safeEvents, { width: 1000 }) : null;
+  const nodes: TimelineNode[] = layout?.nodes ?? [];
+  const n = nodes.length;
+  const fracOf = (i: number): number => (n <= 1 ? 0 : i / (n - 1));
+
+  // ── position-based active + progress column (rAF-throttled, passive) ─────────
+  // The progress fraction is written DIRECTLY to the rail node (a CSS var) so the
+  // column glides at 60fps without a React re-render per frame; `active` (which
+  // changes rarely) drives the discrete highlights via state.
+  useEffect(() => {
+    if (!live || !rootRef.current || !beatsRef.current || n === 0) return;
+    const beats = beatsRef.current;
+    let frame = 0;
+    const fractions = Array.from({ length: n }, (_, i) => fracOf(i));
+    const recompute = () => {
+      frame = 0;
+      const r = beats.getBoundingClientRect();
+      const p = sectionProgress(r.top, r.height, window.innerHeight);
+      const fill = playheadFraction(p, fractions);
+      railRef.current?.style.setProperty("--tl-progress", String(fill));
+      const tops = Array.from(
+        beats.querySelectorAll<HTMLElement>(".tl2-beat"),
+        (el) => el.getBoundingClientRect().top,
+      );
+      const next = activeIndexFromScroll(tops, window.innerHeight, TRIGGER_OFFSET);
+      setActive((cur) => (cur === next ? cur : next));
+    };
+    const onScroll = () => {
+      if (frame) return; // one recompute per animation frame
+      frame = requestAnimationFrame(recompute);
+    };
+    recompute(); // seed for the current scroll position at (late) hydration
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [live, n]);
+
+  // Spine node → scroll its beat to the trigger line (progressive enhancement).
+  const jumpTo = useCallback(
+    (index: number) => {
+      const beats = beatsRef.current;
+      if (!beats) return;
+      const i = clampIndex(index, n);
+      const panel = beats.querySelectorAll<HTMLElement>(".tl2-beat")[i];
+      if (!panel) return;
+      panel.scrollIntoView({ behavior: live ? "smooth" : "auto", block: "center" });
+      setActive(i);
+    },
+    [n, live],
+  );
+
+  // ── empty guard: never blank, never throw ──────────────────────────────────
+  if (n === 0) {
+    return caption ? (
+      <figure className="mdx-figure mdx-figure--wide tl2">
+        <figcaption className="mdx-caption">{caption}</figcaption>
+      </figure>
+    ) : null;
+  }
+
+  const activeIdx = clampIndex(active, n);
+  const activeNode = nodes[activeIdx];
+  const pad = (v: number): string => String(v).padStart(2, "0");
 
   return (
-    <figure className="mdx-figure mdx-figure--wide tl">
-      <div className={`mdx-panel tl-panel tl-panel--${mode}`}>
-        <svg
-          className="tl-svg"
-          viewBox={`0 0 ${VIEW_W} ${height + 30}`}
-          preserveAspectRatio="xMidYMid meet"
-          role="group"
-          aria-label={caption ? `Timeline: ${caption}` : "Timeline"}
-        >
-          <defs>
-            <linearGradient id="tl-axis-grad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" stopColor="var(--tl-axis-fade)" />
-              <stop offset="0.06" stopColor="var(--tl-axis)" />
-              <stop offset="0.94" stopColor="var(--tl-axis)" />
-              <stop offset="1" stopColor="var(--tl-axis-fade)" />
-            </linearGradient>
-          </defs>
+    <figure
+      className={live ? "mdx-figure mdx-figure--wide tl2 tl2--live" : "mdx-figure mdx-figure--wide tl2"}
+      ref={rootRef}
+      style={{ ["--tl2-top" as string]: `${headerOffset}px` }}
+    >
+      <div className="tl2-grid">
+        {/* ── LEFT: the sticky instrument spine ──────────────────────────── */}
+        <aside className="tl2-spine">
+          <div className="tl2-spine-sticky">
+            <div className="tl2-readout" aria-hidden="true">
+              <span className="tl2-readout-seq">
+                {pad(activeIdx + 1)} <span className="tl2-readout-total">/ {pad(n)}</span>
+              </span>
+              <span className="tl2-readout-date">{activeNode?.dateLabel}</span>
+              <span className="tl2-readout-label">{activeNode?.label}</span>
+            </div>
 
-          {/* ── the axis line ───────────────────────────────────────────── */}
-          <line className="tl-axis" x1={0} y1={axisY} x2={VIEW_W} y2={axisY} />
+            <div className="tl2-rail" ref={railRef}>
+              <span className="tl2-rail-track" aria-hidden="true" />
+              <span className="tl2-rail-fill" aria-hidden="true" />
+              {nodes.map((node, i) => {
+                const cls =
+                  i === activeIdx
+                    ? "tl2-node tl2-node--active"
+                    : i < activeIdx
+                      ? "tl2-node tl2-node--on"
+                      : "tl2-node";
+                return (
+                  <button
+                    key={`${node.t}-${i}`}
+                    type="button"
+                    className={cls}
+                    style={{ top: `${8 + fracOf(i) * 84}%` }}
+                    onClick={() => jumpTo(i)}
+                    aria-label={`Jump to ${node.dateLabel}: ${node.label}`}
+                  >
+                    <span className="tl2-node-dot" aria-hidden="true" />
+                    <span className="tl2-node-date">{node.dateLabel}</span>
+                  </button>
+                );
+              })}
+            </div>
 
-          {/* ── broken-axis marks where a dead span was compressed ────────── */}
-          {breaks.map((b, i) => (
-            <g key={`brk-${i}`} className="tl-break" aria-hidden="true">
-              <rect x={b.x - 7} y={axisY - 7} width={14} height={14} className="tl-break-mask" />
-              <line x1={b.x - 5} y1={axisY - 6} x2={b.x - 1} y2={axisY + 6} className="tl-break-slash" />
-              <line x1={b.x + 1} y1={axisY - 6} x2={b.x + 5} y2={axisY + 6} className="tl-break-slash" />
-            </g>
-          ))}
+            <p className="tl2-hint" aria-hidden="true">
+              scroll to advance
+            </p>
+          </div>
+        </aside>
 
-          {/* ── proportional: adaptive year ticks below the axis ──────────── */}
-          {mode === "proportional" &&
-            ticks.map((t) => (
-              <g key={`tick-${t.year}`} className="tl-tick" aria-hidden="true">
-                <line x1={t.x} y1={axisY} x2={t.x} y2={axisY + 6} />
-                <text x={t.x} y={axisY + 20} textAnchor="middle" className="tl-tick-label">
-                  {t.year}
-                </text>
-              </g>
-            ))}
+        {/* live region: announce the active event to assistive tech */}
+        <p className="tl2-sr-live" aria-live="polite">
+          {`Event ${activeIdx + 1} of ${n}: ${activeNode?.dateLabel ?? ""}, ${activeNode?.label ?? ""}`}
+        </p>
 
-          {/* ── sequence: elapsed-gap chips between nodes ─────────────────── */}
-          {mode === "sequence" &&
-            gaps.map((g, i) => (
-              <g key={`gap-${i}`} className="tl-gap" aria-hidden="true">
-                {/* a small bracket on the axis spanning the gap's reach */}
-                <line x1={g.x - 14} y1={axisY} x2={g.x + 14} y2={axisY} className="tl-gap-rule" />
-                <text x={g.x} y={axisY + 36} textAnchor="middle" className="tl-gap-label">
-                  {g.label}
-                </text>
-              </g>
-            ))}
-
-          {/* ── nodes: dot + leader stem + staggered label + date stamp ───── */}
+        {/* ── RIGHT: the scrolling beats (every one always fully readable) ── */}
+        <div className="tl2-beats" ref={beatsRef}>
           {nodes.map((node, i) => {
-            const dotY = axisY;
-            const labelY = axisY - 16 - node.row * ROW_STEP;
-            const isActive = active === i;
+            const prevGap = i > 0 ? formatGap(node.t - nodes[i - 1].t) : "";
+            const cls = i === activeIdx ? "tl2-beat tl2-beat--active" : "tl2-beat";
             return (
-              <g
-                key={`${node.t}-${i}`}
-                className={isActive ? "tl-node tl-node--active" : "tl-node"}
-                tabIndex={0}
-                role="button"
-                aria-label={`${node.dateLabel}: ${node.label}${node.detail ? `. ${node.detail}` : ""}`}
-                onMouseEnter={() => setActive(i)}
-                onMouseLeave={() => setActive((cur) => (cur === i ? null : cur))}
-                onFocus={() => setActive(i)}
-                onBlur={() => setActive((cur) => (cur === i ? null : cur))}
-              >
-                {/* generous transparent hit-target for pointer + focus */}
-                <rect
-                  className="tl-hit"
-                  x={node.x - 22}
-                  y={labelY - 14}
-                  width={44}
-                  height={dotY - labelY + 30}
-                />
-                {/* leader stem from the axis up to the lifted label row */}
-                <line
-                  className="tl-stem"
-                  x1={node.x}
-                  y1={dotY}
-                  x2={node.x}
-                  y2={labelY + 4}
-                />
-                {/* the event label, anchored to dodge the panel edges */}
-                <text x={node.x} y={labelY} textAnchor={node.anchor} className="tl-label">
-                  {node.label}
-                </text>
-                {/* the node marker on the axis */}
-                <circle className="tl-dot-halo" cx={node.x} cy={dotY} r={9} />
-                <circle className="tl-dot" cx={node.x} cy={dotY} r={isActive ? 6 : 4.5} />
-                {/* compact date stamp below the axis (sequence mode only —
-                    proportional mode reads its dates off the year ticks) */}
-                {mode === "sequence" ? (
-                  <text x={node.x} y={axisY + 18} textAnchor={node.anchor} className="tl-date">
-                    {node.dateLabel}
-                  </text>
-                ) : null}
-              </g>
+              <section className={cls} key={`${node.t}-${i}`}>
+                <span className="tl2-beat-node" aria-hidden="true" />
+                <div className="tl2-beat-body">
+                  <div className="tl2-beat-graphic">
+                    {node.image ? (
+                      <div className="tl2-plate tl2-plate--image">
+                        <img src={node.image} alt={node.alt ?? node.label} loading="lazy" />
+                        {node.imageCaption ? (
+                          <span className="tl2-plate-credit">{node.imageCaption}</span>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="tl2-plate" aria-hidden="true">
+                        <span className="tl2-plate-index">{pad(i + 1)}</span>
+                        <span className="tl2-plate-meta">
+                          <span className="tl2-plate-year">{yearOf(node.dateLabel)}</span>
+                          <span className="tl2-plate-gap">
+                            {i === 0 ? "opening" : prevGap || "—"}
+                          </span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="tl2-beat-text">
+                    <div className="tl2-beat-head">
+                      <span className="tl2-beat-date">{node.dateLabel}</span>
+                    </div>
+                    <h3 className="tl2-beat-label">{node.label}</h3>
+                    {node.detail ? <p className="tl2-beat-detail">{node.detail}</p> : null}
+                  </div>
+                </div>
+              </section>
             );
           })}
-
-          {/* ── stable detail readout (no layout shift) ───────────────────── */}
-          {activeNode ? (
-            <text x={VIEW_W / 2} y={readoutY + 14} textAnchor="middle" className="tl-readout">
-              <tspan className="tl-readout-date">{activeNode.dateLabel}</tspan>
-              <tspan className="tl-readout-sep"> · </tspan>
-              <tspan className="tl-readout-text">{activeNode.detail ?? activeNode.label}</tspan>
-            </text>
-          ) : (
-            <text x={VIEW_W / 2} y={readoutY + 14} textAnchor="middle" className="tl-readout tl-readout--hint">
-              {mode === "sequence" ? "hover a moment for detail" : "hover an event for detail"}
-            </text>
-          )}
-        </svg>
-
-        {/* SSR / no-JS fallback */}
-        <ol className="tl-fallback">
-          {nodes.map((node, i) => (
-            <li key={`f-${i}`}>
-              <span className="mdx-label">{node.dateLabel}</span> {node.label}
-              {node.detail ? <span className="tl-fallback-detail"> — {node.detail}</span> : null}
-            </li>
-          ))}
-        </ol>
+          {/* Runway so the LAST beat can still scroll up to the centered trigger
+              line (otherwise the final event never becomes active at max scroll).
+              Inert in the static layout (collapsed by CSS when not live). */}
+          <div className="tl2-tail" aria-hidden="true" />
+        </div>
       </div>
+
       {caption ? <figcaption className="mdx-caption">{caption}</figcaption> : null}
     </figure>
   );

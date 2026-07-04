@@ -6,6 +6,18 @@ export interface TimelineEvent {
   date: string;
   label: string;
   detail?: string;
+  /**
+   * OPTIONAL graphic for the vertical <Timeline> "stage" — a URL to an image the
+   * author wants shown alongside this event's prose. Absent is the common case:
+   * <Timeline> synthesises a tasteful numeric "plate" motif instead, so the
+   * component is beautiful text-forward without any media. Ignored by the compact
+   * spine renderers (<ScrollyTimeline>) that don't have a stage.
+   */
+  image?: string;
+  /** Alt text for `image`. Falls back to `label` when omitted. */
+  alt?: string;
+  /** A short caption/credit rendered beneath `image`. */
+  imageCaption?: string;
 }
 
 export interface TimelinePoint extends TimelineEvent {
