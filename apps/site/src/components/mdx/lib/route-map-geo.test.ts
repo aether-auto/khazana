@@ -14,6 +14,14 @@ import {
   midpointOf,
   dashParams,
   projectScene,
+  sceneFitCollection,
+  niceStep,
+  ticksInRange,
+  niceRoundKm,
+  formatKm,
+  formatLat,
+  formatLon,
+  wrapLon,
   type Project,
   type RouteSpec,
 } from "./route-map-geo.js";
@@ -178,6 +186,103 @@ describe("polyline helpers", () => {
   test("midpointOf is always finite, even for empty input", () => {
     expect(midpointOf([])).toEqual([0, 0]);
     expect(midpointOf([[2, 2], [4, 4], [6, 6]])).toEqual([4, 4]);
+  });
+});
+
+describe("sceneFitCollection — the geometry we zoom the map to", () => {
+  const routes: RouteSpec[] = [
+    { from: [-0.37, 37.98], to: [7.75, 43.33], label: "Iberia → Alps", kind: "march" },
+    { from: [12.11, 43.07], to: [15.82, 41.3], label: "→ Cannae", kind: "march" },
+  ];
+  const points = [
+    { at: [12.48, 41.9] as [number, number], label: "Rome" },
+    { at: [15.82, 41.3] as [number, number], label: "Cannae" },
+  ];
+
+  test("null when there is nothing to fit", () => {
+    expect(sceneFitCollection([], [])).toBeNull();
+  });
+
+  test("one LineString feature per route + one MultiPoint for the points", () => {
+    const fc = sceneFitCollection(routes, points, 16);
+    expect(fc?.type).toBe("FeatureCollection");
+    expect(fc?.features).toHaveLength(3); // 2 routes + 1 multipoint
+    expect(fc?.features[0]?.geometry.type).toBe("LineString");
+    expect(fc?.features[2]?.geometry.type).toBe("MultiPoint");
+  });
+
+  test("routes alone (no points) omit the MultiPoint feature", () => {
+    const fc = sceneFitCollection(routes, [], 8);
+    expect(fc?.features).toHaveLength(2);
+  });
+
+  test("the sampled LineString includes both endpoints", () => {
+    const fc = sceneFitCollection([routes[0]!], [], 8);
+    const coords = (fc!.features[0]!.geometry as { coordinates: [number, number][] }).coordinates;
+    const last = coords[coords.length - 1]!;
+    expect(coords[0]![0]).toBeCloseTo(routes[0]!.from[0], 6);
+    expect(coords[0]![1]).toBeCloseTo(routes[0]!.from[1], 6);
+    expect(last[0]).toBeCloseTo(routes[0]!.to[0], 6);
+    expect(last[1]).toBeCloseTo(routes[0]!.to[1], 6);
+  });
+});
+
+describe("niceStep / ticksInRange — graticule graduation", () => {
+  test("niceStep returns a 1/2/5 × 10ⁿ value", () => {
+    expect(niceStep(20, 4)).toBe(5);
+    expect(niceStep(8, 4)).toBe(2);
+    expect(niceStep(3, 4)).toBe(0.5);
+    expect(niceStep(400, 4)).toBe(100);
+  });
+  test("niceStep never returns 0 for degenerate spans", () => {
+    expect(niceStep(0)).toBe(1);
+    expect(niceStep(-5)).toBe(1);
+    expect(niceStep(Number.NaN)).toBe(1);
+  });
+  test("ticksInRange yields ascending step multiples inside [min,max]", () => {
+    expect(ticksInRange(-3, 12, 5)).toEqual([0, 5, 10]);
+    expect(ticksInRange(37, 46, 2)).toEqual([38, 40, 42, 44, 46]);
+  });
+  test("ticksInRange is empty on bad input", () => {
+    expect(ticksInRange(0, 10, 0)).toEqual([]);
+    expect(ticksInRange(10, 0, 2)).toEqual([]);
+  });
+});
+
+describe("niceRoundKm / formatKm — the scale bar", () => {
+  test("rounds down to a friendly 1/2/5 × 10ⁿ km value", () => {
+    expect(niceRoundKm(473)).toBe(200);
+    expect(niceRoundKm(600)).toBe(500);
+    expect(niceRoundKm(1200)).toBe(1000);
+    expect(niceRoundKm(2600)).toBe(2000);
+  });
+  test("0 for non-positive input (never a broken bar)", () => {
+    expect(niceRoundKm(0)).toBe(0);
+    expect(niceRoundKm(-10)).toBe(0);
+  });
+  test("formatKm groups thousands", () => {
+    expect(formatKm(500)).toBe("500 km");
+    expect(formatKm(2000)).toBe("2,000 km");
+  });
+});
+
+describe("lat/lon formatting + wrap", () => {
+  test("formatLat", () => {
+    expect(formatLat(30)).toBe("30° N");
+    expect(formatLat(-12)).toBe("12° S");
+    expect(formatLat(0)).toBe("0°");
+  });
+  test("formatLon normalizes past ±180", () => {
+    expect(formatLon(120)).toBe("120° E");
+    expect(formatLon(-150)).toBe("150° W");
+    expect(formatLon(210)).toBe("150° W"); // wrapped
+    expect(formatLon(0)).toBe("0°");
+    expect(formatLon(180)).toBe("180°");
+  });
+  test("wrapLon maps any longitude into [-180,180)", () => {
+    expect(wrapLon(200)).toBeCloseTo(-160, 6);
+    expect(wrapLon(-190)).toBeCloseTo(170, 6);
+    expect(wrapLon(45)).toBeCloseTo(45, 6);
   });
 });
 

@@ -13,6 +13,7 @@
 // and the offset for a reveal fraction t ∈ [0,1].
 
 import { geoInterpolate } from "d3-geo";
+import type { FeatureCollection } from "geojson";
 
 /** A projector: lng/lat degrees -> pixel [x,y] (or null when unprojectable). */
 export type Project = (lngLat: [number, number]) => [number, number] | null;
@@ -161,4 +162,108 @@ export function projectScene(
   }
 
   return { routes: projectedRoutes, points: projectedPoints };
+}
+
+// ── Fit-to-route: zoom the map to the JOURNEY, not the whole world ────────────
+//
+// The bug this fixes: fitting the projection to the world FeatureCollection put
+// every regional march (Hannibal in the W. Mediterranean, the Kido Butai across
+// the Pacific) into a 3%-of-frame illegible speck. Instead we fit the projection
+// to the scene's OWN geometry so the route fills the frame with breathing room.
+
+/**
+ * The GeoJSON whose extent the projection is fit to: every route as a SAMPLED
+ * great-circle LineString (so a poleward-bowing arc stays fully in frame, not
+ * just its endpoints) plus all standalone points as one MultiPoint. Returns null
+ * when there is nothing to fit — the caller then falls back to a world view.
+ * Pure; the same `steps` the scene is drawn with keeps fit and render in sync.
+ */
+export function sceneFitCollection(
+  routes: readonly RouteSpec[],
+  points: readonly PointSpec[],
+  steps = 48,
+): FeatureCollection | null {
+  const features: FeatureCollection["features"] = [];
+  for (const r of routes) {
+    features.push({
+      type: "Feature",
+      properties: {},
+      geometry: { type: "LineString", coordinates: greatCirclePoints(r.from, r.to, steps) },
+    });
+  }
+  if (points.length > 0) {
+    features.push({
+      type: "Feature",
+      properties: {},
+      geometry: { type: "MultiPoint", coordinates: points.map((p) => p.at) },
+    });
+  }
+  if (features.length === 0) return null;
+  return { type: "FeatureCollection", features };
+}
+
+/**
+ * A "nice" 1 / 2 / 5 × 10ⁿ step that carves `span` into roughly `target` ticks —
+ * for graticule graduation and scale bars. Always > 0; falls back to 1 for a
+ * non-positive span so callers never divide by zero.
+ */
+export function niceStep(span: number, target = 4): number {
+  if (!(span > 0) || !Number.isFinite(span)) return 1;
+  const raw = span / Math.max(1, target);
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  const nice = norm >= 5 ? 5 : norm >= 2 ? 2 : 1;
+  return nice * mag;
+}
+
+/** Ascending multiples of `step` within [min, max] inclusive. Empty on bad input. */
+export function ticksInRange(min: number, max: number, step: number): number[] {
+  if (!(step > 0) || !Number.isFinite(min) || !Number.isFinite(max) || max < min) return [];
+  const out: number[] = [];
+  const start = Math.ceil(min / step - 1e-9) * step;
+  for (let v = start; v <= max + step * 1e-9; v += step) {
+    // round to the step's own precision so float drift doesn't leak into labels
+    // (the `+ 0` normalizes a possible -0 at the origin to +0)
+    out.push(Math.round(v / step) * step + 0);
+  }
+  return out;
+}
+
+/**
+ * Round a raw distance (km) DOWN to a friendly 1 / 2 / 5 × 10ⁿ value for a scale
+ * bar (so the bar reads "~500 km", never "~473 km"). 0 for a non-positive input.
+ */
+export function niceRoundKm(rawKm: number): number {
+  if (!(rawKm > 0) || !Number.isFinite(rawKm)) return 0;
+  const mag = Math.pow(10, Math.floor(Math.log10(rawKm)));
+  const norm = rawKm / mag;
+  const nice = norm >= 5 ? 5 : norm >= 2 ? 2 : 1;
+  return nice * mag;
+}
+
+/** Human scale-bar distance: "500 km" / "1,000 km" / "2,000 km". */
+export function formatKm(km: number): string {
+  const n = Math.round(km);
+  return `${n.toLocaleString("en-US")} km`;
+}
+
+/** Latitude label: "30° N", "10° S", "0°". Rounded to whole degrees. */
+export function formatLat(lat: number): string {
+  const r = Math.round(lat);
+  if (r === 0) return "0°";
+  return `${Math.abs(r)}° ${r > 0 ? "N" : "S"}`;
+}
+
+/** Longitude label, normalized to [-180,180]: "120° E", "150° W", "0°", "180°". */
+export function formatLon(lon: number): string {
+  const n = ((((lon + 180) % 360) + 360) % 360) - 180;
+  const r = Math.round(n);
+  if (r === 0) return "0°";
+  if (Math.abs(r) === 180) return "180°";
+  return `${Math.abs(r)}° ${r > 0 ? "E" : "W"}`;
+}
+
+/** Normalize any longitude into the [-180, 180) range for projecting/labelling. */
+export function wrapLon(lon: number): number {
+  return ((((lon + 180) % 360) + 360) % 360) - 180;
 }

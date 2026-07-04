@@ -87,11 +87,38 @@
 }
 .rm-point-label {
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 11px;
-  fill: var(--ink-dim);
+  font-size: 13px;
+  font-weight: 500;
+  fill: var(--ink);
   paint-order: stroke;
   stroke: var(--bg);
+  stroke-width: 3.5;
+  stroke-linejoin: round;
+}
+
+/* ── regional graticule + scale bar (the zoomed-to-route view) ─────────────── */
+/* the fitted regional grid reads at a smaller scale than the world map, so its
+   edge labels get a touch more size + a halo to stay legible over the land. */
+.routemap .map-lat-label {
+  font-size: 11px;
+  paint-order: stroke;
+  stroke: var(--bg-inset);
   stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.rm-scalebar-line {
+  stroke: var(--ink-dim);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.rm-scalebar-label {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  fill: var(--ink);
+  paint-order: stroke;
+  stroke: var(--bg-inset);
+  stroke-width: 3.5;
   stroke-linejoin: round;
 }
 
