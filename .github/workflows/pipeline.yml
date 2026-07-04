@@ -153,3 +153,8 @@ jobs:
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
+        with:
+          # Ride through GitHub Pages' transient publish-poll errors (see
+          # feed-refresh.yml): more patience instead of failing the run.
+          timeout: 900000
+          error_count: 60

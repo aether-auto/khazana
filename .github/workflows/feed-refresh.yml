@@ -95,3 +95,10 @@ jobs:
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
+        with:
+          # GitHub Pages' publish backend intermittently returns transient poll
+          # errors ("Deployment failed, try again later"). Give the status poll
+          # far more patience (error_count default 10 → 60) + a longer timeout so
+          # a flaky publish rides through instead of failing the whole run.
+          timeout: 900000
+          error_count: 60
