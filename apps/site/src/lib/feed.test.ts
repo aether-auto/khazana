@@ -5,6 +5,8 @@ import { afterEach, beforeEach, expect, test } from "vitest";
 import type { FeedItem } from "@khazana/core";
 import {
   loadCurated,
+  cleanSummary,
+  SUMMARY_MAX_CHARS,
   filterByChannel,
   tickerTitles,
   splitFeatured,
@@ -48,6 +50,26 @@ test("loadCurated loads curated.json when present and preserves order", () => {
   );
   const items = loadCurated(dir);
   expect(items.map((i) => i.id)).toEqual(["first", "second"]);
+});
+
+test("cleanSummary strips HTML, collapses whitespace, and clamps long text", () => {
+  expect(cleanSummary("")).toBe("");
+  expect(cleanSummary("<p>Hello   <b>world</b></p>")).toBe("Hello world");
+  expect(cleanSummary("a &amp; b &lt;c&gt;")).toBe("a & b <c>");
+  const long = "word ".repeat(200); // ~1000 chars
+  const out = cleanSummary(long);
+  expect(out.length).toBeLessThanOrEqual(SUMMARY_MAX_CHARS + 1); // +1 for the ellipsis
+  expect(out.endsWith("…")).toBe(true);
+  expect(out).not.toContain("  "); // no double spaces / no mid-word cut artifacts
+});
+
+test("loadCurated clamps oversized summaries (RSS full-body descriptions)", () => {
+  const huge = "sentence ".repeat(5000); // ~45k chars, like a Pluralistic post
+  writeFileSync(join(dir, "curated.json"), JSON.stringify([item({ id: "big", summary: huge })]));
+  const items = loadCurated(dir);
+  expect(items).toHaveLength(1);
+  expect(items[0]!.summary.length).toBeLessThanOrEqual(SUMMARY_MAX_CHARS + 1);
+  expect(items[0]!.summary.endsWith("…")).toBe(true);
 });
 
 test("loadCurated drops items that fail FeedItemSchema validation", () => {
