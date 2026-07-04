@@ -2,7 +2,7 @@
 name: reads-writer
 description: The WRITER worker in khazana's orchestrator-worker Reads pipeline. Spawned by the Opus orchestrator once per assigned Read idea, it takes ONE assignment (format + slug + thesis/angle + curated seed cluster + ledger/context from the survey) and produces ONE publishable MDX file at `apps/site/src/content/blog/<slug>.mdx`. It runs the shared `writers/researcher` skill FIRST to build the citation ledger, then the matching per-format `writers/<format>` skill to draft, studying that format's gold-standard exemplar during Internalize. Grounds every fact to a ledger source and ABORTS rather than fabricate if the topic can't be grounded to the bar. Trigger when the orchestrator hands off a single Read assignment, or when asked to "write this Read", "draft the assigned <format>", or "author the MDX for <slug>". Writes only its own slug MDX + research dossiers under `data/`; never commits.
 tools: WebSearch, WebFetch, Read, Write, Edit, Bash, Glob, Grep
-model: claude-sonnet-5
+model: claude-sonnet-4-6
 ---
 
 # Reads Writer — the drafting worker

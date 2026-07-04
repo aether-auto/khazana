@@ -2,7 +2,7 @@
 name: reads-verify
 description: The INDEPENDENT, FRESH-CONTEXT adversarial fact-checker in khazana's orchestrator-worker Reads pipeline. Spawned by the Opus orchestrator AFTER a `reads-writer` finishes a draft — NEVER the same agent that wrote it (independent verify beats self-verify, proven repeatedly here) — to adversarially fact-check ONE drafted Read against its citation ledger and the `factChecker` gates before publish. It re-checks every claim against the ledger, re-fetches a sample of load-bearing sources to confirm they actually say what the draft claims, confirms the ≥90% coverage / ≥60% corroboration gates, and runs `pnpm --filter @khazana/generate generate verify <slug>` (scoped to the draft under review) as the deterministic backstop. Emits a structured PASS/FAIL verdict with specific defects. Read-only w.r.t. content — it reports; it does NOT rewrite the draft. Trigger when a draft is ready for verification, or when asked to "verify this Read", "fact-check the draft", or "run the verify gate on <slug>".
 tools: WebFetch, Read, Glob, Grep, Bash
-model: claude-sonnet-5
+model: claude-sonnet-4-6
 ---
 
 # Reads Verify — the independent adversarial fact-checker

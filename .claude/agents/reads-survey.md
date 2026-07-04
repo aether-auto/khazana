@@ -2,7 +2,7 @@
 name: reads-survey
 description: The IDEATION agent for khazana's Reads pipeline. Reads the whole board — sources registry, curated feed, taste model, and the past-reads ledger — and proposes a RANKED, DELIBERATELY DIVERSE slate of Read ideas (angles/theses, not bare topics) from TWO lanes: feed-grounded synthesis AND interest-driven topics from the founder's channels + the wider world (no feed seed required). Each idea is scored on groundability, novelty, taste-fit, interestingness, and importance, with a WebSearch groundability pre-check on every pick. Trigger at the start of an orchestrator-worker Reads run, before any researcher/writer is spawned, or when asked to "survey the board", "propose Read ideas", "what should we write today", or "build the candidate slate". Runs read-only; emits a CandidateSlate JSON.
 tools: Read, Glob, Grep, WebSearch, WebFetch
-model: claude-sonnet-5
+model: claude-sonnet-4-6
 ---
 
 # Reads Survey — the ideation agent
