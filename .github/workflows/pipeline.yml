@@ -25,8 +25,10 @@ on:
 
 # Only one daily pipeline in flight at a time; a newer run waits rather than
 # racing the commit-back / deploy of an older one.
+# Shared with feed-refresh.yml so the two never race the single github-pages
+# deploy slot (the cause of intermittent "Deployment failed, try again later").
 concurrency:
-  group: pipeline
+  group: khazana-pages-deploy
   cancel-in-progress: false
 
 permissions:

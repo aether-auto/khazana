@@ -18,9 +18,12 @@ on:
   workflow_dispatch:
 
 # Serialize with itself; don't stack refreshes.
+# Shared with pipeline.yml so Pages deploys serialize (never race the single
+# github-pages slot). cancel-in-progress:false so a run is never killed mid-deploy
+# (which corrupts the deployment and makes the next one fail "try again later").
 concurrency:
-  group: feed-refresh
-  cancel-in-progress: true
+  group: khazana-pages-deploy
+  cancel-in-progress: false
 
 permissions:
   contents: read
