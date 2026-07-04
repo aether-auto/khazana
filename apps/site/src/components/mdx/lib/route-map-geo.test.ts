@@ -218,7 +218,7 @@ describe("sceneFitCollection — the geometry we zoom the map to", () => {
 
   test("the sampled LineString includes both endpoints", () => {
     const fc = sceneFitCollection([routes[0]!], [], 8);
-    const coords = (fc!.features[0]!.geometry as { coordinates: [number, number][] }).coordinates;
+    const coords = (fc!.features[0]!.geometry as unknown as { coordinates: [number, number][] }).coordinates;
     const last = coords[coords.length - 1]!;
     expect(coords[0]![0]).toBeCloseTo(routes[0]!.from[0], 6);
     expect(coords[0]![1]).toBeCloseTo(routes[0]!.from[1], 6);
