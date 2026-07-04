@@ -65,21 +65,36 @@ test("Timeline SSR does NOT emit the tl2--live gate (no-JS shows the full stack)
   expect(html).toContain("tl2-beats");
 });
 
-test("Timeline SSR sorts events chronologically (ascending) regardless of input order", () => {
-  // Unambiguous CE dates so ascending-by-time order is well defined. (Reads that
-  // encode BC years as positive ISO years sort by the numeric year exactly as the
-  // shared layoutTimeline always has — that pre-existing behaviour is preserved.)
-  const ce = [
-    { date: "1942-06-04", label: "Midway", detail: "The hinge." },
-    { date: "1941-12-07", label: "Pearl Harbor", detail: "The opening." },
-    { date: "1942-02-01", label: "Marshall raids", detail: "The probe." },
+test("Timeline SSR preserves AUTHORED order — does NOT re-sort by parsed epoch", () => {
+  // BC dates are stored as positive ISO years (218/217/216 = 218–216 BC). An
+  // ascending-epoch sort would INVERT this to 216→218 (the battle first). The
+  // vertical Timeline renders the authored order, so the chronology stays correct.
+  const bc = [
+    { date: "218-05-01", label: "Hannibal leaves Iberia", detail: "The march begins." },
+    { date: "217-06-21", label: "Lake Trasimene", detail: "The ambush." },
+    { date: "216-08-02", label: "Cannae", detail: "The annihilation." },
   ];
-  const html = renderToStaticMarkup(createElement(Timeline, { events: ce }));
-  const iPearl = html.indexOf(">Pearl Harbor<");
-  const iRaids = html.indexOf(">Marshall raids<");
-  const iMidway = html.indexOf(">Midway<");
-  expect(iPearl).toBeLessThan(iRaids);
-  expect(iRaids).toBeLessThan(iMidway);
+  const html = renderToStaticMarkup(createElement(Timeline, { events: bc }));
+  const iIberia = html.indexOf(">Hannibal leaves Iberia<");
+  const iTrasimene = html.indexOf(">Lake Trasimene<");
+  const iCannae = html.indexOf(">Cannae<");
+  // authored (chronological) order top-to-bottom: 218 BC → 217 BC → 216 BC
+  expect(iIberia).toBeLessThan(iTrasimene);
+  expect(iTrasimene).toBeLessThan(iCannae);
+});
+
+test("Timeline SSR elapsed-gap plate is non-negative for a BC (decreasing-epoch) sequence", () => {
+  // 218-05-01 → 216-08-02 steps DOWN in stored epoch; the gap must read forward
+  // (absolute magnitude), never as an empty/negative gap.
+  const bc = [
+    { date: "218-05-01", label: "Hannibal leaves Iberia", detail: "The march begins." },
+    { date: "216-08-02", label: "Cannae", detail: "The annihilation." },
+  ];
+  const html = renderToStaticMarkup(createElement(Timeline, { events: bc }));
+  // first beat reads "opening"; the second carries a positive elapsed gap
+  expect(html).toContain("opening");
+  expect(html).toMatch(/\+\d+\s*(yr|mo|days?|hr|min)/);
+  expect(html).not.toContain("+-"); // no negative gap ever
 });
 
 test("Timeline SSR synthesises a numeric plate when no image is supplied", () => {

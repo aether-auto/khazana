@@ -24,12 +24,7 @@
 // `{ image?, alt?, imageCaption? }`. Existing reads render identically.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  layoutTimeline,
-  formatGap,
-  type TimelineEvent,
-  type TimelineNode,
-} from "./lib/timeline-scale.js";
+import { formatGap, formatNodeDate, type TimelineEvent } from "./lib/timeline-scale.js";
 import { activeIndexFromScroll, sectionProgress, playheadFraction, clampIndex } from "./lib/scrolly-timeline.js";
 import "./mdx.css";
 import "./Timeline.css";
@@ -37,6 +32,22 @@ import "./Timeline.css";
 export interface TimelineProps {
   events: TimelineEvent[];
   caption?: string;
+}
+
+/**
+ * A laid-out beat in AUTHORED order — the order the events appear in the MDX
+ * `events` array. We deliberately do NOT re-sort by parsed epoch: reads author
+ * their timelines chronologically, and BC dates are stored as POSITIVE ISO years
+ * (218/217/216 for 218–216 BC), so an ascending-epoch sort would INVERT them
+ * (the battle first, the Alpine crossing last). Authored order is correct for
+ * both BC and CE. `t` (epoch ms) is kept only to size the elapsed-gap plate,
+ * using the ABSOLUTE delta so a 218 BC → 216 BC step reads forward, never
+ * negative. (The shared `layoutTimeline` sort is untouched — <ScrollyTimeline>
+ * still relies on it.)
+ */
+interface TimelineBeat extends TimelineEvent {
+  t: number;
+  dateLabel: string;
 }
 
 // One centered trigger line drives BOTH the active beat and the progress column,
@@ -80,12 +91,16 @@ export default function Timeline({ events, caption }: TimelineProps) {
     return () => window.removeEventListener("resize", measure);
   }, [live]);
 
-  // Pure, unit-tested layout: sorts by date and hands back each node's compact
-  // date label (dateLabel) and epoch ms (t). We drive the SPINE with even
-  // vertical fractions (one beat ≈ one equal scroll interval), so the axis reads
-  // as an evenly-legible chronology rather than piling near-simultaneous events.
-  const layout = safeEvents.length > 0 ? layoutTimeline(safeEvents, { width: 1000 }) : null;
-  const nodes: TimelineNode[] = layout?.nodes ?? [];
+  // Beats in AUTHORED order (see TimelineBeat). `formatNodeDate` gives the compact
+  // UTC date label (SSR/client agree); `t` sizes the elapsed-gap plate only. The
+  // SPINE uses even vertical fractions (one beat ≈ one equal scroll interval), so
+  // the axis reads as an evenly-legible chronology rather than piling
+  // near-simultaneous events.
+  const nodes: TimelineBeat[] = safeEvents.map((e) => ({
+    ...e,
+    t: Date.parse(e.date),
+    dateLabel: formatNodeDate(e.date),
+  }));
   const n = nodes.length;
   const fracOf = (i: number): number => (n <= 1 ? 0 : i / (n - 1));
 
@@ -210,7 +225,7 @@ export default function Timeline({ events, caption }: TimelineProps) {
         {/* ── RIGHT: the scrolling beats (every one always fully readable) ── */}
         <div className="tl2-beats" ref={beatsRef}>
           {nodes.map((node, i) => {
-            const prevGap = i > 0 ? formatGap(node.t - nodes[i - 1].t) : "";
+            const prevGap = i > 0 ? formatGap(Math.abs(node.t - nodes[i - 1].t)) : "";
             const cls = i === activeIdx ? "tl2-beat tl2-beat--active" : "tl2-beat";
             return (
               <section className={cls} key={`${node.t}-${i}`}>
