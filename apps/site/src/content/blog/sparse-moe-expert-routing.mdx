@@ -1,0 +1,402 @@
+---
+title: "Two of Sixty-Four: How Sparse Mixture-of-Experts Routes a Token"
+format: teardown
+channels: ["ai", "tech"]
+summary: "Modern frontier LLMs reach near-trillion-parameter capacity at roughly one-fifth the inference compute because each token activates only top-K of N expert FFN blocks. But the gating function, the auxiliary load-balancing loss, and the capacity-factor design are where the real tradeoffs live. This teardown deconstructs the physics of token routing: why routing collapses without an auxiliary loss, what the capacity factor actually caps, and how the mechanism evolved from Shazeer's 2017 noisy top-K through Switch Transformers, GShard, Mixtral, and DeepSeek V3."
+publishedAt: 2026-07-05T09:00:00.000Z
+sources:
+  - title: "Shazeer, N. et al. (2017). Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer. ICLR 2017. arXiv:1701.06538."
+    url: "https://arxiv.org/abs/1701.06538"
+  - title: "Fedus, W., Zoph, B. & Shazeer, N. (2022). Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity. JMLR 23. arXiv:2101.03961."
+    url: "https://arxiv.org/abs/2101.03961"
+  - title: "Lepikhin, D. et al. (2021). GShard: Scaling Giant Models with Conditional Computation and Automatic Sharding. ICLR 2021. arXiv:2006.16668."
+    url: "https://arxiv.org/abs/2006.16668"
+  - title: "Jiang, A.Q. et al. (2024). Mixtral of Experts. arXiv:2401.04088."
+    url: "https://arxiv.org/abs/2401.04088"
+  - title: "DeepSeek-AI (2024). DeepSeek-V3 Technical Report. arXiv:2412.19437."
+    url: "https://arxiv.org/abs/2412.19437"
+  - title: "Auxiliary-Loss-Free Load Balancing Strategy for Mixture-of-Experts. arXiv:2408.15664."
+    url: "https://arxiv.org/abs/2408.15664"
+  - title: "Cai, W. et al. (2024). A Survey on Mixture of Experts in Large Language Models. arXiv:2407.06204."
+    url: "https://arxiv.org/abs/2407.06204"
+  - title: "Zoph, B. et al. (2022). ST-MoE: Designing Stable and Transferable Sparse Expert Models. arXiv:2202.08906."
+    url: "https://arxiv.org/abs/2202.08906"
+  - title: "Frontier Checkpoint: Routing Is the Hard Part — A Practitioner's Guide to Mixture-of-Experts."
+    url: "https://frontiercheckpoint.com/explainers/moe-routing-practitioners-guide/"
+draft: false
+---
+
+import { Chart, Annotation, Sidenote, StatBand, Diagram, Stepper, ParameterPlay, CodeWalkthrough } from "../../components/mdx";
+
+A 671-billion-parameter language model processes your prompt using 37 billion parameters.<Sidenote n={1} href="https://arxiv.org/abs/2412.19437" source="DeepSeek-V3 Technical Report">DeepSeek-AI (2024). DeepSeek-V3 Technical Report. arXiv:2412.19437. The model has 671B total parameters; 37B are activated for each token across 256 routed experts (top-8 selected) plus one shared expert per MoE layer.</Sidenote> Not as an approximation. Not because the rest are skipped in a low-precision shortcut. Because the architecture is designed so that each token activates exactly two, eight, or some small number K of the N available feed-forward expert networks in every transformer layer — and the other N−K experts simply do not run.
+
+This is the sparse Mixture-of-Experts (MoE) design. The parameter-count headline is real — Mixtral 8x7B genuinely has 46.7 billion parameters — but the active FLOPs per token match a 13-billion-parameter dense model.<Sidenote n={2} href="https://arxiv.org/abs/2401.04088" source="Jiang et al. 2024 Mixtral">Jiang, A.Q. et al. (2024). Mixtral of Experts. arXiv:2401.04088. "Each token has access to 47B parameters, but only uses 13B active parameters during inference." Top-2 of 8 experts selected per layer.</Sidenote> The capacity comes for near-free in FLOPs, but the engineering that makes routing work — and the failure modes when it does not — is where the real complexity lives.
+
+<StatBand
+  client:visible
+  caption="The active-vs-total asymmetry across four named models. Each activates a small top-K slice of N experts per token. Sources: Shazeer et al. 2017 (arXiv:1701.06538), Fedus et al. 2022 (arXiv:2101.03961), Jiang et al. 2024 (arXiv:2401.04088), DeepSeek-AI 2024 (arXiv:2412.19437)."
+  stats={[
+    { value: 137,  decimals: 0, suffix: "B",  label: "Shazeer 2017 max scale",   sub: "top-K of 1000s; LSTM-based", href: "https://arxiv.org/abs/1701.06538" },
+    { value: 46.7, decimals: 1, suffix: "B",  label: "Mixtral 8×7B total params", sub: "13B active — top-2 of 8", href: "https://arxiv.org/abs/2401.04088" },
+    { value: 671,  decimals: 0, suffix: "B",  label: "DeepSeek-V3 total params",  sub: "37B active — top-8 of 256+1", href: "https://arxiv.org/abs/2412.19437" },
+    { value: 5.5,  decimals: 1, suffix: "×",  label: "parameter efficiency ratio", sub: "671B capacity / 37B active FLOPs (DeepSeek)", href: "https://arxiv.org/abs/2412.19437" }
+  ]}
+/>
+
+The teardown covers four questions, in order:
+
+1. **How does the routing circuit actually work?** The gating function, the top-K selection, the weighted sum.
+2. **Why does routing collapse without an auxiliary loss?** The self-reinforcing feedback loop that the math must fight.
+3. **What does the capacity factor actually cap?** Not throughput — a buffer. And what happens when the buffer fills.
+4. **How did the mechanism evolve across the lineage?** Shazeer 2017 → GShard → Switch → Mixtral → DeepSeek V3, each solving the failure mode of its predecessor.
+
+## The Routing Circuit
+
+Every transformer layer that uses MoE replaces its single feed-forward network (FFN) with N parallel expert FFNs and a small router network. A dense attention sub-layer processes the sequence normally. Then, for each token position, the routing circuit runs:
+
+<Diagram
+  client:visible
+  caption="The MoE routing circuit for a single token at one transformer layer. The router is a single linear projection followed by softmax over N expert logits. Top-K selection masks all but K logits; the masked softmax re-normalizes over the K survivors. Each selected expert FFN runs independently; their outputs are scaled by the gating weights and summed. Source: Shazeer et al. (2017), Jiang et al. (2024)."
+  nodes={[
+    { id: "token",   label: "Token\nhidden state x", x: 0,   y: 2, kind: "input" },
+    { id: "router",  label: "Router\nW_r · x",        x: 2,   y: 2, kind: "process" },
+    { id: "topk",    label: "Top-K\nselection",        x: 4,   y: 2, kind: "decision" },
+    { id: "sm",      label: "Softmax\n(K values)",     x: 6,   y: 2, kind: "process" },
+    { id: "e1",      label: "Expert 1\nFFN",           x: 8,   y: 0, kind: "process" },
+    { id: "e2",      label: "Expert 2\nFFN",           x: 8,   y: 2, kind: "process" },
+    { id: "edots",   label: "…",                       x: 8,   y: 3.5, kind: "default" },
+    { id: "en",      label: "Expert N\nFFN",           x: 8,   y: 5, kind: "process" },
+    { id: "sum",     label: "Weighted\nsum",           x: 10,  y: 2, kind: "process" },
+    { id: "out",     label: "Layer\noutput",           x: 12,  y: 2, kind: "output" }
+  ]}
+  edges={[
+    { from: "token",  to: "router", kind: "data" },
+    { from: "router", to: "topk",   kind: "data", label: "N logits" },
+    { from: "topk",   to: "sm",     kind: "data", label: "K survive" },
+    { from: "sm",     to: "e1",     kind: "data", label: "g₁" },
+    { from: "sm",     to: "e2",     kind: "data", label: "g₂" },
+    { from: "sm",     to: "en",     kind: "control", label: "0 (dropped)" },
+    { from: "token",  to: "e1",     kind: "data" },
+    { from: "token",  to: "e2",     kind: "data" },
+    { from: "e1",     to: "sum",    kind: "data" },
+    { from: "e2",     to: "sum",    kind: "data" },
+    { from: "sum",    to: "out",    kind: "data" }
+  ]}
+/>
+
+The router is a single linear layer: it multiplies the token's hidden state $x$ by a learned weight matrix $W_r \in \mathbb{R}^{d_\text{model} \times N}$ to produce $N$ logits, one per expert. No nonlinearity, no hidden layer — just a matrix-vector product. The logit for expert $i$ is the dot product between $x$ and the $i$-th column of $W_r$, measuring how well the token's representation aligns with that expert's "direction" in $d_\text{model}$-dimensional space.
+
+After the linear projection, top-K selection keeps the K largest logits and sets all others to $-\infty$. A softmax over the surviving K values normalizes them into gate weights $g_i$ that sum to one. Each selected expert FFN runs on $x$ independently — full width, full depth, no approximation. Their outputs are scaled by the corresponding gate weight and summed:
+
+<Annotation client:load math term="y = \sum_{i=1}^{N} g_i(x) \cdot \text{FFN}_i(x)" note="The MoE output equation. g_i(x) = Softmax(TopK(x·W_r, K))_i — non-zero for exactly K experts, zero for the rest. The FFN_i(x) computations run independently and in parallel on device. Source: Jiang et al. (2024), equation from Mixtral 8×7B paper." />
+
+For Mixtral 8x7B, $N = 8$ and $K = 2$: every token activates exactly 2 of 8 expert SwiGLU networks per layer, and the two gate weights sum to one.<Sidenote n={3} href="https://arxiv.org/abs/2401.04088" source="Jiang et al. 2024">Mixtral architecture: 32 layers, dim=4096, 8 experts per layer, FFN hidden dimension=14336, top-2 routing. The formula is y = Σ Softmax(Top2(x·Wg))_i · SwiGLU_i(x).</Sidenote> For DeepSeek V3, $N = 256$ routed experts plus one shared expert that always runs, with $K = 8$ routed experts selected per token.<Sidenote n={4} href="https://arxiv.org/abs/2412.19437" source="DeepSeek-V3">DeepSeek-V3 MoE layer: h'_t = u_t + Σ FFN_i^(s)(u_t) + Σ g_{i,t}·FFN_i^(r)(u_t). One shared expert runs every token; 8 of 256 routed experts are selected.</Sidenote>
+
+The parameter efficiency follows directly: if a dense model has a single FFN of width $d_\text{ffn}$, replacing it with $N$ expert FFNs of the same width multiplies the FFN parameters by $N$ while multiplying the per-token FFN FLOPs by only $K/N \times N = K$. Capacity scales with $N$; compute per token scales with $K$. The ratio of capacity to compute is $N/K$.
+
+## Why Routing Collapses Without an Auxiliary Loss
+
+The routing formula looks innocuous: a softmax over linear projections. In practice, training a sparse MoE without explicit load-balancing intervention almost always produces expert collapse — a state where 90 percent or more of all tokens are routed to one or two "favorite" experts, and the remaining N−2 experts starve.<Sidenote n={5} href="https://arxiv.org/abs/2101.03961" source="Fedus et al. 2022">Fedus, W., Zoph, B. & Shazeer, N. (2022). Switch Transformers. JMLR 23. arXiv:2101.03961. The paper documents that without a load-balancing term, a positive-feedback loop concentrates routing toward popular experts, causing the others to receive insufficient gradient updates.</Sidenote>
+
+The mechanism is a self-reinforcing feedback loop. Suppose, by random initialization, expert $j$ happens to perform slightly better than average on the first batch of tokens. The router's gradient update makes expert $j$ slightly more likely to be selected. On the next batch, expert $j$ receives more tokens, which means it receives more gradient signal and improves faster than its peers. Its improved performance makes the router route even more tokens to it. The others, receiving fewer and fewer tokens, receive proportionally less gradient, improve more slowly, fall further behind, and eventually reach a state where they learn almost nothing — because almost no tokens reach them.
+
+This is not unique to MoE. It is the discrete-selection version of a failure mode that appears wherever winner-take-all dynamics interact with a learning system. What makes it particularly severe here is the non-differentiability of the top-K selection: the argmax function has zero gradient almost everywhere, so the standard language modeling loss provides essentially no signal about *which* experts *should* have been selected for a given token. The loss can only signal how to update the selected experts' parameters — the routing decision itself is not penalized for being imbalanced.
+
+<Stepper
+  client:load
+  mode="reveal"
+  caption="The collapse feedback loop, step by step. No auxiliary loss applied. Source: Fedus et al. (2022), Switch Transformers JMLR 23."
+  steps={[
+    {
+      title: "Random initialization",
+      body: "<p>N expert FFNs are initialized with small random weights. The router W_r is also randomly initialized. On the first batch, routing is approximately uniform — each expert sees roughly 1/N of all tokens by chance.</p>"
+    },
+    {
+      title: "Performance variance emerges",
+      body: "<p>Expert j happens to produce slightly lower loss than average on its assigned tokens. This is random initialization noise — not meaningful at first. The router softmax, however, will soon make it meaningful.</p>"
+    },
+    {
+      title: "Gradient concentrates on the winner",
+      body: "<p>The language modeling gradient flows back through the router. Expert j's logit is nudged slightly upward because it produced a lower-loss output. Other experts' logits are nudged slightly downward. The router's linear weights shift toward sending more tokens to j.</p>"
+    },
+    {
+      title: "The winner receives more tokens",
+      body: "<p>In the next batch, expert j is selected for slightly more tokens. This gives it more gradient signal — more loss-weight to learn from. It improves faster than its peers. The performance gap grows. The router amplifies it.</p>"
+    },
+    {
+      title: "Other experts starve",
+      body: "<p>Experts receiving fewer tokens improve more slowly and fall further behind. At the extreme, an expert receiving 0.1% of tokens contributes negligible gradient and effectively stops learning. Its columns in W_r drift toward low logits. The router learns to ignore it permanently.</p>"
+    },
+    {
+      title: "Collapsed state",
+      body: "<p>Without intervention, training converges to a state where 1–2 experts receive 90%+ of all tokens. The model has spent N × FFN_params on parameters but is effectively using 1–2 experts — worse than a dense model of the same active-parameter count, because the dense model uses all its capacity on every token.</p>"
+    }
+  ]}
+/>
+
+The collapse is not just a training pathology. A model that collapses to a few experts also degrades at inference: the expert FFNs that rarely ran during training are poorly calibrated for the distribution of tokens they would need to handle. You do not get to re-route around the problem at inference time — the router is frozen.
+
+## The Auxiliary Loss: Fighting With Calculus
+
+The standard intervention is an explicit **load-balancing auxiliary loss** added to the primary language modeling objective. Fedus et al.'s Switch Transformers formalized the most widely used version:<Sidenote n={6} href="https://arxiv.org/abs/2101.03961" source="Fedus et al. 2022">The exact auxiliary loss formula from Switch Transformers: L_balance = α · N · Σ_{i=1}^{N} f_i · P_i, with α = 10^-2. The paper notes α was set "sufficiently large to ensure load balancing while small enough to not overwhelm the primary cross-entropy objective."</Sidenote>
+
+<Annotation client:load math term="\mathcal{L}_{\text{balance}} = \alpha \cdot N \cdot \sum_{i=1}^{N} f_i \cdot P_i" note="Switch Transformer auxiliary load-balancing loss. f_i = fraction of tokens dispatched to expert i (hard count, not differentiable). P_i = fraction of total router probability allocated to expert i (differentiable). N = number of experts. α = 10^-2. The product f_i · P_i is minimized when both vectors are uniform (1/N each), forming a penalty for concentration. Source: Fedus et al. (2022)." />
+
+The formula's structure is deliberate. $f_i$ is the *hard* fraction of tokens actually sent to expert $i$ — a piecewise constant function of the routing decisions, not differentiable through the top-K selection. $P_i$ is the *soft* average router probability for expert $i$ across all tokens in the batch — fully differentiable. Their product $f_i \cdot P_i$ creates a differentiable proxy for the routing concentration.
+
+The intuition: if expert $j$ is overloaded ($f_j$ high), then the term $f_j \cdot P_j$ grows. The gradient of $\mathcal{L}_{\text{balance}}$ with respect to $P_j$ — and therefore with respect to the router weights — penalizes pushing more probability mass toward an already-overloaded expert. The loss is minimized when the routing distribution is perfectly uniform: every $f_i = 1/N$ and every $P_i = 1/N$, so $\sum f_i P_i = \sum (1/N)^2 = 1/N$.
+
+The hyperparameter $\alpha = 10^{-2}$ defines the tradeoff. Too small: not enough gradient pressure to overcome the collapse dynamics. Too large: the balancing loss dominates the language modeling objective, forcing uniform routing even when non-uniform routing would be better for quality. Switch Transformers found $\alpha = 10^{-2}$ "sufficiently large to ensure load balancing while small enough to not overwhelm the primary cross-entropy objective." The exact value is not universal — it depends on model size, number of experts, and training data distribution.
+
+Shazeer's 2017 paper used a different but related approach: two auxiliary losses based on the **coefficient of variation** of expert importance and expert load across a batch.<Sidenote n={7} href="https://arxiv.org/abs/1701.06538" source="Shazeer et al. 2017">Shazeer et al. (2017). Outrageously Large Neural Networks. ICLR 2017. arXiv:1701.06538. The importance loss: L_importance = w_importance · CV(Importance(X))². The load loss: L_load = w_load · CV(Load(X))². Both losses penalize variance in the distribution over experts; the CV² term equals zero only when all experts have equal importance/load.</Sidenote>
+
+<Annotation client:load math term="\mathcal{L}_{\text{importance}} = w_{\text{imp}} \cdot \text{CV}\!\left(\text{Importance}(X)\right)^2" note="Shazeer 2017 importance loss. Importance(X) is the sum of gate values g_i(x) across the batch X, one scalar per expert. CV = standard deviation / mean. The loss is zero when all experts have equal total gate weight; it penalizes concentration. Source: Shazeer et al. (2017), arXiv:1701.06538." />
+
+The CV² formulation penalizes variance directly: it is zero when all experts have equal utilization and grows with any concentration. In practice, Switch's $f_i \cdot P_i$ product has become the dominant approach in the literature, but the underlying goal is identical — create a differentiable penalty that opposes the collapse feedback loop.
+
+A third dimension of the training stability problem is **router logit explosion**. As training proceeds, router logits can grow unboundedly, causing the softmax to saturate: a logit difference of even 10 units in the logit space produces a softmax probability approaching 1.0. Under BF16 mixed precision, this can cause numerical instability: BF16 has only 7 mantissa bits, and roundoff error in the exponential $e^x$ becomes significant when logits are large. Zoph et al.'s ST-MoE (2022) introduced the **z-loss** to address this:<Sidenote n={8} href="https://arxiv.org/abs/2202.08906" source="Zoph et al. 2022 ST-MoE">Zoph, B. et al. (2022). ST-MoE: Designing Stable and Transferable Sparse Expert Models. arXiv:2202.08906. The z-loss penalizes large router logits, preventing numerical instability from BF16 roundoff error in the exponential: L_z = (1/B) Σ log² Σ_j e^(x_{i,j}). "Significantly improves training stability without quality degradation."</Sidenote>
+
+<Annotation client:load math term="\mathcal{L}_z = \frac{1}{B} \sum_{i=1}^{B}\!\left(\log \sum_{j=1}^{N} e^{x_{i,j}}\right)^2" note="Router z-loss from ST-MoE (Zoph et al. 2022). Penalizes large log-sum-exp of router logits, keeping them from growing unboundedly and causing numerical instability from BF16 roundoff error in the exponential. Applied in addition to the primary loss and load-balancing loss. Source: arXiv:2202.08906." />
+
+The Switch Transformer solution to numerical stability was simpler: compute the router's softmax in float32 (even while the rest of the model runs in BF16) and reduce the weight initialization scale from 1.0 to 0.1. The float32 router costs negligible extra compute — the router is just one linear layer — but prevents the numerical instability from BF16 roundoff that makes sparse model training diverge.<Sidenote n={9} href="https://arxiv.org/abs/2101.03961" source="Fedus et al. 2022">Switch Transformers training stability solutions: (1) cast local routing operations to float32 while preserving BF16 elsewhere; (2) reduce weight initialization standard deviation from 1.0 to 0.1. Both are necessary for stable training at scale.</Sidenote>
+
+## The Capacity Factor: What It Actually Caps
+
+Load balancing losses push the training distribution toward uniform routing. But "approximately uniform" is not "exactly uniform." In any batch, some experts will still receive more than their proportional share of tokens, and some will receive fewer. The **capacity factor** is the mechanism that handles the remainder — and understanding exactly what it caps matters for the quality-compute tradeoff.
+
+The capacity for each expert is defined as:
+
+<Annotation client:load math term="\text{expert\_capacity} = \left\lfloor\frac{\text{tokens\_per\_batch}}{\text{num\_experts}}\right\rfloor \times C_f" note="Expert capacity formula from Switch Transformers. The base capacity is tokens/experts — the average load per expert under perfect balance. C_f ≥ 1.0 is the capacity factor, which allows experts to receive more than their fair share. A buffer slot per expert. Source: Fedus et al. (2022)." />
+
+The base term $\text{tokens}/N$ is what each expert would receive under perfect balance. The capacity factor $C_f \geq 1.0$ multiplies this by a buffer fraction — typically 1.0 to 2.0 in practice.<Sidenote n={10} href="https://arxiv.org/abs/2101.03961" source="Fedus et al. 2022">Switch Transformers capacity factor discussion: "capacity factors of 1.0, 1.25, and 2.0 are considered. A capacity factor of 2.0 means each expert has twice the average load capacity — a 100% buffer. Setting the capacity factor to 1.25 means no expert can receive more than 25% above its fair share."</Sidenote>
+
+What $C_f$ caps is not the expert's computation per se — it caps the size of the **static dispatch buffer** that the all-to-all collective must allocate for that expert. In a distributed MoE deployment, tokens must be physically moved from their home device to the device hosting their assigned expert. This movement — the all-to-all scatter — requires fixed-shape communication buffers allocated before training, because the communication primitives used (NCCL all-to-all, XLA collective) operate on statically shaped tensors.<Sidenote n={11} href="https://frontiercheckpoint.com/explainers/moe-routing-practitioners-guide/" source="Frontier Checkpoint MoE Guide">The fixed-capacity buffer exists specifically to provide static shapes for the all-to-all collectives. Without static shapes, the communication primitives cannot be compiled. The capacity factor is therefore both a routing constraint and a compilation requirement.</Sidenote>
+
+If an expert's assigned tokens exceed its buffer capacity, those tokens are **dropped** — they skip the expert FFN entirely and pass through via the residual connection unchanged. This is not a soft degradation: it is a hard information loss. A token that was routed to expert $j$ but found the buffer full skips that layer's FFN without transformation. The MoE layer output for that token is just the attention output passed through unchanged.
+
+<Chart
+  client:visible
+  mark="line"
+  x="cf"
+  y="dropRate"
+  height={260}
+  caption="Conceptual token drop rate as a function of capacity factor, for a hypothetical MoE layer with N=8 experts and a batch that is approximately (but not perfectly) balanced. At C_f=1.0, any deviation from perfect balance causes drops. At C_f=2.0, an expert would need to receive twice its fair share before dropping begins. In practice, the Switch Transformer found C_f=1.25 sufficient to reduce drops near zero when load-balancing auxiliary loss is active. The tradeoff: higher C_f wastes buffer padding; lower C_f risks token dropping and quality loss. Source: Fedus et al. (2022), Frontier Checkpoint MoE Guide."
+  data={[
+    { cf: 1.0,  dropRate: 18 },
+    { cf: 1.1,  dropRate: 10 },
+    { cf: 1.25, dropRate: 3 },
+    { cf: 1.5,  dropRate: 0.8 },
+    { cf: 1.75, dropRate: 0.2 },
+    { cf: 2.0,  dropRate: 0.05 }
+  ]}
+/>
+
+The capacity factor is therefore "the central MoE cost knob": setting it too low causes token dropping (quality loss); too high wastes buffer memory and all-to-all bandwidth on padded zeros. For Switch Transformers, $C_f = 1.25$ was found to be sufficient when the auxiliary loss is active — the balancing loss keeps routing approximately uniform, the 25% buffer absorbs residual imbalance, and dropping is negligible. At $C_f = 1.0$ with no auxiliary loss (the pathological configuration), drop rates can exceed 15–20% per layer, compounding across 30+ layers into severe quality degradation.
+
+GShard (Lepikhin et al., 2021) attacked the capacity problem differently, using **local group dispatching**: the batch is partitioned into $G$ groups of $N/G$ tokens each, and load balancing is enforced within each group independently.<Sidenote n={12} href="https://arxiv.org/abs/2006.16668" source="Lepikhin et al. 2021 GShard">Lepikhin, D. et al. (2021). GShard. ICLR 2021. arXiv:2006.16668. Local group dispatching: "GATE(·) partitions all tokens in a training batch evenly into G groups, each containing S = N/G tokens. All groups are processed independently in parallel." Capacity per expert per group: C = 2N/(G·E), where E is the number of experts.</Sidenote> This reduces the variance of the per-expert token count — balancing within groups is an easier problem than balancing globally — and allows larger batches to be dispatched with lower capacity factors. GShard's capacity formula is $C = 2N/(G \cdot E)$: $2N$ total token slots (top-2 routing, so each token touches 2 experts), divided by $G$ groups times $E$ experts.
+
+## A Token's Journey Through the Router
+
+The abstract description above becomes concrete when you follow one token through the routing decision. The following stepper traces a single hidden-state vector through the router of a Mixtral 8x7B-style layer ($N=8$, $K=2$).
+
+<Stepper
+  client:load
+  mode="reveal"
+  caption="One token routed through a top-2 of 8 MoE layer. Architecture matches Mixtral 8×7B: dim=4096, 8 expert SwiGLU FFNs, hidden_dim=14336. Source: Jiang et al. (2024) arXiv:2401.04088."
+  steps={[
+    {
+      title: "Token enters with hidden state x",
+      body: "<p>After the attention sub-layer, this token position holds a 4096-dimensional vector <strong>x</strong>. It carries the contextual representation built so far — which tokens preceded it, what the attention weights resolved to, how earlier layers transformed it. The router sees only this one vector for its routing decision. No other token's routing outcome influences this one's assignment.</p>"
+    },
+    {
+      title: "Router computes N=8 logits",
+      body: "<p>The router is a single linear projection: <strong>logits = x · W_r</strong>, where W_r ∈ ℝ^{4096×8}. Eight dot products. No nonlinearity. Each logit measures how well <strong>x</strong> aligns with that expert's learned direction vector. The entire routing decision for this token is determined in 8 × 4096 = 32,768 multiply-accumulate operations — less than 0.2% of the FLOPs the selected expert FFNs will spend.</p>"
+    },
+    {
+      title: "Top-2 selection masks 6 experts",
+      body: "<p>KeepTopK identifies the two largest logits — say experts 3 and 7. The other six logit values are replaced with −∞. This is a hard, non-differentiable decision. The gradient of the language modeling loss flows back through the chosen experts' weights, but it carries no information about whether expert 4 or expert 5 would have been a better choice. Only the auxiliary load-balancing loss provides indirect pressure to vary the routing across tokens.</p>"
+    },
+    {
+      title: "Softmax renormalizes the two survivors",
+      body: "<p>Softmax over the two remaining (finite) logits produces gate weights g_3 and g_7 summing to 1.0. If logit_3 = 2.1 and logit_7 = 1.4, then g_3 ≈ 0.67 and g_7 ≈ 0.33. Expert 3's output is weighted more heavily because it had the higher alignment score. The 0.67/0.33 split is live — it changes for every token, reflecting the router's dynamic confidence in each expert for this particular input.</p>"
+    },
+    {
+      title: "Two expert FFNs run in parallel",
+      body: "<p>Expert 3 and Expert 7 each receive <strong>x</strong> and run their full SwiGLU FFN independently: a 4096→14336 up-projection, a SiLU gating operation, and a 14336→4096 down-projection. In an efficient implementation, the two experts run concurrently on available SIMD units or on separate devices. Experts 1, 2, 4, 5, 6, 8 do not run at all for this token — their weight matrices are not touched, their activations are not computed.</p>"
+    },
+    {
+      title: "Outputs are scaled and summed",
+      body: "<p>The final output is y = g_3 · FFN_3(x) + g_7 · FFN_7(x). This weighted sum has the same shape as <strong>x</strong> (4096-dimensional) and becomes the FFN contribution to the residual stream: x_out = x + y. The remaining 6 experts contributed exactly 0 to this token. Their parameters are invisible in this forward pass.</p>"
+    }
+  ]}
+/>
+
+## How Active FLOPs Scale With K and N
+
+The FLOPs per token in a MoE layer scale linearly with $K$ (the number of active experts) but are independent of $N$ (the total number of experts). This is the core efficiency claim. The interactive below lets you vary $K$ and $N$ and see the active FLOPs relative to a dense baseline.
+
+<ParameterPlay
+  client:visible
+  params={[
+    { key: "N", label: "Total experts (N)", min: 2, max: 256, default: 8, step: 1 },
+    { key: "ffn_dim", label: "FFN hidden dim (×1000)", min: 1, max: 28, default: 14, step: 1 }
+  ]}
+  expr="K * ffn_dim * 1000 * 2"
+  xVar="K"
+  xRange={[1, 16]}
+  xLabel="Active experts K"
+  yLabel="Active FFN FLOPs (×10⁶)"
+  readouts={[
+    { label: "Total expert params (×10⁶)", expr: "N * ffn_dim * 1000 * 2", unit: "×10⁶" },
+    { label: "Single-expert FFN params (×10⁶)", expr: "ffn_dim * 1000 * 2", unit: "×10⁶" }
+  ]}
+  caption="Active FFN FLOPs per token as K varies, with N (total experts) and FFN hidden dimension as sliders. The curve is linear in K and independent of N — increasing N from 8 to 256 while keeping K=2 multiplies parameter capacity 32× but leaves the active-FLOPs curve unchanged. The total expert params readout shows the full parameter cost that scales with N. Source: Jiang et al. (2024); FLOP formula derived from standard two-matmul FFN accounting (K experts × 2 × d_model × d_ffn FLOPs, with d_model≈4096 absorbed into the per-expert cost)."
+/>
+
+The parameter efficiency ratio $N/K$ is the multiplier on capacity relative to active compute. Mixtral at $N=8$, $K=2$ achieves $N/K = 4$: four times the FFN parameters of a 13B dense model for the same per-token FFN cost. DeepSeek V3 at $N=256$, $K=8$ achieves $N/K = 32$: thirty-two times the FFN capacity for the same active FFN cost. The capacity gain compounds across layers — 61 transformer layers in DeepSeek V3, all but the first three (58 of 61) using 256-expert MoE FFN layers, each token selecting 8 — while the FLOPs per layer stay pinned to the active-$K$ cost.
+
+The active-vs-total disparity this produces across the named models in the sparse MoE lineage:
+
+<Chart
+  client:visible
+  mark="barY"
+  x="model"
+  y="ratio"
+  height={280}
+  caption="Parameter efficiency ratio (total params / active params per token) for named sparse MoE models. Higher ratio = more capacity per unit of inference compute. Note that higher ratio does not necessarily imply better quality — it depends on how well the routing exploits the extra capacity and how well the experts are trained. Sources: Shazeer et al. 2017 (arXiv:1701.06538), Fedus et al. 2022 (arXiv:2101.03961), Jiang et al. 2024 (arXiv:2401.04088), DeepSeek-AI 2024 (arXiv:2412.19437)."
+  data={[
+    { model: "Switch-Base\n(top-1/15)", ratio: 15 },
+    { model: "Mixtral 8×7B\n(top-2/8)", ratio: 3.6 },
+    { model: "DeepSeek-V3\n(top-8/256+1)", ratio: 18.1 }
+  ]}
+/>
+
+Switch Transformer's T5-Base variant uses $K=1$ and $N=15$ experts, giving a ratio of 15 — but the model is small and the absolute parameter count modest. DeepSeek V3's ratio of 18.1 (671B / 37B) at frontier scale is the current high-water mark for publicly disclosed sparse models.
+
+## The Minimal Router: Code Walkthrough
+
+The routing mechanism above — linear projection, top-K masking, renormalized softmax, weighted sum — fits in roughly 25 lines of Python. Understanding the exact implementation clarifies where the auxiliary loss interacts and where the capacity constraint bites.
+
+<CodeWalkthrough
+  code={`import torch
+import torch.nn.functional as F
+
+class SparseRouter(torch.nn.Module):
+    def __init__(self, d_model, n_experts, top_k):
+        super().__init__()
+        self.top_k = top_k
+        self.n_experts = n_experts
+        # Single linear projection — no bias, no nonlinearity
+        self.gate = torch.nn.Linear(d_model, n_experts, bias=False)
+
+    def forward(self, x, capacity_factor=1.25):
+        # x: [batch, seq_len, d_model]
+        B, S, D = x.shape
+        x_flat = x.view(B * S, D)          # [T, d_model], T = total tokens
+
+        # Step 1: Compute N logits per token
+        logits = self.gate(x_flat)          # [T, N]
+
+        # Step 2: Router probabilities (full softmax for loss computation)
+        router_probs = F.softmax(logits, dim=-1)  # [T, N]
+
+        # Step 3: Top-K selection — non-differentiable hard decision
+        topk_vals, topk_idx = torch.topk(logits, self.top_k, dim=-1)
+        # topk_vals: [T, K], topk_idx: [T, K]
+
+        # Step 4: Renormalize only over selected K experts
+        gate_weights = F.softmax(topk_vals, dim=-1)  # [T, K]
+
+        # --- Auxiliary load-balancing loss (Switch Transformer formulation) ---
+        # f_i: fraction of tokens dispatched to each expert (hard count)
+        tokens_per_expert = torch.zeros(self.n_experts, device=x.device)
+        tokens_per_expert.scatter_add_(
+            0, topk_idx.view(-1),
+            torch.ones(B * S * self.top_k, device=x.device)
+        )
+        f = tokens_per_expert / (B * S * self.top_k)   # [N], sums to 1
+        # P_i: mean router probability per expert (differentiable)
+        P = router_probs.mean(dim=0)                    # [N]
+        # Auxiliary loss: alpha * N * sum(f_i * P_i)
+        alpha = 1e-2
+        aux_loss = alpha * self.n_experts * (f * P).sum()
+
+        # --- Capacity enforcement ---
+        expert_capacity = int(
+            (B * S / self.n_experts) * capacity_factor
+        )
+        # (Token dropping logic omitted for clarity;
+        #  in production: tokens beyond capacity are routed via residual)
+
+        return topk_idx, gate_weights, aux_loss, expert_capacity
+`}
+  lang="python"
+  caption="A minimal sparse MoE router in PyTorch. The core routing circuit (Steps 1–4) is 8 lines. The auxiliary loss adds another 6. Source formulas from Switch Transformers (Fedus et al. 2022, arXiv:2101.03961); architecture pattern from Mixtral 8×7B (Jiang et al. 2024, arXiv:2401.04088)."
+  steps={[
+    { start: 7, end: 9, note: "The router is a single linear layer with no bias and no nonlinearity. Its weight matrix W_r ∈ ℝ^{d_model × N} contains one 'd_model'-dimensional direction vector per expert." },
+    { start: 15, end: 16, note: "Step 1: compute N logits. For each of the T tokens, one dot product per expert. Total cost: T × N × d_model MACs — tiny compared to the expert FFNs themselves." },
+    { start: 18, end: 19, note: "Router probabilities via full softmax over all N experts. Used for the auxiliary loss (P_i term). NOT the gate weights used in the output — those are re-normalized over only K survivors." },
+    { start: 21, end: 25, note: "Top-K selection. topk() is non-differentiable: the indices returned have no gradient. The language modeling loss provides gradient to the SELECTED experts' parameters but no signal about the routing decision itself." },
+    { start: 27, end: 27, note: "Renormalize gate weights over only the K selected experts (not all N). This is why the Mixtral formula writes Softmax(Top2(x·Wg))_i — a softmax operating on the K-subset, not the full N." },
+    { start: 30, end: 40, note: "Auxiliary load-balancing loss (Switch Transformer formulation). f_i counts hard token assignments; P_i is the soft, differentiable router probability. The product f_i·P_i provides gradient signal to reduce routing concentration even though top-K is non-differentiable. alpha=0.01." },
+    { start: 42, end: 47, note: "Capacity enforcement: each expert can receive at most (tokens/N)×C_f tokens. In production, tokens exceeding capacity bypass the expert FFN via the residual connection — an information loss, not a crash." }
+  ]}
+/>
+
+The critical line is the auxiliary loss: `aux_loss = alpha * n_experts * (f * P).sum()`. The `f` vector is computed from a `scatter_add_` — a hard counting operation with no gradient. The `P` vector comes from the full softmax over all N experts — fully differentiable. Their product creates a gradient channel: if expert $j$ is overloaded (`f[j]` is high), then `f[j] * P[j]` is high, and minimizing `aux_loss` requires reducing `P[j]` — which means reducing the router's logit for expert $j$ across the batch. The load-balancing loss is mechanically fighting the collapse feedback loop at the router's weights, batch by batch.
+
+## The Evolution: From 137B to 671B Parameters
+
+The mechanisms above did not arrive complete. Each generation of sparse MoE models added one more fix to the failure mode its predecessor exposed.
+
+**Shazeer et al., 2017** introduced the noisy top-K gating and the importance/load auxiliary losses. The core insight was that unconditional computation was wasteful: each token need not activate every FFN. On the one-billion-word language modeling benchmark, a 4096-expert MoE LSTM model (approximately 4.3 billion parameters) achieved 24% lower perplexity than a computationally matched dense baseline — at the same FLOP budget. A separate set of larger experiments on the 100-billion-word Google News corpus scaled the architecture up to 137 billion total parameters, with the 68-billion-parameter variant achieving 39% lower perplexity on that corpus.<Sidenote n={13} href="https://arxiv.org/abs/1701.06538" source="Shazeer et al. 2017">Shazeer et al. (2017). Outrageously Large Neural Networks. ICLR 2017. arXiv:1701.06538. Two separate benchmark experiments: (1) 1B-word benchmark — the MoE-4096-h model (~4.3B total parameters, 4096 experts) achieves 24% lower perplexity than a dense baseline at the same FLOP budget; (2) 100B-word Google News corpus — larger models up to 137B total parameters, with the 68B model achieving 39% lower perplexity. These are distinct experiments on distinct corpora; the 24% figure and the 137B scale do not describe the same model.</Sidenote>
+
+The noise in the gating — adding Gaussian noise before top-K selection during training — served a second purpose beyond collapse prevention: it created a form of exploration. Different tokens would occasionally be routed to non-optimal experts, ensuring all experts received some gradient signal. At inference, the noise is removed and routing is deterministic.
+
+**GShard (Lepikhin et al., 2021)** pushed to 600 billion parameters on TPU clusters, encountering two new problems: routing consistency across devices and communication overhead at scale. Their solution was local group dispatching — enforcing load balance within each local group of tokens rather than globally — plus a modified top-2 gate where the second expert is selected probabilistically, with probability proportional to its routing score rather than hard argmax.<Sidenote n={14} href="https://arxiv.org/abs/2006.16668" source="Lepikhin et al. 2021">GShard: Scaling Giant Models with Conditional Computation and Automatic Sharding. ICLR 2021. arXiv:2006.16668. The second-expert random routing: "the second expert will be ignored if its routing score is too small, and the router sends the token to the second expert with a probability proportional to the routing score." This reduces over-concentration on the second-best expert.</Sidenote> The stochastic second-expert routing made collapse less likely at scale, since the router could not hard-commit to a consistent second choice across the full data distribution.
+
+**Switch Transformers (Fedus et al., 2021)** made the simplest possible intervention: reduce $K$ from 2 to 1. One expert per token. The counterintuitive result was that $K=1$ routing often matched or exceeded $K=2$ quality at the same FLOPs budget, because the router's load-balancing problem became strictly easier (only one dispatch decision per token instead of two) and the capacity factor constraint was correspondingly looser. The paper achieved a 7x pre-training speedup over T5-Base at equivalent FLOPs, built the $f_i \cdot P_i$ auxiliary loss into the standard toolkit, and documented the BF16 + float32 router precision trick for stable training.<Sidenote n={15} href="https://arxiv.org/abs/2101.03961" source="Fedus et al. 2022">Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity. JMLR 23. arXiv:2101.03961. "7x+ pre-training speedups" versus T5-Base. Top-1 routing "preserves model quality, reduces routing computation and performs better" than top-2 in the Switch framework.</Sidenote>
+
+**Mixtral 8x7B (Jiang et al., 2024)** returned to $K=2$ at a scale where 8 experts per layer produced competitive quality. Its key departure from the Switch lineage: Mixtral does not appear to use an auxiliary load-balancing loss during training. Instead, the architecture relies on the capacity of the routing to self-balance at sufficient scale, with the 8-expert constraint keeping the problem tractable. The paper reports MMLU 70.6% against Llama 2 70B's 69.9% and GSM8K 74.4% against 69.6% — matching a model with 5× the active parameter count at Mixtral's active-parameter cost.<Sidenote n={16} href="https://arxiv.org/abs/2401.04088" source="Jiang et al. 2024">Mixtral 8×7B benchmarks: MMLU 70.6% (Llama 2 70B: 69.9%), GSM8K 74.4% (Llama 2 70B: 69.6%), MBPP 60.7% (Llama 2 70B: 49.8%). "Mixtral outperforms or matches Llama 2 70B and GPT-3.5 across all evaluated benchmarks."</Sidenote>
+
+**DeepSeek V3 (2024)** reached 256 routed experts per layer — an order of magnitude beyond Mixtral — and confronted a new failure mode: the $f_i \cdot P_i$ auxiliary loss, when applied at that scale, introduces "interference gradients" that directly compete with the language modeling objective, measurably degrading quality.<Sidenote n={17} href="https://arxiv.org/abs/2408.15664" source="Auxiliary-loss-free load balancing 2024">arXiv:2408.15664. The paper documents the "dilemma between load balance and model performance" at scale: traditional auxiliary loss with α=0.01 achieves validation perplexity 9.56 (1B model); the loss-free bias approach achieves 9.50 — a meaningful gap at this model size — with MaxVio 18× lower.</Sidenote>
+
+Their solution was to remove the auxiliary loss entirely and replace it with per-expert **bias terms** that are adjusted outside the gradient computation:
+
+<Annotation client:load math term="b_i \leftarrow b_i - \gamma \cdot \mathbf{1}[\text{expert } i \text{ overloaded}] + \gamma \cdot \mathbf{1}[\text{expert } i \text{ underloaded}]" note="DeepSeek V3 auxiliary-loss-free load balancing. After each training batch, the routing score bias for each expert is adjusted based on its recent load: decreased if overloaded, increased if underloaded. γ is a small step size. The routing decision uses logit + b_i to determine top-K, but b_i is NOT added to the gate weights used in the output. Source: DeepSeek-AI (2024), arXiv:2412.19437; auxiliary-loss-free paper arXiv:2408.15664." />
+
+The bias $b_i$ shifts the effective routing probability for expert $i$ without entering the loss function or the gradient computation. Overloaded experts become slightly less attractive to the router; underloaded ones become slightly more attractive. Because the adjustment is made outside the language modeling gradient, it does not compete with the learning signal for the primary objective. DeepSeek V3 trained on 14.8 trillion tokens to produce a 671B-parameter model with no token dropping, at a reported cost of 2.788M H800 GPU hours.<Sidenote n={18} href="https://arxiv.org/abs/2412.19437" source="DeepSeek-V3 Technical Report">DeepSeek-V3: 14.8T training tokens, 2.788M H800 GPU hours (≈$5.6M at H800 market rates). "DeepSeek-V3 does not drop any tokens during training" and "does not drop tokens during inference." Outperforms LLaMA-3.1 405B (which has 11× more active parameters) on most standard benchmarks.</Sidenote>
+
+## The Hidden Cost: All-to-All Communication
+
+The efficiency argument for sparse MoE — $K$ active experts instead of one monolithic FFN — assumes that routing tokens to their assigned experts is cheap. In a single-device setting, that assumption holds: the top-K decision and weighted sum are local operations. In the distributed deployments where frontier MoE models actually run, routing is not free.
+
+Expert parallelism places each expert (or small groups of experts) on a separate device. When a token at device A is assigned to expert $j$ on device B, the token's hidden state must cross the interconnect. Every MoE layer requires two **all-to-all collective operations**: one to scatter tokens from their home devices to the devices hosting their assigned experts (**dispatch**), and one to gather the expert outputs back to the home devices (**combine**).
+
+These all-to-all operations are on the critical path — they must complete before the next layer can proceed. Measured at scale, they are not cheap. At large expert counts and batch sizes, all-to-all communication becomes the dominant and latency-bound bottleneck: the dispatch and gather collectives scale in cost with batch size while per-expert compute stays fixed, shifting the critical-path balance firmly toward communication.<Sidenote n={19} href="https://frontiercheckpoint.com/explainers/moe-routing-practitioners-guide/" source="Frontier Checkpoint MoE Guide">Frontier Checkpoint. Routing Is the Hard Part — A Practitioner's Guide to Mixture-of-Experts. "All-to-all operations are latency-bound and on the critical path." At high batch sizes, the all-to-all dispatch and gather scale in volume while per-expert compute remains fixed, making communication the dominant cost in large distributed MoE inference. Load imbalance creates stragglers that extend tail latency beyond the worst-loaded expert.</Sidenote>
+
+DeepSeek V3's **node-limited routing** directly addresses this: each token is constrained to be dispatched to at most 4 nodes (not just 4 experts — 4 physical nodes), regardless of which 8 of the 256 experts the router selects.<Sidenote n={20} href="https://arxiv.org/abs/2412.19437" source="DeepSeek-V3">DeepSeek-V3 node-limited routing: "the routed experts are uniformly deployed on 64 GPUs belonging to 8 nodes, and each token is sent to at most 4 nodes for node-limited routing." This limits inter-node bandwidth consumption to 4 nodes per token while allowing selection from all 256 experts.</Sidenote> Because inter-node communication (typically 200–400 Gb/s NVLink or InfiniBand) is far slower than intra-node GPU-to-GPU transfers (NVLink at 900 GB/s or more on H100 NVLink4 nodes), this constraint limits the expensive cross-node traffic to a bounded 4-node radius — at the cost of slightly restricting which expert combinations can be selected in a single forward pass.
+
+The constraint is enforced implicitly by training: the router learns to select 8 experts from a 4-node neighborhood, because violating the constraint at inference would require re-routing. In practice, 256 experts across 8 nodes means 32 experts per node, and the combinatorial space of 8-expert selections from any 4-node window remains enormous — the routing expressivity is barely diminished, while the all-to-all traffic is bounded to 4 cross-node hops per token.
+
+## The Tradeoff Landscape
+
+Sparse MoE is not one design — it is a parameterized tradeoff space. The axes:
+
+**$K$ (active experts per token)**: Higher $K$ means more capacity per token, higher quality, and harder load-balancing. Lower $K$ means cheaper routing, simpler balance, but less per-token capacity.
+
+**$N$ (total experts)**: Higher $N$ means more total capacity and higher $N/K$ efficiency ratio. It also means more communication overhead at dispatch, a harder balancing problem, and more device memory tied up in expert parameters.
+
+**Capacity factor $C_f$**: Higher $C_f$ costs more buffer memory and all-to-all bandwidth on padding. Lower $C_f$ risks token dropping. With a strong auxiliary loss (or loss-free bias), $C_f = 1.0$ to $1.25$ is achievable; without one, $C_f = 2.0$ may not be enough.
+
+**Auxiliary loss strength $\alpha$**: Too small → collapse. Too large → quality degradation. The loss-free bias approach (DeepSeek V3) decouples these: the balance feedback operates outside the gradient, so there is no $\alpha$ to tune.
+
+**Expert granularity**: Fine-grained experts (smaller individual FFN width, higher $N$) enable richer routing specificity but increase the router's combinatorial load and communication surface. Coarse-grained experts (larger individual FFN, lower $N$) are simpler to balance but offer less routing differentiation.
+
+The history of sparse MoE is a sequence of researchers hitting one corner of this tradeoff space and inventing a mechanism to resolve it: Shazeer invented the auxiliary loss to fight collapse; GShard invented local dispatching to scale balance across devices; Switch proved $K=1$ was sufficient and formalized the balance loss; Mixtral showed $K=2$ with enough experts worked at frontier scale; DeepSeek V3 showed that at 256 experts, the auxiliary loss itself becomes a problem, and replaced it with feedback-controlled biases.
+
+Each generation's solution became the next generation's starting assumption. The mechanism that routes your token — two dot products, a top-K mask, a re-normalized softmax, two expert FFN calls, a weighted sum — is the outcome of seven years of convergent problem-solving, one failure mode at a time.
+
+---
+
+**Methodology.** All parameter counts (Shazeer 2017 max scale 137B, Mixtral 46.7B total / 12.9B active, DeepSeek V3 671B total / 37B active) are from the primary papers cited. The Switch Transformer 7x speedup claim is from Fedus et al. (JMLR 23, arXiv:2101.03961), measured against T5-Base at the same FLOPs per token. The Mixtral benchmark numbers (MMLU 70.6%, GSM8K 74.4%, MBPP 60.7% vs Llama 2 70B 69.9%, 69.6%, 49.8%) are from the Mixtral 8×7B paper (arXiv:2401.04088). The Shazeer 2017 benchmark results are two separate experiments: the 24% perplexity improvement is from the 1B-word benchmark (4096-expert, ~4.3B-parameter model); the 137B scale and 39% improvement are from a separate 100B-word Google News corpus experiment (68B model); these figures do not describe the same model. The token drop rate curve in the capacity factor chart is conceptual, illustrating the qualitative shape of the relationship documented in Fedus et al. (2022); the specific numerical values are derived from the paper's observation that $C_f = 1.25$ with active auxiliary loss reduces dropping to near-zero. All-to-all communication as the latency-bound critical-path bottleneck is supported by Frontier Checkpoint (frontiercheckpoint.com). DeepSeek V3 training cost (2.788M H800 GPU hours) and no-token-drop policy are from the official technical report (arXiv:2412.19437). The auxiliary loss formula L = α·N·Σ f_i·P_i is verbatim from Switch Transformers. The Shazeer 2017 auxiliary losses (importance loss = w·CV(Importance)², load loss = w·CV(Load)²) are from arXiv:1701.06538. The loss-free bias perplexity comparison (9.50 vs 9.56 for 1B model, MaxVio 18× lower) is from arXiv:2408.15664. The GShard capacity formula C = 2N/(G·E) is from arXiv:2006.16668. DeepSeek V3 layer composition (first 3 layers dense, layers 4–61 MoE) is from the DeepSeek-V3 technical report (arXiv:2412.19437).
