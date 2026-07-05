@@ -62,6 +62,18 @@ are React; in Astro MDX they need a **client directive** — use `client:visible
 for below-the-fold figures (lazy) and `client:load` for above-the-fold or inline
 ones.
 
+## 2a. Attribute quoting — inner quotes MUST be curly
+
+Component attributes are **double-quoted** (`note="…"`). NEVER put a straight
+double-quote (`"`) or a backslash (`\`) inside an attribute value — MDX closes
+the string at the first inner `"` and the build fails. Inner quotes must be
+**typographic curly quotes**: `“ ”` for double, `‘ ’` for single (and `’` for
+apostrophes). `validateDraft` runs an MDX-syntax lint that rejects a draft with
+straight or `\"` inner quotes before it can reach `astro build`.
+
+    ✗ note="the "arid interruption" in the Sahara"
+    ✓ note="the “arid interruption” in the Sahara"
+
 ## 3. Exact component props (copy these shapes)
 
 ### `<Annotation>` — inline cited term (the citation apparatus)

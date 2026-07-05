@@ -123,6 +123,13 @@ Summary:
   `...approach — <Annotation ... /> — was sound...`, not the `<Annotation />` on a line
   by itself sandwiched between prose lines. (`scripts/reflow-inline-mdx.mts --check`
   reports any own-line inline components in a file.)
+- **Attribute quoting — inner quotes MUST be curly.** Component attributes are
+  double-quoted (`note="…"`). NEVER put a straight double-quote (`"`) or a backslash
+  (`\`) inside an attribute value — MDX closes the string at the first inner `"` and
+  the build fails. Use **typographic curly quotes**: `“ ”` for double, `‘ ’` for
+  single, `’` for apostrophes (write `note="the “arid interruption” in the Sahara"`,
+  never `note="the "arid interruption" …"` or `\"…\"`). `validateDraft` now runs an
+  MDX-syntax lint that fails the verify gate on straight/`\"` inner quotes.
 
 ## Scripts (stdlib-only, $0, no API keys)
 

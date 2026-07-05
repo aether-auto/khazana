@@ -130,6 +130,22 @@ test("a newly-mandated component (Pullquote/StatBand) now passes", () => {
   expect(r.errors).toEqual([]);
 });
 
+test("a draft with inner straight quotes in a JSX attribute fails (mdx-syntax)", () => {
+  const body =
+    'import { Annotation } from "@/components/mdx";\n\n<Annotation note="the "arid interruption" in the Sahara" />';
+  const r = validateDraft(mdx(VALID_FM, body), KNOWN_URLS);
+  expect(r.ok).toBe(false);
+  expect(r.errors.join(" ")).toMatch(/mdx-syntax/);
+});
+
+test("the same draft with curly quotes in the JSX attribute passes", () => {
+  const body =
+    'import { Annotation } from "@/components/mdx";\n\n<Annotation note="the “arid interruption” in the Sahara" />';
+  const r = validateDraft(mdx(VALID_FM, body), KNOWN_URLS);
+  expect(r.ok).toBe(true);
+  expect(r.errors).toEqual([]);
+});
+
 test("the retired NarrativeScene component is rejected", () => {
   const body = 'import { NarrativeScene } from "@/components/mdx";\n\n<NarrativeScene />';
   const r = validateDraft(mdx(VALID_FM, body), KNOWN_URLS);

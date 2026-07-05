@@ -1,6 +1,7 @@
 import matter from "gray-matter";
 import { z } from "zod";
 import { CHANNELS, FORMAT_NAMES } from "@khazana/core";
+import { lintMdxJsxAttributes } from "./mdx-lint.js";
 
 // Mirrors apps/site/src/content.config.ts `blog` collection EXACTLY so generated
 // MDX builds under astro:content. Field names + constraints must not drift.
@@ -152,6 +153,13 @@ export function validateDraft(
   const allowed = new Set(knownComponents);
   for (const name of usedComponentNames(parsed.content)) {
     if (!allowed.has(name)) errors.push(`component: unknown component <${name}>`);
+  }
+
+  // MDX/JSX syntax: catch inner straight/backslash-escaped quotes in attribute
+  // values (the recurring build-breaker astro:content rejects). Runs on the full
+  // mdx so line numbers match the file (frontmatter offset preserved).
+  for (const issue of lintMdxJsxAttributes(mdx)) {
+    errors.push(`mdx-syntax: line ${issue.line}:${issue.column}: ${issue.message}`);
   }
 
   return { ok: errors.length === 0, slug, errors };

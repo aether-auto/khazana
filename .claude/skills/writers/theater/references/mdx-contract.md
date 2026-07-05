@@ -63,6 +63,18 @@ for below-the-fold figures (lazy) and `client:load` for above-the-fold or inline
 ones. Static Astro components (`OrderOfBattle`, `CastGrid`, `Pullquote`, `Figure`,
 `Callout`, `Detail`) take **no** directive.
 
+## 2a. Attribute quoting — inner quotes MUST be curly
+
+Component attributes are **double-quoted** (`note="…"`). NEVER put a straight
+double-quote (`"`) or a backslash (`\`) inside an attribute value — MDX closes
+the string at the first inner `"` and the build fails. Inner quotes must be
+**typographic curly quotes**: `“ ”` for double, `‘ ’` for single (and `’` for
+apostrophes). `validateDraft` runs an MDX-syntax lint that rejects a draft with
+straight or `\"` inner quotes before it can reach `astro build`.
+
+    ✗ note="the "arid interruption" in the Sahara"
+    ✓ note="the “arid interruption” in the Sahara"
+
 ## 3. Theater's military kit — exact props (copy these shapes)
 
 > These four — BattleMap, OrderOfBattle, ForceComparison, Sankey — are theater's

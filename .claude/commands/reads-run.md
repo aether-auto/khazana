@@ -125,6 +125,13 @@ a draft your agents let through — find the offending file from its output, DRO
 and its slug from the verify args), and re-run until it exits 0. Never commit while this command is
 red.
 
+`validateDraft` now includes an **MDX-syntax lint** (`mdx-lint.ts`) that rejects a draft with inner
+straight/`\"` quotes in a JSX attribute — the recurring build-breaker. So a green `generate verify`
+already confirms this run's new drafts MDX-compile. **Before committing, confirm the drafts still
+build**: rely on that green verify (the compile check is inside it), or if you touched anything
+beyond the new slugs, run `pnpm --filter @khazana/site build` and require it green (~355 pages).
+Never commit on a red verify or a broken build.
+
 Then commit and push **only** the kept Reads:
 
 ```bash
