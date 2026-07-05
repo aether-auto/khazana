@@ -82,6 +82,15 @@ const PAD_Y = 0.12; // 12% of height each side
 // back to the calm whole-world view rather than a uselessly zoomed-out regional one.
 const GLOBAL_LON_SPAN = 200;
 const GLOBAL_LAT_SPAN = 130;
+// A scene whose bounding box has ~zero width or height (a lone point, a
+// zero-length route, coincident/collinear points) would make fitExtent's scale
+// blow up to Infinity → NaN coordinates → nothing renders. Below this span (in
+// degrees) we treat a dimension as degenerate and pad it to a sensible default
+// zoom instead of fitting to it.
+const DEGENERATE_EPS = 0.1;
+// Half-span (degrees) used to pad a degenerate dimension: shows ~24° of land
+// around a lone landfall — the point comfortably framed by its surroundings.
+const MIN_HALF_SPAN = 12;
 
 interface CountryProps {
   name?: string;
@@ -227,9 +236,45 @@ export default function RouteMap({
         const [cLon] = geoCentroid(fitFC);
         const padX = W * PAD_X;
         const padY = H * PAD_Y;
-        projection = geoMercator()
-          .rotate([-cLon, 0])
-          .fitExtent([[padX, padY], [W - padX, H - padY]], fitFC);
+        const extent: [[number, number], [number, number]] = [
+          [padX, padY],
+          [W - padX, H - padY],
+        ];
+        const mercator = geoMercator().rotate([-cLon, 0]);
+        const degenerate = lonSpan < DEGENERATE_EPS || latSpan < DEGENERATE_EPS;
+        if (degenerate) {
+          // Zero-area (or near-zero) scene: pad each degenerate dimension so
+          // fitExtent gets a real box instead of an Infinite scale. Real spans
+          // are preserved; only the collapsed dimension(s) expand to a default
+          // regional zoom around the centroid — a finite, land-showing view.
+          const midLon = w0 + lonSpan / 2;
+          const midLat = s0 + latSpan / 2;
+          const halfLon = Math.max(lonSpan / 2, MIN_HALF_SPAN);
+          const halfLat = Math.max(latSpan / 2, MIN_HALF_SPAN);
+          const latLo = Math.max(-85, midLat - halfLat);
+          const latHi = Math.min(85, midLat + halfLat);
+          const box: FeatureCollection = {
+            type: "FeatureCollection",
+            features: [
+              {
+                type: "Feature",
+                properties: {},
+                geometry: {
+                  type: "MultiPoint",
+                  coordinates: [
+                    [wrapLon(midLon - halfLon), latLo],
+                    [wrapLon(midLon + halfLon), latLo],
+                    [wrapLon(midLon + halfLon), latHi],
+                    [wrapLon(midLon - halfLon), latHi],
+                  ],
+                },
+              },
+            ],
+          };
+          projection = mercator.fitExtent(extent, box);
+        } else {
+          projection = mercator.fitExtent(extent, fitFC);
+        }
         regional = true;
       }
     }
