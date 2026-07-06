@@ -2,21 +2,32 @@
 // A pinned BUILD card for the Workshop board. Deliberately distinct from the
 // Feed's IdeaCard: it reads top-down like something tacked to a workbench
 // pinboard — a pin head + tear line, the project title, then a maker's stat
-// strip (source as credibility, maker channel, est. build time, a difficulty
-// band DERIVED from read-time and labelled honestly). Same design tokens as the
-// Feed (hairline rules, mono chrome, amber signal) so it belongs to khazana,
-// but its own object identity.
+// strip (source as credibility, est. build time, a difficulty band DERIVED
+// from read-time and labelled honestly). Same design tokens as the Feed
+// (hairline rules, mono chrome, amber signal) so it belongs to khazana, but
+// its own object identity.
+//
+// Per-maker-channel identity (level-up): `makerChannelStyle` — the ONE
+// centralized map in workshop/lib/maker-channel-style.ts — tints the pin head
+// and a left "spine" accent (mirroring ReadGalleryCard's format spine), plus a
+// small mono ticker code, so an iot build and an ai-projects build read as
+// visually distinct kinds of object at a glance, not just different chip text.
+//
+// Hover-preview (level-up): a CSS-ONLY reveal (no JS) — hovering OR focusing
+// the card (:focus-within) expands a panel showing a genuine opening line of
+// the item's real body (`excerptFromHtml`, grounded, never invented — distinct
+// from the hand-tagged `summary` teaser already always visible). Keyboard
+// users get the IDENTICAL reveal via focus, so it's never mouse-only.
 import type { FeedItem } from "@khazana/core";
-import ChannelChip from "./ChannelChip.astro";
 import { readTimeFromHtml } from "../lib/read-time.js";
+import { makerChannelStyle, primaryMakerChannel } from "./workshop/lib/maker-channel-style.js";
+import { excerptFromHtml } from "./workshop/lib/build-excerpt.js";
 
 interface Props {
   item: FeedItem;
-  /** Maker channels the board filters by — used to surface the item's primary one. */
-  makerChannels: readonly string[];
   revealDelay?: number;
 }
-const { item, makerChannels, revealDelay = 0 } = Astro.props;
+const { item, revealDelay = 0 } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const readHref = `${base}/item/${item.id}`;
 
@@ -34,10 +45,29 @@ function difficultyBand(min: number | null): { label: string; level: 1 | 2 | 3 }
 }
 const diff = difficultyBand(minutes);
 
-// The item's primary MAKER channel (first maker tag, else first topic) — the
-// board's filter pivots on `data-channels`, this just labels the card.
-const makerSet = new Set(makerChannels);
-const primaryMaker = item.topics.find((t) => makerSet.has(t)) ?? item.topics[0] ?? "build";
+// The item's primary MAKER channel + its centralized identity (color + code).
+const channel = primaryMakerChannel(item);
+const chan = makerChannelStyle(channel);
+
+// `publishedAt` is a required, validated ISO datetime on every FeedItem — the
+// YYYY-MM-DD slice matches the exact convention build-reads.ts uses for reads.
+const dateLabel = item.publishedAt.slice(0, 10);
+
+// Honest, plain-language label for the item's `kind` — no invented taxonomy,
+// just the canonical ITEM_KINDS vocabulary rendered for humans.
+const KIND_LABEL: Record<string, string> = {
+  link: "article",
+  discussion: "thread",
+  paper: "paper",
+  idea: "idea",
+  video: "video",
+  audio: "audio",
+};
+const kindLabel = KIND_LABEL[item.kind] ?? item.kind;
+
+// A real opening line of the actual source body — "" (and no reveal panel) when
+// there's no body to draw from. Never a placeholder, never invented.
+const excerpt = excerptFromHtml(item.body);
 
 const image = item.media.find((m) => m.type === "image");
 ---
@@ -45,10 +75,16 @@ const image = item.media.find((m) => m.type === "image");
 <article
   class="build"
   data-channels={item.topics.join(" ")}
+  data-primary-channel={channel}
+  data-source={item.source}
+  data-published={item.publishedAt}
+  data-build-id={item.id}
   data-reveal
-  style={`--reveal-delay:${revealDelay}ms`}
+  style={`--reveal-delay:${revealDelay}ms; --chan-accent:${chan.color};`}
 >
-  {/* pin head + tear line — the "tacked to the board" affordance */}
+  {/* pin head + tear line — the "tacked to the board" affordance, tinted by
+      the build's maker channel so the pinboard itself carries the identity
+      system, not just the metadata row below. */}
   <span class="build-pin" aria-hidden="true"></span>
 
   {
@@ -61,8 +97,10 @@ const image = item.media.find((m) => m.type === "image");
 
   <div class="build-body">
     <p class="build-kicker">
-      <span class="build-src" title={`source · ${item.source}`}>{item.source}</span>
-      <ChannelChip channel={primaryMaker} />
+      <span class="build-code tnum" aria-hidden="true">{chan.code}</span>
+      <span class="build-chan">{channel}</span>
+      <span class="build-kind">{kindLabel}</span>
+      <time class="build-date tnum" datetime={item.publishedAt}>{dateLabel}</time>
     </p>
 
     <h2 class="build-title">
@@ -70,6 +108,16 @@ const image = item.media.find((m) => m.type === "image");
     </h2>
 
     {item.summary && <p class="build-sum">{item.summary}</p>}
+
+    {
+      excerpt && (
+        <div class="build-preview" aria-hidden="true">
+          <div class="build-preview-inner">
+            <p class="build-excerpt">“{excerpt}”</p>
+          </div>
+        </div>
+      )
+    }
 
     <dl class="build-stats" aria-label="build telemetry">
       <div class="stat">
@@ -88,14 +136,17 @@ const image = item.media.find((m) => m.type === "image");
         </dd>
       </div>
       <div class="stat stat-end">
-        <a
-          class="build-srclink"
-          href={item.url}
-          data-track="open"
-          data-item-id={item.id}
-          rel="noopener noreferrer"
-          title="open the original source"
-        >↗ source</a>
+        <dt>source</dt>
+        <dd>
+          <a
+            class="build-srclink"
+            href={item.url}
+            data-track="open"
+            data-item-id={item.id}
+            rel="noopener noreferrer"
+            title="open the original source"
+          >{item.source} ↗</a>
+        </dd>
       </div>
     </dl>
   </div>
@@ -116,15 +167,19 @@ const image = item.media.find((m) => m.type === "image");
       border-color var(--dur) var(--ease-out),
       transform var(--dur) var(--ease-out);
   }
-  .build:hover {
-    border-color: color-mix(in oklab, var(--accent) 30%, var(--rule));
+  .build:hover,
+  .build:focus-within {
+    border-color: color-mix(in oklab, var(--chan-accent) 30%, var(--rule));
     transform: translateY(-2px);
   }
   .build:active {
     transform: translateY(0);
   }
 
-  /* the pin — an amber gem head tacking the card to the board */
+  /* the pin — a channel-tinted gem head tacking the card to the board. The
+     outer glow deliberately stays the site's fixed amber halo-star (every pin
+     catches the SAME overhead workbench light) while the pin body itself is
+     tinted per maker channel — one shared light source, distinct objects. */
   .build-pin {
     position: absolute;
     top: var(--s-3);
@@ -133,11 +188,11 @@ const image = item.media.find((m) => m.type === "image");
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--accent);
+    background: var(--chan-accent);
     box-shadow:
-      0 0 0 3px color-mix(in oklab, var(--accent) 16%, transparent),
+      0 0 0 3px color-mix(in oklab, var(--chan-accent) 16%, transparent),
       0 2px 4px rgba(0, 0, 0, 0.5),
-      var(--halo-star, 0 0 8px color-mix(in oklab, var(--accent) 50%, transparent));
+      var(--halo-star, 0 0 8px color-mix(in oklab, var(--chan-accent) 50%, transparent));
   }
 
   .build-shot {
@@ -158,10 +213,36 @@ const image = item.media.find((m) => m.type === "image");
   }
 
   .build-body {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: var(--s-3);
-    padding: var(--s-4);
+    padding: var(--s-4) var(--s-4) var(--s-4) calc(var(--s-4) + 4px);
+  }
+  /* the maker-channel "spine" — a left edge accent in the channel's own color,
+     faintly present at rest (so the channel reads as distinct even before any
+     interaction) and full-strength on hover/focus — mirrors ReadGalleryCard's
+     format spine so the two boards share one visual grammar. */
+  .build-body::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: var(--s-3);
+    bottom: var(--s-3);
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+    background: var(--chan-accent);
+    opacity: 0.42;
+    transform: scaleY(0.8);
+    transform-origin: center;
+    transition:
+      opacity var(--dur) var(--ease-out),
+      transform var(--dur) var(--ease-out);
+  }
+  .build:hover .build-body::before,
+  .build:focus-within .build-body::before {
+    opacity: 1;
+    transform: scaleY(1);
   }
 
   .build-kicker {
@@ -173,16 +254,38 @@ const image = item.media.find((m) => m.type === "image");
     /* leave room for the pin head */
     padding-right: var(--s-5);
   }
-  .build-src {
+  .build-code {
     font-family: var(--font-mono);
     font-size: var(--t-xs);
-    letter-spacing: 0.04em;
-    color: var(--accent);
-    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--chan-accent);
+    opacity: 0.85;
+  }
+  .build-chan {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.02em;
+    text-transform: lowercase;
+    color: var(--chan-accent);
+    border: var(--hair) solid color-mix(in oklab, var(--chan-accent) 45%, var(--rule));
+    border-radius: var(--r-sm);
+    padding: 0.1em 0.45em;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 22ch;
+  }
+  .build-kind {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.02em;
+    text-transform: lowercase;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+  .build-date {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    white-space: nowrap;
   }
 
   .build-title {
@@ -197,7 +300,7 @@ const image = item.media.find((m) => m.type === "image");
     color: var(--ink);
   }
   .build-title a:hover {
-    color: var(--accent);
+    color: var(--chan-accent);
     text-decoration: none;
   }
 
@@ -211,6 +314,48 @@ const image = item.media.find((m) => m.type === "image");
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  /* ── hover-preview: CSS-only reveal, no JS ────────────────────────────────
+     Same grid-rows 0fr→1fr trick as ReadGalleryCard: content stays in the DOM
+     (screen readers always have it via the visible summary above) — only its
+     visual presentation is gated behind :hover / :focus-within, so keyboard
+     focus reveals it exactly like a mouse hover does. */
+  .build-preview {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition:
+      grid-template-rows var(--dur-slow) var(--ease-out),
+      margin-block var(--dur-slow) var(--ease-out);
+    margin-block: calc(var(--s-2) * -1);
+  }
+  .build:hover .build-preview,
+  .build:focus-within .build-preview {
+    grid-template-rows: 1fr;
+    margin-block: 0;
+  }
+  .build-preview-inner {
+    overflow: hidden;
+  }
+  .build-excerpt {
+    margin: var(--s-2) 0 0;
+    padding-left: var(--s-3);
+    border-left: var(--hair) solid var(--chan-accent);
+    font-family: var(--font-read);
+    font-style: italic;
+    color: var(--read);
+    font-size: var(--t-xs);
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(-2px);
+    transition:
+      opacity var(--dur) var(--ease-out),
+      transform var(--dur) var(--ease-out);
+  }
+  .build:hover .build-excerpt,
+  .build:focus-within .build-excerpt {
+    opacity: 1;
+    transform: translateY(0);
   }
 
   /* stat strip — workbench telemetry, hairline-ruled, mono */
@@ -227,10 +372,12 @@ const image = item.media.find((m) => m.type === "image");
     display: flex;
     flex-direction: column;
     gap: 0.15em;
+    min-width: 0;
   }
   .stat-end {
     margin-left: auto;
     align-self: center;
+    max-width: 22ch;
   }
   .stat dt {
     font-family: var(--font-mono);
@@ -245,6 +392,11 @@ const image = item.media.find((m) => m.type === "image");
     font-size: var(--t-sm);
     color: var(--ink-dim);
     font-variant-numeric: tabular-nums;
+  }
+  .stat-end dd {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .diff {
@@ -279,16 +431,20 @@ const image = item.media.find((m) => m.type === "image");
     transition: color var(--dur-fast) var(--ease-out);
   }
   .build-srclink:hover {
-    color: var(--accent);
+    color: var(--chan-accent);
     text-decoration: none;
   }
 
   @media (prefers-reduced-motion: reduce) {
     .build,
-    .build-shot img {
+    .build-shot img,
+    .build-body::before,
+    .build-preview,
+    .build-excerpt {
       transition: none;
     }
-    .build:hover {
+    .build:hover,
+    .build:focus-within {
       transform: none;
     }
     .build:hover .build-shot img {

@@ -1,6 +1,8 @@
 ---
 import Shell from "../layouts/Shell.astro";
 import BuildCard from "../components/BuildCard.astro";
+import BuildsSort from "../components/workshop/BuildsSort.astro";
+import { makerChannelStyle } from "../components/workshop/lib/maker-channel-style.js";
 import {
   loadCurated,
   loadMakerSets,
@@ -19,6 +21,27 @@ const ticker = builds.length > 0 ? tickerTitles(builds, 8) : ["the bench is bein
 
 // Maker browse channels for the local filter chips (display order from core).
 const channels = WORKSHOP_BROWSE_CHANNELS;
+
+// Per-channel counts over the WHOLE board — drives each filter chip's live
+// count (same "count = exactly what clicking reveals" contract as ReadsFilter).
+// An item can carry more than one maker channel tag, so a build may count
+// toward several chips — that's correct: it genuinely shows under any of them.
+const channelCounts = new Map<string, number>();
+for (const item of builds) {
+  for (const c of channels) {
+    if (item.topics.includes(c)) channelCounts.set(c, (channelCounts.get(c) ?? 0) + 1);
+  }
+}
+
+// When the board is genuinely sparse, a couple of ghost pin-slots (the SAME
+// motif the empty "stocking the bench" state uses) fill out the row so a
+// lightly-populated board still reads as an intentionally designed pinboard,
+// not an accident of too few cards in a wide masonry. Never shown once the
+// board has enough builds to fill its own rhythm.
+const SPARSE_FLOOR = 6;
+const fillerCount = builds.length > 0 && builds.length < SPARSE_FLOOR
+  ? Math.min(3, SPARSE_FLOOR - builds.length)
+  : 0;
 
 // For the sparse-state "sources being mined" list — a sampling of the real
 // pure-maker registry ids (the benches we pull builds from). Pure data, no fakes.
@@ -39,29 +62,47 @@ const minedSources = [...PURE_MAKER_ALLOWLIST].slice(0, 12);
     </p>
   </header>
 
-  {/* maker-channel browse filter — real buttons, accessible, client-side board filter */}
-  <nav class="ws-filter" data-ws-filter aria-label="Filter builds by maker channel">
-    <button type="button" class="ws-chip is-active" data-ws-channel="" aria-pressed="true">
-      all
-    </button>
-    {channels.map((c) => (
-      <button type="button" class="ws-chip" data-ws-channel={c} aria-pressed="false">
-        {c}
-      </button>
-    ))}
-  </nav>
-
   {
     builds.length > 0 ? (
       <>
+        {/* maker-channel browse filter + sort — real buttons, accessible,
+            client-side board reflow. Only rendered when there's a board to
+            act on (an empty bench has nothing to filter or sort). */}
+        <div class="ws-controls" data-reveal>
+          <nav class="ws-filter" data-ws-filter aria-label="Filter builds by maker channel">
+            <button type="button" class="ws-chip is-active" data-ws-channel="" aria-pressed="true">
+              all<span class="ws-chip-n tnum">{builds.length}</span>
+            </button>
+            {channels.map((c) => (
+              <button
+                type="button"
+                class="ws-chip"
+                data-ws-channel={c}
+                aria-pressed="false"
+                style={`--chan-accent:${makerChannelStyle(c).color}`}
+              >
+                {c}<span class="ws-chip-n tnum">{channelCounts.get(c) ?? 0}</span>
+              </button>
+            ))}
+          </nav>
+          <BuildsSort channelOrder={channels} />
+        </div>
+
         <section class="ws-board" data-ws-board>
           {builds.map((item, i) => (
-            <BuildCard
-              item={item}
-              makerChannels={channels}
-              revealDelay={Math.min(i, 6) * 45}
-            />
+            <BuildCard item={item} revealDelay={Math.min(i, 6) * 45} />
           ))}
+          {/* ghost pin-slots — same motif as the empty state, filling out a
+              sparse board so it never reads as accidentally half-built. */}
+          {fillerCount > 0 &&
+            Array.from({ length: fillerCount }).map((_, i) => (
+              <div class="slot slot-filler" aria-hidden="true" style={`--slot-delay:${i * 70}ms`}>
+                <span class="slot-pin"></span>
+                <span class="slot-line slot-line-1"></span>
+                <span class="slot-line slot-line-2"></span>
+                <span class="slot-line slot-line-3"></span>
+              </div>
+            ))}
         </section>
         {/* shown by JS only when a filter empties the board */}
         <p class="ws-board-empty" data-ws-board-empty hidden>
@@ -153,16 +194,27 @@ const minedSources = [...PURE_MAKER_ALLOWLIST].slice(0, 12);
     white-space: nowrap;
   }
 
-  /* ── maker-channel filter — machined chips, mono ──────────────────────── */
-  .ws-filter {
+  /* ── controls row — filter chips + sort, sharing one instrument rail ──── */
+  .ws-controls {
     display: flex;
+    align-items: flex-end;
     flex-wrap: wrap;
-    gap: var(--s-2);
+    gap: var(--s-3) var(--s-5);
     margin: var(--s-2) 0 var(--s-6);
     padding-top: var(--s-3);
     border-top: var(--hair) solid var(--rule);
   }
+
+  /* ── maker-channel filter — machined chips, mono, ALIVE on active/hover ── */
+  .ws-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+  }
   .ws-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.5ch;
     font-family: var(--font-mono);
     font-size: var(--t-xs);
     letter-spacing: 0.02em;
@@ -175,20 +227,42 @@ const minedSources = [...PURE_MAKER_ALLOWLIST].slice(0, 12);
     transition:
       color var(--dur-fast) var(--ease-out),
       border-color var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
+      background var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-overshoot);
   }
   .ws-chip:hover {
-    color: var(--ink);
+    color: var(--chan-accent, var(--accent));
     border-color: var(--rule-bright);
+    transform: translateY(-1px);
   }
+  .ws-chip:active {
+    transform: translateY(0);
+  }
+  /* each chip carries its own channel's accent (set inline as --chan-accent by
+     the page); "all" has no --chan-accent, so it falls back to the site's
+     amber signal — the SAME centralized identity system BuildCard's pin/spine
+     use, now reinforced at the filter level. */
   .ws-chip.is-active {
-    color: var(--bg);
-    background: var(--accent);
-    border-color: var(--accent);
+    color: var(--chan-accent, var(--accent));
+    border-color: color-mix(in oklab, var(--chan-accent, var(--accent)) 38%, var(--rule));
+    background: color-mix(in oklab, var(--chan-accent, var(--accent)) 8%, transparent);
+    text-shadow: 0 0 8px color-mix(in oklab, var(--chan-accent, var(--accent)) 35%, transparent);
+    animation: ws-chip-pop var(--dur) var(--ease-overshoot);
+  }
+  @keyframes ws-chip-pop {
+    from { transform: scale(0.9); }
+    to { transform: scale(1); }
   }
   .ws-chip:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--focus);
     outline-offset: 2px;
+  }
+  .ws-chip-n {
+    font-size: 0.68rem;
+    color: var(--ink-faint);
+  }
+  .ws-chip.is-active .ws-chip-n {
+    color: color-mix(in oklab, var(--chan-accent, var(--accent)) 75%, var(--ink-faint));
   }
 
   /* ── the board — a true masonry pinboard, distinct from the bento ─────── */
@@ -199,6 +273,13 @@ const minedSources = [...PURE_MAKER_ALLOWLIST].slice(0, 12);
   /* a build that the filter hid collapses out of the column flow cleanly */
   .ws-board :global(.build[hidden]) {
     display: none !important;
+  }
+  /* sparse-board ghost fillers reuse the empty state's `.slot` exactly, just
+     sized to sit inside the masonry columns rather than the bench's grid. */
+  .ws-board .slot-filler {
+    break-inside: avoid;
+    margin-bottom: var(--s-5);
+    min-height: 140px;
   }
   .ws-board-empty {
     margin-top: var(--s-6);
@@ -320,6 +401,11 @@ const minedSources = [...PURE_MAKER_ALLOWLIST].slice(0, 12);
       opacity: 0.7;
       animation: none;
       transform: none;
+    }
+    .ws-chip {
+      transition: color var(--dur-fast) var(--ease-out);
+      transform: none !important;
+      animation: none !important;
     }
   }
 </style>
