@@ -357,6 +357,19 @@ const { formatFacet, channelFacet, collectionCount } = Astro.props;
     border-color: color-mix(in oklab, var(--accent) 38%, var(--rule));
     background: color-mix(in oklab, var(--accent) 8%, transparent);
     text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 35%, transparent);
+    /* a tactile little "confirmed" pop the instant a chip becomes active — since
+       JS only ever ADDS this class to a chip that didn't already have it (the
+       previously-active chip loses it in the same tick), the animation fires
+       fresh on every real activation, never on re-renders. */
+    animation: rchip-pop var(--dur) var(--ease-overshoot);
+  }
+  @keyframes rchip-pop {
+    from {
+      transform: scale(0.9);
+    }
+    to {
+      transform: scale(1);
+    }
   }
   .rchip-active .rchip-n {
     color: color-mix(in oklab, var(--accent) 75%, var(--ink-faint));

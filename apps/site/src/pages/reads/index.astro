@@ -3,6 +3,7 @@ import Shell from "../../layouts/Shell.astro";
 import FeaturedRead from "../../components/reads/FeaturedRead.astro";
 import ReadGalleryCard from "../../components/reads/ReadGalleryCard.astro";
 import ReadsFilter from "../../components/reads/ReadsFilter.astro";
+import ReadsSort from "../../components/reads/ReadsSort.astro";
 import { buildReadsIndex, type ReadInput } from "../../components/reads/lib/build-reads.js";
 import { getCollection } from "astro:content";
 import { FORMAT_NAMES } from "@khazana/core";
@@ -43,23 +44,23 @@ const { featured, gallery, formatFacet, channelFacet, stats } = buildReadsIndex(
         <dl class="reads-stats tnum" aria-label="collection telemetry">
           <div class="rstat">
             <dt>reads</dt>
-            <dd>{stats.total}</dd>
+            <dd data-countup={stats.total}>{stats.total}</dd>
           </div>
           <div class="rstat">
             <dt>minutes</dt>
-            <dd>{stats.totalMinutes}</dd>
+            <dd data-countup={stats.totalMinutes}>{stats.totalMinutes}</dd>
           </div>
           <div class="rstat">
             <dt>formats</dt>
-            <dd>{stats.formats}</dd>
+            <dd data-countup={stats.formats}>{stats.formats}</dd>
           </div>
           <div class="rstat">
             <dt>channels</dt>
-            <dd>{stats.channels}</dd>
+            <dd data-countup={stats.channels}>{stats.channels}</dd>
           </div>
           <div class="rstat">
             <dt>sources</dt>
-            <dd>{stats.sources}</dd>
+            <dd data-countup={stats.sources}>{stats.sources}</dd>
           </div>
         </dl>
       )
@@ -75,6 +76,7 @@ const { featured, gallery, formatFacet, channelFacet, stats } = buildReadsIndex(
         channels={featured.channels}
         summary={featured.summary}
         href={featured.href}
+        publishedAt={featured.publishedAt}
         dateLabel={featured.dateLabel}
         readMin={featured.readMin}
         sourceCount={featured.sourceCount}
@@ -90,6 +92,7 @@ const { featured, gallery, formatFacet, channelFacet, stats } = buildReadsIndex(
               heading order is page h1 → hero h2 → this h2 → card h3, no skips. */}
           <h2 id="collection-heading" class="eyebrow collection-heading">the collection</h2>
           <span class="collection-rule" aria-hidden="true" />
+          <ReadsSort formatOrder={FORMAT_NAMES} />
         </div>
 
         <ReadsFilter
@@ -107,9 +110,11 @@ const { featured, gallery, formatFacet, channelFacet, stats } = buildReadsIndex(
               channels={card.channels}
               summary={card.summary}
               href={card.href}
+              publishedAt={card.publishedAt}
               dateLabel={card.dateLabel}
               readMin={card.readMin}
               sourceCount={card.sourceCount}
+              excerpt={card.excerpt}
               revealDelay={Math.min(i, 6) * 60}
             />
           ))}
@@ -118,6 +123,80 @@ const { featured, gallery, formatFacet, channelFacet, stats } = buildReadsIndex(
     )
   }
 </Shell>
+
+<script>
+  // ── "new since your last visit" ──────────────────────────────────────────
+  // Reads a khz.reads.lastVisit timestamp from localStorage (last-visit.ts —
+  // the ONLY place that key lives) and un-hides the quiet amber "new" badge on
+  // every hero/card published since then, then bumps the stored timestamp to
+  // now. Progressive enhancement only: no-JS visitors, or anyone with storage
+  // unavailable (private mode), simply never see the badge — the rest of the
+  // page is already meaningful without it.
+  import { READS_LAST_VISIT_KEY, isNewSinceVisit } from "../../components/reads/lib/last-visit.js";
+
+  function markNewSinceVisit(): void {
+    let lastVisit: string | null = null;
+    try {
+      lastVisit = localStorage.getItem(READS_LAST_VISIT_KEY);
+    } catch {
+      return; // storage unavailable — degrade to no markers, no crash
+    }
+
+    for (const el of document.querySelectorAll<HTMLElement>("[data-published]")) {
+      const published = el.dataset.published;
+      if (!published || !isNewSinceVisit(published, lastVisit)) continue;
+      const badge = el.querySelector<HTMLElement>("[data-new-badge]");
+      if (badge) badge.hidden = false;
+    }
+
+    try {
+      localStorage.setItem(READS_LAST_VISIT_KEY, new Date().toISOString());
+    } catch {
+      /* private mode / quota — the badge just won't persist between visits */
+    }
+  }
+
+  markNewSinceVisit();
+  document.addEventListener("astro:page-load", markNewSinceVisit);
+</script>
+
+<script>
+  // ── editorial-readout count-up ────────────────────────────────────────────
+  // Same technique as the Observatory (graph.astro): SSR renders the real
+  // number so no-JS/reduced-motion visitors see it immediately; on reveal, JS
+  // counts up from 0 for a touch of "live instrument" life. Progressive
+  // enhancement only — never the source of truth for the value itself.
+  function initCountUps(): void {
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce || !("IntersectionObserver" in window)) return;
+    const els = document.querySelectorAll<HTMLElement>("[data-countup]");
+    const io = new IntersectionObserver(
+      (entries, obs) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          const el = e.target as HTMLElement;
+          obs.unobserve(el);
+          const target = parseFloat(el.dataset.countup ?? "0");
+          if (!Number.isFinite(target)) continue;
+          const dur = 700;
+          const start = performance.now();
+          const tick = (t: number) => {
+            const p = Math.min(1, (t - start) / dur);
+            const eased = 1 - Math.pow(1 - p, 3);
+            el.textContent = String(Math.round(target * eased));
+            if (p < 1) requestAnimationFrame(tick);
+            else el.textContent = String(target);
+          };
+          requestAnimationFrame(tick);
+        }
+      },
+      { threshold: 0.4 },
+    );
+    for (const el of els) io.observe(el);
+  }
+  initCountUps();
+  document.addEventListener("astro:page-load", initCountUps);
+</script>
 
 <style>
   .reads-head {
@@ -183,7 +262,8 @@ const { featured, gallery, formatFacet, channelFacet, stats } = buildReadsIndex(
   .collection-head {
     display: flex;
     align-items: center;
-    gap: var(--s-4);
+    flex-wrap: wrap;
+    gap: var(--s-2) var(--s-4);
     margin-bottom: var(--s-5);
   }
   .collection-head .eyebrow {
