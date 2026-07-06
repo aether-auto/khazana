@@ -15,3 +15,5 @@ export * from "./scoring.js";
 export * from "./dedupe.js";
 export * from "./taste-model.js";
 export * from "./retention.js";
+export * from "./summary.js";
+export * from "./archive.js";

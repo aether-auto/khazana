@@ -7,7 +7,7 @@ import WatchCard from "../components/WatchCard.astro";
 import ListenCard from "../components/ListenCard.astro";
 import CategoryRail from "../components/CategoryRail.astro";
 import {
-  loadCurated,
+  loadFeed,
   tickerTitles,
   splitFeaturedGated,
   dropShorts,
@@ -38,7 +38,7 @@ const now = new Date().toISOString();
 // short (3–5 min) maker tutorials in curated.json for the Workshop, and this guard
 // stops them leaking into the Feed (the register/firehose has no floor of its own).
 // No-body bare links are kept, exactly as before.
-const all = dropBelowFeedFloor(dropJunkVideos(dropShorts(loadCurated(dataDir()))));
+const all = dropBelowFeedFloor(dropJunkVideos(dropShorts(loadFeed(dataDir()))));
 const ticker = tickerTitles(all, 8);
 // Live instrument readout: total signals + how many arrived in the last 24h
 const nowMs = Date.parse(now);

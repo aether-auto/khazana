@@ -31,7 +31,7 @@ export interface DatedEntry {
  * mis-aging it. We re-serialize and compare to reject overflow dates like
  * `2026-13-99` that `Date.parse` would silently roll forward.
  */
-function dayIndex(value: string): number | null {
+export function parseDayIndex(value: string): number | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim());
   if (!match) return null;
   const [, y, m, d] = match;
@@ -65,13 +65,13 @@ export function selectExpired(
   today: string,
   retentionDays: number = DEFAULT_RETENTION_DAYS,
 ): string[] {
-  const todayIdx = dayIndex(today);
+  const todayIdx = parseDayIndex(today);
   if (todayIdx === null) return [];
   const window = Math.max(1, Math.floor(retentionDays));
 
   const expired: string[] = [];
   for (const { id, day } of entries) {
-    const idx = dayIndex(day);
+    const idx = parseDayIndex(day);
     if (idx === null) continue; // malformed → keep (skip)
     const age = todayIdx - idx;
     if (age >= window) expired.push(id);

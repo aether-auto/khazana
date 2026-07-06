@@ -118,6 +118,14 @@ jobs:
       - name: Ingest + curate
         run: pnpm exec tsx scripts/real-ingest.mts
 
+      # ---- 2b. update the committed rolling feed archive (~2-week corpus) ----
+      # Merge the fresh curated snapshot into data/feed/archive.json (union by id,
+      # fresh wins, drop items older than ARCHIVE_WINDOW_DAYS, teaser-trim). This
+      # small file is committed below so the Feed keeps ~2 weeks of past stories
+      # across stateless runs instead of resetting to the latest snapshot.
+      - name: Update feed archive
+        run: pnpm exec tsx scripts/update-archive.mts
+
       # ---- 3. record build ledger so prune uses authoritative ages ----
       - name: Record build day
         run: pnpm exec tsx scripts/record-build-day.mts
@@ -128,14 +136,15 @@ jobs:
       - name: Prune expired history
         run: pnpm exec tsx scripts/prune-history.mts --apply
 
-      # ---- 5. commit back pruned MDX ([skip ci]) ----
-      # Only removals land here (the routine commits new Reads itself); this keeps
-      # the committed blog dir bounded to the retention window.
+      # ---- 5. commit back pruned MDX + the rolling feed archive ([skip ci]) ----
+      # Read removals AND the refreshed data/feed/archive.json land here (the Reads
+      # routine commits new Reads itself); this keeps the committed blog dir bounded
+      # to the retention window and the Feed's ~2-week archive current, once/day.
       - name: Commit generated Reads
         run: |
           git config user.name "khazana-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add apps/site/src/content/blog
+          git add apps/site/src/content/blog data/feed/archive.json
           if git diff --cached --quiet; then
             echo "No Read changes to commit."
           else

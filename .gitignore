@@ -20,7 +20,12 @@ apps/site/.quarantine/
 data/sources.json
 data/sources.pending.json
 data/scout/
-data/feed/
+# Ignore the generated feed snapshots (curated.json/raw.json are large + churn every
+# run) but COMMIT the small rolling archive so the Feed keeps ~2 weeks of past
+# stories across stateless cloud runs. Exclude the dir CONTENTS (not the dir itself)
+# so the re-include below can take effect.
+data/feed/*
+!data/feed/archive.json
 data/taste.json
 # Transient per-run generation artifacts (briefs, per-slug citation ledgers, verify
 # report). The committed output is apps/site/src/content/blog/*.mdx, never these.

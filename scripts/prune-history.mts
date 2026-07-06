@@ -12,8 +12,15 @@
  *   TODAY            override "today" as YYYY-MM-DD (CI/testing; default = now, UTC)
  *
  * Source of truth for an entry's AGE:
- *   1. data/feed/history.json (the build ledger) when present — authoritative;
- *   2. otherwise fall back to scanning blog MDX frontmatter `publishedAt`.
+ *   1. each Read's COMMITTED frontmatter `publishedAt` — AUTHORITATIVE. It is
+ *      committed, accurate, and survives the stateless cloud run.
+ *   2. the build ledger (data/feed/history.json) — FALLBACK ONLY, used when a
+ *      Read has no parseable `publishedAt`.
+ *
+ * Why not the ledger first? history.json is gitignored, so every stateless cloud
+ * run starts without it; `record-build-day` then re-stamps EVERY Read as "today",
+ * which made nothing ever look older than the window — prune removed nothing. The
+ * committed frontmatter can't be reset that way, so it is the true age.
  *
  * Safe by construction: dry-run is the default, every file op is guarded, and
  * the pure age math (selectExpired) clamps RETENTION_DAYS so today is never
@@ -22,7 +29,12 @@
 import { readdirSync, readFileSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { DEFAULT_RETENTION_DAYS, selectExpired, type DatedEntry } from "../packages/core/src/retention.ts";
+import {
+  DEFAULT_RETENTION_DAYS,
+  selectExpired,
+  parseDayIndex,
+  type DatedEntry,
+} from "../packages/core/src/retention.ts";
 import { readLedger, dayStamp } from "./lib/history.mts";
 
 const repoRoot = fileURLToPath(new URL("../", import.meta.url));
@@ -43,7 +55,7 @@ function readSafe(path: string): string {
 }
 
 /** Pull `publishedAt` out of an MDX frontmatter block. Returns "" if absent. */
-function frontmatterPublishedAt(mdx: string): string {
+export function frontmatterPublishedAt(mdx: string): string {
   const fm = /^---\r?\n([\s\S]*?)\r?\n---/.exec(mdx);
   if (!fm) return "";
   const line = /^publishedAt:\s*(.+)$/m.exec(fm[1] ?? "");
@@ -51,40 +63,58 @@ function frontmatterPublishedAt(mdx: string): string {
 }
 
 /**
- * Build the dated-entry list from the ledger when present, else by scanning
- * blog frontmatter. Each entry's `id` is the Read slug.
+ * Build the dated-entry list, aging each Read by its COMMITTED frontmatter
+ * `publishedAt` (authoritative). Only when a Read has no parseable `publishedAt`
+ * do we fall back to the build ledger's recorded day for that slug. Each entry's
+ * `id` is the Read slug. Pure w.r.t. its args (the caller passes the dirs/ledger),
+ * so it's directly unit-testable.
  */
-function gatherEntries(): { entries: DatedEntry[]; source: string } {
-  const ledger = readLedger(ledgerPath);
-
-  if (ledger.days.length > 0) {
-    const entries: DatedEntry[] = [];
-    for (const d of ledger.days) {
-      for (const slug of d.slugs) {
-        entries.push({ id: slug, day: d.day });
-      }
-    }
-    return { entries, source: `ledger (${ledgerPath})` };
+export function gatherEntries(
+  blogDirPath: string,
+  ledgerFilePath: string,
+): { entries: DatedEntry[]; source: string } {
+  const ledger = readLedger(ledgerFilePath);
+  // slug → build-day, for the fallback path only (last write wins).
+  const ledgerDay = new Map<string, string>();
+  for (const d of ledger.days) {
+    for (const slug of d.slugs) ledgerDay.set(slug, d.day);
   }
 
-  // Fallback: scan blog MDX frontmatter publishedAt.
-  const entries: DatedEntry[] = [];
   let files: string[] = [];
   try {
-    files = readdirSync(blogDir).filter((f) => f.endsWith(".mdx") || f.endsWith(".md"));
+    files = readdirSync(blogDirPath).filter((f) => f.endsWith(".mdx") || f.endsWith(".md"));
   } catch {
     files = [];
   }
+
+  const entries: DatedEntry[] = [];
+  let fromFrontmatter = 0;
+  let fromLedger = 0;
+  let undated = 0;
   for (const f of files) {
     const slug = f.replace(/\.(mdx?|md)$/i, "");
-    const day = frontmatterPublishedAt(readSafe(join(blogDir, f)));
-    entries.push({ id: slug, day });
+    const published = frontmatterPublishedAt(readSafe(join(blogDirPath, f)));
+    if (parseDayIndex(published) !== null) {
+      entries.push({ id: slug, day: published }); // authoritative
+      fromFrontmatter++;
+    } else if (ledgerDay.has(slug)) {
+      entries.push({ id: slug, day: ledgerDay.get(slug)! }); // fallback
+      fromLedger++;
+    } else {
+      entries.push({ id: slug, day: published }); // unparseable → selectExpired skips (keeps)
+      undated++;
+    }
   }
-  return { entries, source: `frontmatter scan (${blogDir})` };
+  return {
+    entries,
+    source:
+      `frontmatter publishedAt (${blogDirPath})` +
+      ` — ${fromFrontmatter} dated, ${fromLedger} via ledger fallback, ${undated} undated`,
+  };
 }
 
 function main(): void {
-  const { entries, source } = gatherEntries();
+  const { entries, source } = gatherEntries(blogDir, ledgerPath);
   const expiredSlugs = selectExpired(entries, today, retentionDays);
 
   console.log(`[prune] today=${today} retentionDays=${retentionDays} mode=${apply ? "APPLY" : "DRY-RUN"}`);
@@ -125,4 +155,7 @@ function main(): void {
   if (!apply) console.log("[prune] DRY-RUN — re-run with --apply to delete.");
 }
 
-main();
+// Only run when invoked directly (not when imported by the unit test).
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  main();
+}

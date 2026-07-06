@@ -10,6 +10,7 @@ import {
   MAKER_THRESHOLD,
   makerScore,
   titleBuildSignal,
+  cleanSummary,
   type MakerSets,
   type FeedItem,
 } from "@khazana/core";
@@ -29,36 +30,10 @@ export {
   type MakerSets,
 } from "@khazana/core";
 
-/**
- * Max length of a feed-card `summary` for DISPLAY. Some sources (e.g. Pluralistic)
- * ship the entire post as their RSS `<description>`, so raw summaries range from a
- * sentence to ~95k chars. Rendered verbatim they turn feed cards into walls of text
- * and bloat the page (the register JSON embeds every summary). We clamp to a short
- * teaser at load — the full text is always one click away on the source, and Reads
- * carry their own long-form body.
- */
-export const SUMMARY_MAX_CHARS = 280;
-
-/**
- * Normalize a raw feed summary into a short plain-text teaser: strip any HTML the
- * source left in the description, decode the few common entities, collapse
- * whitespace, and truncate to ~SUMMARY_MAX_CHARS at a word boundary with an
- * ellipsis. Pure + deterministic so SSR and any client re-render agree.
- */
-export function cleanSummary(raw: string, maxChars = SUMMARY_MAX_CHARS): string {
-  if (!raw) return "";
-  const text = raw
-    .replace(/<[^>]*>/g, " ") // drop HTML tags RSS descriptions carry
-    .replace(/&(amp|lt|gt|quot|#39|apos|nbsp);/g, (_m, e: string) =>
-      e === "amp" ? "&" : e === "lt" ? "<" : e === "gt" ? ">" : e === "quot" ? '"' : e === "nbsp" ? " " : "'",
-    )
-    .replace(/\s+/g, " ")
-    .trim();
-  if (text.length <= maxChars) return text;
-  const cut = text.slice(0, maxChars);
-  const lastSpace = cut.lastIndexOf(" ");
-  return (lastSpace > maxChars * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd() + "…";
-}
+// The feed-summary teaser clamp (`cleanSummary` + `SUMMARY_MAX_CHARS`) now lives in
+// @khazana/core so the committed feed archive and the site apply the SAME trim.
+// Re-exported here so existing call sites (`import … from "./feed.js"`) stay stable.
+export { cleanSummary, SUMMARY_MAX_CHARS } from "@khazana/core";
 
 /**
  * Load the curated feed from the pipeline-generated `curated.json`
@@ -79,6 +54,48 @@ export function loadCurated(dataDir: string): FeedItem[] {
     if (parsed.success) out.push({ ...parsed.data, summary: cleanSummary(parsed.data.summary) });
   }
   return out;
+}
+
+/**
+ * Load the committed rolling feed archive (`archive.json`) — the ~2-week corpus
+ * of past stories the daily pipeline commits (see `scripts/update-archive.mts`).
+ * Same contract as `loadCurated`: absent file → empty array; each item validated
+ * with FeedItemSchema (invalid dropped); summaries clamped to a teaser. The
+ * archive stores no `body`, so archived items carry only what the Feed surfaces.
+ */
+export function loadArchive(dataDir: string): FeedItem[] {
+  const path = join(dataDir, "archive.json");
+  if (!existsSync(path)) return [];
+  const raw: unknown = JSON.parse(readFileSync(path, "utf8"));
+  if (!Array.isArray(raw)) return [];
+  const out: FeedItem[] = [];
+  for (const entry of raw) {
+    const parsed = FeedItemSchema.safeParse(entry);
+    if (parsed.success) out.push({ ...parsed.data, summary: cleanSummary(parsed.data.summary) });
+  }
+  return out;
+}
+
+/**
+ * The Feed's corpus: the UNION of the committed archive (DEPTH — past ~2 weeks)
+ * and the fresh curated snapshot (RECENCY — this run's ingest), deduped by `id`.
+ *
+ * The FRESH curated item wins on conflict and keeps its rank position (curated
+ * order first), so the featured bento / rails — which draw from the top of the
+ * list — are unchanged. Archive-only items (older stories no longer in the latest
+ * snapshot) are appended after, landing in the register/firehose tail so past
+ * stories persist instead of vanishing when ingest churns.
+ *
+ * Degrades exactly to today's behavior when the archive is absent/empty: it
+ * simply returns `loadCurated(dataDir)`.
+ */
+export function loadFeed(dataDir: string): FeedItem[] {
+  const fresh = loadCurated(dataDir);
+  const archive = loadArchive(dataDir);
+  if (archive.length === 0) return fresh;
+  const seen = new Set(fresh.map((it) => it.id));
+  const archiveOnly = archive.filter((it) => !seen.has(it.id));
+  return [...fresh, ...archiveOnly];
 }
 
 /** Items whose `topics` include the channel. `null`/empty channel → all items. */

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { selectExpired, DEFAULT_RETENTION_DAYS, type DatedEntry } from "./retention.js";
+import { selectExpired, parseDayIndex, DEFAULT_RETENTION_DAYS, type DatedEntry } from "./retention.js";
 
 // "today" is fixed across these tests so the window boundary is unambiguous.
 const TODAY = "2026-06-28";
@@ -106,5 +106,43 @@ describe("selectExpired", () => {
 
   it("exposes a default retention window of 3", () => {
     expect(DEFAULT_RETENTION_DAYS).toBe(3);
+  });
+
+  // The production retention window (RETENTION_DAYS=14 in pipeline.yml), aged by
+  // each Read's committed frontmatter `publishedAt`. This is the case prune relies
+  // on now that it no longer trusts the resettable build ledger for aging.
+  it("with a 14-day window, prunes a 2026-07-01 Read and keeps a 2026-07-10 one (today 2026-07-20)", () => {
+    const e = [
+      entry("published-07-01", "2026-07-01T09:00:00.000Z"), // age 19 → expired
+      entry("published-07-10", "2026-07-10T09:00:00.000Z"), // age 10 → kept
+    ];
+    expect(selectExpired(e, "2026-07-20", 14)).toEqual(["published-07-01"]);
+  });
+
+  it("keeps all currently-committed Reads (published 2026-06-24…2026-07-05) within 14 days of 2026-07-05", () => {
+    // Sanity: the oldest live Read (2026-06-24, age 11) is inside the 14-day window,
+    // so a build 'today' never wrongly prunes the committed corpus.
+    const committed = [
+      entry("arithmetic-of-ruin", "2026-06-24T09:00:00.000Z"),
+      entry("bloom-filter", "2026-06-25T09:00:00.000Z"),
+      entry("first-digit-law", "2026-06-26T09:00:00.000Z"),
+      entry("carrington-event", "2026-06-27T09:00:00.000Z"),
+      entry("plague-wage", "2026-07-01T09:00:00.000Z"),
+      entry("sparse-moe", "2026-07-05T09:00:00.000Z"),
+    ];
+    expect(selectExpired(committed, "2026-07-05", 14)).toEqual([]);
+  });
+});
+
+describe("parseDayIndex", () => {
+  it("parses a YYYY-MM-DD or full ISO timestamp to a UTC day-index", () => {
+    expect(parseDayIndex("2026-07-01")).toBe(parseDayIndex("2026-07-01T09:00:00.000Z"));
+    expect(parseDayIndex("2026-07-02")! - parseDayIndex("2026-07-01")!).toBe(1);
+  });
+
+  it("returns null for malformed / overflow dates (so callers can skip them)", () => {
+    expect(parseDayIndex("")).toBeNull();
+    expect(parseDayIndex("not-a-date")).toBeNull();
+    expect(parseDayIndex("2026-13-99")).toBeNull();
   });
 });

@@ -5,6 +5,8 @@ import { afterEach, beforeEach, expect, test } from "vitest";
 import type { FeedItem } from "@khazana/core";
 import {
   loadCurated,
+  loadArchive,
+  loadFeed,
   cleanSummary,
   SUMMARY_MAX_CHARS,
   filterByChannel,
@@ -50,6 +52,49 @@ test("loadCurated loads curated.json when present and preserves order", () => {
   );
   const items = loadCurated(dir);
   expect(items.map((i) => i.id)).toEqual(["first", "second"]);
+});
+
+// ── Rolling feed archive (archive ∪ fresh) ────────────────────────────────────
+
+test("loadArchive returns an empty array when archive.json is absent", () => {
+  expect(loadArchive(dir)).toEqual([]);
+});
+
+test("loadArchive loads + validates archive.json and clamps summaries", () => {
+  const huge = "sentence ".repeat(5000);
+  writeFileSync(
+    join(dir, "archive.json"),
+    JSON.stringify([item({ id: "a", summary: huge }), { id: "broken" }]),
+  );
+  const items = loadArchive(dir);
+  expect(items.map((i) => i.id)).toEqual(["a"]); // invalid item dropped
+  expect(items[0]!.summary.length).toBeLessThanOrEqual(SUMMARY_MAX_CHARS + 1);
+});
+
+test("loadFeed degrades to loadCurated when there is no archive", () => {
+  writeFileSync(join(dir, "curated.json"), JSON.stringify([item({ id: "c1" }), item({ id: "c2" })]));
+  expect(loadFeed(dir).map((i) => i.id)).toEqual(["c1", "c2"]);
+});
+
+test("loadFeed unions archive ∪ fresh: fresh order first, archive-only appended, deduped by id", () => {
+  writeFileSync(
+    join(dir, "curated.json"),
+    JSON.stringify([item({ id: "fresh1" }), item({ id: "dup", title: "fresh wins" })]),
+  );
+  writeFileSync(
+    join(dir, "archive.json"),
+    JSON.stringify([item({ id: "dup", title: "stale" }), item({ id: "old1" }), item({ id: "old2" })]),
+  );
+  const out = loadFeed(dir);
+  // fresh order preserved first, then archive-only (old1, old2); dup appears once.
+  expect(out.map((i) => i.id)).toEqual(["fresh1", "dup", "old1", "old2"]);
+  // fresh copy of the shared id wins.
+  expect(out.find((i) => i.id === "dup")!.title).toBe("fresh wins");
+});
+
+test("loadFeed returns archive items when curated is absent (empty→archive-only)", () => {
+  writeFileSync(join(dir, "archive.json"), JSON.stringify([item({ id: "old1" })]));
+  expect(loadFeed(dir).map((i) => i.id)).toEqual(["old1"]);
 });
 
 test("cleanSummary strips HTML, collapses whitespace, and clamps long text", () => {
