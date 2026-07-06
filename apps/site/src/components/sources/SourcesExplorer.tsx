@@ -139,14 +139,6 @@ export default function SourcesExplorer({ data, base }: Props) {
     hydrated.current = true;
   }, []);
 
-  // The page ships a disabled SSR control-bar scaffold (.src-controls) so the
-  // pre-hydration page reads as live; once we own the real controls, retire it so
-  // there aren't two search boxes. (We don't edit the page; just hide its scaffold.)
-  useEffect(() => {
-    const scaffold = document.querySelector<HTMLElement>(".src-controls");
-    if (scaffold) scaffold.style.display = "none";
-  }, []);
-
   const byId = useMemo(() => {
     const m = new Map<string, EnrichedSource>();
     for (const s of data.sources) m.set(s.id, s);
