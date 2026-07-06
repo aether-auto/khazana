@@ -19,14 +19,8 @@ import {
   CATEGORY_MIN_MINUTES,
 } from "../lib/feed.js";
 import { assignBento } from "../lib/bento.js";
-import {
-  CHANNELS,
-  scoreContributions,
-  RANK_WEIGHTS,
-  GAUSSIAN_DEFAULTS,
-  DEFAULT_HALF_LIFE_DAYS,
-  type FeedItem,
-} from "@khazana/core";
+import { CHANNELS, type FeedItem } from "@khazana/core";
+import { toPersonalizeItem, type PersonalizeItem } from "../lib/for-you.js";
 import { dataDir } from "../lib/data.js";
 import { readTimeFromHtml } from "../lib/read-time.js";
 import { extractYouTubeId, buildYouTubeThumbnail } from "../lib/media.js";
@@ -126,36 +120,36 @@ const fallback = rest.slice(0, 20);
 
 // ── "for you" personalization payload ────────────────────────────────────────
 // SSR renders quality order (curated.json is pre-ranked); the client re-orders
-// into an affinity-weighted "for you" ranking ONLY when the live taste model is
-// ready. Personalization is affinity-only: in core `scoreContributions` the sole
-// profile-dependent term is `affinity`, so forYouTotal === base + affinityDelta
-// where `base` is the core total with a NOT-ready profile. We precompute `base`
-// here (same weights/gaussian/clusterSize/now the build ranks with) and ship only
-// {id, base, topics, entities, region} — no bodies. See lib/for-you.ts + its
-// parity test, which locks base + affinityDelta === scoreContributions(...).total.
+// into an affinity-weighted "for you" ranking once THIS device's live taste
+// model clears the readiness gate. Personalization is affinity-only: in core
+// `scoreContributions` the sole profile-dependent term is `affinity`, so
+// forYouTotal === base + affinityDelta where `base` is the core total with a
+// NOT-ready profile. `toPersonalizeItem` (lib/for-you.ts) precomputes `base`
+// (same weights/gaussian/clusterSize/now the build ranks with) and ships only
+// {id, base, topics, entities, region} — no bodies. Its parity test locks
+// base + affinityDelta === scoreContributions(...).total.
+//
+// personalizeData can only ever be CONSUMED when a live Worker endpoint exists
+// for this deployment — feed-personalize.ts's own /summary fetch is a no-op
+// without PUBLIC_WORKER_URL (mirrors Beacon.astro), so for a build without one
+// the whole feature is permanently inert for every visitor. Building + shipping
+// the payload in that case would be pure dead weight, so we gate it here at the
+// one point where that's actually knowable: build time.
+const workerUrl = (import.meta.env.PUBLIC_WORKER_URL ?? "").trim();
 const clusterSizes = new Map<string, number>();
 for (const it of all) {
   if (it.clusterId) clusterSizes.set(it.clusterId, (clusterSizes.get(it.clusterId) ?? 0) + 1);
 }
 const featuredIds = new Set(featured.map((it) => it.id));
-const personalizeData = all.map((it) => {
-  const clusterSize = it.clusterId ? clusterSizes.get(it.clusterId) ?? 1 : 1;
-  const base = scoreContributions(it, {
-    weights: RANK_WEIGHTS,
-    gaussian: GAUSSIAN_DEFAULTS,
-    clusterSize,
-    now,
-    profile: { ready: false, topics: {}, entities: {} },
-    halfLifeDays: DEFAULT_HALF_LIFE_DAYS,
-  }).total;
-  return {
-    id: it.id,
-    base,
-    topics: it.topics,
-    entities: it.entities,
-    region: featuredIds.has(it.id) ? "featured" : "rest",
-  };
-});
+const personalizeData: PersonalizeItem[] = workerUrl
+  ? all.map((it) =>
+      toPersonalizeItem(it, {
+        clusterSize: it.clusterId ? clusterSizes.get(it.clusterId) ?? 1 : 1,
+        now,
+        region: featuredIds.has(it.id) ? "featured" : "rest",
+      }),
+    )
+  : [];
 
 // Channel filter — initial state read from URL at SSR time
 const urlParams = new URLSearchParams(Astro.url.search);
@@ -197,31 +191,42 @@ const delay = (i: number) => Math.min(i, 8) * 60;
   {
     all.length > 0 ? (
       <>
-        {/* "for you" payload (text, not DOM) — {id, base, topics, entities, region}
-            per item, no bodies. The feed-personalize island reads this to compute
-            the affinity re-rank when the live taste model is ready. */}
-        <script
-          type="application/json"
-          id="feed-personalize-data"
-          set:html={JSON.stringify(personalizeData)}
-        />
+        {workerUrl && (
+          <>
+            {/* "for you" payload (text, not DOM) — {id, base, topics, entities, region}
+                per item, no bodies. Only emitted when a live Worker endpoint is
+                configured for this deployment: without one, feed-personalize.ts's
+                /summary fetch is a permanent no-op (mirrors Beacon.astro), so
+                building + shipping this would be dead weight on every load. */}
+            <script
+              type="application/json"
+              id="feed-personalize-data"
+              set:html={JSON.stringify(personalizeData)}
+            />
 
-        {/* Ranking affordance — hidden until the live taste model is ready. The
-            feed-personalize island unhides it and drives the ⇄ toggle:
-            "◈ for you" (affinity re-rank) ⇄ "top ranked" (SSR quality order). */}
-        <div class="rank-toggle" data-rank-toggle hidden>
-          <span class="rt-rule" aria-hidden="true"></span>
-          <button
-            type="button"
-            class="rt-btn"
-            data-rank-btn
-            aria-pressed="true"
-            title="Toggle between your personalized order and the top-ranked order"
-          >
-            <span class="rt-glyph" aria-hidden="true">◈</span>
-            <span class="rt-label" data-rank-label>for you</span>
-          </button>
-        </div>
+            {/* Ranking affordance — ALWAYS visible once a Worker is configured
+                (honest discoverability instead of a silently-hidden control),
+                starting in the honest "calibrating" state — same dot+label
+                language as the Bench's live-pill — until THIS device's taste
+                model clears the readiness gate. feed-personalize.ts flips it
+                live and drives the ⇄ toggle: "◈ for you" (affinity re-rank) ⇄
+                "top ranked" (SSR quality order). */}
+            <div class="rank-toggle" data-rank-toggle>
+              <span class="rt-rule" aria-hidden="true"></span>
+              <button
+                type="button"
+                class="rt-btn"
+                data-rank-btn
+                aria-pressed="false"
+                aria-disabled="true"
+                title="Building your taste model from your reading — check back after a few more visits."
+              >
+                <span class="rt-glyph" data-rank-glyph aria-hidden="true">○</span>
+                <span class="rt-label" data-rank-label>calibrating…</span>
+              </button>
+            </div>
+          </>
+        )}
 
         <!-- Bento: top 30 featured reads — rich, browsable, intentional structure.
              Hero lead (1 full-width feature) + varied mosaic grid beneath.
@@ -449,16 +454,17 @@ const delay = (i: number) => Math.min(i, 8) * 60;
 
   /* ── ranking affordance ("◈ for you" ⇄ "top ranked") ─────────────────────
      A subtle terminal×editorial toggle — mono, accent glyph, hairline rule.
-     Hidden until the live taste model is ready (the island unhides it), so we
-     never imply personalization that isn't there. */
+     ALWAYS visible once a Worker is configured (honest discoverability instead
+     of a silently-hidden control): starts "calibrating" — a faint pulsing
+     hollow dot, the Bench live-pill's dot+label language — until this device's
+     taste model clears the readiness gate, then the feed-personalize island
+     flips it live. We never claim personalization that isn't there yet — we
+     just say plainly when it's still warming up. */
   .rank-toggle {
     display: flex;
     align-items: center;
     gap: var(--s-3);
     margin: var(--s-4) 0 calc(-1 * var(--s-2));
-  }
-  .rank-toggle[hidden] {
-    display: none;
   }
   .rt-rule {
     flex: 1;
@@ -499,6 +505,32 @@ const delay = (i: number) => Math.min(i, 8) * 60;
   .rt-btn[aria-pressed="true"] .rt-glyph {
     color: var(--accent);
     text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 45%, transparent);
+  }
+
+  /* calibrating (aria-disabled="true"): an honest inert state — no hover
+     feedback (nothing to invite a click into), a faint pulsing hollow dot
+     standing in for the accent glyph until the model comes ready. */
+  .rt-btn[aria-disabled="true"] {
+    cursor: default;
+  }
+  .rt-btn[aria-disabled="true"]:hover {
+    color: var(--ink-dim);
+    border-color: var(--rule);
+  }
+  .rt-btn[aria-disabled="true"] .rt-glyph {
+    color: var(--ink-faint);
+    text-shadow: none;
+    animation: rt-pulse 2.6s ease-in-out infinite;
+  }
+  @keyframes rt-pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rt-btn[aria-disabled="true"] .rt-glyph {
+      animation: none;
+      opacity: 1;
+    }
   }
 
   /* Hidden bento cards must collapse out of the grid (they have display:flex
