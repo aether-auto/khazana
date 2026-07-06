@@ -15,3 +15,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test
+      # Strict site build — NOT the resilient wrapper. We WANT CI red when a Read
+      # fails to render (a bad component prop / MDX syntax that tests + `generate
+      # verify` don't catch), so a build-breaker is visible at push time instead
+      # of silently freezing the feed-refresh deploys.
+      - name: Build site (strict)
+        run: pnpm --filter @khazana/site build
+        env:
+          PUBLIC_WORKER_URL: ${{ vars.PUBLIC_WORKER_URL }}
+          PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
+          PUBLIC_BASE_PATH: ${{ vars.PUBLIC_BASE_PATH }}
+          PUBLIC_SITE_GATE_HASH: ${{ vars.PUBLIC_SITE_GATE_HASH }}

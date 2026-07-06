@@ -85,8 +85,26 @@ jobs:
       - name: Ingest + curate
         run: pnpm exec tsx scripts/real-ingest.mts
 
-      - name: Build site
-        run: pnpm --filter @khazana/site build
+      # Resilient build: a single Read that fails to render (bad prop / syntax)
+      # is quarantined out of the collection so the deploy still ships with the
+      # valid Reads. Aborts loudly on a systemic bug (see MAX_QUARANTINE).
+      - name: Build site (resilient)
+        run: pnpm tsx scripts/build-resilient.mts
+
+      - name: Report quarantined Reads
+        if: always()
+        run: |
+          if [ -f apps/site/dist/_quarantine-report.json ]; then
+            echo "::group::Quarantine report"
+            cat apps/site/dist/_quarantine-report.json
+            echo "::endgroup::"
+            count=$(node -e "process.stdout.write(String((require('./apps/site/dist/_quarantine-report.json').quarantined||[]).length))")
+            if [ "$count" != "0" ]; then
+              echo "::warning::$count Read(s) were quarantined (skipped) this build — see the quarantine report above."
+            fi
+          else
+            echo "No quarantine report emitted."
+          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

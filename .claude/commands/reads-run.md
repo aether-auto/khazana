@@ -125,14 +125,36 @@ a draft your agents let through — find the offending file from its output, DRO
 and its slug from the verify args), and re-run until it exits 0. Never commit while this command is
 red.
 
-`validateDraft` now includes an **MDX-syntax lint** (`mdx-lint.ts`) that rejects a draft with inner
-straight/`\"` quotes in a JSX attribute — the recurring build-breaker. So a green `generate verify`
-already confirms this run's new drafts MDX-compile. **Before committing, confirm the drafts still
-build**: rely on that green verify (the compile check is inside it), or if you touched anything
-beyond the new slugs, run `pnpm --filter @khazana/site build` and require it green (~355 pages).
-Never commit on a red verify or a broken build.
+`validateDraft` includes an **MDX-syntax lint** (`mdx-lint.ts`) that rejects some build-breakers
+(e.g. inner straight/`\"` quotes in a JSX attribute). But `generate verify` **only lints syntax —
+it does NOT render**. A draft can pass verify and still throw at SSG time (a component handed a
+malformed prop, a stray `{…}` in prose that MDX evaluates as JS, a runtime `_createMdxContent`
+error). Such a Read compiles past verify, reaches `main`, and then freezes **every** feed-refresh
+build. This has happened; it is the single worst failure mode of this routine.
 
-Then commit and push **only** the kept Reads:
+**MANDATORY build gate — run an ACTUAL build, not just verify.** After the verify gate is green,
+run the resilient build over the full site:
+
+```bash
+pnpm tsx scripts/build-resilient.mts
+```
+
+It builds the site and, if any Read throws during SSG, **quarantines** it (moves it out of the
+collection) and reports it in `apps/site/dist/_quarantine-report.json`. Then:
+
+- **Read the quarantine report.** For **every** slug you authored THIS run that appears in it (or
+  that the build otherwise fails on), the Read does **not** build → **DROP it**: delete its MDX and
+  remove its slug from the commit. **Never `git add` a Read that did not survive a real `astro
+  build`.** Fix-in-place is allowed (correct the offending prop/expression, preserving meaning) —
+  but then re-run the build and confirm it is clean before keeping the Read.
+- If `build-resilient.mts` **ABORTS** (systemic failure — `MAX_QUARANTINE` tripped, or an error not
+  attributable to a single Read), do **not** commit. Investigate: it means a shared component or
+  config broke, not just one bad Read.
+- Report which of this run's slugs were dropped/quarantined and why.
+
+Never commit on a red verify, a broken build, or with any of this run's quarantined slugs staged.
+
+Then commit and push **only** the kept Reads (all of which built clean):
 
 ```bash
 git add apps/site/src/content/blog/
@@ -157,6 +179,9 @@ You run unattended, so be robust:
 - **`ideation-eval.mts` fails** → fall back to running `reads-survey` against the raw data dirs.
 - **`generate verify` stays red after dropping the flagged draft** → do not force a commit; drop
   drafts until it exits 0 (in the worst case, commit nothing).
+- **A Read gets quarantined by `build-resilient.mts` (fails the real build)** → drop that slug from
+  the commit; never `git add` a Read that doesn't build. If the build ABORTS systemically, commit
+  nothing and investigate.
 - A single failed writer or verifier never aborts the whole run — drop that one Read and continue
   with the rest.
 
@@ -167,5 +192,6 @@ You run unattended, so be robust:
 When invoked with a drill argument (e.g. `--drill`, `drill`, or `1 read`), **cap the run to a
 single Read** for fast end-to-end validation of the whole chain: survey → pick exactly **one**
 (your single best groundable candidate) → one writer → one fresh verifier → final QC →
-`generate verify` → commit (only if it passed). Everything else is identical; you are just
-validating the pipeline wiring, not producing volume.
+`generate verify` → `pnpm tsx scripts/build-resilient.mts` (the mandatory real-build gate) →
+commit (only if verify passed AND the Read built clean / was not quarantined). Everything else is
+identical; you are just validating the pipeline wiring, not producing volume.

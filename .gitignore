@@ -1,6 +1,10 @@
 node_modules/
 dist/
 .astro/
+# Ephemeral per-run quarantine: build-resilient.mts moves a Read that fails to
+# build here so the deploy still ships. Never committed — the source Read stays
+# in git; CI's strict build flags it red.
+apps/site/.quarantine/
 .env
 .env.*
 .dev.vars

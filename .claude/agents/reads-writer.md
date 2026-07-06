@@ -106,6 +106,16 @@ verify step can confirm they ran. In order:
   print `DONE: <slug>`. (This is your own pre-flight self-check; the independent
   `reads-verify` worker is the authoritative gate before publish — never treat your own
   self-check as sufficient to ship.)
+- **Every component MUST get valid, prop-exact props — no runtime errors.** The Read has to
+  survive an actual `astro build` (SSG render), NOT just `generate verify` (which only lints
+  syntax and does NOT render). A component handed a malformed prop — a `<Chart>` with a bad
+  data shape, a `<Diagram>` edge pointing at a missing node id, a `<ParameterPlay>` with a
+  broken formula — throws `_createMdxContent` at build time and freezes the whole deploy. Also
+  watch prose: a stray `{…}` in body text is parsed by MDX as a JS expression (e.g. `g_{i,t}`
+  became `(i,t)` → `i is not defined`); write literal braces as `(…)` or escape them. Match
+  each component's props exactly to that format's `references/mdx-contract.md`. A Read that
+  throws at build is DROPPED — it never ships — so a runtime-erroring component wastes the
+  whole assignment.
 
 ## Length floors and authoring doctrine
 
