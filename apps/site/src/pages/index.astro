@@ -1019,6 +1019,10 @@ const delay = (i: number) => Math.min(i, 8) * 60;
   // Listens to the khz:channelchange event dispatched by Shell's header filter
   // script. Filters bento cards and category rows live without a page reload.
   // The register's own initRegister() also listens to this event.
+  //
+  // The actual show/hide-by-channel predicate is shared (apps/site/src/lib/filter) —
+  // this file only knows which DOM section each filter applies to.
+  import { applyFacetVisibility } from "../lib/filter/index.js";
 
   // Resolve the effective channel set from a khz:channelchange detail.
   // Single channel → [ch]; group → channels[]; "all" → [] (no filter).
@@ -1028,16 +1032,16 @@ const delay = (i: number) => Math.min(i, 8) * 60;
     return [];
   }
 
+  // Cards carry their channels as a space-separated `data-channels` attribute
+  // (the site-wide convention — see FeedCard/WatchCard/ListenCard/etc.).
+  function channelsOf(card: HTMLElement): string[] {
+    return (card.dataset.channels ?? "").split(" ").filter(Boolean);
+  }
+
   function applyBentoFilter(activeChannels: string[]): void {
     const cards = document.querySelectorAll<HTMLElement>(".bento [data-channels]");
     const empty = document.querySelector<HTMLElement>(".bento-empty");
-    let shown = 0;
-    cards.forEach((card) => {
-      const cardChannels = (card.dataset.channels ?? "").split(" ").filter(Boolean);
-      const match = activeChannels.length === 0 || cardChannels.some((c) => activeChannels.includes(c));
-      card.hidden = !match;
-      if (match) shown++;
-    });
+    const shown = applyFacetVisibility(cards, channelsOf, activeChannels);
     if (empty) empty.hidden = shown !== 0;
   }
 
@@ -1046,13 +1050,7 @@ const delay = (i: number) => Math.min(i, 8) * 60;
     if (!browse) return;
     const rows = browse.querySelectorAll<HTMLElement>("[data-catrow]");
     const empty = browse.querySelector<HTMLElement>(".browse-empty");
-    let shown = 0;
-    rows.forEach((row) => {
-      const rowChannel = row.dataset.catrowChannel ?? "";
-      const match = activeChannels.length === 0 || activeChannels.includes(rowChannel);
-      row.hidden = !match;
-      if (match) shown++;
-    });
+    const shown = applyFacetVisibility(rows, (row) => row.dataset.catrowChannel ?? "", activeChannels);
     if (empty) empty.hidden = shown !== 0 || activeChannels.length === 0;
   }
 
@@ -1061,13 +1059,7 @@ const delay = (i: number) => Math.min(i, 8) * 60;
     if (!section) return;
     const cards = section.querySelectorAll<HTMLElement>("[data-channels]");
     if (cards.length === 0) return;
-    let shown = 0;
-    cards.forEach((card) => {
-      const cardChannels = (card.dataset.channels ?? "").split(" ").filter(Boolean);
-      const match = activeChannels.length === 0 || cardChannels.some((c) => activeChannels.includes(c));
-      card.hidden = !match;
-      if (match) shown++;
-    });
+    const shown = applyFacetVisibility(cards, channelsOf, activeChannels);
     section.hidden = shown === 0 && activeChannels.length > 0;
   }
 
@@ -1076,13 +1068,7 @@ const delay = (i: number) => Math.min(i, 8) * 60;
     if (!section) return;
     const cards = section.querySelectorAll<HTMLElement>("[data-channels]");
     if (cards.length === 0) return;
-    let shown = 0;
-    cards.forEach((card) => {
-      const cardChannels = (card.dataset.channels ?? "").split(" ").filter(Boolean);
-      const match = activeChannels.length === 0 || cardChannels.some((c) => activeChannels.includes(c));
-      card.hidden = !match;
-      if (match) shown++;
-    });
+    const shown = applyFacetVisibility(cards, channelsOf, activeChannels);
     section.hidden = shown === 0 && activeChannels.length > 0;
   }
 

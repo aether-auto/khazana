@@ -16,6 +16,7 @@ import {
 } from "@khazana/core";
 import { readTimeFromHtml } from "./read-time.js";
 import { extractYouTubeId, isYouTubeShort } from "./media.js";
+import { filterItems } from "./filter/index.js";
 
 // The maker (Workshop) vocabulary, source sets, scorer, and threshold now live
 // in @khazana/core (shared with curate). Re-export the ones the Workshop page /
@@ -100,8 +101,7 @@ export function loadFeed(dataDir: string): FeedItem[] {
 
 /** Items whose `topics` include the channel. `null`/empty channel → all items. */
 export function filterByChannel(items: FeedItem[], channel: string | null): FeedItem[] {
-  if (!channel) return items;
-  return items.filter((it) => it.topics.includes(channel));
+  return filterItems(items, (it) => it.topics, channel ? [channel] : []);
 }
 
 /**

@@ -13,7 +13,10 @@
 //
 // Channel filter: the ?channel= param (and the in-page filter links) filter the
 // FULL tail set — pagination then walks the filtered list, so "load more" and
-// the filter compose correctly.
+// the filter compose correctly. The predicate itself is shared (apps/site/src/
+// lib/filter) — same OR-within-facet, empty-selection-shows-all semantics as
+// every other channel filter on the site.
+import { filterItems } from "../lib/filter/index.js";
 
 interface RegisterItem {
   id: string;
@@ -113,8 +116,7 @@ function initRegister(): void {
   if (view !== "list" && view !== "card") view = "list";
 
   function filterByChannels(set: string[]): RegisterItem[] {
-    if (set.length === 0) return all;
-    return all.filter((it) => it.topics.some((t) => set.includes(t)));
+    return filterItems(all, (it) => it.topics, set);
   }
 
   let filtered = filterByChannels(activeChannels);

@@ -331,6 +331,9 @@ const minedSources = [...PURE_MAKER_ALLOWLIST].slice(0, 12);
   // a chip shows only cards whose channels include it. Real <button aria-pressed>
   // controls; "all" clears the filter. Also dispatches khz:channelchange so the
   // pattern is consistent across the app, but the board listens locally (no nav).
+  // The show/hide predicate itself is shared — see apps/site/src/lib/filter.
+  import { applyFacetVisibility } from "../lib/filter/index.js";
+
   function initWorkshopFilter(): void {
     const nav = document.querySelector<HTMLElement>("[data-ws-filter]");
     const board = document.querySelector<HTMLElement>("[data-ws-board]");
@@ -341,13 +344,12 @@ const minedSources = [...PURE_MAKER_ALLOWLIST].slice(0, 12);
     const empty = document.querySelector<HTMLElement>("[data-ws-board-empty]");
 
     function apply(channel: string): void {
-      let shown = 0;
-      for (const card of cards) {
-        const cardChannels = (card.dataset.channels ?? "").split(" ").filter(Boolean);
-        const match = channel === "" || cardChannels.includes(channel);
-        card.hidden = !match;
-        if (match) shown++;
-      }
+      const active = channel ? [channel] : [];
+      const shown = applyFacetVisibility(
+        cards,
+        (card) => (card.dataset.channels ?? "").split(" ").filter(Boolean),
+        active,
+      );
       if (empty) empty.hidden = shown !== 0;
     }
 

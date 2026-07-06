@@ -18,6 +18,7 @@ import {
   type FeedItem,
   type FormatName,
 } from "@khazana/core";
+import { matchesFacet } from "../../../lib/filter/index.js";
 
 // ── Candidate shape the page serializes at build time ────────────────────────
 // RerankItem carries the FULL set of FeedItem fields the scorer reads (body,
@@ -126,15 +127,19 @@ export function applyDiversityFloor<T extends { kind: FeedItem["kind"]; tasteSco
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-/** Does the item survive the current channel/format filters and read-time floor? */
+/**
+ * Does the item survive the current channel/format filters and read-time floor?
+ * Channel/format matching is the shared predicate (apps/site/src/lib/filter) —
+ * empty selection / "all" sentinel both mean "show everything".
+ */
 function passesFilters(it: RerankItem, opts: RerankOpts): boolean {
   if (it.readMin < opts.gates.minReadMinutes) return false;
-  if (opts.filters.channels.length > 0 && !opts.filters.channels.includes(it.channel)) return false;
+  if (!matchesFacet(it.channel, opts.filters.channels)) return false;
   // Format filtering is by channel→format membership; "all" passes everything.
   // (The page maps format → channels when it builds the candidate set; here we
   // only honor an explicit single-format restriction via the item's group/channel
   // when provided. With "all" — the default — nothing is excluded.)
-  if (opts.filters.format !== "all" && it.group !== opts.filters.format) return false;
+  if (!matchesFacet(it.group, opts.filters.format !== "all" ? [opts.filters.format] : [])) return false;
   return true;
 }
 
