@@ -25,6 +25,7 @@ import {
   RANK_WEIGHTS,
   GAUSSIAN_DEFAULTS,
   DEFAULT_HALF_LIFE_DAYS,
+  type FeedItem,
 } from "@khazana/core";
 import { dataDir } from "../lib/data.js";
 import { readTimeFromHtml } from "../lib/read-time.js";
@@ -38,7 +39,26 @@ const now = new Date().toISOString();
 // short (3–5 min) maker tutorials in curated.json for the Workshop, and this guard
 // stops them leaking into the Feed (the register/firehose has no floor of its own).
 // No-body bare links are kept, exactly as before.
-const all = dropBelowFeedFloor(dropJunkVideos(dropShorts(loadFeed(dataDir()))));
+const rawFeed = dropJunkVideos(dropShorts(loadFeed(dataDir())));
+
+// Read-time is computed ONCE per item, right here, at the earliest point the
+// full-text corpus is assembled — keyed by id so every downstream consumer
+// (the floor/feature gates below, the category-rail substantial check, the
+// register payload, and FeedCard/FeatureCard/CategoryRail's own display) reads
+// this map instead of re-parsing the same HTML body 2-5x over. Only items with
+// a body get an entry; bodyless (link-only) items have no reading time.
+const readMinutesById = new Map<string, number>();
+for (const it of rawFeed) {
+  if (it.body) readMinutesById.set(it.id, readTimeFromHtml(it.body));
+}
+// Accessor for the two feed.ts gates below (they only invoke it when a body
+// is present, so the `?? 0` fallback is never actually exercised).
+const readMinutesOf = (it: FeedItem) => readMinutesById.get(it.id) ?? 0;
+// Display-side lookup: null for link-only items (matches the old `item.body ?
+// readTimeFromHtml(item.body) : null` shape every consumer used).
+const readMinOf = (it: FeedItem): number | null => readMinutesById.get(it.id) ?? null;
+
+const all = dropBelowFeedFloor(rawFeed, readMinutesOf);
 const ticker = tickerTitles(all, 8);
 // Live instrument readout: total signals + how many arrived in the last 24h
 const nowMs = Date.parse(now);
@@ -52,7 +72,7 @@ const freshCount = all.filter((it) => nowMs - Date.parse(it.publishedAt) < 24 * 
 // Expanded from 10 → 30 for the redesigned bento (richer browsable area).
 // Structure preserved for future personalization: ordering is pure score-rank
 // today; a personalization layer can slot into the ordering without API changes.
-const { featured, rest } = splitFeaturedGated(all, 30);
+const { featured, rest } = splitFeaturedGated(all, 30, readMinutesOf);
 const cells = assignBento(featured);
 
 // Category browse: bucket the rest by primary topic, filter to channels with
@@ -63,7 +83,7 @@ const allBuckets = bucketByChannel(rest);
 const categoryRails = CHANNELS.flatMap((ch) => {
   const bucket = allBuckets.get(ch);
   if (!bucket) return [];
-  const substantial = bucket.filter((it) => it.body && readTimeFromHtml(it.body) >= CATEGORY_MIN_MINUTES);
+  const substantial = bucket.filter((it) => it.body && readMinutesOf(it) >= CATEGORY_MIN_MINUTES);
   if (substantial.length < CATEGORY_MIN_ITEMS) return [];
   return [{ channel: ch, items: substantial }];
 });
@@ -75,8 +95,8 @@ const listenItems = selectListenRail(rest, 10);
 
 // The tail ships as a single JSON payload (text, not DOM) — the register script
 // builds compact rows/cards from it in small batches. Trim to just the fields
-// the register needs (smaller payload, no body/media blobs). readMinutes is
-// pre-computed here at build time so the client never sees raw body HTML.
+// the register needs (smaller payload, no body/media blobs). readMinutes reads
+// the map built once above — no re-parsing of raw body HTML here either.
 const registerData = rest.map((it) => {
   // Derive YouTube videoId at build time from the canonical URL so the client
   // never needs to parse URLs or make API calls. Only set for video kind.
@@ -95,7 +115,7 @@ const registerData = rest.map((it) => {
     score: it.metrics?.score,
     comments: it.metrics?.comments,
     // Only include readMinutes for full-text items (body present); null means link-only.
-    readMinutes: it.body ? readTimeFromHtml(it.body) : null,
+    readMinutes: readMinOf(it),
     // Video affordance: pre-computed at build time, null for non-video items.
     videoId: videoId ?? null,
     thumbnailUrl: videoId ? buildYouTubeThumbnail(videoId) : null,
@@ -209,9 +229,9 @@ const delay = (i: number) => Math.min(i, 8) * 60;
         <section class="bento" aria-label="Featured signals" aria-live="polite" data-section="bento">
           {cells.map((cell) =>
             cell.size === "feature" ? (
-              <FeatureCard item={cell.item} now={now} revealDelay={delay(cell.index)} />
+              <FeatureCard item={cell.item} now={now} revealDelay={delay(cell.index)} readMinutes={readMinOf(cell.item)} />
             ) : (
-              <FeedCard item={cell.item} now={now} size={cell.size} revealDelay={delay(cell.index)} />
+              <FeedCard item={cell.item} now={now} size={cell.size} revealDelay={delay(cell.index)} readMinutes={readMinOf(cell.item)} />
             ),
           )}
           <p class="bento-empty" hidden>
@@ -261,7 +281,7 @@ const delay = (i: number) => Math.min(i, 8) * 60;
               <p class="browse-eyebrow">browse by topic</p>
             </div>
             {categoryRails.map(({ channel, items }) => (
-              <CategoryRail channel={channel} items={items} now={now} />
+              <CategoryRail channel={channel} items={items} now={now} readMinutesById={readMinutesById} />
             ))}
             <p class="browse-empty" hidden>
               No category rows for this channel.

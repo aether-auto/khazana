@@ -15,13 +15,20 @@ interface Props {
   revealDelay?: number;
   /** Bento cell size — drives the grid span (see index.astro grid CSS). */
   size?: BentoSize;
+  /**
+   * Precomputed read-time (minutes), computed ONCE in index.astro's build and
+   * threaded down as a prop so this card never re-parses the item's HTML body.
+   * `null` means link-only (no body). Omit only if the caller genuinely has no
+   * precomputed value — the card then falls back to computing it itself.
+   */
+  readMinutes?: number | null;
 }
-const { item, now, revealDelay = 0, size = "regular" } = Astro.props;
+const { item, now, revealDelay = 0, size = "regular", readMinutes } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const channelHref = (c: string) => `${base}/?channel=${c}`;
 const readHref = `${base}/item/${item.id}`;
 // Only show reading time for items with real full-text body (on-khazana reads).
-const readMin = item.body ? readTimeFromHtml(item.body) : null;
+const readMin = readMinutes !== undefined ? readMinutes : item.body ? readTimeFromHtml(item.body) : null;
 
 // Video affordance: extract videoId at build time for the thumbnail + play glyph.
 const videoId = item.kind === "video" ? extractYouTubeId(item.url) : null;
