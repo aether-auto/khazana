@@ -81,10 +81,10 @@ ds-sports, data-strategy, finance, ideas, diy, 3d-printing, iot, embedded, ai-pr
 | Tier | Used for | Cost |
 |---|---|---|
 | **Free LLM** (Gemini / NVIDIA NIM free tier) | High-volume per-item enrichment: tag, summarize, entity extraction | $0 |
-| **Claude Sonnet** (subscription, via Claude Action) | Source Scout credibility reasoning; most blog copywriting (Dispatch, Field Notes, Teardown, Primer, Build Log); verification passes | subscription, default tier |
-| **Claude Opus** (subscription) | Highest-value flagship prose (Chronicle); genuinely hard credibility calls. Used sparingly. | subscription, used rarely |
+| **Claude Sonnet 5** (subscription) | ALL blog copywriting, every format including Chronicle (survey → write → verify); Source Scout credibility reasoning; the fact-check/verification passes | subscription, default tier |
+| **Claude Opus** (subscription) | The Reads-run **orchestrator's own** curation/QC judgement only (`reads-run` picking the slate, judging verdicts) — never per-format prose. Used sparingly. | subscription, used rarely |
 
-Rule of thumb: **free LLM for volume, Sonnet for the work, Opus only when quality truly demands it.**
+Rule of thumb: **free LLM for volume, Sonnet 5 for every format's writing and verification, Opus only for the orchestrator's own curation/QC judgement.**
 
 ---
 

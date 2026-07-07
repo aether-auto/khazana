@@ -16,8 +16,9 @@ front of their chain and refuse to draft until its outputs exist.
 **What this skill is NOT.** It is not the deep-research harness's plumbing. It borrows
 that harness's *methodology* — plan → fan-out explore → appraise → triangulate →
 converge → synthesize with quality gates — but runs entirely inside one Claude Code
-Action on the subscription (Sonnet for the work, Opus only for the hardest credibility
-calls), uses only free tools (`WebSearch`, `WebFetch`, `scripts/fetch-data.py`), and
+Action on the subscription (Sonnet 5 for every format's writing, research, and
+verification; Opus only for the orchestrator's own slate curation/QC), uses only free
+tools (`WebSearch`, `WebFetch`, `scripts/fetch-data.py`), and
 writes khazana artifacts, not `ai-docs/sessions`. No Gemini, no OpenRouter, no paid
 data APIs, no session-dir machinery.
 

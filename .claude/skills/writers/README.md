@@ -79,6 +79,34 @@ are marked with `<phase>` tags so the verify step can confirm they ran:
    component allow-list; run `check-links.py`; write the file; print `DONE: <slug>` (or
    `FAIL: <slug> — <reason>` and do not write).
 
+## The repair cycle — WHOLE-DOCUMENT SWEEP (binding on every writer skill)
+
+A draft that fails `reads-verify` gets **exactly one** fix-and-reverify cycle (see
+`reads-run.md` Stage 5): the orchestrator sends the draft back to a writer with the verifier's
+specific defect list. A second failure DROPS the Read, so the repair must be done right.
+
+**HARD RULE.** When correcting ANY value, number, figure, name, unit, or claim, the writer MUST
+do a **WHOLE-DOCUMENT SWEEP**: search the ENTIRE draft for the OLD value and every restatement of
+it — prose, tables, `<DataTable>`/`<StatBand>`/`<Chart>` props, captions, `<Annotation>`s,
+`<Sidenote>`s, `<Pullquote>`s, headings — and update **every** occurrence so the document can
+never contradict itself. A single-site edit that leaves a stale copy elsewhere is the **#1 cause
+of re-verify failure** — this has actually happened: prose fixed to "0.31" while a `<Chart>` prop
+still read "0.29"; a `<DataTable>` still said "3,255" while the prose said "3,231"; prose said
+`O(n³)` while a code comment still said `O(n²)`. The pipeline's deterministic gate now catches
+same-labeled-quantity-different-value cases across components and prose, but it CANNOT catch
+symbolic/notational mismatches or paraphrased restatements — that remains the writer's job.
+
+Before handing a repaired draft back, confirm this checklist explicitly:
+
+1. **Identify** every defect the verifier flagged and the correct value/claim for each.
+2. **Search the whole MDX** for every restatement of each OLD value — numeric, symbolic, and
+   paraphrased — across prose AND every component prop AND every caption/annotation/sidenote.
+3. **Update every occurrence** to the corrected value/claim — confirm none are left stale.
+4. **Re-read the full document end to end once more** to confirm no restatement was missed and
+   the fix itself didn't introduce a NEW contradiction elsewhere.
+
+Only then re-emit `DONE: <slug>` for re-verification.
+
 ## How the GitHub Action invokes a writer
 
 The generate pipeline plans assignments and writes one brief per post. The Action
