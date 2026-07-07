@@ -56,7 +56,18 @@ export function registryChannelIds(registry: Registry): Set<string> {
   return set;
 }
 
-/** The canonical channel feed URL (what we'd register as a new source). */
+/**
+ * The canonical channel feed URL (what we'd register as a new source, and
+ * also the per-source `url` every existing youtube `SourceEntry` fetches on
+ * each ingest run via the generic RSS path in `build-source.ts`).
+ *
+ * KNOWN DEGRADED (out of scope here): this endpoint has been 404ing for every
+ * channel, which struck all ~208 existing youtube sources to their permanent-
+ * failure threshold and auto-disabled them (`source-verify.ts`). That auto-
+ * disable is no longer a one-way door — `isReprobeEligible` + `runIngest`'s
+ * bounded re-probe will pick them back up and re-enable them automatically
+ * once this endpoint starts responding again, no manual registry edit needed.
+ */
 export function channelFeedUrl(channelId: string): string {
   return `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
 }

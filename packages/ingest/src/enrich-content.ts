@@ -395,10 +395,13 @@ async function pooledMap<T>(items: T[], limit: number, fn: (item: T) => Promise<
  * (article full-text, YouTube/podcast transcripts). Resilient and bounded; a
  * failure on any item never affects others or the run. Returns the same array.
  *
- * Article sources we attempt full-text extraction for. Others (reddit/hn/x)
- * already carry their own text and are skipped.
+ * Article sources we attempt full-text extraction for. Others (reddit/x)
+ * already carry their own text and are skipped. `hn` items are link+comments
+ * with only a tiny snippet — the linked article needs the same fallback
+ * chain as rss/news, or hn items can never clear curate's full-text gate
+ * (`isFullTextRead` / `MIN_FULLTEXT_CHARS`) and silently never reach the feed.
  */
-const ARTICLE_TYPES = new Set(["news", "eng-blog", "rss", "arxiv"]);
+const ARTICLE_TYPES = new Set(["news", "eng-blog", "rss", "arxiv", "hn"]);
 
 export async function enrichContent(
   items: FeedItem[],

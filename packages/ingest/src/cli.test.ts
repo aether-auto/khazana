@@ -82,7 +82,43 @@ test("a permanent 404, struck to threshold, auto-disables (after failed rediscov
   expect((bad.lastError as { kind: string }).kind).toBe("permanent");
 });
 
-test("disabled sources are skipped on the next run", async () => {
+test("a disabled source still inside its re-probe window is skipped on the next run", async () => {
+  writeFileSync(
+    join(dir, "sources.json"),
+    JSON.stringify({
+      version: 1,
+      sources: [
+        { id: "good", type: "rss", url: "https://a.com/feed", channels: ["tech"] },
+        {
+          id: "off",
+          type: "rss",
+          url: "https://off.com/feed",
+          channels: ["ai"],
+          enabled: false,
+          status: "disabled",
+          disabledAt: "2026-06-22T00:00:00.000Z", // 1 day before NOW — well inside the 7-day window
+        },
+      ],
+    }),
+  );
+  let offHit = false;
+  const fetchFn: FetchFn = async (url) => {
+    if (url.includes("off.com")) offHit = true;
+    return { ok: true, status: 200, text: async () => RSS, json: async () => ({}) };
+  };
+  await main(dir, NOW, fetchFn);
+  expect(offHit).toBe(false); // never fetched
+
+  const off = loadReg().sources.find((s) => s.id === "off")!;
+  expect(off.status).toBe("disabled"); // untouched (no fetch result)
+  expect(off.enabled).toBe(false);
+});
+
+test("a disabled source past its re-probe window self-heals: re-fetched and re-enabled on success", async () => {
+  // No `disabledAt` — exactly the shape of the ~208 pre-existing youtube
+  // sources auto-disabled before this field existed. Treated as already past
+  // the window, so a resolved systemic outage (the actual bug this fixes)
+  // self-heals on the very next run without a manual registry edit.
   writeFileSync(
     join(dir, "sources.json"),
     JSON.stringify({
@@ -99,9 +135,10 @@ test("disabled sources are skipped on the next run", async () => {
     return { ok: true, status: 200, text: async () => RSS, json: async () => ({}) };
   };
   await main(dir, NOW, fetchFn);
-  expect(offHit).toBe(false); // never fetched
+  expect(offHit).toBe(true); // bounded single re-probe fetch this run
 
   const off = loadReg().sources.find((s) => s.id === "off")!;
-  expect(off.status).toBe("disabled"); // untouched (no fetch result)
-  expect(off.enabled).toBe(false);
+  expect(off.status).toBe("active"); // re-probe succeeded → fully re-enabled
+  expect(off.enabled).toBe(true);
+  expect(off.disabledAt).toBeUndefined();
 });

@@ -31,6 +31,30 @@ test("legacy entries with no health/lifecycle fields validate unchanged", () => 
   expect(hn.lastOkAt).toBeUndefined();
   expect(hn.lastError).toBeUndefined();
   expect(hn.resolvedUrl).toBeUndefined();
+  expect(hn.disabledAt).toBeUndefined();
+});
+
+test("legacy DISABLED entry with no disabledAt still parses (backward-compat for the re-probe field)", () => {
+  // Exactly the shape of the ~208 youtube sources already killed by the
+  // videos.xml discovery outage before `disabledAt` existed.
+  const reg = parseRegistry({
+    version: 1,
+    sources: [
+      {
+        id: "yt-dead",
+        type: "youtube",
+        url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCxxxxxxxxxxxxxxxxxxxxxx",
+        channels: ["tech"],
+        enabled: false,
+        status: "disabled",
+        consecutiveFailures: 3,
+      },
+    ],
+  });
+  const s = reg.sources[0]!;
+  expect(s.enabled).toBe(false);
+  expect(s.status).toBe("disabled");
+  expect(s.disabledAt).toBeUndefined();
 });
 
 test("parseRegistry accepts and round-trips the new health/lifecycle fields", () => {
@@ -47,6 +71,7 @@ test("parseRegistry accepts and round-trips the new health/lifecycle fields", ()
         lastOkAt: "2026-06-01T00:00:00.000Z",
         lastError: { kind: "permanent", code: 404, at: "2026-06-30T00:00:00.000Z" },
         resolvedUrl: "https://e.com/new-feed.xml",
+        disabledAt: "2026-06-30T00:00:00.000Z",
       },
     ],
   });
@@ -56,6 +81,7 @@ test("parseRegistry accepts and round-trips the new health/lifecycle fields", ()
   expect(s.lastOkAt).toBe("2026-06-01T00:00:00.000Z");
   expect(s.lastError).toEqual({ kind: "permanent", code: 404, at: "2026-06-30T00:00:00.000Z" });
   expect(s.resolvedUrl).toBe("https://e.com/new-feed.xml");
+  expect(s.disabledAt).toBe("2026-06-30T00:00:00.000Z");
 });
 
 test("parseRegistry rejects an unknown status value", () => {
