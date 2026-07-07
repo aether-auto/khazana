@@ -5,3 +5,6 @@ export * from "./brief.js";
 export * from "./validate.js";
 export * from "./verify.js";
 export * from "./fact-checker.js";
+export * from "./richness.js";
+export * from "./component-contract.js";
+export * from "./component-catalog.js";

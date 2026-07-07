@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { CitationLedgerEntrySchema, FeedItemSchema, type CitationLedger, type FeedItem } from "@khazana/core";
 import type { TastePayload } from "@khazana/curate";
 import type { VerifyReport } from "./verify.js";
+import type { ComponentCatalog } from "./component-catalog.js";
 
 const EMPTY_TASTE: TastePayload = { ready: false, topics: {}, entities: {}, formatAffinity: {} };
 
@@ -103,5 +104,18 @@ export function writeReport(dataDir: string, report: VerifyReport): string {
   const path = join(dataDir, "generation", "report.json");
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, JSON.stringify(report, null, 2) + "\n");
+  return path;
+}
+
+/**
+ * Commit the component catalog snapshot where writer skills can reference it
+ * during Internalize (see `.claude/skills/writers/README.md`), NOT under
+ * `data/generation/` (which is gitignored/ephemeral) — the catalog is meant to
+ * be a checked-in artifact writers read like any other skill reference.
+ */
+export function writeComponentCatalog(repoRoot: string, catalog: ComponentCatalog): string {
+  const path = join(repoRoot, ".claude", "skills", "writers", "component-catalog.json");
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, JSON.stringify(catalog, null, 2) + "\n");
   return path;
 }

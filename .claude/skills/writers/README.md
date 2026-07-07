@@ -34,7 +34,17 @@ Figure / Stepper / Table / Scrolly / StateMachine / …) per ~800–1,000 words 
 6,000-word read carries ~6–8 substantive islands, not two. Reach the 20–25 min depth through *more
 knowledge-carrying components and more real material* (scenes, data layers, mechanism coverage,
 worked examples), never through padding or hedging. **Know and use the FULL per-format kit** — the
-authoritative set is each format's `references/mdx-contract.md`, not a memorized subset.
+authoritative set is each format's `references/mdx-contract.md`, not a memorized subset. **During
+Internalize, consult `component-catalog.json`** (in this directory, regenerated via
+`pnpm --filter @khazana/generate generate catalog`) for the full ~45-component palette — blurb,
+props, kit membership, and LIVE usage count per component — so you pick from the whole kit instead
+of defaulting to the same 2–3.
+
+This density mandate is no longer just prose: `packages/generate/src/richness.ts` computes a
+per-draft score (words, distinct knowledge-carrying components, words-per-island vs. the
+~800–1,000-word target) and `generate verify` surfaces it every run. It HARD-FAILS only an
+egregious under-build (a long-form draft with fewer than 2 distinct knowledge-carrying components);
+anything else below target is reported, not blocked — see `richness.ts` for the exact thresholds.
 
 ## The one rule above all others: GROUNDING (via the citation ledger)
 

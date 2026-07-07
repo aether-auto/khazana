@@ -104,8 +104,12 @@ test("a hallucinated component name fails", () => {
 
 test("component allow-list matches the mdx barrel (minus retired), no drift", () => {
   const barrel = barrelComponents();
-  // Every retired component is exported by the barrel but MUST be excluded.
-  for (const r of RETIRED_COMPONENTS) expect(barrel.has(r)).toBe(true);
+  // Retired components are fully removed from the barrel (not merely blocked
+  // from the allow-list) once confirmed at 0 live uses — see RETIRED_COMPONENTS
+  // in validate.ts. Filtering them out of `barrel` here is a no-op today but
+  // keeps this test correct if a future retirement is kept in the barrel for
+  // backwards-compat instead.
+  for (const r of RETIRED_COMPONENTS) expect(barrel.has(r)).toBe(false);
   const expected = [...barrel].filter((c) => !RETIRED_COMPONENTS.includes(c as never)).sort();
   expect([...KNOWN_COMPONENTS].sort()).toEqual(expected);
 });

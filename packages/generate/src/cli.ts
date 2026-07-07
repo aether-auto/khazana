@@ -9,10 +9,12 @@ import {
   readStyle,
   readTaste,
   writeBrief,
+  writeComponentCatalog,
   writeReport,
 } from "./io.js";
 import { selectAssignments } from "./select.js";
 import { runVerify, type FactChecker } from "./verify.js";
+import { buildComponentCatalog } from "./component-catalog.js";
 
 export interface CliDeps {
   dataDir: string;
@@ -78,16 +80,50 @@ async function runVerifyCmd(deps: CliDeps, slugs: string[] = []): Promise<number
           `tiers H:${t.high} M:${t.med} L:${t.low} unknown:${t.unknown}`,
       );
     }
+    // Richness/density score — ALWAYS surfaced (report-only unless egregious,
+    // which already failed the draft above via runVerify). See richness.ts.
+    if (d.richness) {
+      const r = d.richness;
+      if (r.exempt) {
+        console.log(`[generate:verify] ${d.slug} richness: exempt (${r.format}), ${r.words} words`);
+      } else {
+        const wpi = r.wordsPerIsland === null ? "n/a" : r.wordsPerIsland.toFixed(0);
+        console.log(
+          `[generate:verify] ${d.slug} richness: ${r.words} words, ${r.distinctIslandComponents.length} distinct ` +
+            `island component(s) [${r.distinctIslandComponents.join(", ") || "none"}], ${r.islandInstanceCount} ` +
+            `island instance(s), ${wpi} words/island (target ${r.targetBand.min}-${r.targetBand.max}) — ` +
+            `${r.meetsTarget ? "meets target" : "BELOW target"}${r.egregious ? " — EGREGIOUS" : ""}`,
+        );
+      }
+    }
   }
   console.log(`[generate:verify] ${report.drafts.filter((d) => d.ok).length}/${report.drafts.length} ok → ${path}`);
   return report.ok ? 0 : 1;
+}
+
+/**
+ * Regenerate the writer-facing component catalog (name, blurb, props, kit(s),
+ * LIVE usage count across `content/blog/*.mdx`) at
+ * `.claude/skills/writers/component-catalog.json`. Run after adding/renaming a
+ * component or shipping new Reads so usage counts stay current.
+ */
+async function runCatalog(deps: CliDeps): Promise<number> {
+  const catalog = buildComponentCatalog(deps.contentDir, deps.now);
+  const path = writeComponentCatalog(deps.repoRoot, catalog);
+  const unused = catalog.components.filter((c) => c.usageCount === 0);
+  console.log(`[generate:catalog] ${catalog.components.length} component(s) → ${path}`);
+  if (unused.length > 0) {
+    console.log(`[generate:catalog] ${unused.length} orphan(s) (0 live uses): ${unused.map((c) => c.name).join(", ")}`);
+  }
+  return 0;
 }
 
 export async function main(argv: string[], deps: CliDeps): Promise<number> {
   const cmd = argv[0];
   if (cmd === "plan") return runPlan(deps);
   if (cmd === "verify") return runVerifyCmd(deps, argv.slice(1));
-  console.error(`[generate] unknown subcommand: ${cmd ?? "(none)"} (expected "plan" or "verify")`);
+  if (cmd === "catalog") return runCatalog(deps);
+  console.error(`[generate] unknown subcommand: ${cmd ?? "(none)"} (expected "plan", "verify", or "catalog")`);
   return 2;
 }
 

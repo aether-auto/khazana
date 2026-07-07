@@ -20,8 +20,12 @@ export const BlogFrontmatterSchema = z.object({
 });
 export type BlogFrontmatter = z.infer<typeof BlogFrontmatterSchema>;
 
-// Retired components that MUST NOT be authored, even if still exported from the
-// barrel for backwards-compat. Kept out of the allow-list on purpose.
+// Retired components that MUST NOT be authored. NarrativeScene was confirmed at
+// 0 live uses across content/blog/*.mdx and its export was removed from the
+// barrel entirely (apps/site/src/components/mdx/index.ts) — not merely blocked
+// here. It stays in this list as a permanent name-reservation: so it can never
+// be silently re-added to KNOWN_COMPONENTS, and so an old MDX file that still
+// references it fails validation with a clear "unknown component" error.
 export const RETIRED_COMPONENTS = ["NarrativeScene"] as const;
 
 // Single source of truth for authorable MDX components. This MUST stay in sync
