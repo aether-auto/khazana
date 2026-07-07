@@ -192,6 +192,16 @@ the table, or cites a URL not in the ledger, it fails verification. Research is 
 foundation the ~15-min PhD-thesis depth is *earned* from — depth comes from real cited
 evidence, never from padding.
 
+**The ledger's `tier`/`origin` must reach the frontmatter, not just gate the draft.**
+The ledger you emit here is ephemeral (gitignored under `data/generation/research/`) —
+it does not survive to when the site builds. So the writer must copy each cited url's
+`tier` and `origin` from your ledger entry onto that same url's `sources[]` entry in
+the committed MDX (`sources[].tier`, `sources[].origin` — both optional, so this never
+blocks validation, but the site's on-page "Sources & corroboration" rail can only show
+real grounding tier/provenance if the writer carries it over). Order the ledger
+High-first (per Emit, above) partly *because* this makes that copy step easy to do
+correctly.
+
 ## Resources
 - `references/methodology.md` — the deep-research adaptation in depth: query craft for
   primary sources, citation-chain following, independence tests for corroboration, and

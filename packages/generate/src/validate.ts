@@ -1,6 +1,6 @@
 import matter from "gray-matter";
 import { z } from "zod";
-import { CHANNELS, FORMAT_NAMES } from "@khazana/core";
+import { CHANNELS, FORMAT_NAMES, SourceOriginSchema, SourceTierSchema } from "@khazana/core";
 import { lintMdxJsxAttributes } from "./mdx-lint.js";
 import { checkNumericConsistency } from "./numeric-consistency.js";
 
@@ -15,7 +15,18 @@ export const BlogFrontmatterSchema = z.object({
   channels: z.array(channelEnum).min(1),
   summary: z.string(),
   publishedAt: z.coerce.date(),
-  sources: z.array(z.object({ title: z.string(), url: z.string().url() })).default([]),
+  sources: z
+    .array(
+      z.object({
+        title: z.string(),
+        url: z.string().url(),
+        // OPTIONAL — see content.config.ts for why (ledger tier/origin, baked
+        // into the committed frontmatter since the ledger itself is ephemeral).
+        tier: SourceTierSchema.optional(),
+        origin: SourceOriginSchema.optional(),
+      }),
+    )
+    .default([]),
   draft: z.boolean().default(false),
 });
 export type BlogFrontmatter = z.infer<typeof BlogFrontmatterSchema>;

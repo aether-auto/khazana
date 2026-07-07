@@ -18,6 +18,8 @@ publishedAt: 2026-06-24T09:00:00.000Z   # ISO 8601 datetime (coerced to a date)
 sources:
   - title: "Real source article title"
     url: "https://exact-url-from-the-brief"
+    tier: high   # copy from this url's citation-ledger entry: high | med | low
+    origin: researched   # copy from the ledger entry: curated | researched
 draft: false
 ---
 ```
@@ -31,6 +33,13 @@ Hard rules (each maps to a check in `validate.ts`):
   **verbatim** one of the brief's source-item URLs (`validateDraft` rejects any
   url not in the known FeedItem set, and rejects an empty `sources` list). One
   entry per source you actually cite.
+- **`sources[].tier` / `sources[].origin`** — OPTIONAL but STRONGLY expected: copy
+  the `tier` (`high`/`med`/`low`) and `origin` (`curated`/`researched`) straight off
+  that url's citation-ledger entry — you already appraised it in the research
+  phase, this is a copy, not new judgment. The site's "Sources & corroboration"
+  rail reads these to show grounding tier + provenance; omitting them still
+  validates (both are optional in the schema) but degrades the rail to a plain
+  list, so always include them when the url is in your ledger.
 - **`publishedAt`** — ISO 8601 (e.g. the run date). `z.coerce.date()` parses it.
 - **`draft`** — `false` to publish.
 - `summary` and `title` are plain strings.

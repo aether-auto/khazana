@@ -61,6 +61,18 @@ The tier rubric (High/Med/Low), triangulation rules, independence tests, and the
 arithmetic live once in **`writers/researcher/SKILL.md`** and each format's SKILL — you
 reference them, never restate or relax them.
 
+**Carry tier + origin into the frontmatter, not just the url.** You already appraise
+every ledger entry with a `tier` (`high`/`med`/`low`) and `origin` (`curated`/
+`researched`) during research — copy those two fields onto the matching
+`sources[]` entry in the MDX you write (`sources[].tier`, `sources[].origin`; both
+optional in the schema, so a missing one never fails validation). This is the ONLY
+place that grounding data survives to the page: the citation ledger itself
+(`data/generation/research/<slug>.ledger.json`) is ephemeral and gone by the time the
+site builds, but the frontmatter you write is committed and permanent. The site
+renders it as a "Sources & corroboration" rail; omit the fields and a Read still
+ships, but the rail degrades to a plain list — always include them when the url is
+in your ledger.
+
 ## How you run — researcher FIRST, then the per-format skill
 
 You drive TWO skills, in strict order. Do not draft prose before the ledger exists.
