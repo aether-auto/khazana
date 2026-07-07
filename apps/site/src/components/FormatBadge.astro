@@ -2,13 +2,38 @@
 import { FORMATS, type FormatName } from "@khazana/core";
 interface Props {
   format: string;
+  /**
+   * Optional per-format accent (e.g. `formatStyle(format).color` from
+   * reads/lib/format-style.ts) — a var()/color-mix() CSS color, never a raw
+   * hex. When provided, the pill's border/sheen/bracket use it instead of the
+   * house `--editorial` clay, so teardown/primer/dispatch/theater/chronicle
+   * pills read as visually distinct types, not one flat color. Omitted =
+   * unchanged `--editorial` look for every consumer that doesn't pass it
+   * (Article.astro, ReadCard.astro).
+   */
+  color?: string;
 }
-const { format } = Astro.props;
+const { format, color } = Astro.props;
 const meta = FORMATS[format as FormatName];
 const intent = meta?.intent ?? "";
+// Some format colors (e.g. teardown's info/accent blend) read AA-small-text
+// contrast well on dark but dip under ~4:1 on the light ladder. The BORDER
+// stays the full-saturation per-format accent (identity at a glance matters
+// more there); the actual glyph color blends toward --ink — the token
+// already guaranteed readable on whatever surface it sits on — so the label
+// itself never goes low-contrast in either theme while still reading as
+// tinted with its format's hue.
+const styleVars = color
+  ? `--fmt-badge-accent:${color}; --fmt-badge-text:color-mix(in oklab, ${color} 65%, var(--ink) 35%);`
+  : undefined;
 ---
 
-<span class="fmt" data-format={format} title={intent ? `intent: ${intent}` : undefined}>
+<span
+  class="fmt"
+  data-format={format}
+  title={intent ? `intent: ${intent}` : undefined}
+  style={styleVars}
+>
   <span class="fmt-bracket" aria-hidden="true">«</span>{format}<span
     class="fmt-bracket"
     aria-hidden="true">»</span>
@@ -16,6 +41,12 @@ const intent = meta?.intent ?? "";
 
 <style>
   .fmt {
+    /* defaults to the house clay; a `color` prop overrides both via the
+       inline custom properties set above — see Props.color doc comment.
+       --fmt-badge-text defaults to the (unmixed) accent too, so the default
+       badge's text stays byte-identical to before this prop existed. */
+    --fmt-badge-accent: var(--editorial);
+    --fmt-badge-text: var(--fmt-badge-accent);
     position: relative;
     display: inline-block;
     overflow: hidden;
@@ -23,14 +54,14 @@ const intent = meta?.intent ?? "";
     font-size: var(--t-xs);
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--editorial);
-    border: var(--hair) solid color-mix(in oklab, var(--editorial) 45%, var(--rule));
+    color: var(--fmt-badge-text);
+    border: var(--hair) solid color-mix(in oklab, var(--fmt-badge-accent) 45%, var(--rule));
     border-radius: var(--r-sm);
     padding: 0.12em 0.5em;
     white-space: nowrap;
     /* glass-gated: subtle dark translucent background + always-on lit top edge */
     background: color-mix(in oklab, var(--glass-bg) calc(var(--glass) * 80%), transparent);
-    box-shadow: inset 0 var(--hair) 0 color-mix(in oklab, var(--editorial) calc(var(--glass) * 28%), transparent);
+    box-shadow: inset 0 var(--hair) 0 color-mix(in oklab, var(--fmt-badge-accent) calc(var(--glass) * 28%), transparent);
   }
   /* always-on faint specular highlight (glass-gated): a static diagonal glint
      sits in the upper-left corner so the badge reads as glass even at rest. */
@@ -54,7 +85,7 @@ const intent = meta?.intent ?? "";
     background: linear-gradient(
       105deg,
       transparent 30%,
-      color-mix(in oklab, var(--editorial) 32%, transparent) 48%,
+      color-mix(in oklab, var(--fmt-badge-accent) 32%, transparent) 48%,
       transparent 64%
     );
     opacity: calc(var(--glass) * 1);
@@ -65,6 +96,6 @@ const intent = meta?.intent ?? "";
     transform: translateX(130%);
   }
   .fmt-bracket {
-    color: color-mix(in oklab, var(--editorial) 70%, transparent);
+    color: color-mix(in oklab, var(--fmt-badge-accent) 70%, transparent);
   }
 </style>

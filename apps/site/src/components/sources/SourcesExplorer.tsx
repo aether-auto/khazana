@@ -26,6 +26,7 @@ import type {
   TrustPolarity,
 } from "./lib/build-sources.js";
 import { assessTrust } from "./lib/build-sources.js";
+import { matchesFacet } from "../../lib/filter/index.js";
 import styles from "./SourcesExplorer.module.css";
 
 interface Props {
@@ -138,14 +139,6 @@ export default function SourcesExplorer({ data, base }: Props) {
     hydrated.current = true;
   }, []);
 
-  // The page ships a disabled SSR control-bar scaffold (.src-controls) so the
-  // pre-hydration page reads as live; once we own the real controls, retire it so
-  // there aren't two search boxes. (We don't edit the page; just hide its scaffold.)
-  useEffect(() => {
-    const scaffold = document.querySelector<HTMLElement>(".src-controls");
-    if (scaffold) scaffold.style.display = "none";
-  }, []);
-
   const byId = useMemo(() => {
     const m = new Map<string, EnrichedSource>();
     for (const s of data.sources) m.set(s.id, s);
@@ -181,13 +174,12 @@ export default function SourcesExplorer({ data, base }: Props) {
           .toLowerCase();
         if (!terms.every((t) => hay.includes(t))) return false;
       }
-      // Facets: OR within a group, AND across groups.
-      if (selected.type.size && !selected.type.has(s.type)) return false;
-      if (selected.status.size && !selected.status.has(s.status)) return false;
-      if (selected.provenance.size && !selected.provenance.has(s.addedBy)) return false;
-      if (selected.channel.size) {
-        if (!s.channels.some((c) => selected.channel.has(c))) return false;
-      }
+      // Facets: OR within a group, AND across groups (shared predicate — see
+      // apps/site/src/lib/filter/facets.ts).
+      if (!matchesFacet(s.type, selected.type)) return false;
+      if (!matchesFacet(s.status, selected.status)) return false;
+      if (!matchesFacet(s.addedBy, selected.provenance)) return false;
+      if (!matchesFacet(s.channels, selected.channel)) return false;
       return true;
     });
   }, [data.sources, query, selected]);

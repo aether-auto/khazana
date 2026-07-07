@@ -7,7 +7,13 @@ import {
   type FeedItem,
   type RankProfile,
 } from "@khazana/core";
-import { affinityDelta, forYouScore, forYouOrder, type ForYouItem } from "./for-you.js";
+import {
+  affinityDelta,
+  forYouScore,
+  forYouOrder,
+  toPersonalizeItem,
+  type ForYouItem,
+} from "./for-you.js";
 
 const NOW = "2026-06-30T00:00:00.000Z";
 
@@ -160,5 +166,40 @@ describe("forYouOrder", () => {
 
   test("empty input → empty output", () => {
     expect(forYouOrder([], READY)).toEqual([]);
+  });
+});
+
+describe("toPersonalizeItem", () => {
+  test("base matches the core total scored with a NOT-ready profile", () => {
+    const item = makeItem({ id: "p1", topics: ["ai", "quantum"], entities: ["openai"] });
+    const out = toPersonalizeItem(item, { clusterSize: 3, now: NOW, region: "featured" });
+    expect(out.base).toBeCloseTo(baseScore(item, 3), 12);
+  });
+
+  test("passes id/topics/entities/region through unchanged", () => {
+    const item = makeItem({ id: "p2", topics: ["diy", "ai"], entities: ["cern"] });
+    const out = toPersonalizeItem(item, { clusterSize: 1, now: NOW, region: "rest" });
+    expect(out.id).toBe("p2");
+    expect(out.topics).toEqual(["diy", "ai"]);
+    expect(out.entities).toEqual(["cern"]);
+    expect(out.region).toBe("rest");
+  });
+
+  test("parity: base + affinityDelta(out, READY) === coreTotal(item, clusterSize, READY)", () => {
+    const item = makeItem({ id: "p3", topics: ["ai", "history"], entities: ["openai"] });
+    const out = toPersonalizeItem(item, { clusterSize: 2, now: NOW, region: "featured" });
+    const lhs = out.base + affinityDelta(out, READY);
+    const rhs = coreTotal(item, 2, READY);
+    expect(Math.abs(lhs - rhs)).toBeLessThan(1e-9);
+  });
+
+  test("different clusterSize/now/region produce independent, correct output", () => {
+    const item = makeItem({ id: "p4", topics: [], entities: [] });
+    const a = toPersonalizeItem(item, { clusterSize: 1, now: NOW, region: "featured" });
+    const b = toPersonalizeItem(item, { clusterSize: 5, now: NOW, region: "rest" });
+    expect(a.base).toBeCloseTo(baseScore(item, 1), 12);
+    expect(b.base).toBeCloseTo(baseScore(item, 5), 12);
+    expect(a.region).toBe("featured");
+    expect(b.region).toBe("rest");
   });
 });

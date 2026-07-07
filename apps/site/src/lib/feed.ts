@@ -16,6 +16,7 @@ import {
 } from "@khazana/core";
 import { readTimeFromHtml } from "./read-time.js";
 import { extractYouTubeId, isYouTubeShort } from "./media.js";
+import { filterItems } from "./filter/index.js";
 
 // The maker (Workshop) vocabulary, source sets, scorer, and threshold now live
 // in @khazana/core (shared with curate). Re-export the ones the Workshop page /
@@ -100,8 +101,7 @@ export function loadFeed(dataDir: string): FeedItem[] {
 
 /** Items whose `topics` include the channel. `null`/empty channel → all items. */
 export function filterByChannel(items: FeedItem[], channel: string | null): FeedItem[] {
-  if (!channel) return items;
-  return items.filter((it) => it.topics.includes(channel));
+  return filterItems(items, (it) => it.topics, channel ? [channel] : []);
 }
 
 /**
@@ -346,9 +346,18 @@ export const MIN_FEED_MINUTES = 5;
  * No-body items (bare links, transcript-less video/audio) are KEPT — matching the
  * Feed's long-standing behavior; the floor only removes short full-text items that
  * curate's relaxed maker floor newly admits to `curated.json`. Rank order preserved.
+ *
+ * @param readMinutesOf optional precomputed read-time accessor. Callers that
+ * already computed each item's read time once (the Feed page does, keyed by
+ * id) can pass it here so this gate re-parses no HTML. Defaults to computing
+ * straight from `readTimeFromHtml(item.body)`, preserving prior behavior for
+ * callers that don't have a precomputed value (e.g. tests).
  */
-export function dropBelowFeedFloor(items: FeedItem[]): FeedItem[] {
-  return items.filter((it) => !it.body || readTimeFromHtml(it.body) >= MIN_FEED_MINUTES);
+export function dropBelowFeedFloor(
+  items: FeedItem[],
+  readMinutesOf: (item: FeedItem) => number = (it) => readTimeFromHtml(it.body),
+): FeedItem[] {
+  return items.filter((it) => !it.body || readMinutesOf(it) >= MIN_FEED_MINUTES);
 }
 
 /**
@@ -362,16 +371,21 @@ export function dropBelowFeedFloor(items: FeedItem[]): FeedItem[] {
  * their media affordances (thumbnail, play glyph, etc.) are still shown.
  * The bento may be smaller than `count` when too few qualifying items exist —
  * we never pad with short items. Rank order is preserved in both arrays.
+ *
+ * @param readMinutesOf optional precomputed read-time accessor — see
+ * `dropBelowFeedFloor`'s doc for why/how the Feed page supplies this instead
+ * of letting the gate re-parse each item's body.
  */
 export function splitFeaturedGated(
   items: FeedItem[],
   count = 10,
+  readMinutesOf: (item: FeedItem) => number = (it) => readTimeFromHtml(it.body),
 ): { featured: FeedItem[]; rest: FeedItem[] } {
   const featured: FeedItem[] = [];
   const rest: FeedItem[] = [];
 
   for (const it of items) {
-    if (featured.length < count && it.body && readTimeFromHtml(it.body) >= FEATURE_MIN_MINUTES) {
+    if (featured.length < count && it.body && readMinutesOf(it) >= FEATURE_MIN_MINUTES) {
       featured.push(it);
     } else {
       rest.push(it);

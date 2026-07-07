@@ -9,9 +9,14 @@
 //
 // Atmosphere: a restrained, format-keyed amber/clay glow that drifts slowly behind
 // the masthead (transform/opacity only, GPU-cheap, 60fps; stilled under
-// prefers-reduced-motion). No WebGL, no rainbow — a single living detail.
+// prefers-reduced-motion). No WebGL, no rainbow — a single living detail. The
+// second glow (`.atmos-clay`) is tinted with THIS read's format accent
+// (lib/format-style.ts — the same centralized map the gallery cards use), so
+// the hero's atmosphere genuinely shifts hue with what's featured, not just its
+// badge text — a chronicle glows clay, a teardown glows a cooler technical tone.
 import FormatBadge from "../FormatBadge.astro";
 import ChannelChip from "../ChannelChip.astro";
+import { formatStyle } from "./lib/format-style.js";
 
 interface Props {
   slug: string;
@@ -20,12 +25,14 @@ interface Props {
   channels: string[];
   summary: string;
   href: string;
+  publishedAt: string;
   dateLabel: string;
   readMin: number;
   sourceCount: number;
 }
-const { slug, title, format, channels, summary, href, dateLabel, readMin, sourceCount } =
+const { slug, title, format, channels, summary, href, publishedAt, dateLabel, readMin, sourceCount } =
   Astro.props;
+const fmt = formatStyle(format);
 // A stable issue number derived from the slug — the same hand-built-artifact
 // detail the Article masthead uses (Article.astro), so the hero and the read agree.
 const issueNo = (Array.from(slug).reduce((a, c) => (a + c.charCodeAt(0)) % 999, 0) + 1);
@@ -41,7 +48,9 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
   data-reads-featured
   data-format={format}
   data-channels={channels.join(",")}
+  data-published={publishedAt}
   aria-labelledby="featured-title"
+  style={`--fmt-accent:${fmt.color};`}
 >
   <a class="featured-link" href={href}>
     <!-- the living atmosphere: two slow-drifting amber/clay glows behind the
@@ -56,7 +65,16 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
         <span class="featured-flag">latest read</span>
         <span class="featured-issue">{issueLabel}</span>
         <span class="ksep" aria-hidden="true">·</span>
-        <FormatBadge format={format} />
+        <span class="featured-code tnum" aria-hidden="true">{fmt.code}</span>
+        <FormatBadge format={format} color={fmt.color} />
+        <span
+          class="featured-new"
+          data-new-badge
+          hidden
+          aria-label="new since your last visit"
+        >
+          <span class="featured-new-dot" aria-hidden="true"></span>new
+        </span>
         <span class="ksep" aria-hidden="true">·</span>
         <time class="tnum" datetime={dateLabel}>{dateLabel}</time>
       </p>
@@ -180,7 +198,10 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
     height: 130%;
     top: -10%;
     right: 2%;
-    background: radial-gradient(circle, color-mix(in oklab, var(--editorial) 26%, transparent), transparent 66%);
+    /* tinted with THIS read's format accent (--fmt-accent, set inline from
+       lib/format-style.ts) rather than a fixed clay — the hero's atmosphere
+       shifts hue with whatever format is currently featured. */
+    background: radial-gradient(circle, color-mix(in oklab, var(--fmt-accent) 26%, transparent), transparent 66%);
     animation: drift-clay 23s var(--ease-out) infinite alternate;
   }
   @keyframes drift-amber {
@@ -232,6 +253,43 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
   }
   .ksep {
     color: var(--rule-bright);
+  }
+  /* the mono ticker code — same identity mark the gallery cards wear */
+  .featured-code {
+    letter-spacing: 0.1em;
+    color: var(--fmt-accent);
+    opacity: 0.85;
+  }
+  /* "new since your last visit" — hidden by default; the page script un-hides
+     it after checking localStorage (mirrors ReadGalleryCard's .gcard-new). */
+  .featured-new {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4ch;
+    color: var(--accent);
+    text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 35%, transparent);
+  }
+  /* see ReadGalleryCard's .gcard-new[hidden] — same reasoning: an author
+     `display` rule otherwise beats the UA `[hidden]` rule at equal specificity. */
+  .featured-new[hidden] {
+    display: none;
+  }
+  .featured-new-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent);
+    animation: featured-new-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes featured-new-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .featured-new-dot {
+      animation: none;
+    }
   }
 
   .featured-title {

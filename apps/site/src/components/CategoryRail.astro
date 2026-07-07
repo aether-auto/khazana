@@ -12,8 +12,15 @@ interface Props {
   channel: string;
   items: FeedItem[];
   now: string;
+  /**
+   * Precomputed read-time (minutes) per item id, computed ONCE in index.astro's
+   * build. Looked up per item below instead of re-parsing each body's HTML.
+   * Falls back to computing it directly only for an id missing from the map
+   * (defensive — the sole caller today always covers every item).
+   */
+  readMinutesById?: ReadonlyMap<string, number>;
 }
-const { channel, items, now } = Astro.props;
+const { channel, items, now, readMinutesById } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 // Kind → glyph map — precomputed in frontmatter (not in JSX template where TS
@@ -45,7 +52,11 @@ const KIND_GLYPH: Record<string, string> = {
   <div class="catrow-track-wrap">
     <div class="catrow-track" role="list">
       {items.slice(0, 12).map((item) => {
-        const readMin = item.body ? readTimeFromHtml(item.body) : null;
+        const readMin = readMinutesById?.has(item.id)
+          ? (readMinutesById.get(item.id) as number)
+          : item.body
+            ? readTimeFromHtml(item.body)
+            : null;
         const videoId = item.kind === "video" ? extractYouTubeId(item.url) : null;
         const thumbUrl = videoId ? buildYouTubeThumbnail(videoId) : null;
         const readHref = `${base}/item/${item.id}`;

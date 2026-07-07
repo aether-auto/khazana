@@ -4,9 +4,28 @@
 // It keeps the house glass/sheen/hover micro-interactions and the per-slug
 // `transition:name` on its title (so navigating into the read morphs the title).
 // The card is a filter target: it carries data-read / data-format / data-channels
-// so the ReadsFilter island can show/hide it by facet without re-rendering.
+// so the ReadsFilter island can show/hide it by facet without re-rendering, AND
+// a sort target: data-published / data-readmin let the ReadsSort island reorder
+// cards client-side without re-fetching anything.
+//
+// Per-format identity (P2 level-up): `formatStyle(format)` — the ONE centralized
+// map in lib/format-style.ts — drives a left "spine" accent bar (always faintly
+// present, full-strength on hover) and a small mono ticker code, so a chronicle
+// and a teardown read as visually distinct types of object at a glance, not just
+// different badge text. Colors are var()/color-mix() over existing tokens only.
+//
+// Hover-preview (P2): a CSS-ONLY reveal (no JS) — hovering OR focusing the card
+// (:focus-within) expands a panel showing the piece's real opening line
+// (`excerpt`, grounded prose from build-reads.ts — never invented, distinct from
+// the hand-written `summary` teaser already always visible). Keyboard users get
+// the IDENTICAL reveal via focus (:focus-within), so it's never mouse-only. The
+// excerpt is marked aria-hidden: it's supplementary flavor layered on top of the
+// `summary` a screen reader already announces as the link's content, not new
+// information — hiding it keeps the link's accessible name from ballooning to
+// title+summary+excerpt+telemetry for every card.
 import FormatBadge from "../FormatBadge.astro";
 import ChannelChip from "../ChannelChip.astro";
+import { formatStyle } from "./lib/format-style.js";
 
 interface Props {
   slug: string;
@@ -15,9 +34,11 @@ interface Props {
   channels: string[];
   summary: string;
   href: string;
+  publishedAt: string;
   dateLabel: string;
   readMin: number;
   sourceCount: number;
+  excerpt: string;
   revealDelay?: number;
 }
 const {
@@ -27,29 +48,54 @@ const {
   channels,
   summary,
   href,
+  publishedAt,
   dateLabel,
   readMin,
   sourceCount,
+  excerpt,
   revealDelay = 0,
 } = Astro.props;
+const fmt = formatStyle(format);
 ---
 
 <article
   class="gcard"
   data-reveal
   data-read
+  data-slug={slug}
   data-format={format}
   data-channels={channels.join(",")}
-  style={`--reveal-delay:${revealDelay}ms`}
+  data-published={publishedAt}
+  data-readmin={readMin}
+  style={`--reveal-delay:${revealDelay}ms; --fmt-accent:${fmt.color};`}
 >
   <a class="gcard-link" href={href}>
     <div class="gcard-top">
-      <FormatBadge format={format} />
+      <span class="gcard-code tnum" aria-hidden="true">{fmt.code}</span>
+      <FormatBadge format={format} color={fmt.color} />
+      <span
+        class="gcard-new"
+        data-new-badge
+        hidden
+        aria-label="new since your last visit"
+      >
+        <span class="gcard-new-dot" aria-hidden="true"></span>new
+      </span>
       <time class="gcard-date tnum" datetime={dateLabel}>{dateLabel}</time>
     </div>
 
     <h3 class="gcard-title" transition:name={`read-title-${slug}`}>{title}</h3>
     <p class="gcard-summary">{summary}</p>
+
+    {
+      excerpt && (
+        <div class="gcard-preview" aria-hidden="true">
+          <div class="gcard-preview-inner">
+            <p class="gcard-excerpt">“{excerpt}”</p>
+          </div>
+        </div>
+      )
+    }
 
     <div class="gcard-foot">
       <div class="gcard-channels">
@@ -71,7 +117,7 @@ const {
     position: relative;
     border: var(--hair) solid var(--rule);
     border-radius: var(--r-md);
-    /* glass surface: dark translucent panel + lit top edge (matches ReadCard) */
+    /* glass surface: translucent panel + subtle lit top edge (matches ReadCard) */
     background: color-mix(
       in oklab,
       var(--glass-bg) calc(var(--glass) * 100%),
@@ -85,14 +131,39 @@ const {
       border-color var(--dur) var(--ease-out),
       transform var(--dur) var(--ease-out);
   }
-  .gcard:hover {
-    border-color: var(--editorial);
+  .gcard:hover,
+  .gcard:focus-within {
+    border-color: var(--fmt-accent);
     transform: translateY(-2px) scale(1.005);
   }
   .gcard:active {
     transform: translateY(0) scale(1);
   }
-  /* specular sheen sweep — diagonal amber band translated across on hover */
+  /* the format "spine" — a left edge accent bar in the format's own color,
+     faintly present at rest (so the format reads as distinct even before any
+     interaction) and full-strength + taller on hover/focus. */
+  .gcard::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: var(--s-4);
+    bottom: var(--s-4);
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+    background: var(--fmt-accent);
+    opacity: 0.42;
+    transform: scaleY(0.72);
+    transform-origin: center;
+    transition:
+      opacity var(--dur) var(--ease-out),
+      transform var(--dur) var(--ease-out);
+  }
+  .gcard:hover::before,
+  .gcard:focus-within::before {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  /* specular sheen sweep — tinted with the format's own accent, not a flat amber */
   .gcard::after {
     content: "";
     position: absolute;
@@ -101,14 +172,15 @@ const {
     background: linear-gradient(
       105deg,
       transparent 28%,
-      color-mix(in oklab, var(--accent) 26%, transparent) 46%,
+      color-mix(in oklab, var(--fmt-accent) 26%, transparent) 46%,
       transparent 60%
     );
     opacity: calc(var(--glass) * 1);
     transform: translateX(-120%);
     transition: transform var(--dur-slow) var(--ease-out);
   }
-  .gcard:hover::after {
+  .gcard:hover::after,
+  .gcard:focus-within::after {
     transform: translateX(120%);
   }
   .gcard-link {
@@ -117,7 +189,7 @@ const {
     display: flex;
     flex-direction: column;
     gap: var(--s-3);
-    padding: var(--s-5);
+    padding: var(--s-5) var(--s-5) var(--s-5) calc(var(--s-5) + 4px);
     height: 100%;
   }
   .gcard-link:hover {
@@ -126,13 +198,53 @@ const {
   .gcard-top {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: var(--s-3);
+    gap: var(--s-2);
+  }
+  /* the mono ticker code — the format's identity mark, terse and quiet */
+  .gcard-code {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.1em;
+    color: var(--fmt-accent);
+    opacity: 0.85;
   }
   .gcard-date {
+    margin-left: auto;
     font-family: var(--font-mono);
     font-size: var(--t-xs);
     color: var(--ink-faint);
+  }
+  /* "new since your last visit" — mirrors the topbar's `.readout-fresh` voice:
+     a quiet amber pulse, not a loud ribbon. Hidden by default (SSR/no-JS never
+     shows it); the page script un-hides it after checking localStorage. */
+  .gcard-new {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4ch;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 35%, transparent);
+  }
+  /* `display: inline-flex` above is an author rule and would otherwise beat
+     the UA stylesheet's `[hidden] { display: none }` at equal specificity (an
+     author rule always wins over UA origin) — this explicit override is what
+     actually keeps the badge hidden until the page script clears `hidden`. */
+  .gcard-new[hidden] {
+    display: none;
+  }
+  .gcard-new-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent);
+    animation: gcard-new-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes gcard-new-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
   }
   .gcard-title {
     margin: 0;
@@ -155,6 +267,54 @@ const {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  /* ── hover-preview: CSS-only reveal, no JS ────────────────────────────────
+     A grid-rows 0fr→1fr trick (no max-height guesswork, animates cleanly to
+     "auto" height) driven purely by :hover / :focus-within on the card, so
+     keyboard focus reveals it exactly like a mouse hover does. Content stays
+     in the DOM at all times (screen readers always have it) — only its
+     visual presentation is gated. */
+  .gcard-preview {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition:
+      grid-template-rows var(--dur-slow) var(--ease-out),
+      margin-block var(--dur-slow) var(--ease-out);
+    /* the flex `gap` on .gcard-link still reserves space around this item even
+       while its row-track is 0fr (gap isn't content-height-aware) — cancel
+       BOTH sides so a collapsed card looks byte-for-byte like one with no
+       preview at all, not one with a mystery sliver of empty space. */
+    margin-block: calc(var(--s-3) * -1);
+  }
+  .gcard:hover .gcard-preview,
+  .gcard:focus-within .gcard-preview {
+    grid-template-rows: 1fr;
+    margin-block: 0;
+  }
+  .gcard-preview-inner {
+    overflow: hidden;
+  }
+  .gcard-excerpt {
+    margin: var(--s-2) 0 0;
+    padding-left: var(--s-3);
+    border-left: var(--hair) solid var(--fmt-accent);
+    font-family: var(--font-read);
+    font-style: italic;
+    color: var(--read);
+    font-size: var(--t-sm);
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(-2px);
+    transition:
+      opacity var(--dur) var(--ease-out),
+      transform var(--dur) var(--ease-out);
+  }
+  .gcard:hover .gcard-excerpt,
+  .gcard:focus-within .gcard-excerpt {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
   .gcard-foot {
     display: flex;
     align-items: center;
@@ -185,11 +345,18 @@ const {
     margin-top: auto;
     font-family: var(--font-mono);
     font-size: var(--t-xs);
-    color: var(--editorial);
+    color: var(--fmt-accent);
     letter-spacing: 0.04em;
     transition: transform var(--dur) var(--ease-out);
   }
-  .gcard:hover .gcard-cta {
+  .gcard:hover .gcard-cta,
+  .gcard:focus-within .gcard-cta {
     transform: translateX(3px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gcard-new-dot {
+      animation: none;
+    }
   }
 </style>

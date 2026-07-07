@@ -2,6 +2,7 @@ import { expect, test, describe } from "vitest";
 import {
   buildSources,
   assessTrust,
+  toSourcesEntry,
   type SourcesItem,
   type SourcesEntry,
   type EnrichedSource,
@@ -413,5 +414,43 @@ describe("assessTrust", () => {
     };
     expect(() => assessTrust(bare)).not.toThrow();
     expect(assessTrust(bare).factors.length).toBeGreaterThan(0);
+  });
+});
+
+describe("toSourcesEntry", () => {
+  // The page uses one shared projection for both the live `sources` array and
+  // the Scout's `pending` queue (both are `SourceEntry[]` from the same
+  // registry schema) — this pins the field-for-field mapping so it can't drift.
+  test("projects every SourcesEntry field, including optional notes", () => {
+    const full = {
+      id: "acme",
+      type: "eng-blog",
+      url: "https://acme.com/feed",
+      channels: ["tech", "ai"],
+      enabled: true,
+      trustScore: 0.8,
+      addedBy: "seed",
+      failureCount: 2,
+      notes: "hand-vetted",
+      // extra fields present on the real registry SourceEntry, not on SourcesEntry.
+      addedAt: "2026-01-01T00:00:00.000Z",
+      status: "producing",
+    };
+    expect(toSourcesEntry(full)).toEqual({
+      id: "acme",
+      type: "eng-blog",
+      url: "https://acme.com/feed",
+      channels: ["tech", "ai"],
+      enabled: true,
+      trustScore: 0.8,
+      addedBy: "seed",
+      failureCount: 2,
+      notes: "hand-vetted",
+    });
+  });
+
+  test("omitted notes stays undefined (not coerced to null)", () => {
+    const { notes, ...rest } = entry({ id: "beta" });
+    expect(toSourcesEntry(rest).notes).toBeUndefined();
   });
 });

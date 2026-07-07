@@ -45,6 +45,15 @@ export interface ReadCardData {
   readMin: number; // whole-minute estimate, floor 1
   sourceCount: number;
   href: string; // `${base}/reads/${slug}`
+  /**
+   * The opening line(s) of the ACTUAL piece — grounded real prose (never
+   * invented), stripped the same way read-time is derived, truncated to a
+   * sentence/word boundary. Distinct from `summary` (the hand-written
+   * editorial teaser): this is what the hover/focus preview reveals on the
+   * gallery card — a genuine taste of the piece's voice, not a repeat of the
+   * teaser. Empty string only when the body is empty.
+   */
+  excerpt: string;
 }
 export interface FacetCount {
   value: string;
@@ -78,17 +87,48 @@ export interface ReadsIndexData {
 // ── helpers ──────────────────────────────────────────────────────────────
 
 /**
- * Strip MDX scaffolding from a raw body so the word count reflects PROSE only,
- * matching pages/reads/[slug].astro exactly: drop `^import …` lines, fenced
- * ```code``` blocks, `<JSX>` tags, and `{expressions}`.
+ * Strip MDX scaffolding from a raw body down to PROSE only, matching
+ * pages/reads/[slug].astro exactly: drop `^import …` lines, fenced
+ * ```code``` blocks, `<JSX>` tags (attributes and all — so an annotation's
+ * `note="…"` text never leaks into the prose), and `{expressions}`, then
+ * collapse whitespace. Both the read-time word count and the card excerpt
+ * derive from this ONE stripped string, so they never disagree.
  */
-function proseWords(body: string): number {
-  const prose = body
+function stripMdxProse(body: string): string {
+  return body
     .replace(/^import\s.+$/gm, "")
     .replace(/```[\s\S]*?```/g, "")
     .replace(/<[^>]+>/g, " ")
-    .replace(/\{[^}]*\}/g, " ");
-  return countWords(prose);
+    .replace(/\{[^}]*\}/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function proseWords(body: string): number {
+  return countWords(stripMdxProse(body));
+}
+
+/** Excerpts are capped around this many characters before truncating. */
+const EXCERPT_TARGET = 180;
+
+/**
+ * The opening line(s) of the real prose, truncated at a sentence boundary
+ * when one falls in a reasonable range, else at a word boundary — never
+ * mid-word. Bodies shorter than the target return in full, no ellipsis.
+ */
+function excerptOf(body: string): string {
+  const prose = stripMdxProse(body);
+  if (prose.length <= EXCERPT_TARGET) return prose;
+
+  const window = prose.slice(0, EXCERPT_TARGET + 1);
+  const sentenceEnd = Math.max(window.lastIndexOf(". "), window.lastIndexOf("? "), window.lastIndexOf("! "));
+  // Prefer a sentence break, but only if it isn't so early the excerpt reads
+  // as a fragment (e.g. an abbreviation's stray period near the start).
+  if (sentenceEnd > EXCERPT_TARGET * 0.4) return window.slice(0, sentenceEnd + 1).trim();
+
+  const wordBoundary = window.slice(0, EXCERPT_TARGET).lastIndexOf(" ");
+  const cut = wordBoundary > 0 ? wordBoundary : EXCERPT_TARGET;
+  return `${window.slice(0, cut).trim()}…`;
 }
 
 /** Frequency facet over a fixed canonical key order (zero-count keys dropped). */
@@ -129,6 +169,7 @@ function toCard(read: ReadInput, base: string): ReadCardData {
     readMin,
     sourceCount: read.sourceCount,
     href: `${base}/reads/${read.slug}`,
+    excerpt: excerptOf(read.body),
   };
 }
 

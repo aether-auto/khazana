@@ -1,0 +1,213 @@
+---
+// The /reads sort control — a small client-enhanced instrument button group,
+// sibling to ReadsFilter. Three keys (lib/sort-reads.ts): newest (SSR default —
+// buildReadsIndex already renders newest-first, so a no-JS visitor gets exactly
+// this order with inert buttons), longest (by real read-time), and format (the
+// canonical FORMAT_NAMES sequence). Only reorders the GALLERY grid — the
+// featured hero lives outside it and is never re-sorted.
+//
+// Progressive enhancement: without JS the buttons are simply inert (type=
+// "button", no form action) — the page already shows the sensible default
+// order. With JS, clicking a key reorders the rendered [data-read] elements in
+// place (no re-fetch, no re-render) via a FLIP pass, the same technique
+// ReadsFilter uses for its show/hide reflow, so the two islands feel like one
+// coherent instrument rather than two different libraries bolted together.
+import { READS_SORT_KEYS, READS_SORT_DEFAULT, type ReadsSortKey } from "./lib/sort-reads.js";
+
+interface Props {
+  formatOrder: readonly string[];
+}
+const { formatOrder } = Astro.props;
+
+const LABELS: Record<ReadsSortKey, string> = {
+  newest: "newest",
+  longest: "longest",
+  format: "by format",
+};
+---
+
+<div class="rsort" data-reads-sort data-format-order={formatOrder.join(",")}>
+  <span class="rsort-label">sort /</span>
+  <div class="rsort-chips" role="group" aria-label="Sort reads">
+    {
+      READS_SORT_KEYS.map((key) => (
+        <button
+          type="button"
+          class="rsort-chip"
+          class:list={{ "rsort-active": key === READS_SORT_DEFAULT }}
+          data-sort={key}
+          aria-pressed={key === READS_SORT_DEFAULT ? "true" : "false"}
+        >
+          {LABELS[key]}
+        </button>
+      ))
+    }
+  </div>
+  <p class="rsort-status" data-reads-sort-status aria-live="polite"></p>
+</div>
+
+<script>
+  import { compareReads, isReadsSortKey, READS_SORT_DEFAULT, type ReadsSortKey } from "./lib/sort-reads.js";
+
+  function initReadsSort(): void {
+    const root = document.querySelector<HTMLElement>("[data-reads-sort]");
+    if (!root) return;
+    if (root.dataset.sortReady === "1") return;
+    root.dataset.sortReady = "1";
+
+    const grid = document.querySelector<HTMLElement>("[data-reads-grid]");
+    const status = root.querySelector<HTMLElement>("[data-reads-sort-status]");
+    if (!grid) return;
+
+    const formatOrder = (root.dataset.formatOrder ?? "").split(",").filter(Boolean);
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let active: ReadsSortKey = READS_SORT_DEFAULT;
+
+    function cardsOf(): HTMLElement[] {
+      return Array.from(grid!.querySelectorAll<HTMLElement>("[data-read]"));
+    }
+
+    function sortableOf(card: HTMLElement) {
+      return {
+        slug: card.dataset.slug ?? "",
+        format: card.dataset.format ?? "",
+        publishedAt: card.dataset.published ?? "",
+        readMin: Number(card.dataset.readmin ?? "0"),
+        el: card,
+      };
+    }
+
+    function apply(key: ReadsSortKey): void {
+      const cards = cardsOf();
+      const firstRects = new Map<HTMLElement, DOMRect>();
+      if (!reduce) {
+        for (const card of cards) firstRects.set(card, card.getBoundingClientRect());
+      }
+
+      const sorted = cards
+        .map(sortableOf)
+        .sort((a, b) => compareReads(a, b, key, formatOrder));
+
+      // Re-insert in sorted order, always ahead of the filter's empty-state
+      // node (if present) so a fresh reorder never displaces it.
+      const empty = grid!.querySelector<HTMLElement>("[data-reads-empty]");
+      for (const { el } of sorted) grid!.insertBefore(el, empty ?? null);
+
+      if (status) status.textContent = `Sorted by ${key === "format" ? "format" : key}.`;
+
+      if (reduce) return;
+      for (const card of cards) {
+        if (card.hidden) continue;
+        const last = card.getBoundingClientRect();
+        const first = firstRects.get(card);
+        if (!first) continue;
+        const dx = first.left - last.left;
+        const dy = first.top - last.top;
+        if (dx === 0 && dy === 0) continue;
+        card.animate(
+          [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "translate(0, 0)" }],
+          { duration: 320, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)" },
+        );
+      }
+    }
+
+    root.addEventListener("click", (ev) => {
+      const chip = (ev.target as HTMLElement | null)?.closest<HTMLButtonElement>("[data-sort]");
+      if (!chip) return;
+      const key = chip.dataset.sort ?? "";
+      if (!isReadsSortKey(key) || key === active) return;
+      active = key;
+
+      root.querySelectorAll<HTMLButtonElement>("[data-sort]").forEach((c) => {
+        const on = c.dataset.sort === key;
+        c.classList.toggle("rsort-active", on);
+        c.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+
+      apply(key);
+    });
+  }
+
+  initReadsSort();
+  document.addEventListener("astro:page-load", initReadsSort);
+</script>
+
+<style>
+  .rsort {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-2) var(--s-3);
+    flex: none;
+    margin-left: auto;
+  }
+  .rsort-label {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+  }
+  .rsort-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+  }
+  .rsort-chip {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-dim);
+    background: transparent;
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-sm);
+    padding: 0.22em 0.6em;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-overshoot);
+  }
+  .rsort-chip:hover {
+    color: var(--accent);
+    border-color: var(--rule-bright);
+    transform: translateY(-1px);
+  }
+  .rsort-chip:active {
+    transform: translateY(0);
+  }
+  .rsort-chip:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .rsort-active {
+    color: var(--accent);
+    border-color: color-mix(in oklab, var(--accent) 38%, var(--rule));
+    background: color-mix(in oklab, var(--accent) 8%, transparent);
+    text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 35%, transparent);
+  }
+  .rsort-status {
+    /* visually quiet, screen-reader-relevant telemetry — mirrors rfilter-status */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rsort-chip {
+      transition: color var(--dur-fast) var(--ease-out);
+      transform: none !important;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .rsort {
+      margin-left: 0;
+      flex-basis: 100%;
+    }
+  }
+</style>

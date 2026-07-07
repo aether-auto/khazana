@@ -14,6 +14,7 @@ import { repoDataDir, dataDir } from "../lib/data.js";
 import { CHANNELS } from "@khazana/core";
 import {
   buildSources,
+  toSourcesEntry,
   type SourcesItem,
   type SourcesEntry,
 } from "../components/sources/lib/build-sources.js";
@@ -27,29 +28,11 @@ const sources = registry.sources;
 const pending = loadPending(repoDataDir());
 const curated = loadCurated(dataDir());
 
-// Project the registry + feed onto the lib's minimal structural inputs.
-const srcInput: SourcesEntry[] = sources.map((s) => ({
-  id: s.id,
-  type: s.type,
-  url: s.url,
-  channels: s.channels,
-  enabled: s.enabled,
-  trustScore: s.trustScore,
-  addedBy: s.addedBy,
-  failureCount: s.failureCount,
-  notes: s.notes,
-}));
-const pendingInput: SourcesEntry[] = pending.map((s) => ({
-  id: s.id,
-  type: s.type,
-  url: s.url,
-  channels: s.channels,
-  enabled: s.enabled,
-  trustScore: s.trustScore,
-  addedBy: s.addedBy,
-  failureCount: s.failureCount,
-  notes: s.notes,
-}));
+// Project the registry + feed onto the lib's minimal structural inputs. Both
+// `sources` and `pending` are `SourceEntry[]` from the same registry schema, so
+// one shared projection (`toSourcesEntry`) covers both — no per-array repeat.
+const srcInput: SourcesEntry[] = sources.map(toSourcesEntry);
+const pendingInput: SourcesEntry[] = pending.map(toSourcesEntry);
 const itemInput: SourcesItem[] = curated.map((it) => ({
   id: it.id,
   source: it.source,
@@ -192,27 +175,16 @@ const trustPct = (t?: number) => (t != null ? Math.round(t * 100) : null);
         </section>
 
         {/* ── The explorer ──────────────────────────────────────────────
-            The control bar is markup-only scaffolding; the island wires every
-            behavior (search/facet/sort/drawer). SourcesData is passed as a prop
-            (cleanest with Astro hydration) AND embedded as inline JSON so any
-            consumer can read it without a second fetch. */}
+            SourcesData ships exactly once, as a component prop — the island
+            renders its own real controls (search/facet/sort/drawer) from that
+            prop on first client render, so there's no separate disabled SSR
+            control-bar scaffold to desync or double-ship as inline JSON.
+            `client:visible`: this section sits below the header + health band
+            (stats + by-type bar), i.e. below the fold on typical viewports, so
+            deferring hydration until scrolled into view avoids paying for the
+            largest island on the page before anyone's looked at it. */}
         <section class="src-explorer" data-reveal aria-label="source explorer">
-          <div class="src-controls" aria-hidden="true">
-            <input
-              class="src-search"
-              type="search"
-              placeholder="search sources…"
-              disabled
-            />
-            <div class="src-chips" />
-            <select class="src-sort" disabled>
-              <option>trust ↓</option>
-            </select>
-          </div>
-
-          <script type="application/json" id="sources-data" is:inline set:html={JSON.stringify(data).replace(/</g, "\\u003c")} />
-
-          <SourcesExplorer client:load data={data} base={base} />
+          <SourcesExplorer client:visible data={data} base={base} />
 
           {/* No-JS / pre-hydration fallback — the grouped-by-channel list. */}
           <noscript>

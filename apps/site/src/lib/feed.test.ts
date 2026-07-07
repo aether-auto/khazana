@@ -389,6 +389,27 @@ test("dropBelowFeedFloor preserves existing behavior for bare-link / no-body ite
   expect(dropBelowFeedFloor(items).map((i) => i.id)).toEqual(["bare", "video-nobody"]);
 });
 
+// Characterization test for the optional `readMinutesOf` accessor (added so the
+// Feed page can precompute read-time ONCE and thread it in here, instead of
+// dropBelowFeedFloor re-parsing each body's HTML itself). Pins that supplying a
+// precomputed accessor produces the EXACT same result as the default (body-parsing)
+// path — the refactor that consumes this must be invisible to output.
+test("dropBelowFeedFloor: a precomputed readMinutesOf accessor yields identical results to the default", () => {
+  const items = [
+    item({ id: "short-maker", source: "hackaday", topics: ["diy"], body: bodyMin(3) }),
+    item({ id: "long", topics: ["tech"], body: bodyMin(9) }),
+    item({ id: "exactly5", topics: ["tech"], body: bodyMin(5) }),
+    item({ id: "bare", body: undefined }),
+  ];
+  const readMinutesById = new Map(items.map((it) => [it.id, it.body ? Math.round(it.body.split(/\s+/).length / 225) : 0]));
+  const readMinutesOf = (it: FeedItem) => readMinutesById.get(it.id) ?? 0;
+
+  const withAccessor = dropBelowFeedFloor(items, readMinutesOf).map((i) => i.id);
+  const withDefault = dropBelowFeedFloor(items).map((i) => i.id);
+  expect(withAccessor).toEqual(withDefault);
+  expect(withAccessor).toEqual(["long", "exactly5", "bare"]);
+});
+
 test("tickerTitles returns the first n titles", () => {
   const items = [item({ id: "1", title: "One" }), item({ id: "2", title: "Two" }), item({ id: "3", title: "Three" })];
   expect(tickerTitles(items, 2)).toEqual(["One", "Two"]);

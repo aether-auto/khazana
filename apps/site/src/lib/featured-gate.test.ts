@@ -76,6 +76,30 @@ test("splitFeaturedGated handles empty feed", () => {
   expect(splitFeaturedGated([], 10)).toEqual({ featured: [], rest: [] });
 });
 
+// Characterization test for the optional `readMinutesOf` accessor (added so the
+// Feed page can precompute read-time ONCE, keyed by id, and thread it in here
+// instead of splitFeaturedGated re-parsing each body's HTML itself). Pins that
+// supplying a precomputed accessor produces the EXACT same split as the default
+// (body-parsing) path.
+test("splitFeaturedGated: a precomputed readMinutesOf accessor yields an identical split to the default", () => {
+  const items = [
+    item({ id: "long1", body: bodyOfMinutes(8) }),
+    item({ id: "short", body: bodyOfMinutes(4) }),
+    item({ id: "long2", body: bodyOfMinutes(10) }),
+    item({ id: "nobody" }),
+  ];
+  const readMinutesById = new Map(
+    items.map((it) => [it.id, it.body ? Math.round(it.body.replace(/<[^>]*>/g, " ").trim().split(/\s+/).length / 225) : 0]),
+  );
+  const readMinutesOf = (it: FeedItem) => readMinutesById.get(it.id) ?? 0;
+
+  const withAccessor = splitFeaturedGated(items, 2, readMinutesOf);
+  const withDefault = splitFeaturedGated(items, 2);
+  expect(withAccessor.featured.map((i) => i.id)).toEqual(withDefault.featured.map((i) => i.id));
+  expect(withAccessor.rest.map((i) => i.id)).toEqual(withDefault.rest.map((i) => i.id));
+  expect(withAccessor.featured.map((i) => i.id)).toEqual(["long1", "long2"]);
+});
+
 // Content-agnostic gate: kind / sourceType are irrelevant — only the rendered
 // body length determines eligibility. A video with a long transcript is as
 // featurable as an article of equal length; a link-only video is not.

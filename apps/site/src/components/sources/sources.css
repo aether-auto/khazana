@@ -1,9 +1,9 @@
 /* The Sources explorer — shared chrome for the faceted source surface.
    "Lines not boxes": hairline rules, mono labels, dense-but-readable rows,
    negative space. Tokens only (tokens.css). The island (SourcesExplorer.tsx)
-   adds its own behavior + result/drawer styles; this file owns the page frame,
-   the health overview band, the control-bar scaffold, the type-color map, and
-   the stub placeholder so the page renders meaningfully before hydration. */
+   owns its own control bar, facets, and result/drawer styles (scoped in
+   SourcesExplorer.module.css) — this file owns the page frame: the masthead,
+   the health overview band, the type-color map, and the no-JS fallback list. */
 
 /* ── Masthead ──────────────────────────────────────────────────────────── */
 .src-head {
@@ -130,69 +130,6 @@
 }
 .src-legend-count {
   color: var(--ink-faint);
-}
-
-/* ── Control bar (markup only — island wires behavior) ─────────────────── */
-.src-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s-3) var(--s-4);
-  margin-bottom: var(--s-5);
-}
-.src-search {
-  flex: 1 1 16rem;
-  min-width: 0;
-  font-family: var(--font-mono);
-  font-size: var(--t-sm);
-  color: var(--ink);
-  background: var(--bg-inset);
-  border: var(--hair) solid var(--rule);
-  border-radius: var(--r-sm);
-  padding: var(--s-2) var(--s-3);
-}
-.src-search::placeholder {
-  color: var(--ink-faint);
-}
-.src-search:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-.src-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2);
-}
-.src-chip {
-  font-family: var(--font-mono);
-  font-size: var(--t-xs);
-  letter-spacing: 0.04em;
-  color: var(--ink-dim);
-  background: transparent;
-  border: var(--hair) solid var(--rule);
-  border-radius: 999px;
-  padding: 0.2em 0.7em;
-  cursor: pointer;
-  transition:
-    border-color var(--dur-fast) var(--ease-out),
-    color var(--dur-fast) var(--ease-out);
-}
-.src-chip:hover {
-  border-color: var(--rule-bright);
-  color: var(--ink);
-}
-.src-chip[aria-pressed="true"] {
-  color: var(--accent);
-  border-color: color-mix(in oklab, var(--accent) 50%, var(--rule));
-}
-.src-sort {
-  font-family: var(--font-mono);
-  font-size: var(--t-sm);
-  color: var(--ink-dim);
-  background: var(--bg-inset);
-  border: var(--hair) solid var(--rule);
-  border-radius: var(--r-sm);
-  padding: var(--s-2) var(--s-3);
 }
 
 /* ── Type badge — mono, uppercase. Distinct hues for the richer media types

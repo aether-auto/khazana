@@ -148,6 +148,16 @@
     --focus: #b8851d;
     --halo-display: none;
     --halo-star: none;
+    /* liquid-glass, light: the dark mode --glass-bg (rgba(14,14,16,0.72), a
+       translucent charcoal near --bg-raised dark's #121210) has no light
+       counterpart here, so glass cards compute an opaque charcoal panel with
+       --ink-dim text UNDER the light ink — the light-mode "dark box" bug.
+       Mirror the same recipe with the light ladder: light --bg-raised is
+       #fbfaf6, so a translucent cream at the same 0.72 alpha. --glass-edge/
+       --glass-sheen need no light entry — both are color-mix()es over --ink/
+       --accent, which already flip above, so they resolve to the light inks
+       automatically. */
+    --glass-bg: rgba(251, 250, 246, 0.72);
     color-scheme: light;
   }
 }

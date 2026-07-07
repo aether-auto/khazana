@@ -91,6 +91,13 @@ const { formatFacet, channelFacet, collectionCount } = Astro.props;
   // before, toggle [hidden], measure after, then play the inverse transform — so
   // surviving cards glide to their new grid slots and entering cards fade up.
   // Reduced-motion → no FLIP, just an instant toggle. No layout libs.
+  //
+  // The per-facet match + AND-across-facets composition is shared (apps/site/
+  // src/lib/filter): a card's format/channels only ever count as "" / [] when
+  // truly absent, and the shared predicate already treats an empty item value
+  // as matching nothing but the empty/"all" selection — so an untagged card
+  // naturally shows only under all/all, with no separate flag needed.
+  import { matchesFacet } from "../../lib/filter/index.js";
 
   type Facet = "format" | "channel";
 
@@ -120,28 +127,25 @@ const { formatFacet, channelFacet, collectionCount } = Astro.props;
     // The full filterable set: every read on the page (hero first, then gallery).
     const allTargets = hero ? [hero, ...cards] : cards;
 
-    // Read a card's facet values. A card is "tagged" only if it carries BOTH
-    // data-format and data-channels; an untagged card must NEVER satisfy a
-    // specific (non-empty) filter — otherwise a card with missing metadata would
-    // leak under every chip and make the counts disagree with what renders.
-    function facetsOf(card: HTMLElement): { format: string; channels: string[]; tagged: boolean } {
-      const hasFmt = card.hasAttribute("data-format");
-      const hasCh = card.hasAttribute("data-channels");
+    // Read a card's facet values. A card with no data-format/data-channels (or
+    // empty values) reads as "" / [] — the shared predicate below only ever
+    // matches that against the empty/"all" selection, so a genuinely untagged
+    // card can never leak under a specific chip.
+    function facetsOf(card: HTMLElement): { format: string; channels: string[] } {
       return {
         format: card.dataset.format ?? "",
         channels: (card.dataset.channels ?? "").split(",").filter(Boolean),
-        tagged: hasFmt && hasCh,
       };
     }
 
-    // Does a card match a given (format, channel) selection? "" = any. An untagged
-    // card matches ONLY the all/all selection — it can never appear under a chip.
+    // Does a card match a given (format, channel) selection? "" = any. Two
+    // independent facets, ANDed together (see apps/site/src/lib/filter/facets.ts).
     function cardMatches(card: HTMLElement, fmtSel: string, chanSel: string): boolean {
-      const { format, channels, tagged } = facetsOf(card);
-      if (!tagged) return fmtSel === "" && chanSel === "";
-      const fmtOk = fmtSel === "" || format === fmtSel;
-      const chanOk = chanSel === "" || channels.includes(chanSel);
-      return fmtOk && chanOk;
+      const { format, channels } = facetsOf(card);
+      return (
+        matchesFacet(format, fmtSel ? [fmtSel] : []) &&
+        matchesFacet(channels, chanSel ? [chanSel] : [])
+      );
     }
 
     function matches(card: HTMLElement): boolean {
@@ -353,6 +357,19 @@ const { formatFacet, channelFacet, collectionCount } = Astro.props;
     border-color: color-mix(in oklab, var(--accent) 38%, var(--rule));
     background: color-mix(in oklab, var(--accent) 8%, transparent);
     text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 35%, transparent);
+    /* a tactile little "confirmed" pop the instant a chip becomes active — since
+       JS only ever ADDS this class to a chip that didn't already have it (the
+       previously-active chip loses it in the same tick), the animation fires
+       fresh on every real activation, never on re-renders. */
+    animation: rchip-pop var(--dur) var(--ease-overshoot);
+  }
+  @keyframes rchip-pop {
+    from {
+      transform: scale(0.9);
+    }
+    to {
+      transform: scale(1);
+    }
   }
   .rchip-active .rchip-n {
     color: color-mix(in oklab, var(--accent) 75%, var(--ink-faint));

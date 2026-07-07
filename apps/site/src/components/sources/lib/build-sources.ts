@@ -37,6 +37,37 @@ export interface SourcesItem {
   kind: string;
 }
 
+/**
+ * Project any registry-shaped object (the live `sources` array, the Scout's
+ * `pending` queue — both are `SourceEntry[]` from `@khazana/core`) onto the
+ * lib's minimal `SourcesEntry` shape. A structural parameter (not `SourceEntry`
+ * itself) keeps this file free of the full zod schema import; one shared
+ * projection means the page never repeats this field list per array.
+ */
+export function toSourcesEntry(s: {
+  id: string;
+  type: string;
+  url: string;
+  channels: string[];
+  enabled: boolean;
+  trustScore: number;
+  addedBy: string;
+  failureCount: number;
+  notes?: string;
+}): SourcesEntry {
+  return {
+    id: s.id,
+    type: s.type,
+    url: s.url,
+    channels: s.channels,
+    enabled: s.enabled,
+    trustScore: s.trustScore,
+    addedBy: s.addedBy,
+    failureCount: s.failureCount,
+    notes: s.notes,
+  };
+}
+
 // ── Output datasets (the data contract the island builds to) ──────────────
 export interface RecentItem {
   id: string;

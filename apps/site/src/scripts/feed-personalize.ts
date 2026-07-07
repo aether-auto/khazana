@@ -8,9 +8,15 @@
 // (liveProfileFromEvents → aggregateProfile), and — only when the model is
 // READY — re-order the bento mosaic + tell the register to re-order too.
 //
-// When the model isn't ready / no Worker URL / no deviceId / the fetch fails,
-// we leave the SSR DOM exactly as-is and never surface the toggle. 0 console
-// errors in every path (the fetch NEVER throws — mirrors LiveSignal/Beacon).
+// The toggle itself is ALWAYS visible (SSR renders it whenever a Worker is
+// configured — index.astro gates that at build time) so the affordance is
+// honestly discoverable rather than a silently-hidden dead control. Until
+// THIS device's model is ready it stays in a "calibrating" state — disabled,
+// with a tooltip explaining why (as specific as the /summary response lets us
+// be, via the same gateState/gaugeLabel the Bench's live-pill uses) — and
+// setCalibrating() is the ONLY thing every no-signal / error path falls back
+// to. 0 console errors in every path (the fetch NEVER throws — mirrors
+// LiveSignal/Beacon).
 //
 // Correctness key: personalization is affinity-only. The bento HERO (index 0) is
 // a distinct richer FeatureCard that a FeedCard can't become via a DOM move, so
@@ -19,22 +25,15 @@
 // via a khz:foryou CustomEvent it listens for.
 import {
   liveProfileFromEvents,
+  gaugeLabel,
+  gateState,
 } from "../components/taste/lib/taste-derive.js";
 import type { EngagementEvent, FeedItem, RankProfile } from "@khazana/core";
-import { forYouOrder, type ForYouItem } from "../lib/for-you.js";
+import { forYouOrder, type PersonalizeItem } from "../lib/for-you.js";
 import { assignBento } from "../lib/bento.js";
 
 const DEVICE_KEY = "khazana:deviceId";
 const RANKING_KEY = "khz.feed.ranking";
-
-/** The compact per-item payload the page ships in #feed-personalize-data. */
-interface PersonalizeItem {
-  id: string;
-  base: number;
-  topics: string[];
-  entities: string[];
-  region: "featured" | "rest";
-}
 
 /** The /summary response shape (Worker, public, read-only). Mirrors LiveSignal. */
 interface SummaryResponse {
@@ -51,6 +50,13 @@ interface SummaryResponse {
 
 type Ranking = "for-you" | "top-ranked";
 
+/** Shown whenever we genuinely have no signal to reason about yet (no Worker
+ * URL / no deviceId / fetch failed / zero events) — the honest generic case. */
+const GENERIC_CALIBRATING_MSG =
+  "Building your taste model from your reading — check back after a few more visits.";
+/** Title shown once the model is ready and the toggle becomes interactive. */
+const READY_TITLE = "Toggle between your personalized order and the top-ranked order";
+
 // Module-scoped stash so a late-initializing register can read the last "for
 // you" order even if it missed the event (the event is still the primary path).
 declare global {
@@ -62,11 +68,38 @@ declare global {
 function initPersonalize(): void {
   const root = document.querySelector<HTMLElement>("[data-section='bento']");
   const payloadEl = document.querySelector<HTMLScriptElement>("#feed-personalize-data");
-  if (!root || !payloadEl) return;
+  const toggle = document.querySelector<HTMLElement>("[data-rank-toggle]");
+  const btn = toggle?.querySelector<HTMLButtonElement>("[data-rank-btn]") ?? null;
+  const label = toggle?.querySelector<HTMLElement>("[data-rank-label]") ?? null;
+  const glyph = toggle?.querySelector<HTMLElement>("[data-rank-glyph]") ?? null;
+  // The SSR toggle only exists when index.astro built it (PUBLIC_WORKER_URL
+  // configured); no toggle → nothing for this island to do.
+  if (!root || !payloadEl || !btn || !label) return;
   // Double-init guard (this module runs on import AND on every astro:page-load;
   // both fire on first load under View Transitions). Tag the bento root once.
   if (root.dataset.personalizeReady === "1") return;
   root.dataset.personalizeReady = "1";
+
+  /**
+   * The ONE state every no-signal / not-ready / error path falls back to: an
+   * honest, inert, disabled toggle with a tooltip explaining why — never a
+   * silently-hidden control. `message` defaults to the generic case; callers
+   * with a live gateState pass the specific "N more events…" sentence.
+   */
+  function setCalibrating(message: string = GENERIC_CALIBRATING_MSG): void {
+    btn!.setAttribute("aria-disabled", "true");
+    btn!.setAttribute("aria-pressed", "false");
+    btn!.title = message;
+    label!.textContent = "calibrating…";
+    if (glyph) glyph.textContent = "○";
+  }
+
+  /** Flip the toggle from calibrating → interactive once the model is ready. */
+  function markReady(): void {
+    btn!.removeAttribute("aria-disabled");
+    btn!.title = READY_TITLE;
+    if (glyph) glyph.textContent = "◈";
+  }
 
   let items: PersonalizeItem[] = [];
   try {
@@ -74,12 +107,12 @@ function initPersonalize(): void {
   } catch {
     items = [];
   }
-  if (items.length === 0) return;
+  if (items.length === 0) {
+    setCalibrating();
+    return;
+  }
 
   const now = new Date().toISOString();
-  const toggle = document.querySelector<HTMLElement>("[data-rank-toggle]");
-  const btn = toggle?.querySelector<HTMLButtonElement>("[data-rank-btn]") ?? null;
-  const label = toggle?.querySelector<HTMLElement>("[data-rank-label]") ?? null;
 
   // ── SSR baseline: capture the quality order for the "top ranked" revert. ──
   // Bento CARDS carry BOTH data-bento and data-item-id (the ↗ source links inside
@@ -90,13 +123,15 @@ function initPersonalize(): void {
   const mosaicNodes = bentoNodes.filter((n) => n.dataset.bento !== "feature");
   const mosaicSsrOrder = mosaicNodes.map((n) => n.dataset.itemId ?? "");
 
-  const featuredById = new Map<string, ForYouItem>();
-  const restById = new Map<string, ForYouItem>();
+  // PersonalizeItem already IS a ForYouItem plus `region` — no adapter object
+  // needed, just partition by region (forYouOrder only reads the ForYouItem
+  // fields it needs; the extra `region` field is harmless).
+  const featuredById = new Map<string, PersonalizeItem>();
+  const restById = new Map<string, PersonalizeItem>();
   const allById = new Map<string, FeedItem>();
   for (const it of items) {
-    const fy: ForYouItem = { id: it.id, base: it.base, topics: it.topics, entities: it.entities };
-    if (it.region === "featured") featuredById.set(it.id, fy);
-    else restById.set(it.id, fy);
+    if (it.region === "featured") featuredById.set(it.id, it);
+    else restById.set(it.id, it);
     // Partial FeedItem carrying topics/entities is enough for aggregateProfile.
     allById.set(it.id, { id: it.id, topics: it.topics, entities: it.entities } as unknown as FeedItem);
   }
@@ -165,13 +200,13 @@ function initPersonalize(): void {
   }
 
   function syncToggle(mode: Ranking): void {
-    if (!btn || !label) return;
     const forYou = mode === "for-you";
-    btn.setAttribute("aria-pressed", forYou ? "true" : "false");
-    label.textContent = forYou ? "for you" : "top ranked";
+    btn!.setAttribute("aria-pressed", forYou ? "true" : "false");
+    label!.textContent = forYou ? "for you" : "top ranked";
   }
 
-  // ── Fetch the device's /summary (never throws — silent snapshot on any miss). ──
+  // ── Fetch the device's /summary (never throws — falls back to "calibrating"
+  // on any miss, same contract LiveSignal/Beacon follow). ──
   const base = (import.meta.env.PUBLIC_WORKER_URL ?? "").trim();
   let deviceId = "";
   try {
@@ -179,7 +214,10 @@ function initPersonalize(): void {
   } catch {
     deviceId = "";
   }
-  if (!base || !deviceId) return; // no URL or no device → stay quality order.
+  if (!base || !deviceId) {
+    setCalibrating(); // no URL or no device yet → genuinely nothing to report.
+    return;
+  }
 
   const ctrl = new AbortController();
   fetch(`${base.replace(/\/$/, "")}/summary?deviceId=${encodeURIComponent(deviceId)}`, {
@@ -187,19 +225,32 @@ function initPersonalize(): void {
   })
     .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
     .then((data: SummaryResponse) => {
-      if (!data || typeof data.eventCount !== "number" || data.eventCount === 0) return;
+      if (!data || typeof data.eventCount !== "number" || data.eventCount === 0) {
+        setCalibrating();
+        return;
+      }
 
       const profile: RankProfile = liveProfileFromEvents(data.events ?? [], allById, now).profile;
-      if (!profile.ready) return; // model not ready → leave SSR order + toggle hidden.
+      if (!profile.ready) {
+        // Not ready yet, but we DO know how far — surface the exact same
+        // gateState/gaugeLabel sentence the Bench's live-pill/fuel-gauges use
+        // ("N more events, M more days until the model is ready.").
+        const gate = gateState(data.eventCount, data.spanDays, {
+          minEvents: data.gates?.minEvents,
+          minDays: data.gates?.minDays,
+        });
+        setCalibrating(gaugeLabel(gate));
+        return;
+      }
 
       // Compute the affinity orders for both regions.
       mosaicForYouOrder = forYouOrder([...featuredById.values()], profile);
       restForYouOrder = forYouOrder([...restById.values()], profile);
 
-      // Reveal the affordance and wire the toggle.
-      if (toggle) toggle.hidden = false;
-      btn?.addEventListener("click", () => {
-        const next: Ranking = btn.getAttribute("aria-pressed") === "true" ? "top-ranked" : "for-you";
+      // Flip the affordance live and wire the toggle.
+      markReady();
+      btn!.addEventListener("click", () => {
+        const next: Ranking = btn!.getAttribute("aria-pressed") === "true" ? "top-ranked" : "for-you";
         try {
           localStorage.setItem(RANKING_KEY, next);
         } catch {
@@ -221,7 +272,8 @@ function initPersonalize(): void {
       applyRanking(initial);
     })
     .catch(() => {
-      // failure / abort / parse error → silently stay on the SSR quality order.
+      // failure / abort / parse error → honest calibrating state, never a crash.
+      setCalibrating();
     });
 }
 

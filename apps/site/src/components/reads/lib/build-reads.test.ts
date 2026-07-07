@@ -133,6 +133,41 @@ describe("buildReadsIndex — facets (whole-collection: a chip's count = reads i
   });
 });
 
+describe("buildReadsIndex — excerpt (grounded hover-preview text)", () => {
+  test("short bodies return the full stripped prose, no ellipsis", () => {
+    const { featured } = buildReadsIndex([read({ slug: "x", body: "A short opening line." })]);
+    expect(featured?.excerpt).toBe("A short opening line.");
+  });
+
+  test("long bodies are truncated with an ellipsis, at a word or sentence boundary", () => {
+    const { featured } = buildReadsIndex([read({ slug: "x", body: proseOf(400) })]);
+    expect(featured?.excerpt.length).toBeLessThan(400 * 2); // proseOf produces "w0 w1 ..." tokens
+    expect(featured?.excerpt.endsWith("…")).toBe(true);
+    // never cuts mid-word: the excerpt (minus the ellipsis) must be a prefix
+    // made of whole "wN" tokens only.
+    const withoutEllipsis = featured!.excerpt.replace(/…$/, "").trim();
+    expect(withoutEllipsis).toMatch(/^(w\d+ )*w\d+$/);
+  });
+
+  test("strips import lines, code fences, JSX tags and {expressions} just like read-time", () => {
+    const mdx = [
+      'import Chart from "../Chart.astro";',
+      "```js",
+      "const secret = 1;",
+      "```",
+      '<Chart data={foo} caption="ignored attr text" />',
+      "The real opening sentence of the piece.",
+    ].join("\n");
+    const { featured } = buildReadsIndex([read({ slug: "x", body: mdx })]);
+    expect(featured?.excerpt).toBe("The real opening sentence of the piece.");
+  });
+
+  test("empty body yields an empty excerpt (card hides the hover-preview panel)", () => {
+    const { featured } = buildReadsIndex([read({ slug: "x", body: "" })]);
+    expect(featured?.excerpt).toBe("");
+  });
+});
+
 describe("buildReadsIndex — stats", () => {
   test("editorial stats sum across every read", () => {
     const { stats } = buildReadsIndex(reads, { formatOrder: FORMAT_NAMES });

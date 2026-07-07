@@ -14,7 +14,14 @@
 // runs — so the client can re-rank the feed shipping only `{id, base, topics,
 // entities}` per item (no article bodies, tiny payload). The parity test in
 // `for-you.test.ts` locks `base + affinityDelta === scoreContributions(...).total`.
-import { RANK_WEIGHTS, type RankProfile } from "@khazana/core";
+import {
+  RANK_WEIGHTS,
+  GAUSSIAN_DEFAULTS,
+  DEFAULT_HALF_LIFE_DAYS,
+  scoreContributions,
+  type RankProfile,
+  type FeedItem,
+} from "@khazana/core";
 
 /**
  * The minimal per-item shape the client ships to re-rank the feed. `base` is the
@@ -26,6 +33,39 @@ export interface ForYouItem {
   base: number;
   topics: string[];
   entities: string[];
+}
+
+/**
+ * The exact payload the Feed page ships in `#feed-personalize-data`: a
+ * `ForYouItem` plus which SSR region the item renders in (the bento mosaic,
+ * excluding the pinned hero, or the register tail), so the client re-ranks each
+ * region independently. No other field is shipped — no bodies, no titles, no
+ * urls — this IS the minimal shape `feed-personalize.ts` consumes.
+ */
+export interface PersonalizeItem extends ForYouItem {
+  region: "featured" | "rest";
+}
+
+/**
+ * Build the ONE `PersonalizeItem` for a feed item: `base` is the core total
+ * scored with a NOT-ready profile (so it's pure recency/trust/metrics/cluster/
+ * content/readTime — see the parity contract above `affinityDelta`), computed
+ * with the SAME weights/gaussian/half-life the build ranks with. PURE given
+ * (item, clusterSize, now, region) — no I/O, no clock (now is passed in).
+ */
+export function toPersonalizeItem(
+  item: FeedItem,
+  opts: { clusterSize: number; now: string; region: "featured" | "rest" },
+): PersonalizeItem {
+  const base = scoreContributions(item, {
+    weights: RANK_WEIGHTS,
+    gaussian: GAUSSIAN_DEFAULTS,
+    clusterSize: opts.clusterSize,
+    now: opts.now,
+    profile: { ready: false, topics: {}, entities: {} },
+    halfLifeDays: DEFAULT_HALF_LIFE_DAYS,
+  }).total;
+  return { id: item.id, base, topics: item.topics, entities: item.entities, region: opts.region };
 }
 
 /** Mean of a number array; empty → 0. Matches core's `mean`. */

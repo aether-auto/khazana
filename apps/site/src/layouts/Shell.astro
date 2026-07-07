@@ -7,6 +7,7 @@ import CommandPalette from "../components/cmdk/CommandPalette.tsx";
 import SiteGate from "../components/SiteGate.astro";
 import NavRail from "../components/header/NavRail.tsx";
 import SiteNav from "../components/nav/SiteNav.tsx";
+import FeedFilterBar from "../components/nav/FeedFilterBar.astro";
 import { ClientRouter } from "astro:transitions";
 import { CHANNELS } from "@khazana/core";
 
@@ -152,72 +153,7 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
         </button>
       </div>
       {feedPage ? (
-        <!-- FEED PAGE: hierarchical two-level filter.
-             Top row: group tabs (all · world · science · data · make) with a
-             sliding amber indicator matching the NavRail aesthetic.
-             Bottom row: sub-channel chips for the active group, animating in. -->
-        <div
-          class="channels channels-feed feed-filter"
-          aria-label="Filter by topic"
-          data-feed-channels=""
-          data-feed-filter=""
-        >
-          <!-- GROUP TAB ROW -->
-          <div class="filter-groups" role="tablist" aria-label="Topic groups">
-            <div class="filter-group-indicator" aria-hidden="true"></div>
-            <a
-              class:list={["filter-group-tab", activeChannel === "" && "fg-active"]}
-              href={withBase("/")}
-              data-group-tab=""
-              data-group-channels=""
-              role="tab"
-              aria-selected={activeChannel === "" ? "true" : "false"}
-              aria-controls="filter-subchannels"
-            >all</a>
-            {channelGroups.map((g) => {
-              const isGroupActive = activeChannel !== "" && g.channels.includes(activeChannel);
-              return (
-                <a
-                  class:list={["filter-group-tab", isGroupActive && "fg-active"]}
-                  href={`${withBase("/")}?channel=${g.channels[0]}`}
-                  data-group-tab={g.label}
-                  data-group-channels={g.channels.join(",")}
-                  role="tab"
-                  aria-selected={isGroupActive ? "true" : "false"}
-                  aria-controls="filter-subchannels"
-                >{g.label}</a>
-              );
-            })}
-          </div>
-          <!-- SUB-CHANNEL CHIP ROW — populated + animated by JS -->
-          <div
-            class="filter-subchannels"
-            id="filter-subchannels"
-            role="tabpanel"
-            aria-label="Channels in group"
-          >
-            {/* Rendered by JS; SSR provides the active channel's group for no-JS fallback */}
-            {channelGroups.map((g) => {
-              const isActive = g.channels.includes(activeChannel);
-              return (
-                <span
-                  class:list={["filter-subgroup", isActive && "is-visible"]}
-                  data-subgroup={g.label}
-                  aria-hidden={!isActive ? "true" : "false"}
-                >
-                  {g.channels.map((c) => (
-                    <a
-                      class:list={["filter-sub-ch", c === activeChannel && "fsc-active"]}
-                      href={`${withBase("/")}?channel=${c}`}
-                      data-filter={c}
-                      data-filter-sub=""
-                    >{c}</a>
-                  ))}
-                </span>
-              );
-            })}
-          </div>
-        </div>
+        <FeedFilterBar channelGroups={channelGroups} activeChannel={activeChannel} />
       ) : (
         <nav
           class="channels"
@@ -254,183 +190,6 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
          it needs no per-page wiring and lives entirely here in the shell. -->
     <SiteNav base={base} client:idle />
     <Beacon />
-
-    <!-- Feed-page hierarchical channel filter.
-         Group tabs dispatch khz:channelchange with a `channels` array (union of
-         the group's sub-channels). Sub-channel chips dispatch with a single
-         `channel` string. "all" clears both.
-         Progressive enhancement: all links are real hrefs; JS adds live filtering. -->
-    <script>
-      // The channelGroups definition mirrored here so JS can derive group→channels
-      // without needing to parse the DOM on every interaction.
-      const FILTER_GROUPS: { label: string; channels: string[] }[] = [
-        { label: "world",   channels: ["history", "geopolitics", "politics", "geography"] },
-        { label: "science", channels: ["science", "tech", "ai", "quantum"] },
-        { label: "data",    channels: ["data-science", "ds-sports", "data-strategy", "finance"] },
-        { label: "make",    channels: ["ideas", "diy", "3d-printing", "iot", "embedded", "ai-projects"] },
-      ];
-
-      function groupForChannel(ch: string): string | null {
-        for (const g of FILTER_GROUPS) {
-          if (g.channels.includes(ch)) return g.label;
-        }
-        return null;
-      }
-
-      function channelsForGroup(groupLabel: string): string[] {
-        return FILTER_GROUPS.find((g) => g.label === groupLabel)?.channels ?? [];
-      }
-
-      function initFeedChannelFilter(): void {
-        const root = document.querySelector<HTMLElement>("[data-feed-filter]");
-        if (!root) return;
-        if (root.dataset.filterReady === "1") return;
-        root.dataset.filterReady = "1";
-
-        const params = new URLSearchParams(location.search);
-        const initial = params.get("channel") ?? "";
-
-        // Set active group + sub-channels from URL at load time
-        activateGroup(initial ? (groupForChannel(initial) ?? "") : "", initial);
-
-        // Position the group-tab sliding indicator on load
-        requestAnimationFrame(() => positionGroupIndicator(root));
-
-        // GROUP TAB clicks
-        root.addEventListener("click", (ev) => {
-          const groupTab = (ev.target as HTMLElement | null)?.closest<HTMLAnchorElement>("[data-group-tab]");
-          if (groupTab) {
-            ev.preventDefault();
-            const groupLabel = groupTab.dataset.groupTab ?? "";
-            // Clicking a group tab again navigates INTO that group (shows sub-channels),
-            // but the feed filters to the full group (union), not a single channel.
-            const groupChannels = channelsForGroup(groupLabel);
-            // Update URL: clear to "all" or pick first channel as the group representative
-            const url = new URL(location.href);
-            if (!groupLabel) {
-              url.searchParams.delete("channel");
-            } else {
-              // Store the group label as the "active" URL param
-              // so SSR renders correct state on reload. We use the group's first channel
-              // as the URL value because URL has no "group" concept — the filter
-              // JS re-derives the group from the channel on load.
-              // But for group-level filters we want ALL channels in the group
-              // to show — we store a sentinel: "group:<label>" — NO, that breaks
-              // SSR rendering. Instead, keep the url param empty for group-level
-              // so the url is just "?". The JS-state machine handles it: store
-              // the active group in a data attr on root.
-              url.searchParams.delete("channel");
-            }
-            history.replaceState(null, "", url.toString());
-            activateGroup(groupLabel, "");
-            positionGroupIndicator(root);
-
-            // Dispatch to all feed sections: for group tabs we pass the channels array
-            document.dispatchEvent(new CustomEvent("khz:channelchange", {
-              detail: {
-                channel: "",          // single-channel filter is empty
-                channels: groupChannels, // group union filter
-                group: groupLabel,
-              },
-            }));
-            return;
-          }
-
-          // SUB-CHANNEL chip clicks
-          const subChip = (ev.target as HTMLElement | null)?.closest<HTMLAnchorElement>("[data-filter-sub]");
-          if (subChip) {
-            ev.preventDefault();
-            const ch = subChip.dataset.filter ?? "";
-            const url = new URL(location.href);
-            if (ch) {
-              url.searchParams.set("channel", ch);
-            } else {
-              url.searchParams.delete("channel");
-            }
-            history.replaceState(null, "", url.toString());
-
-            const groupLabel = ch ? (groupForChannel(ch) ?? "") : "";
-            activateGroup(groupLabel, ch);
-            positionGroupIndicator(root);
-
-            // Single-channel dispatch — back-compat with consumers expecting `channel`
-            document.dispatchEvent(new CustomEvent("khz:channelchange", {
-              detail: {
-                channel: ch,
-                channels: ch ? [ch] : [],
-                group: groupLabel,
-              },
-            }));
-          }
-        });
-      }
-
-      function activateGroup(groupLabel: string, activeChannel: string): void {
-        const root = document.querySelector<HTMLElement>("[data-feed-filter]");
-        if (!root) return;
-
-        // Mark active group tab
-        root.querySelectorAll<HTMLElement>("[data-group-tab]").forEach((tab) => {
-          const isActive =
-            (groupLabel === "" && (tab.dataset.groupTab ?? "") === "") ||
-            (groupLabel !== "" && tab.dataset.groupTab === groupLabel);
-          tab.classList.toggle("fg-active", isActive);
-          tab.setAttribute("aria-selected", isActive ? "true" : "false");
-        });
-
-        // Show/hide sub-channel rows
-        root.querySelectorAll<HTMLElement>("[data-subgroup]").forEach((sg) => {
-          const isVisible = sg.dataset.subgroup === groupLabel && groupLabel !== "";
-          sg.classList.toggle("is-visible", isVisible);
-          sg.setAttribute("aria-hidden", isVisible ? "false" : "true");
-        });
-
-        // Mark active sub-channel chip
-        root.querySelectorAll<HTMLElement>("[data-filter-sub]").forEach((chip) => {
-          chip.classList.toggle("fsc-active", (chip.dataset.filter ?? "") === activeChannel && activeChannel !== "");
-        });
-      }
-
-      function positionGroupIndicator(root: HTMLElement): void {
-        const indicator = root.querySelector<HTMLElement>(".filter-group-indicator");
-        const groupRow = root.querySelector<HTMLElement>(".filter-groups");
-        if (!indicator || !groupRow) return;
-
-        const activeTab = groupRow.querySelector<HTMLElement>(".fg-active");
-        if (!activeTab) {
-          indicator.style.opacity = "0";
-          return;
-        }
-
-        const rowRect = groupRow.getBoundingClientRect();
-        const tabRect = activeTab.getBoundingClientRect();
-        const x = tabRect.left - rowRect.left;
-        const w = tabRect.width;
-
-        indicator.style.opacity = "1";
-        indicator.style.width = `${w}px`;
-        indicator.style.transform = `translateX(${x}px)`;
-
-        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        indicator.style.transitionDuration = reduced ? "0ms" : "";
-      }
-
-      initFeedChannelFilter();
-      document.addEventListener("astro:page-load", () => {
-        initFeedChannelFilter();
-        // Re-position indicator after fonts + layout settle
-        requestAnimationFrame(() => {
-          const root = document.querySelector<HTMLElement>("[data-feed-filter]");
-          if (root) positionGroupIndicator(root);
-        });
-      });
-
-      // Re-position on resize (same pattern as NavRail)
-      window.addEventListener("resize", () => {
-        const root = document.querySelector<HTMLElement>("[data-feed-filter]");
-        if (root) positionGroupIndicator(root);
-      });
-    </script>
 
     <!-- v2 motion foundation: Lenis smooth scroll + GSAP/ScrollTrigger, wired to
          the View Transitions lifecycle. Reduced-motion → native scroll, no smooth.
@@ -610,8 +369,9 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
       transform: none;
       pointer-events: auto;
       /* reduced-motion keeps the row fully present — undo the collapse entirely,
-         restoring the base box (.channels / .feed-filter pad bottom by --s-3,
-         no top pad, no border, auto-centred margins). */
+         restoring the base box (.channels pads bottom by --s-3, no top pad, no
+         border, auto-centred margins). FeedFilterBar.astro carries its own
+         copy of this same rule for its `.feed-filter`-classed root. */
       height: auto;
       overflow: visible;
       padding-block: 0 var(--s-3);
@@ -784,165 +544,9 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
     text-decoration: none;
   }
 
-  /* ── FEED PAGE: Hierarchical two-level filter ─────────────────────────────
-     Top row: group tabs (all / world / science / data / make) with a sliding
-     amber pill indicator — same visual language as the NavRail.
-     Bottom row: sub-channel chips for the selected group, animating in/out.
-     Both rows tuck on scroll alongside the regular .channels row. */
-  .feed-filter {
-    max-width: var(--maxw);
-    margin-inline: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    padding: 0 var(--s-5) var(--s-3);
-  }
-
-  /* GROUP TAB ROW — the primary level tabs */
-  .filter-groups {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: var(--s-2);
-    padding-bottom: var(--s-2);
-  }
-
-  /* The sliding amber underline pill — GPU only (transform + width + opacity) */
-  .filter-group-indicator {
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    height: 2px;
-    width: 0;
-    opacity: 0;
-    border-radius: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--editorial));
-    box-shadow: 0 0 10px color-mix(in oklab, var(--accent) 40%, transparent);
-    transform: translateX(0);
-    transform-origin: left;
-    pointer-events: none;
-    transition:
-      transform var(--dur) var(--ease-spring),
-      width var(--dur) var(--ease-spring),
-      opacity var(--dur-fast) var(--ease-out);
-    will-change: transform, width;
-  }
-
-  .filter-group-tab {
-    position: relative;
-    display: inline-block;
-    font-family: var(--font-mono);
-    font-size: var(--t-xs);
-    letter-spacing: 0.04em;
-    color: var(--ink-faint);
-    padding: 0.3em 0.6em;
-    border-radius: var(--r-sm);
-    transition:
-      color var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
-    text-decoration: none;
-    white-space: nowrap;
-  }
-  .filter-group-tab:hover {
-    color: var(--ink-dim);
-    text-decoration: none;
-  }
-  .filter-group-tab.fg-active {
-    color: var(--accent);
-    text-shadow: 0 0 10px color-mix(in oklab, var(--accent) 35%, transparent);
-  }
-  /* "all" tab: slightly more prominent */
-  .filter-group-tab[data-group-tab=""] {
-    color: var(--ink-dim);
-    padding-left: 0;
-  }
-  .filter-group-tab[data-group-tab=""].fg-active {
-    color: var(--accent);
-  }
-
-  /* SUB-CHANNEL CHIP ROW — revealed when a group is active */
-  .filter-subchannels {
-    overflow: hidden;
-    min-height: 0;
-  }
-  /* all subgroups are hidden by default; .is-visible reveals the active one */
-  .filter-subgroup {
-    display: none;
-    flex-wrap: wrap;
-    gap: var(--s-2);
-    padding: var(--s-2) 0 0;
-    opacity: 0;
-    transform: translateY(-4px);
-    transition:
-      opacity var(--dur) var(--ease-out),
-      transform var(--dur) var(--ease-out);
-  }
-  .filter-subgroup.is-visible {
-    display: flex;
-    opacity: 1;
-    transform: translateY(0);
-    animation: subgroup-reveal var(--dur) var(--ease-out) both;
-  }
-  @keyframes subgroup-reveal {
-    from {
-      opacity: 0;
-      transform: translateY(-4px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* Individual sub-channel chips */
-  .filter-sub-ch {
-    display: inline-block;
-    font-family: var(--font-mono);
-    font-size: var(--t-xs);
-    color: var(--ink-dim);
-    border: var(--hair) solid var(--rule);
-    border-radius: var(--r-sm);
-    padding: 0.15em 0.55em;
-    letter-spacing: 0.02em;
-    white-space: nowrap;
-    transition:
-      color var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out),
-      transform var(--dur-fast) var(--ease-overshoot);
-    text-decoration: none;
-  }
-  .filter-sub-ch:hover {
-    color: var(--accent);
-    border-color: var(--rule-bright);
-    text-decoration: none;
-    transform: translateY(-1px);
-  }
-  .filter-sub-ch:active {
-    transform: translateY(0);
-  }
-  .filter-sub-ch.fsc-active {
-    color: var(--accent);
-    border-color: color-mix(in oklab, var(--accent) 35%, var(--rule));
-    background: color-mix(in oklab, var(--accent) 7%, transparent);
-    text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 40%, transparent);
-  }
-
-  /* Reduced-motion: no sliding indicator, no subgroup animation */
-  @media (prefers-reduced-motion: reduce) {
-    .filter-group-indicator {
-      transition: none;
-    }
-    .filter-subgroup.is-visible {
-      animation: none;
-      opacity: 1;
-      transform: none;
-    }
-    .filter-group-tab,
-    .filter-sub-ch {
-      transition: color var(--dur-fast) var(--ease-out);
-      transform: none !important;
-    }
-  }
+  /* The FEED PAGE hierarchical two-level filter (group tabs + sub-channel
+     chips) has been extracted to components/nav/FeedFilterBar.astro — its
+     markup, scoped CSS, and client script now live there. */
 
   .footer {
     max-width: var(--maxw);
@@ -1004,9 +608,7 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
     .nav :global(.navrail-link) {
       padding-block: 0.55em;
     }
-    .ch,
-    .filter-group-tab,
-    .filter-sub-ch {
+    .ch {
       min-height: 40px;
       display: inline-flex;
       align-items: center;
