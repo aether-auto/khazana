@@ -22,10 +22,16 @@ export interface MakerChannelStyle {
   code: string;
 }
 
+// `iot` (70% info / 30% good) and `3d-printing` (55% good / 45% info) used to
+// sit only ~15pt apart on the good↔info blend line — both landing in the same
+// washed-out grey-green-teal zone and reading as near-identical spines. Pushed
+// the ratios further apart (3d-printing now leans hard into `good`, iot now
+// leans hard into `info`) so the two families are unmistakable at a glance
+// while both stay token-derived color-mix()es over the same two anchors.
 const STYLE: Record<MakerChannel, MakerChannelStyle> = {
   diy: { color: "var(--good)", code: "DIY" },
-  "3d-printing": { color: "color-mix(in oklab, var(--good) 55%, var(--info) 45%)", code: "3DP" },
-  iot: { color: "color-mix(in oklab, var(--info) 70%, var(--good) 30%)", code: "IOT" },
+  "3d-printing": { color: "color-mix(in oklab, var(--good) 78%, var(--info) 22%)", code: "3DP" },
+  iot: { color: "color-mix(in oklab, var(--info) 85%, var(--good) 15%)", code: "IOT" },
   embedded: { color: "color-mix(in oklab, var(--info) 60%, var(--accent) 40%)", code: "EMB" },
   "ai-projects": { color: "color-mix(in oklab, var(--accent) 55%, var(--editorial) 45%)", code: "AIP" },
 };
