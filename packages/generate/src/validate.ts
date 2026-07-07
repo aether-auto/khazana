@@ -2,6 +2,7 @@ import matter from "gray-matter";
 import { z } from "zod";
 import { CHANNELS, FORMAT_NAMES } from "@khazana/core";
 import { lintMdxJsxAttributes } from "./mdx-lint.js";
+import { checkNumericConsistency } from "./numeric-consistency.js";
 
 // Mirrors apps/site/src/content.config.ts `blog` collection EXACTLY so generated
 // MDX builds under astro:content. Field names + constraints must not drift.
@@ -160,6 +161,14 @@ export function validateDraft(
   // mdx so line numbers match the file (frontmatter offset preserved).
   for (const issue of lintMdxJsxAttributes(mdx)) {
     errors.push(`mdx-syntax: line ${issue.line}:${issue.column}: ${issue.message}`);
+  }
+
+  // Numeric consistency: catch the "one-shot fix left a stale copy elsewhere"
+  // defect class — the same labeled quantity rendered with different values
+  // in different places (table vs prose, chart vs prose, two components).
+  // Deterministic, no LLM — see numeric-consistency.ts for scope/precision notes.
+  for (const finding of checkNumericConsistency(mdx)) {
+    errors.push(`numeric-consistency: ${finding.message}`);
   }
 
   return { ok: errors.length === 0, slug, errors };

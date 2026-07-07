@@ -152,3 +152,37 @@ test("the retired NarrativeScene component is rejected", () => {
   expect(r.ok).toBe(false);
   expect(r.errors.join(" ")).toContain("NarrativeScene");
 });
+
+test("a DataTable cell that contradicts a prose restatement of the same quantity fails (numeric-consistency)", () => {
+  const body = `<DataTable
+  caption="Casualty figures by theater."
+  columns={[
+    { key: "country", label: "Country", type: "string" },
+    { key: "casualties", label: "Casualties", type: "number" }
+  ]}
+  rows={[
+    { country: "France", casualties: "3,255" }
+  ]}
+/>
+
+Historians estimate France suffered 3,231 casualties in the campaign, a staggering toll.
+`;
+  const r = validateDraft(mdx(VALID_FM, body), KNOWN_URLS);
+  expect(r.ok).toBe(false);
+  expect(r.errors.join(" ")).toMatch(/numeric-consistency/);
+});
+
+test("a draft with internally-consistent numbers passes the numeric-consistency check", () => {
+  const body = `<StatBand
+  caption="Peak throughput"
+  stats={[
+    { value: 989, decimals: 0, suffix: " TFLOPS", label: "H100 peak BF16 (dense)" }
+  ]}
+/>
+
+The H100 peak BF16 (dense) throughput is 989 TFLOPS, astonishing for its era.
+`;
+  const r = validateDraft(mdx(VALID_FM, body), KNOWN_URLS);
+  expect(r.ok).toBe(true);
+  expect(r.errors).toEqual([]);
+});

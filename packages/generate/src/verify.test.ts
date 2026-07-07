@@ -94,6 +94,21 @@ test("curated urls remain grounded even without an explicit ledger", async () =>
   expect(report.drafts[0]!.ok).toBe(true);
 });
 
+test("runVerify always attaches deterministic citationStats, independent of factChecker", async () => {
+  const ledger: CitationLedger = [
+    { url: "https://e.com/1", title: "One", tier: "med", origin: "curated" },
+  ];
+  const report = await runVerify([{ file: "/x/good.mdx", mdx: GOOD }], curated, {
+    now: "2026-06-23T00:00:00.000Z",
+    ledger,
+  });
+  const stats = report.drafts[0]!.citationStats!;
+  expect(stats).toBeDefined();
+  expect(stats.citedCount).toBe(1);
+  expect(stats.groundedCount).toBe(1);
+  expect(stats.ledgerCoverage).toBe(1);
+});
+
 test("factChecker is off by default and runs only when injected", async () => {
   const checker: FactChecker = async () => ({ ok: false, notes: "claim unsupported" });
   const report = await runVerify([{ file: "/x/good.mdx", mdx: GOOD }], curated, {

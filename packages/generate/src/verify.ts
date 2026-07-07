@@ -1,6 +1,8 @@
+import matter from "gray-matter";
 import { type CitationLedger, type FeedItem, ledgerUrls } from "@khazana/core";
 import { validateDraft } from "./validate.js";
 import type { FactCheckVerdict } from "./fact-checker.js";
+import { computeCitationStats, type CitationStats } from "./citation-stats.js";
 
 export interface FactCheckResult {
   ok: boolean;
@@ -26,6 +28,24 @@ export interface DraftCheck {
   ok: boolean;
   errors: string[];
   factCheck?: FactCheckResult;
+  /**
+   * Deterministic ledger-grounding stats over this draft's frontmatter sources
+   * (coverage %, independent-source count, tier breakdown). Always computed —
+   * report-only, does not gate `ok`. NOT the claims-level factChecker gate
+   * (see citation-stats.ts for why that stays with the adversarial verifier).
+   */
+  citationStats?: CitationStats;
+}
+
+/** Best-effort frontmatter `sources[]` read, tolerant of an unparseable draft. */
+function frontmatterSources(mdx: string): { url: string }[] {
+  try {
+    const raw: unknown = matter(mdx).data?.sources;
+    if (!Array.isArray(raw)) return [];
+    return raw.filter((s): s is { url: string } => !!s && typeof s.url === "string");
+  } catch {
+    return [];
+  }
 }
 
 export interface VerifyReport {
@@ -59,6 +79,7 @@ export async function runVerify(
       file: draft.file,
       ok: result.ok,
       errors: [...result.errors],
+      citationStats: computeCitationStats(frontmatterSources(draft.mdx), ledger, curated),
     };
 
     if (opts.factChecker) {

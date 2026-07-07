@@ -66,6 +66,18 @@ async function runVerifyCmd(deps: CliDeps, slugs: string[] = []): Promise<number
   const path = writeReport(deps.dataDir, report);
   for (const d of report.drafts) {
     if (!d.ok) console.error(`[generate:verify] FAIL ${d.file}: ${d.errors.join("; ")}`);
+    // Deterministic ledger-grounding stats — report-only, does not gate `ok`.
+    // The claims-level coverage/corroboration gate stays with the adversarial
+    // reads-verify LLM pass (see citation-stats.ts for why).
+    if (d.citationStats) {
+      const s = d.citationStats;
+      const t = s.tierBreakdown;
+      console.log(
+        `[generate:verify] ${d.slug} citations: ${(s.ledgerCoverage * 100).toFixed(0)}% grounded ` +
+          `(${s.groundedCount}/${s.citedCount}), ${s.independentSourceCount} independent source(s), ` +
+          `tiers H:${t.high} M:${t.med} L:${t.low} unknown:${t.unknown}`,
+      );
+    }
   }
   console.log(`[generate:verify] ${report.drafts.filter((d) => d.ok).length}/${report.drafts.length} ok → ${path}`);
   return report.ok ? 0 : 1;
