@@ -42,15 +42,11 @@ export { default as Detail } from "./Detail.astro";
 export type { DetailProps } from "./Detail.astro";
 export { default as Definition } from "./Definition.js";
 export type { DefinitionProps } from "./Definition.js";
-export { default as NarrativeScene } from "./NarrativeScene.js";
-export type { NarrativeSceneProps } from "./NarrativeScene.js";
-export type {
-  PanelSpec,
-  MapPanelSpec,
-  ChartPanelSpec,
-  ScenePanelSpec,
-  NarrativeStep,
-} from "./lib/narrative-scene.js";
+// NarrativeScene is RETIRED (see `RETIRED_COMPONENTS` in packages/generate/src/validate.ts)
+// and, confirmed at 0 live uses across content/blog/*.mdx, its export is removed here
+// entirely — not just blocked from authoring. The component source + its NarrativeScene.tsx/
+// lib/narrative-scene.ts files are left in place (unreferenced) rather than deleted, in case
+// the format is rebuilt later; the barrel simply no longer surfaces it.
 // ── P1 wave: knowledge-carrier + teardown/build primitives ────────────────────
 export { default as Diagram } from "./Diagram.js";
 export type { DiagramProps } from "./Diagram.js";

@@ -35,6 +35,7 @@ permissions:
   contents: write # commit generated MDX + push
   pages: write # deploy to GitHub Pages
   id-token: write # OIDC for actions/deploy-pages
+  issues: write # open/update the quarantined-Reads tracking issue (see "Escalate quarantined Reads")
 
 jobs:
   run:
@@ -54,6 +55,10 @@ jobs:
       ALLOW_DIRECT_YOUTUBE: "1"
       REDDIT_MIN_GAP_MS: "1500"
       YT_DLP_MIN_GAP_MS: "2000"
+      # yt-dlp's n-challenge solver now needs curl_cffi impersonation to avoid
+      # throttling/blocks; the JS runtime (Deno) + curl-cffi extra are installed
+      # in "Install ffmpeg + yt-dlp" above.
+      YT_DLP_IMPERSONATE: "1"
       ARXIV_HOST_MIN_GAP_MS: "3000"
       # ---- build-time public origin (Variable, not secret) ----
       PUBLIC_WORKER_URL: ${{ vars.PUBLIC_WORKER_URL }}
@@ -80,12 +85,13 @@ jobs:
 
       # ffmpeg is required to decode podcast audio for local Whisper transcription;
       # yt-dlp fetches media for the YouTube/podcast sources.
-      - name: Install ffmpeg + yt-dlp
+      - name: Install ffmpeg + yt-dlp (with JS runtime for n-challenge)
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg
-          sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
-            -o /usr/local/bin/yt-dlp && sudo chmod a+rx /usr/local/bin/yt-dlp
+          sudo apt-get install -y ffmpeg python3-pip
+          pip install --break-system-packages -U "yt-dlp[default,curl-cffi]"   # bundles yt-dlp-ejs + curl_cffi for impersonation
+          curl -fsSL https://deno.land/install.sh | sh
+          echo "$HOME/.deno/bin" >> "$GITHUB_PATH"
 
       # Transformers model cache: local Whisper (podcast STT fallback). Static key —
       # models change rarely; restore-keys lets a bumped key still reuse the prior.
@@ -149,7 +155,23 @@ jobs:
             echo "No Read changes to commit."
           else
             git commit -m "chore: daily reads $(date -u +%F) [skip ci]"
-            git push
+            # Other automations (scout-discover, the Reads routine) can push to
+            # main concurrently; rebase onto the latest main before each push
+            # attempt and retry a bounded number of times on rejection instead
+            # of failing outright and silently dropping a verified Read.
+            push_ok=0
+            for attempt in 1 2 3; do
+              git pull --rebase --autostash origin main
+              if git push; then
+                push_ok=1
+                break
+              fi
+              echo "Push rejected (attempt $attempt/3) — retrying after re-rebasing onto origin/main."
+            done
+            if [ "$push_ok" != "1" ]; then
+              echo "::error::git push failed after 3 attempts (non-fast-forward) — giving up."
+              exit 1
+            fi
           fi
 
       # ---- 6. build the static site (Pagefind index inside build) ----
@@ -160,6 +182,7 @@ jobs:
         run: pnpm tsx scripts/build-resilient.mts
 
       - name: Report quarantined Reads
+        id: quarantine-report
         if: always()
         run: |
           if [ -f apps/site/dist/_quarantine-report.json ]; then
@@ -167,12 +190,58 @@ jobs:
             cat apps/site/dist/_quarantine-report.json
             echo "::endgroup::"
             count=$(node -e "process.stdout.write(String((require('./apps/site/dist/_quarantine-report.json').quarantined||[]).length))")
+            echo "count=$count" >> "$GITHUB_OUTPUT"
             if [ "$count" != "0" ]; then
-              echo "::warning::$count Read(s) were quarantined (skipped) this build — see the quarantine report above."
+              echo "::error::$count Read(s) were quarantined (skipped) this build — deploy proceeds without them (build-resilient isolates one bad Read rather than blocking the site). See the quarantine report above; a tracking issue is opened/updated next."
             fi
           else
+            echo "count=0" >> "$GITHUB_OUTPUT"
             echo "No quarantine report emitted."
           fi
+
+      # Quarantine must be VISIBLE without blocking the deploy: the step above already
+      # annotates the run; this opens (or updates, if one is already open) a single
+      # deduplicated tracking issue listing the quarantined slugs. Never exits non-zero
+      # — build-resilient's whole point is to ship the good site while isolating the bad
+      # Read, and this step must preserve that.
+      - name: Escalate quarantined Reads (tracking issue)
+        if: always() && steps.quarantine-report.outputs.count != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const label = "read-quarantined";
+            const title = "⚠️ Read(s) quarantined from build";
+            const report = JSON.parse(fs.readFileSync("apps/site/dist/_quarantine-report.json", "utf8"));
+            const quarantined = report.quarantined || [];
+            const list = quarantined.map((q) => `- \`${q.slug}\`: ${q.reason}`).join("\n");
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = `${quarantined.length} Read(s) failed to build and were quarantined out of this deploy (the site still shipped — the deploy is NOT blocked).\n\n${list}\n\n- Workflow: ${context.workflow}\n- Run: ${runUrl}\n- Time: ${new Date().toISOString()}`;
+
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: label,
+            });
+            const existing = openIssues.find((issue) => issue.title === title);
+
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: [label],
+              });
+            }
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -186,3 +255,48 @@ jobs:
           # feed-refresh.yml): more patience instead of failing the run.
           timeout: 900000
           error_count: 60
+
+  # A red cron otherwise just sits quietly in the Actions tab. On failure, open (or
+  # update, if one is already open) a single deduplicated tracking issue so a freshness
+  # break gets noticed instead of silently rotting the site's data. Scoped to only the
+  # `issues: write` permission it needs — does not touch the main job's permissions.
+  notify-on-failure:
+    needs: run
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update tracking issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const label = "pipeline-failure";
+            const title = `⚠️ ${context.workflow} failing`;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = `The \`${context.workflow}\` workflow failed.\n\n- Run: ${runUrl}\n- Time: ${new Date().toISOString()}`;
+
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: label,
+            });
+            const existing = openIssues.find((issue) => issue.title === title);
+
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: [label],
+              });
+            }

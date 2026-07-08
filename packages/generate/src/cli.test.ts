@@ -63,7 +63,7 @@ sources:
 <Annotation>note</Annotation>
 `,
   );
-  const code = await main(["verify"], { dataDir, repoRoot: root, contentDir, now: NOW });
+  const code = await main(["verify", "good"], { dataDir, repoRoot: root, contentDir, now: NOW });
   expect(code).toBe(0);
   const report = JSON.parse(readFileSync(join(dataDir, "generation", "report.json"), "utf8"));
   expect(report.ok).toBe(true);
@@ -86,7 +86,7 @@ sources:
 Body.
 `,
   );
-  const code = await main(["verify"], { dataDir, repoRoot: root, contentDir, now: NOW });
+  const code = await main(["verify", "bad"], { dataDir, repoRoot: root, contentDir, now: NOW });
   expect(code).toBe(1);
   const report = JSON.parse(readFileSync(join(dataDir, "generation", "report.json"), "utf8"));
   expect(report.ok).toBe(false);
@@ -128,13 +128,69 @@ test("verify errors when a requested slug has no matching draft", async () => {
   expect(code).not.toBe(0);
 });
 
-test("verify with no slugs checks all drafts (unchanged behavior)", async () => {
+test("verify --all checks all drafts (whole-corpus opt-in, preserved for tests/ops)", async () => {
   writeFileSync(join(contentDir, "slug-a.mdx"), draft("Slug A", "https://e.com/a1"));
   writeFileSync(join(contentDir, "slug-b.mdx"), draft("Slug B", "https://nope.example/x"));
-  const code = await main(["verify"], { dataDir, repoRoot: root, contentDir, now: NOW });
+  const code = await main(["verify", "--all"], { dataDir, repoRoot: root, contentDir, now: NOW });
   expect(code).toBe(1); // slug-b is ungrounded and IS checked
   const report = JSON.parse(readFileSync(join(dataDir, "generation", "report.json"), "utf8"));
   expect(report.drafts).toHaveLength(2);
+});
+
+test("bare verify with no slugs and no --all errors instead of silently scoping to the whole corpus", async () => {
+  // Regression guard for the P1a un-publish hazard: an unattended agent running
+  // an empty-kept-set Stage 5 must NEVER fall through to whole-corpus verify,
+  // which would validate already-published Reads against a near-empty ephemeral
+  // ledger and could trigger a spurious DROP of a live Read.
+  writeFileSync(join(contentDir, "slug-a.mdx"), draft("Slug A", "https://e.com/a1"));
+  writeFileSync(join(contentDir, "slug-b.mdx"), draft("Slug B", "https://nope.example/x"));
+  const code = await main(["verify"], { dataDir, repoRoot: root, contentDir, now: NOW });
+  expect(code).not.toBe(0);
+  // No report should be written for this rejected invocation.
+  expect(() => readFileSync(join(dataDir, "generation", "report.json"), "utf8")).toThrow();
+});
+
+test("verify's report.json carries a richness score for every draft", async () => {
+  writeFileSync(
+    join(contentDir, "dispatch-thin.mdx"),
+    `---
+title: "Dispatch"
+format: dispatch
+channels:
+  - ai
+summary: "s"
+publishedAt: 2026-06-21T00:00:00.000Z
+sources:
+  - { title: "A1", url: "https://e.com/a1" }
+---
+<Chart data={[]} /> <DataTable columns={[]} rows={[]} />
+Some real prose body for this dispatch draft, several words long.
+`,
+  );
+  const code = await main(["verify", "dispatch-thin"], { dataDir, repoRoot: root, contentDir, now: NOW });
+  expect(code).toBe(0);
+  const report = JSON.parse(readFileSync(join(dataDir, "generation", "report.json"), "utf8"));
+  const d = report.drafts[0];
+  expect(d.richness).toBeDefined();
+  expect(d.richness.format).toBe("dispatch");
+  expect(d.richness.distinctIslandComponents.sort()).toEqual(["Chart", "DataTable"]);
+});
+
+test("catalog writes a component catalog snapshot under .claude/skills/writers/", async () => {
+  writeFileSync(
+    join(contentDir, "some-read.mdx"),
+    `---\ntitle: "X"\n---\n<Annotation term="a" note="b" /> <Chart data={[]} />\n`,
+  );
+  const code = await main(["catalog"], { dataDir, repoRoot: root, contentDir, now: NOW });
+  expect(code).toBe(0);
+  const catalog = JSON.parse(
+    readFileSync(join(root, ".claude", "skills", "writers", "component-catalog.json"), "utf8"),
+  );
+  expect(catalog.generatedAt).toBe(NOW);
+  const chart = catalog.components.find((c: { name: string }) => c.name === "Chart");
+  expect(chart.usageCount).toBe(1);
+  const orphan = catalog.components.find((c: { name: string }) => c.name === "Model3D");
+  expect(orphan.usageCount).toBe(0);
 });
 
 test("unknown subcommand returns a non-zero code", async () => {

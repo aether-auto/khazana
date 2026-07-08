@@ -1,4 +1,5 @@
 import type { FeedItem, Registry } from "@khazana/core";
+import { isReprobeEligible } from "@khazana/core";
 import { buildSource, defaultFetch, type FetchFn } from "./fetchers/build-source.js";
 import { enrichContent, type EnrichContentOptions } from "./enrich-content.js";
 import { withRetry, MAX_ATTEMPTS, BACKOFF_BASE_MS, defaultSleep, type SleepFn } from "./retry.js";
@@ -20,7 +21,7 @@ export interface SourceResult {
 export interface IngestProgress {
   /** Sources finished so far (1..total). */
   done: number;
-  /** Total enabled sources this run. */
+  /** Total sources fetched this run (enabled, plus any reprobe-eligible disabled sources). */
   total: number;
   /** Sources that succeeded so far. */
   okSoFar: number;
@@ -90,7 +91,14 @@ export async function runIngest(
   const sleep = opts.sleepFn ?? defaultSleep;
   const caches = opts.caches ?? ephemeralCaches();
 
-  const enabled = registry.sources.filter((s) => s.enabled);
+  // Fetch set = enabled sources ∪ disabled sources whose bounded re-probe
+  // window has elapsed (`isReprobeEligible`, `@khazana/core`). This is how a
+  // SYSTEMIC outage (e.g. a whole source type's discovery endpoint 404ing for
+  // every entry at once, which permanently auto-disables all of them via
+  // `source-verify`'s strike counter) self-heals once the upstream endpoint
+  // recovers, instead of staying dead forever. `opts.now` is the sole clock
+  // input, so this stays deterministic for tests — never `Date.now()` here.
+  const fetchSet = registry.sources.filter((s) => s.enabled || isReprobeEligible(s, opts.now));
 
   const concurrency =
     parseInt(process.env["INGEST_CONCURRENCY"] ?? "", 10) || DEFAULT_INGEST_CONCURRENCY;
@@ -102,7 +110,7 @@ export async function runIngest(
 
   // Completion-ordered running tallies for the optional progress heartbeat.
   // Mutated only from inside the (serialized-by-await) mapper below.
-  const total = enabled.length;
+  const total = fetchSet.length;
   let done = 0;
   let okSoFar = 0;
   let failedSoFar = 0;
@@ -129,7 +137,7 @@ export async function runIngest(
   };
 
   const sourceResults = await pooledMap(
-    enabled,
+    fetchSet,
     concurrency,
     async (entry) => {
       const hostname = new URL(entry.url).hostname;

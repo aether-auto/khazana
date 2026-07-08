@@ -111,6 +111,16 @@ The kit — and when to reach for each:
 - **`<Definition>`** — a glossary tooltip that TEACHES a term (vs `Annotation`, which CITES). Reach for it when a domain term needs a one-line definition in place.
 - **`<Timeline>`, `<Map>`, `<Scrolly>/<ScrollyStep>`, `<DataTable>`** — reach for these when the material is genuinely temporal, spatial, scroll-driven, or tabular.
 
+**Anti-pattern callout — the neglected kit.** In shipped teardowns to date, `StateMachine`,
+`LayerStack`, `CodeWalkthrough`, and `Model3D` — teardown's own SIGNATURE components — have gone
+almost entirely unused, while every piece defaults to the same `RunnableCode` + `Chart` +
+`Annotation` trio. That is the exact anti-pattern this format exists to avoid. Before you outline,
+ask: does the mechanism have states and transitions (`StateMachine`)? Is it a layered system — a
+protocol stack, a rendering pipeline (`LayerStack`)? Is there a code excerpt too large or non-JS to
+run (`CodeWalkthrough` instead of a plain fenced block)? Is the subject a genuinely spatial physical
+part (one `Model3D`, at most)? If any answer is yes, reach for it — don't default to prose plus one
+Chart/Diagram.
+
 **Every component must be earned** — but earn from this BIGGER, clearly-explained set. Reach
 depth through MORE knowledge-carrying components, each earned — NOT through minimalism. The
 runnable code and interactive chart are part of the argument, but so is a `Diagram` of the
@@ -153,7 +163,8 @@ table. If the gates can't be met at budget, take the `RESEARCH THIN` handoff and
 Read the brief and the research dossier. Output 5–10 lines: (a) the one-sentence problem
 X solves; (b) the 2–3 hardest mechanism points that most explanations skip, and their
 ledger URLs (prefer the primary spec/paper); (c) which `<RunnableCode>`/`<Chart>` carries
-which idea. Confirm every mechanism claim, number, and constant you intend to use is a
+which idea — consult `../component-catalog.json` for the full palette + live usage before
+defaulting to `RunnableCode`+`Chart`+`Annotation`. Confirm every mechanism claim, number, and constant you intend to use is a
 claims-table row citing a ledger URL — load-bearing ones corroborated. Anything not in the
 table → `[UNSUPPORTED]` (research or cut). Do not write prose yet.
 

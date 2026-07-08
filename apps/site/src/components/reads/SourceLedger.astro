@@ -1,0 +1,131 @@
+---
+// The "Sources & corroboration" rail — auto-rendered at the end of every Read
+// (see layouts/Article.astro). Surfaces the citation-ledger grounding
+// (tier/origin) that the generation pipeline already computes but which, until
+// now, was invisible on the page: frontmatter.sources only carried title+url.
+//
+// DEGRADES GRACEFULLY: tier/origin are OPTIONAL on every source (see
+// content.config.ts) — the 13 Reads shipped before this field existed render a
+// clean, un-badged list plus the domain-diversity summary; never an empty or
+// broken-looking panel. Pure SSR, no client JS, no hydration.
+import { groupSourcesByTier, summarizeSources, type RailSource } from "./lib/source-ledger.js";
+
+interface Props {
+  sources: RailSource[];
+}
+
+const { sources } = Astro.props;
+const summary = summarizeSources(sources);
+const groups = groupSourcesByTier(sources);
+
+const TIER_LABEL: Record<string, string> = {
+  high: "high · primary / peer-reviewed",
+  med: "med · reputable secondary",
+  low: "low · corroborated only",
+  unknown: "unrated",
+};
+
+function originGlyph(origin?: "curated" | "researched"): string {
+  return origin === "researched" ? "○" : "●";
+}
+function originLabel(origin?: "curated" | "researched"): string {
+  return origin === "researched" ? "researched" : "from the feed";
+}
+
+const summaryParts: string[] = [`${summary.total} source${summary.total === 1 ? "" : "s"}`];
+if (summary.hasTierData) {
+  summaryParts.push(`${summary.tiers.high} high-tier`);
+}
+summaryParts.push(`${summary.independentDomains} independent domain${summary.independentDomains === 1 ? "" : "s"}`);
+if (summary.hasOriginData) {
+  summaryParts.push(`${summary.origins.researched} researched / ${summary.origins.curated} from the feed`);
+}
+---
+
+{
+  sources.length > 0 && (
+    <aside class="ledger" aria-label="Sources & corroboration">
+      <p class="eyebrow">sources &amp; corroboration</p>
+      <p class="ledger-summary tnum">{summaryParts.join(" · ")}</p>
+      <div class="ledger-groups">
+        {groups.map((group) => (
+          <div class="ledger-group" data-tier={group.tier}>
+            {summary.hasTierData && <p class="ledger-group-label">{TIER_LABEL[group.tier]}</p>}
+            <ol>
+              {group.sources.map((s) => (
+                <li>
+                  {summary.hasOriginData && (
+                    <span class="ledger-origin" aria-hidden="true" title={originLabel(s.origin)}>
+                      {originGlyph(s.origin)}
+                    </span>
+                  )}
+                  <a href={s.url} rel="noopener noreferrer">
+                    {s.title}
+                  </a>
+                  {summary.hasOriginData && <span class="visually-hidden"> ({originLabel(s.origin)})</span>}
+                </li>
+              ))}
+            </ol>
+          </div>
+        ))}
+      </div>
+    </aside>
+  )
+}
+
+<style>
+  .ledger {
+    margin-top: var(--s-10);
+    padding-top: var(--s-5);
+    border-top: var(--hair) solid var(--rule);
+  }
+  .ledger-summary {
+    margin: 0 0 var(--s-5);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+  }
+  .ledger-groups {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-4);
+  }
+  .ledger-group-label {
+    margin: 0 0 var(--s-2);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-label);
+  }
+  /* per-tier accent on the group label only — the badge-like color that lets a
+     scanning eye separate high/med/low without reading the words. */
+  .ledger-group[data-tier="high"] .ledger-group-label {
+    color: var(--good);
+  }
+  .ledger-group[data-tier="med"] .ledger-group-label {
+    color: var(--info);
+  }
+  .ledger-group[data-tier="low"] .ledger-group-label {
+    color: var(--ink-dim);
+  }
+  .ledger-group[data-tier="unknown"] .ledger-group-label {
+    color: var(--ink-faint);
+  }
+  .ledger-group ol {
+    margin: 0;
+    padding-left: 1.4em;
+    font-family: var(--font-mono);
+    font-size: var(--t-sm);
+    color: var(--ink-dim);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+  }
+  .ledger-origin {
+    display: inline-block;
+    margin-right: 0.5ch;
+    color: var(--accent-dim);
+    font-size: 0.85em;
+  }
+</style>

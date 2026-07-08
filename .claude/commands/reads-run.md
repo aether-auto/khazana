@@ -67,6 +67,16 @@ quality bar gates volume:
   the same channel unless both are exceptional; spread format and channel; check each pick against
   the ledger entries the survey surfaced so you don't ship two adjacent pieces in one day or repeat
   last cycle's territory.
+- **The slate must be format-diverse and channel-diverse — never let one format or channel
+  dominate a run.** Enforce this explicitly, not just as a side effect of the novelty check above.
+- **Chronicle is first-class, not a leftover.** When the slate contains a groundable non-battle
+  history / geography / geopolitics idea, prefer the **chronicle** format for it and actively
+  reserve a chronicle slot when a fresh, groundable historical narrative is available. Reserve
+  **theater** for genuine BATTLE / military-engagement narratives that actually earn its
+  BattleMap/OrderOfBattle/ForceComparison kit — do NOT let theater absorb every history idea and
+  starve chronicle.
+- If both a battle idea and a broader-history idea are groundable in the same run, they can
+  **coexist** (theater + chronicle) rather than picking two theaters.
 
 Record your picks as explicit **assignments**, one per Read. Each assignment carries: `format`
 (a real FORMAT_NAME), `slug` (kebab-case, unique — must not collide with an existing
@@ -108,17 +118,24 @@ Review each verdict:
   PASSes, keep it. If it still FAILs (or the fix can't be made without fabricating), **DROP** the
   Read — delete its MDX so it is not committed. Exactly one repair cycle; never loop.
 
-Once the kept set is settled, run the **deterministic backstop** — scoped to **only this run's
-newly-authored slugs**, listed explicitly:
+**If your kept set is empty at this point, do NOT run `generate verify` at all** — skip straight to
+the empty-slate exit-clean path below. There is nothing to verify, and `generate verify` now
+**requires** either explicit slugs or `--all` (see next paragraph); never invoke it bare.
+
+Once the kept set is settled (and non-empty), run the **deterministic backstop** — scoped to
+**only this run's newly-authored slugs**, listed explicitly:
 
 ```bash
 pnpm --filter @khazana/generate generate verify <slug1> <slug2> ...
 ```
 
-The scoping is deliberate: the gate validates **this run's NEW Reads** against the fresh per-slug
-ledgers (`data/generation/research/<slug>.ledger.json`), and never re-litigates already-published
-Reads — whose research ledgers are not retained locally, so an all-drafts run would fail on them
-spuriously. Pass exactly the slugs you kept; a listed slug with no draft on disk is an error.
+The scoping is deliberate and enforced: `generate verify` with no slugs and no `--all` now **errors**
+rather than silently falling through to whole-corpus verify. This is a safety fix — a whole-corpus
+verify validates **every already-published Read** against this run's near-empty ephemeral
+per-run ledger, which would fail them spuriously; the recovery step below would then **DROP** (delete
+the MDX for) a live, previously-published Read. Never pass `--all` from this routine — that flag is
+for tests/ops only. Always pass exactly the slugs **this run** drafted and kept; a listed slug with
+no draft on disk is an error.
 
 This runs `validateDraft` + `factChecker` and **must exit 0**. If it exits non-zero, it has caught
 a draft your agents let through — find the offending file from its output, DROP it (delete the MDX,
@@ -154,17 +171,44 @@ collection) and reports it in `apps/site/dist/_quarantine-report.json`. Then:
 
 Never commit on a red verify, a broken build, or with any of this run's quarantined slugs staged.
 
-Then commit and push **only** the kept Reads (all of which built clean):
+**Record the run's telemetry before committing.** So a future "published zero" is never confused
+with "the routine never fired," every run — this one included — ends by appending one line to the
+committed run-log ledger:
 
 ```bash
-git add apps/site/src/content/blog/
+pnpm exec tsx scripts/record-reads-run.mts --json '{
+  "candidates": <size of the surveyed CandidateSlate>,
+  "picked": <ideas picked in Stage 2>,
+  "published": <Reads kept and about to be committed>,
+  "dropped": [{"slug": "<slug>", "reason": "<why it did not ship>"}, ...],
+  "notes": "<optional free text>"
+}'
+```
+
+`dropped` must list **every** picked idea that did not make it to publish (writer abort, verify FAIL
+after the one repair cycle, build-resilient quarantine, ...) with a short reason each.
+
+Then commit and push **only** the kept Reads (all of which built clean) **plus** the run-log ledger:
+
+```bash
+git add apps/site/src/content/blog/ data/reads-run-log.jsonl
 git commit -m "chore: reads run $(date -u +%F)"
 git push
 ```
 
-Commit **only** `apps/site/src/content/blog/` — nothing else (not the ideation snapshot, not data
-artifacts, not report files). If, after all drops, **no** MDX remains staged, **do not commit and
-do not push** — exit cleanly having authored nothing.
+Commit only `apps/site/src/content/blog/` and `data/reads-run-log.jsonl` — nothing else (not the
+ideation snapshot, not data artifacts, not report files). If, after all drops, **no** MDX remains
+staged, do not commit the blog dir — but still record and commit the ledger (see the empty-slate
+path below) so the run is never silently invisible.
+
+**Rebase-and-retry on push, always.** `main` also receives concurrent pushes from the daily
+`pipeline.yml` and the weekly `scout-discover.yml` — a bare `git push` can be rejected as
+non-fast-forward simply because one of those landed a commit first. Never treat that rejection as
+a failure to publish: before pushing, and again on any rejection, run
+`git pull --rebase --autostash origin main` and retry the push, up to 3 attempts total. Only after
+3 rebase-and-retry attempts still fail should you stop and report the push as genuinely broken
+(e.g. a real conflict on `apps/site/src/content/blog/` requiring manual attention) — do not
+silently drop a verified, built Read just because the first push attempt raced another workflow.
 
 ---
 
@@ -172,18 +216,47 @@ do not push** — exit cleanly having authored nothing.
 
 You run unattended, so be robust:
 
-- **Nothing clears the bar in Stage 2** → author nothing, commit nothing, exit cleanly. This is a
-  valid outcome, not an error.
-- **Every writer aborts / every draft is dropped** → same: nothing to publish, commit nothing,
-  exit cleanly.
+- **Nothing clears the bar in Stage 2** → author nothing, exit clean — see *Empty-slate exit* below
+  (still record + commit the run-log ledger; never the blog dir).
+- **Every writer aborts / every draft is dropped** → same: nothing to publish — still record +
+  commit the run-log ledger, exit clean.
+- **Empty kept set (either of the two cases above)** → do **not** run `generate verify` at all —
+  never with no slugs (it now errors by design) and never with `--all` (that would validate
+  already-published Reads against this run's empty ledger and risk a spurious un-publish). Skip
+  straight to the empty-slate exit.
 - **`ideation-eval.mts` fails** → fall back to running `reads-survey` against the raw data dirs.
 - **`generate verify` stays red after dropping the flagged draft** → do not force a commit; drop
-  drafts until it exits 0 (in the worst case, commit nothing).
+  drafts until it exits 0 (in the worst case, commit nothing to the blog dir — still record + commit
+  the ledger).
 - **A Read gets quarantined by `build-resilient.mts` (fails the real build)** → drop that slug from
   the commit; never `git add` a Read that doesn't build. If the build ABORTS systemically, commit
-  nothing and investigate.
+  nothing to the blog dir (still record + commit the ledger) and investigate.
 - A single failed writer or verifier never aborts the whole run — drop that one Read and continue
   with the rest.
+
+### Empty-slate exit (record the run even when you author nothing)
+
+A run that authors zero Reads is a **valid, successful outcome** — but it must still be
+**distinguishable from the routine never having fired at all**. So even on this path, before
+exiting:
+
+```bash
+pnpm exec tsx scripts/record-reads-run.mts --json '{
+  "candidates": <size of the surveyed CandidateSlate, 0 if survey itself failed>,
+  "picked": <ideas picked in Stage 2, usually 0 here>,
+  "published": 0,
+  "dropped": [{"slug": "<slug or idea title>", "reason": "<why it did not ship>"}, ...],
+  "notes": "<why the slate was empty, e.g. nothing cleared the groundability/novelty/taste bar>"
+}'
+git add data/reads-run-log.jsonl
+git commit -m "chore: reads run $(date -u +%F) (no Reads authored)"
+git pull --rebase --autostash origin main
+git push
+```
+
+Never `git add` `apps/site/src/content/blog/` on this path — there is nothing kept to commit there.
+Use the same rebase-and-retry pattern as the publish path (up to 3 attempts) if the push is
+rejected as non-fast-forward.
 
 ---
 

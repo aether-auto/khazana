@@ -23,6 +23,11 @@
 import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import "./mdx.css";
 import "./Model3D.css";
+// isLowPower()/prefersReducedMotion() now live in the shared gl-gates module
+// (see its header comment) — FirstLight.tsx (the Feed masthead's OGL point-
+// field) needed the identical pair, so this is the DRY cleanup the Atlas globe
+// spec already anticipated, done a little early.
+import { isLowPower, prefersReducedMotion } from "../lib/gl-gates";
 
 const Scene = lazy(() => import("./Model3DScene.js"));
 const GlbScene = lazy(() => import("./Model3DGlbScene.js"));
@@ -41,18 +46,6 @@ export interface Model3DProps {
   alt?: string;
   /** Short instrument label shown under the fallback motif when `src` is set. */
   label?: string;
-}
-
-function isLowPower(): boolean {
-  if (typeof navigator === "undefined") return true;
-  const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
-  const mobile = /Mobi|Android/i.test(navigator.userAgent);
-  return mobile || (mem !== undefined && mem < 4);
-}
-
-function prefersReducedMotion(): boolean {
-  if (typeof window === "undefined" || !window.matchMedia) return true;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 export default function Model3D({ caption, detail = 16, src, alt, label }: Model3DProps) {

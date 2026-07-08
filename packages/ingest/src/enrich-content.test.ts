@@ -33,6 +33,19 @@ test("upgrades article body to sanitized full-text when extraction yields enough
   expect(item.body).not.toBe("rss summary");
 });
 
+test("hn items are treated as article type: linked article gets full-text extraction", async () => {
+  // HN items carry only a tiny snippet (link + comment count); the linked
+  // article must go through the same Readability/AMP/meta fallback chain as
+  // rss/news/eng-blog/arxiv, or hn items can never clear the curate
+  // full-text gate (MIN_FULLTEXT_CHARS) and are silently dropped from the feed.
+  const item = makeItem({ sourceType: "hn", url: "https://blog.example.com/hn-linked-post" });
+  const fetchFn: FetchFn = async () => ({ ok: true, status: 200, text: async () => FULL_ARTICLE, json: async () => ({}) });
+  await enrichContent([item], fetchFn);
+  expect(item.body).toContain("<p>");
+  expect(item.body).toContain("Real article body content");
+  expect(item.body).not.toBe("rss summary");
+});
+
 test("keeps RSS summary when extracted text is too short", async () => {
   const item = makeItem({ sourceType: "news", url: "https://news.example.com/x" });
   const short = `<html><body><article><p>too short</p></article></body></html>`;

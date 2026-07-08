@@ -1,5 +1,6 @@
 import { FORMATS, type CitationLedger, type FeedItem } from "@khazana/core";
 import type { Assignment } from "./select.js";
+import { enrichSourcesFromLedger } from "./source-enrichment.js";
 
 export interface BriefResearch {
   /** Free-text research dossier: findings-by-question, appraisal notes, synthesis. */
@@ -54,10 +55,19 @@ export function buildBrief(
 
   const ledger = research.citationLedger ?? [];
   // Frontmatter `sources` seed: prefer the appraised ledger; else the curated seeds.
-  const sourceRows = ledger.length > 0 ? ledger.map((e) => ({ url: e.url })) : sources.map((it) => ({ url: it.url }));
+  // Either way, run the seed through the ledger-enrichment merge so a source
+  // whose url IS in the ledger carries its tier/origin straight into the stub —
+  // the writer copies rather than re-derives it (see source-enrichment.ts).
+  const seedRows = ledger.length > 0 ? ledger.map((e) => ({ url: e.url })) : sources.map((it) => ({ url: it.url }));
+  const sourceRows = enrichSourcesFromLedger(seedRows, ledger);
 
   const channelsYaml = [assignment.channel].map((c) => `  - ${c}`).join("\n");
-  const sourcesYaml = sourceRows.map((s) => `  - { title: "<title>", url: "${s.url}" }`).join("\n");
+  const sourcesYaml = sourceRows
+    .map((s) => {
+      const enrichment = s.tier && s.origin ? `, tier: ${s.tier}, origin: ${s.origin}` : "";
+      return `  - { title: "<title>", url: "${s.url}"${enrichment} }`;
+    })
+    .join("\n");
 
   const dossierSection = research.researchDossier?.trim()
     ? `## Research dossier (from the \`writers/researcher\` phase)\nGround your claims against this. Expand it further with your own research where the dossier is thin.\n\n${research.researchDossier.trim()}\n`
@@ -104,6 +114,7 @@ draft: false
 - \`format\` MUST be exactly \`${assignment.format}\`.
 - \`channels\` MUST be a non-empty list drawn from the site channel vocabulary.
 - \`sources\` MUST be a non-empty list of \`{ title, url }\` — one entry per source you actually cite, each url drawn from the citation ledger below.
+- ALSO include \`tier\` and \`origin\` on each source entry when you have them (copy them straight off that url's citation-ledger appraisal — \`high\`/\`med\`/\`low\` and \`curated\`/\`researched\`). Both fields are optional (older Reads shipped without them), but the site renders a "Sources & corroboration" rail from them, so always carry them through when the url is in your ledger.
 
 ${dossierSection}
 ${ledgerSection}

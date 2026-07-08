@@ -2,11 +2,14 @@
 import Shell from "./Shell.astro";
 import FormatBadge from "../components/FormatBadge.astro";
 import ChannelChip from "../components/ChannelChip.astro";
+import SourceLedger from "../components/reads/SourceLedger.astro";
 import { estimateReadMinutes } from "../lib/read-time.js";
 
 interface Source {
   title: string;
   url: string;
+  tier?: "high" | "med" | "low";
+  origin?: "curated" | "researched";
 }
 interface Props {
   slug?: string;
@@ -87,22 +90,7 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
         <slot />
       </div>
 
-      {
-        sources.length > 0 && (
-          <aside class="sources" aria-label="Sources">
-            <p class="eyebrow">sources</p>
-            <ol>
-              {sources.map((s) => (
-                <li>
-                  <a href={s.url} rel="noopener noreferrer">
-                    {s.title}
-                  </a>
-                </li>
-              ))}
-            </ol>
-          </aside>
-        )
-      }
+      <SourceLedger sources={sources} />
 
       <!-- colophon: the artifact behaves like a publication with a maker -->
       <footer class="colophon">
@@ -380,22 +368,6 @@ const issueLabel = `No. ${String(issueNo).padStart(3, "0")}`;
   /* inline code, code blocks (Shiki) and KaTeX math are styled GLOBALLY in
      styles/code.css so the MDX Reads column and the in-app reader render code +
      math as one identical family. (No .prose code/pre rules here on purpose.) */
-
-  .sources {
-    margin-top: var(--s-10);
-    padding-top: var(--s-5);
-    border-top: var(--hair) solid var(--rule);
-  }
-  .sources ol {
-    margin: 0;
-    padding-left: 1.4em;
-    font-family: var(--font-mono);
-    font-size: var(--t-sm);
-    color: var(--ink-dim);
-    display: flex;
-    flex-direction: column;
-    gap: var(--s-2);
-  }
 
   /* colophon — the maker's mark */
   .colophon {

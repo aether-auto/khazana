@@ -1,5 +1,16 @@
 ---
 import "../styles/global.css";
+// Preload hints for the two most-used font subsets (both basic-Latin, normal
+// style/weight — the display titles + the reading column render these on
+// every single page). `?url` forces Vite to resolve the import to the
+// build's hashed asset URL rather than inlining it, so the <link rel=preload>
+// below always points at the SAME file the @font-face rules in global.css
+// end up fetching — no hardcoded, build-fragile hashed path. This is on top
+// of `font-display: swap` (global.css); preload just gets the browser
+// fetching the bytes before it has parsed the stylesheet that names them,
+// closing the gap that causes a visible reflow on the large display titles.
+import frauncesPreloadUrl from "@fontsource-variable/fraunces/files/fraunces-latin-wght-normal.woff2?url";
+import newsreaderPreloadUrl from "@fontsource-variable/newsreader/files/newsreader-latin-opsz-normal.woff2?url";
 import Wordmark from "../components/Wordmark.astro";
 import Ticker from "../components/Ticker.astro";
 import Beacon from "../components/Beacon.astro";
@@ -59,6 +70,22 @@ const grouped = new Set(channelGroups.flatMap((g) => g.channels));
 const missing = CHANNELS.filter((c) => !grouped.has(c));
 if (missing.length) throw new Error(`Shell nav missing channels: ${missing.join(", ")}`);
 
+// Preconnect to the Worker origin when this build actually has one configured
+// (mirrors index.astro/Beacon.astro's own build-time PUBLIC_WORKER_URL gate).
+// Both Beacon's taste-capture POST and the Feed's /summary personalization
+// fetch hit this origin on load, so an early preconnect buys back the
+// DNS+TLS+TCP handshake before either fires. Renders nothing when unset —
+// most deployments (and local dev) have no Worker, so this must stay inert.
+const workerUrl = (import.meta.env.PUBLIC_WORKER_URL ?? "").trim();
+let workerOrigin = "";
+if (workerUrl) {
+  try {
+    workerOrigin = new URL(workerUrl).origin;
+  } catch {
+    workerOrigin = ""; // malformed env value → no-op, never break the build
+  }
+}
+
 const buildTime = new Date().toISOString();
 const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; label: string; href: string }[] = [
   { id: "feed", label: "feed", href: withBase("/") },
@@ -78,6 +105,17 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="theme-color" content="#0a0a0b" />
+    {/* Font preloads — BEFORE global.css's stylesheet link, so the browser
+        starts fetching these two woff2s while it's still parsing CSS instead
+        of waiting to discover them inside it (the visible reflow this avoids
+        happens on the large display titles + the reading column). */}
+    <link rel="preload" as="font" type="font/woff2" href={frauncesPreloadUrl} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={newsreaderPreloadUrl} crossorigin />
+    {
+      workerOrigin && (
+        <link rel="preconnect" href={workerOrigin} crossorigin />
+      )
+    }
     <link rel="manifest" href={withBase("/manifest.webmanifest")} />
     <link rel="icon" href={withBase("/icon.svg")} type="image/svg+xml" />
     <meta name="generator" content={Astro.generator} />
@@ -110,9 +148,13 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
   </head>
   <body>
     <!-- The decorative mesh-gradient background was removed (art-direction §2.1:
-         it is the #1 vibecoded tell). The only WebGL on the site now is the
-         data-carrying constellation. Empty space is warm, near-black, grain-
-         textured stillness (global.css) — confidence, not filler. -->
+         it is the #1 vibecoded tell). The ONLY WebGL on the site is the Feed's
+         "First Light" hero (art-direction.md §1, Signature Moment A) — a
+         data-driven OGL point-field behind the Feed masthead only (see
+         pages/index.astro + components/FirstLight.tsx), entrance-once then
+         settled, never a permanent background here in the shell. Everywhere
+         else, empty space stays warm, near-black, grain-textured stillness
+         (global.css) — confidence, not filler. -->
     <a class="skip-link" href="#main">Skip to content</a>
     <Ticker titles={tickerTitles} />
     <header class="topbar metal">

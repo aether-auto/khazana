@@ -9,10 +9,12 @@ import {
   readStyle,
   readTaste,
   writeBrief,
+  writeComponentCatalog,
   writeReport,
 } from "./io.js";
 import { selectAssignments } from "./select.js";
 import { runVerify, type FactChecker } from "./verify.js";
+import { buildComponentCatalog } from "./component-catalog.js";
 
 export interface CliDeps {
   dataDir: string;
@@ -41,11 +43,34 @@ function slugOf(file: string): string {
 }
 
 /**
- * Slug-scoped verify. With no slugs, checks every draft (unchanged contract).
- * With slugs, checks only the matching drafts; a requested slug with no matching
- * file is an error so the routine knows a draft it expected is missing.
+ * Slug-scoped verify. Whole-corpus verify (every draft in the collection) is
+ * gated behind an explicit `--all` flag — bare `verify` with no slugs is an
+ * ERROR, not a silent fall-through to whole-corpus.
+ *
+ * Why: an unattended Reads-run agent (see `.claude/commands/reads-run.md`
+ * Stage 5) invokes `generate verify` scoped to THIS run's newly-drafted
+ * slugs. If its kept set is ever empty, a bare `verify` with no args used to
+ * silently validate EVERY already-published draft in the collection against
+ * a near-empty ephemeral per-run ledger — guaranteed spurious FAILs on live
+ * Reads, which the recovery instructions could then DROP (delete the MDX and
+ * un-publish it on the next commit). Requiring `--all` makes whole-corpus
+ * verify an explicit, deliberate choice (used by tests/ops), never an
+ * accidental default.
  */
-async function runVerifyCmd(deps: CliDeps, slugs: string[] = []): Promise<number> {
+async function runVerifyCmd(deps: CliDeps, args: string[] = []): Promise<number> {
+  const all = args.includes("--all");
+  const slugs = args.filter((a) => a !== "--all");
+
+  if (!all && slugs.length === 0) {
+    console.error(
+      "[generate:verify] refusing to run with no slugs and no --all: bare `verify` no longer " +
+        "scopes to the whole corpus (P1a safety fix). Pass explicit slug(s) — " +
+        '`generate verify <slug1> <slug2> ...` — or `generate verify --all` to deliberately ' +
+        "check every draft in the collection.",
+    );
+    return 1;
+  }
+
   const curated = readCurated(deps.dataDir);
   const ledger = readLedger(deps.dataDir);
   let files = listDrafts(deps.contentDir);
@@ -66,16 +91,62 @@ async function runVerifyCmd(deps: CliDeps, slugs: string[] = []): Promise<number
   const path = writeReport(deps.dataDir, report);
   for (const d of report.drafts) {
     if (!d.ok) console.error(`[generate:verify] FAIL ${d.file}: ${d.errors.join("; ")}`);
+    // Deterministic ledger-grounding stats — report-only, does not gate `ok`.
+    // The claims-level coverage/corroboration gate stays with the adversarial
+    // reads-verify LLM pass (see citation-stats.ts for why).
+    if (d.citationStats) {
+      const s = d.citationStats;
+      const t = s.tierBreakdown;
+      console.log(
+        `[generate:verify] ${d.slug} citations: ${(s.ledgerCoverage * 100).toFixed(0)}% grounded ` +
+          `(${s.groundedCount}/${s.citedCount}), ${s.independentSourceCount} independent source(s), ` +
+          `tiers H:${t.high} M:${t.med} L:${t.low} unknown:${t.unknown}`,
+      );
+    }
+    // Richness/density score — ALWAYS surfaced (report-only unless egregious,
+    // which already failed the draft above via runVerify). See richness.ts.
+    if (d.richness) {
+      const r = d.richness;
+      if (r.exempt) {
+        console.log(`[generate:verify] ${d.slug} richness: exempt (${r.format}), ${r.words} words`);
+      } else {
+        const wpi = r.wordsPerIsland === null ? "n/a" : r.wordsPerIsland.toFixed(0);
+        console.log(
+          `[generate:verify] ${d.slug} richness: ${r.words} words, ${r.distinctIslandComponents.length} distinct ` +
+            `island component(s) [${r.distinctIslandComponents.join(", ") || "none"}], ${r.islandInstanceCount} ` +
+            `island instance(s), ${wpi} words/island (target ${r.targetBand.min}-${r.targetBand.max}) — ` +
+            `${r.meetsTarget ? "meets target" : "BELOW target"}${r.egregious ? " — EGREGIOUS" : ""}`,
+        );
+      }
+    }
   }
   console.log(`[generate:verify] ${report.drafts.filter((d) => d.ok).length}/${report.drafts.length} ok → ${path}`);
   return report.ok ? 0 : 1;
+}
+
+/**
+ * Regenerate the writer-facing component catalog (name, blurb, props, kit(s),
+ * LIVE usage count across `content/blog/*.mdx`) at
+ * `.claude/skills/writers/component-catalog.json`. Run after adding/renaming a
+ * component or shipping new Reads so usage counts stay current.
+ */
+async function runCatalog(deps: CliDeps): Promise<number> {
+  const catalog = buildComponentCatalog(deps.contentDir, deps.now);
+  const path = writeComponentCatalog(deps.repoRoot, catalog);
+  const unused = catalog.components.filter((c) => c.usageCount === 0);
+  console.log(`[generate:catalog] ${catalog.components.length} component(s) → ${path}`);
+  if (unused.length > 0) {
+    console.log(`[generate:catalog] ${unused.length} orphan(s) (0 live uses): ${unused.map((c) => c.name).join(", ")}`);
+  }
+  return 0;
 }
 
 export async function main(argv: string[], deps: CliDeps): Promise<number> {
   const cmd = argv[0];
   if (cmd === "plan") return runPlan(deps);
   if (cmd === "verify") return runVerifyCmd(deps, argv.slice(1));
-  console.error(`[generate] unknown subcommand: ${cmd ?? "(none)"} (expected "plan" or "verify")`);
+  if (cmd === "catalog") return runCatalog(deps);
+  console.error(`[generate] unknown subcommand: ${cmd ?? "(none)"} (expected "plan", "verify", or "catalog")`);
   return 2;
 }
 

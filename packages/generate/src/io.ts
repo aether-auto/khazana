@@ -3,20 +3,41 @@ import { dirname, join } from "node:path";
 import { CitationLedgerEntrySchema, FeedItemSchema, type CitationLedger, type FeedItem } from "@khazana/core";
 import type { TastePayload } from "@khazana/curate";
 import type { VerifyReport } from "./verify.js";
+import type { ComponentCatalog } from "./component-catalog.js";
 
 const EMPTY_TASTE: TastePayload = { ready: false, topics: {}, entities: {}, formatAffinity: {} };
 
+/**
+ * Read the curated feed, preferring the fresh ingest snapshot but falling
+ * back to the committed rolling archive when it's absent.
+ *
+ * `data/feed/curated.json` is gitignored and written ONLY by the ingest
+ * GitHub Action — in a fresh clone (exactly what the Reads routine runs
+ * against) it does not exist, so this used to silently return `[]` and starve
+ * `plan`/`verify` of feed grounding on every run. `data/feed/archive.json` is
+ * a small, committed, display-only projection (`packages/core/src/archive.ts`)
+ * that already satisfies `FeedItemSchema`, so it works as a fallback as-is.
+ */
 export function readCurated(dataDir: string): FeedItem[] {
-  const path = join(dataDir, "feed", "curated.json");
-  if (!existsSync(path)) return [];
-  const parsed: unknown = JSON.parse(readFileSync(path, "utf8"));
-  const raw = Array.isArray(parsed) ? parsed : [];
-  const out: FeedItem[] = [];
-  for (const candidate of raw) {
-    const r = FeedItemSchema.safeParse(candidate);
-    if (r.success) out.push(r.data);
+  for (const name of ["curated.json", "archive.json"]) {
+    const path = join(dataDir, "feed", name);
+    if (!existsSync(path)) continue;
+    const parsed: unknown = JSON.parse(readFileSync(path, "utf8"));
+    const raw = Array.isArray(parsed) ? parsed : [];
+    const out: FeedItem[] = [];
+    for (const candidate of raw) {
+      const r = FeedItemSchema.safeParse(candidate);
+      if (r.success) out.push(r.data);
+    }
+    if (out.length > 0) return out;
   }
-  return out;
+  console.warn(
+    "[generate] MISSING DATA: neither data/feed/curated.json (gitignored, ingest-only) nor the " +
+      "committed data/feed/archive.json produced any usable feed items — feed grounding has " +
+      "NOTHING to work with this run. This is a missing-precondition, NOT evidence the feed is " +
+      "genuinely empty; investigate before treating this as a quality signal.",
+  );
+  return [];
 }
 
 /** Parse one ledger JSON file, dropping invalid entries (tolerant parse). */
@@ -103,5 +124,18 @@ export function writeReport(dataDir: string, report: VerifyReport): string {
   const path = join(dataDir, "generation", "report.json");
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, JSON.stringify(report, null, 2) + "\n");
+  return path;
+}
+
+/**
+ * Commit the component catalog snapshot where writer skills can reference it
+ * during Internalize (see `.claude/skills/writers/README.md`), NOT under
+ * `data/generation/` (which is gitignored/ephemeral) — the catalog is meant to
+ * be a checked-in artifact writers read like any other skill reference.
+ */
+export function writeComponentCatalog(repoRoot: string, catalog: ComponentCatalog): string {
+  const path = join(repoRoot, ".claude", "skills", "writers", "component-catalog.json");
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, JSON.stringify(catalog, null, 2) + "\n");
   return path;
 }

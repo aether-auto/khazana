@@ -39,8 +39,12 @@ export const COVERAGE_THRESHOLD = 0.9;
 export const CORROBORATION_THRESHOLD = 0.6;
 export const INDEPENDENT_SOURCES_REQUIRED = 2;
 
-/** Coarse registrable domain, e.g. `https://sub.example.co.uk/x` -> `example.co.uk`. */
-function domainOf(url: string): string {
+/**
+ * Coarse registrable domain, e.g. `https://sub.example.co.uk/x` -> `example.co.uk`.
+ * Exported so other deterministic gates (`citation-stats.ts`) reuse the same
+ * independence test rather than redefining it.
+ */
+export function domainOf(url: string): string {
   let host: string;
   try {
     host = new URL(url).hostname.toLowerCase();

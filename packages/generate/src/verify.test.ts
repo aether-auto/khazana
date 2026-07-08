@@ -94,6 +94,82 @@ test("curated urls remain grounded even without an explicit ledger", async () =>
   expect(report.drafts[0]!.ok).toBe(true);
 });
 
+test("runVerify always attaches deterministic citationStats, independent of factChecker", async () => {
+  const ledger: CitationLedger = [
+    { url: "https://e.com/1", title: "One", tier: "med", origin: "curated" },
+  ];
+  const report = await runVerify([{ file: "/x/good.mdx", mdx: GOOD }], curated, {
+    now: "2026-06-23T00:00:00.000Z",
+    ledger,
+  });
+  const stats = report.drafts[0]!.citationStats!;
+  expect(stats).toBeDefined();
+  expect(stats.citedCount).toBe(1);
+  expect(stats.groundedCount).toBe(1);
+  expect(stats.ledgerCoverage).toBe(1);
+});
+
+test("runVerify always attaches a richness score, independent of factChecker", async () => {
+  const report = await runVerify([{ file: "/x/good.mdx", mdx: GOOD }], curated, {
+    now: "2026-06-23T00:00:00.000Z",
+  });
+  const richness = report.drafts[0]!.richness!;
+  expect(richness).toBeDefined();
+  expect(richness.format).toBe("dispatch");
+});
+
+// A long-form (non-field-notes) draft with a single knowledge-carrying component
+// and enough prose to be a real long-form attempt (well over the egregious
+// word-count floor) — clearly under-built relative to the format's kit.
+const EGREGIOUS = `---
+title: "Thin Dispatch"
+format: dispatch
+channels:
+  - ai
+summary: "ok"
+publishedAt: 2026-06-23T00:00:00.000Z
+sources:
+  - { title: "One", url: "https://e.com/1" }
+---
+<Chart data={[]} />
+
+${Array.from({ length: 1600 }, () => "word").join(" ")}
+`;
+
+test("an egregious richness under-build fails the draft with a richness error", async () => {
+  const report = await runVerify([{ file: "/x/thin.mdx", mdx: EGREGIOUS }], curated, {
+    now: "2026-06-23T00:00:00.000Z",
+  });
+  const d = report.drafts[0]!;
+  expect(d.richness!.egregious).toBe(true);
+  expect(d.ok).toBe(false);
+  expect(d.errors.join(" ")).toMatch(/richness/i);
+});
+
+// field-notes is exempt: even a component-free draft must not fail on richness.
+const FIELD_NOTE = `---
+title: "Quick Note"
+format: field-notes
+channels:
+  - ai
+summary: "ok"
+publishedAt: 2026-06-23T00:00:00.000Z
+sources:
+  - { title: "One", url: "https://e.com/1" }
+---
+A short briefing with no components at all.
+`;
+
+test("field-notes never fails on richness, regardless of component count", async () => {
+  const report = await runVerify([{ file: "/x/note.mdx", mdx: FIELD_NOTE }], curated, {
+    now: "2026-06-23T00:00:00.000Z",
+  });
+  const d = report.drafts[0]!;
+  expect(d.richness!.exempt).toBe(true);
+  expect(d.richness!.egregious).toBe(false);
+  expect(d.ok).toBe(true);
+});
+
 test("factChecker is off by default and runs only when injected", async () => {
   const checker: FactChecker = async () => ({ ok: false, notes: "claim unsupported" });
   const report = await runVerify([{ file: "/x/good.mdx", mdx: GOOD }], curated, {

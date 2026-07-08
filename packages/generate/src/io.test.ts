@@ -1,7 +1,7 @@
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { listDrafts, readCurated, readDraft, readLedger, readStyle, readTaste, writeBrief, writeReport } from "./io.js";
 
 let dir: string;
@@ -33,6 +33,34 @@ test("readCurated returns [] when missing and validates when present", () => {
   const items = readCurated(dir);
   expect(items).toHaveLength(1);
   expect(items[0]!.id).toBe("1");
+});
+
+test("readCurated falls back to the committed archive.json when curated.json is absent", () => {
+  mkdirSync(join(dir, "feed"), { recursive: true });
+  writeFileSync(join(dir, "feed", "archive.json"), JSON.stringify([item, { id: "bad" }]));
+  const items = readCurated(dir);
+  expect(items).toHaveLength(1);
+  expect(items[0]!.id).toBe("1");
+});
+
+test("readCurated prefers curated.json over archive.json when both are present", () => {
+  mkdirSync(join(dir, "feed"), { recursive: true });
+  writeFileSync(join(dir, "feed", "curated.json"), JSON.stringify([item]));
+  writeFileSync(join(dir, "feed", "archive.json"), JSON.stringify([{ ...item, id: "2" }]));
+  const items = readCurated(dir);
+  expect(items).toHaveLength(1);
+  expect(items[0]!.id).toBe("1");
+});
+
+test("readCurated warns loudly (distinguishable from empty data) when both curated.json and archive.json are absent", () => {
+  const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  expect(readCurated(dir)).toEqual([]);
+  expect(warnSpy).toHaveBeenCalledTimes(1);
+  const message = String(warnSpy.mock.calls[0]![0]);
+  expect(message).toMatch(/missing/i);
+  expect(message).toMatch(/curated\.json/);
+  expect(message).toMatch(/archive\.json/);
+  warnSpy.mockRestore();
 });
 
 test("readTaste falls back to a not-ready empty payload", () => {

@@ -121,6 +121,23 @@ test("brief carries the research dossier and citation ledger when provided", () 
   expect(brief).toContain('url: "https://academic.oup.com/mnras/1859"');
 });
 
+test("brief bakes tier+origin into the frontmatter sources stub when the ledger has them", () => {
+  const ledger: CitationLedger = [
+    { url: "https://academic.oup.com/mnras/1859", title: "MNRAS 1859", tier: "high", origin: "researched" },
+    { url: "https://e.com/1", title: "GPT-5 launch", tier: "med", origin: "curated" },
+  ];
+  const brief = buildBrief(assignment, items, STYLE, { citationLedger: ledger });
+  expect(brief).toContain('url: "https://academic.oup.com/mnras/1859", tier: high, origin: researched');
+  expect(brief).toContain('url: "https://e.com/1", tier: med, origin: curated');
+});
+
+test("brief omits tier/origin from the sources stub when no ledger is supplied (back-compat)", () => {
+  const brief = buildBrief(assignment, items, STYLE);
+  expect(brief).toContain('  - { title: "<title>", url: "https://e.com/1" }');
+  expect(brief).not.toContain("tier:");
+  expect(brief).not.toContain("origin:");
+});
+
 test("brief is deterministic with research inputs", () => {
   const research = {
     researchDossier: "dossier",

@@ -10,8 +10,10 @@ import type { FetchFn } from "./fetchers/build-source.js";
 
 export async function main(dataDir: string, now: string, fetchFn?: FetchFn): Promise<void> {
   const registry = loadRegistry(dataDir);
-  // `runIngest` only fetches `enabled` sources, so anything auto-disabled by a
-  // prior run's reconcile is skipped here automatically.
+  // `runIngest` fetches `enabled` sources PLUS any disabled source whose
+  // bounded re-probe window has elapsed (`isReprobeEligible`), so most
+  // auto-disabled sources are skipped here — except the occasional single
+  // self-healing probe once a systemic outage has had a week to resolve.
   const { items, results, fetchResults, cacheStats } = await runIngest(registry, {
     now,
     fetchFn,

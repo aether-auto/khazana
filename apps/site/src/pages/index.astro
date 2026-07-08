@@ -1,5 +1,6 @@
 ---
 import Shell from "../layouts/Shell.astro";
+import FirstLight from "../components/FirstLight.tsx";
 import FeedCard from "../components/FeedCard.astro";
 import FeatureCard from "../components/FeatureCard.astro";
 import MediaRail from "../components/MediaRail.astro";
@@ -9,7 +10,7 @@ import CategoryRail from "../components/CategoryRail.astro";
 import {
   loadFeed,
   tickerTitles,
-  splitFeaturedGated,
+  selectBalancedBento,
   dropShorts,
   dropJunkVideos,
   selectWatchRail,
@@ -58,15 +59,34 @@ const ticker = tickerTitles(all, 8);
 const nowMs = Date.parse(now);
 const freshCount = all.filter((it) => nowMs - Date.parse(it.publishedAt) < 24 * 60 * 60 * 1000).length;
 
+// "First Light" seed data — the masthead's OGL point-field is DATA-DRIVEN, not
+// decorative: real per-channel counts (canonical CHANNELS order) + the real
+// total/fresh counts above become the field's lane density and "fresh signal"
+// highlight. Reuses bucketByChannel (already imported below) over the FULL
+// `all` array so the field represents the whole Feed, not just the tail.
+const allChannelBuckets = bucketByChannel(all);
+const channelCounts = CHANNELS.map((ch) => ({
+  channel: ch,
+  count: allChannelBuckets.get(ch)?.length ?? 0,
+}));
+
 // THE SHOWCASE vs THE TAIL.
-// curated.json is rank-ordered (best first), so the FEATURED set is just the
-// top qualifying slice — the freshest, highest-resonance SUBSTANTIVE catch.
-// Gate is content-agnostic: any item (article, video transcript, podcast
-// transcript) whose RENDERED body clocks ≥ 7 min qualifies.
+// curated.json is rank-ordered (best first); the FEATURED set is the top
+// qualifying slice, BALANCED across channels (`selectBalancedBento`) so a
+// high-volume channel (tech/ai) can't crowd a healthy-sized but lower-scoring
+// channel (history, geopolitics, geography…) out of the hero entirely — it
+// only ever reaches further down the SAME eligible pool `splitFeaturedGated`
+// used, never promoting anything that fails the gate. Gate is content-
+// agnostic: any item (article, video transcript, podcast transcript) whose
+// RENDERED body clocks ≥ 7 min qualifies. The single hero feature slot (bento
+// index 0) stays the top-ranked eligible item, exactly as before.
 // Expanded from 10 → 30 for the redesigned bento (richer browsable area).
 // Structure preserved for future personalization: ordering is pure score-rank
-// today; a personalization layer can slot into the ordering without API changes.
-const { featured, rest } = splitFeaturedGated(all, 30, readMinutesOf);
+// (channel-balanced) today; a personalization layer can slot into the
+// ordering without API changes.
+const featured = selectBalancedBento(all, 30, readMinutesOf);
+const featuredIds = new Set(featured.map((it) => it.id));
+const rest = all.filter((it) => !featuredIds.has(it.id));
 const cells = assignBento(featured);
 
 // Category browse: bucket the rest by primary topic, filter to channels with
@@ -140,7 +160,6 @@ const clusterSizes = new Map<string, number>();
 for (const it of all) {
   if (it.clusterId) clusterSizes.set(it.clusterId, (clusterSizes.get(it.clusterId) ?? 0) + 1);
 }
-const featuredIds = new Set(featured.map((it) => it.id));
 const personalizeData: PersonalizeItem[] = workerUrl
   ? all.map((it) =>
       toPersonalizeItem(it, {
@@ -172,8 +191,13 @@ const delay = (i: number) => Math.min(i, 8) * 60;
   feedPage={true}
   activeChannel={activeChannel}
 >
-  <!-- compact editorial masthead — no canvas, no WebGL -->
+  <!-- compact editorial masthead. "First Light" (art-direction.md §1, Signature
+       Moment A) lives here now, scoped to this band: a data-driven OGL
+       point-field that resolves out of the dark ONCE then settles, lazily
+       hydrated behind the title/copy so first paint is never blocked by
+       WebGL — see components/FirstLight.tsx for the full discipline. -->
   <div class="masthead" data-reveal>
+    <FirstLight channelCounts={channelCounts} totalCount={all.length} freshCount={freshCount} client:visible />
     <p class="mh-eyebrow">
       <span class="mh-dot" aria-hidden="true"></span>
       the observatory
@@ -789,6 +813,14 @@ const delay = (i: number) => Math.min(i, 8) * 60;
     gap: var(--s-4);
     padding: var(--s-3) var(--s-2);
     border-bottom: var(--hair) solid var(--rule);
+    /* content-visibility: as the register/archive grows into hundreds of rows,
+       skip layout/paint/style for whichever batches are off-screen — a cheap
+       hedge against the tail getting expensive. contain-intrinsic-size is a
+       placeholder box (≈ one hairline row) so scroll position/scrollbar don't
+       jump before an off-screen row has ever been measured. Purely a
+       rendering-cost optimization — visual output is unchanged. */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 52px;
     /* color-only hover — no transform, no glass, cheap at scale */
     transition: background var(--dur-fast) var(--ease-out);
   }
@@ -900,6 +932,10 @@ const delay = (i: number) => Math.min(i, 8) * 60;
     border: var(--hair) solid var(--rule);
     border-radius: var(--r-md);
     background: var(--bg-card);
+    /* same content-visibility hedge as the list row above, sized for a card
+       (thumb + title + 2-line clamp summary + foot row). */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 360px;
     transition: border-color var(--dur-fast) var(--ease-out);
   }
   .reg-list[data-view="card"] :global(.reg-card:hover) {

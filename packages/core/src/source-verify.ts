@@ -16,15 +16,35 @@
  *               (a 429/5xx/timeout must never march a live source toward death)
  *   permanent → strike +1, record lastError, status = "failing";
  *               at consecutiveFailures >= DISABLE_THRESHOLD → status "disabled",
- *               enabled = false (unless rediscovery repairs it first — the
- *               reducer only FLAGS `shouldAttemptRediscovery`; the IO wrapper
- *               does the probe and calls `applyRediscovery`).
+ *               enabled = false, disabledAt = now (unless rediscovery repairs
+ *               it first — the reducer only FLAGS `shouldAttemptRediscovery`;
+ *               the IO wrapper does the probe and calls `applyRediscovery`).
+ *
+ * Disable is RECOVERABLE, not a one-way door: `isReprobeEligible` is a pure
+ * predicate the ingest layer consults to fold bounded, once-per-window
+ * re-probes of disabled sources back into the fetch set (see `runIngest`).
+ * When a probe result comes back for an already-`disabled` entry, the reducer
+ * takes a distinct branch: success fully re-enables it (a systemic outage —
+ * e.g. a whole source type's discovery endpoint 404ing — has ended); any
+ * failure (transient or permanent) just restarts the window (`disabledAt =
+ * now`) so a still-dead source gets at most one wasted fetch per window, not
+ * one per run, and is never left in an un-reprobable limbo.
  */
 
 import type { Registry, SourceEntry, SourceLastError } from "./registry.js";
 
 /** Permanent strikes required before a source is auto-disabled. */
 export const DISABLE_THRESHOLD = 3;
+
+/**
+ * How long (ms) a source stays disabled before it's eligible for a single
+ * bounded re-probe. 7 days: long enough that an ordinary dead feed's 3-strike
+ * disable is almost certainly final (not worth re-fetching every run), short
+ * enough that a SYSTEMIC outage — e.g. a whole source type's discovery
+ * endpoint 404ing for every entry at once — self-heals within about a week of
+ * the upstream fix landing, with no manual registry edit.
+ */
+export const REPROBE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
  * Structural input for the reducer — the shape of `@khazana/ingest`'s
@@ -57,6 +77,38 @@ export function isPermanentOutcome(r: FetchOutcome): boolean {
 }
 
 /**
+ * Pure predicate: is this DISABLED source due for a bounded re-probe?
+ *
+ * Only ever true for entries our OWN auto-disable path killed (`status ===
+ * "disabled"`) — a source someone turned off by hand (or Scout pruned) with
+ * `enabled: false` but no such status is left alone; re-probing it would
+ * override a deliberate decision.
+ *
+ * `disabledAt` missing is treated as already past the window rather than
+ * "just disabled" — this matters for entries disabled before this field
+ * existed (e.g. the ~208 youtube sources killed in one run by the
+ * `feeds/videos.xml` discovery outage): they must become eligible on the very
+ * next run once the endpoint recovers, not wait `REPROBE_AFTER_MS` from a
+ * timestamp that was never recorded.
+ *
+ * `now` is the only clock input (deterministic, no `Date.now()` inside).
+ */
+export function isReprobeEligible(
+  entry: SourceEntry,
+  now: string,
+  reprobeAfterMs: number = REPROBE_AFTER_MS,
+): boolean {
+  if (entry.enabled) return false;
+  if (entry.status !== "disabled") return false;
+  const nowMs = Date.parse(now);
+  if (Number.isNaN(nowMs)) return false; // unparseable clock → fail safe, don't reprobe
+  if (!entry.disabledAt) return true;
+  const disabledMs = Date.parse(entry.disabledAt);
+  if (Number.isNaN(disabledMs)) return true;
+  return nowMs - disabledMs >= reprobeAfterMs;
+}
+
+/**
  * The reducer's per-source output: an updated entry plus an ephemeral
  * `shouldAttemptRediscovery` flag the IO wrapper reads (and strips before
  * persisting). The flag is set exactly when a permanent strike is about to
@@ -78,6 +130,44 @@ export function applyFetchResult(
 ): AppliedEntry {
   const now = opts.now;
   const threshold = opts.disableThreshold ?? DISABLE_THRESHOLD;
+
+  // ── Re-probe of an already-disabled source ──
+  // `runIngest` only puts a `status: "disabled"` entry back in the fetch set
+  // when `isReprobeEligible` says its bounded window has elapsed, so any
+  // result reaching here for one IS that single probe. Handled distinctly
+  // from the live-source policy below: success fully re-enables it (the
+  // systemic outage is over); ANY failure — transient or permanent — simply
+  // restarts the window (`disabledAt: now`) rather than re-striking toward an
+  // already-crossed threshold, or (worse) flipping `status` away from
+  // "disabled" and stranding the source where `isReprobeEligible` can never
+  // find it again.
+  if (entry.status === "disabled") {
+    if (result.ok) {
+      const { lastError: _drop, disabledAt: _drop2, ...rest } = entry;
+      return {
+        ...rest,
+        enabled: true,
+        lastFetchedAt: now,
+        lastOkAt: now,
+        consecutiveFailures: 0,
+        status: result.itemCount > 0 ? "active" : "dormant",
+      };
+    }
+    const lastError: SourceLastError = {
+      kind: isPermanentOutcome(result) ? "permanent" : "transient",
+      ...(result.httpStatus !== undefined ? { code: result.httpStatus } : {}),
+      at: now,
+    };
+    return {
+      ...entry,
+      enabled: false,
+      status: "disabled",
+      lastFetchedAt: now,
+      lastError,
+      disabledAt: now,
+    };
+  }
+
   const prior = entry.consecutiveFailures ?? 0;
 
   // ── Success ──
@@ -118,7 +208,7 @@ export function applyFetchResult(
     consecutiveFailures,
     lastError,
     status: reachedThreshold ? "disabled" : "failing",
-    ...(reachedThreshold ? { enabled: false } : {}),
+    ...(reachedThreshold ? { enabled: false, disabledAt: now } : {}),
   };
   if (reachedThreshold) next.shouldAttemptRediscovery = true;
   return next;
@@ -130,7 +220,7 @@ export function applyFetchResult(
  * Pure; the network probe happens in the IO wrapper before this is called.
  */
 export function applyRediscovery(entry: SourceEntry, resolvedUrl: string, opts: ReconcileOpts): SourceEntry {
-  const { lastError: _drop, ...rest } = entry;
+  const { lastError: _drop, disabledAt: _drop2, ...rest } = entry;
   return {
     ...rest,
     enabled: true,
@@ -181,8 +271,16 @@ export function reconcileRegistry(
 
     if (result.ok) {
       if ((entry.consecutiveFailures ?? 0) > 0 || entry.status === "failing" || entry.status === "disabled") {
-        actions.push({ id: entry.id, action: "recover", reason: "successful fetch reset strikes" });
+        actions.push({
+          id: entry.id,
+          action: "recover",
+          reason: entry.status === "disabled" ? "re-probe succeeded" : "successful fetch reset strikes",
+        });
       }
+    } else if (entry.status === "disabled") {
+      // Was already disabled before this run's re-probe — its failure just
+      // restarted the window, it did not newly cross the strike threshold.
+      actions.push({ id: entry.id, action: "disable", reason: "re-probe failed; window reset" });
     } else if (persisted.status === "disabled") {
       actions.push({ id: entry.id, action: "disable", reason: `permanent failures>=${opts.disableThreshold ?? DISABLE_THRESHOLD}` });
     } else if (persisted.lastError?.kind === "permanent") {

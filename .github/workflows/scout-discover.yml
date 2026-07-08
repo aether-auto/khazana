@@ -78,5 +78,21 @@ jobs:
             echo "No source registry changes to commit."
           else
             git commit -m "chore: scout registry update $(date -u +%F) [skip ci]"
-            git push
+            # The daily pipeline and the Reads routine also push to main
+            # concurrently; rebase onto the latest main before each push
+            # attempt and retry a bounded number of times on rejection instead
+            # of failing outright and silently dropping this registry update.
+            push_ok=0
+            for attempt in 1 2 3; do
+              git pull --rebase --autostash origin main
+              if git push; then
+                push_ok=1
+                break
+              fi
+              echo "Push rejected (attempt $attempt/3) — retrying after re-rebasing onto origin/main."
+            done
+            if [ "$push_ok" != "1" ]; then
+              echo "::error::git push failed after 3 attempts (non-fast-forward) — giving up."
+              exit 1
+            fi
           fi

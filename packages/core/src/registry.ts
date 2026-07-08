@@ -42,6 +42,17 @@ export const SourceEntrySchema = z.object({
   lastError: SourceLastErrorSchema.optional(),
   /** Set when rediscovery repairs a moved feed to a new live URL. */
   resolvedUrl: z.string().url().optional(),
+  /**
+   * ISO timestamp of the most recent auto-disable (or the last failed
+   * re-probe of an already-disabled source). Drives the bounded self-healing
+   * re-probe (`isReprobeEligible` in `source-verify.ts`): a disabled source
+   * becomes eligible for a single retry fetch once `now - disabledAt` exceeds
+   * `REPROBE_AFTER_MS`. Absent on legacy entries disabled before this field
+   * existed — treated as already past the window so a resolved systemic
+   * outage (e.g. a whole source type's discovery endpoint recovering) can
+   * self-heal without a manual registry edit.
+   */
+  disabledAt: z.string().datetime().optional(),
 });
 export type SourceEntry = z.infer<typeof SourceEntrySchema>;
 
