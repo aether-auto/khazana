@@ -6,8 +6,8 @@
 > on — the normalized schemas + the $0 ingest architecture. Nothing here renders a pixel;
 > everything downstream depends on it.*
 
-**Status:** Proposed — spec 1 of 7 (Atlas: Spine → Globe → Bias Lab → Ledger → Extras →
-Conflict Theaters → Government Structure)
+**Status:** Proposed — spec 1 of 8 (Atlas: Spine → Globe → Bias Lab → Ledger → Extras →
+Conflict Theaters → Government Structure → Two Faces)
 **Date:** 2026-07-07
 **Owner:** Arnav (founder) + Claude (cofounder)
 **Cost target:** $0 recurring — the same binding constraint as khazana v1. No paid APIs, no
@@ -32,7 +32,8 @@ paid hosting, no always-on machine beyond the existing free Cloudflare Worker.
 >   sources as the seed, not the boundary; §3.6/§7 pull the GeM/CPPP India procurement
 >   scraper forward into the main build; §8's GeM timing question is closed.
 > - **Two new downstream specs (§6)** — spec 6, Conflict Theaters (D6), and spec 7,
->   Government Structure (D5); header renumbered spec 1 of 5 → spec 1 of 7.
+>   Government Structure (D5); plus spec 8, Two Faces (D11, face identities + the
+>   switch transition). Header renumbered spec 1 of 5 → spec 1 of 8.
 
 ---
 
@@ -55,7 +56,7 @@ corpora, procurement records — into three things:
 existing `apps/site` Astro build, sharing the design-token system, the Shell chrome, and
 the deploy pipeline. There is no `apps/atlas`.
 
-This document is spec **1 of 7**. It defines nothing about any downstream UI —
+This document is spec **1 of 8**. It defines nothing about any downstream UI —
 it defines the data those surfaces will read: the zod schemas that make every world
 datum self-describing (source, method, license, uncertainty) and the ingest architecture
 that gets those data into `data/world/` — in the **private `khazana-world-data` repo**
@@ -795,11 +796,13 @@ found/calculated reliably".
 
 ---
 
-## 6. Dependency note — this is spec 1 of 7
+## 6. Dependency note — this is spec 1 of 8
 
 Everything downstream is written *against* this contract. The sequence is Spine → Globe →
-Bias Lab → Ledger → Extras → Conflict Theaters → Government Structure. What each spec
-will pull from the Spine:
+Bias Lab → Ledger → Extras → Conflict Theaters → Government Structure → Two Faces
+(spec 8, `2026-07-07-khazana-two-faces-design.md`, needs no Spine data — it owns the
+face identities, Atlas's top-level IA, and the switch transition). What each data-consuming
+spec will pull from the Spine:
 
 - **Spec 2, the Globe** — `WorldEvent` (incl. `geo`, `time`, `category`, `severity`,
   `reportings[]`) for map placement and event clustering; `Outlet` (via
