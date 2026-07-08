@@ -54,6 +54,10 @@ jobs:
       ALLOW_DIRECT_YOUTUBE: "1"
       REDDIT_MIN_GAP_MS: "1500"
       YT_DLP_MIN_GAP_MS: "2000"
+      # yt-dlp's n-challenge solver now needs curl_cffi impersonation to avoid
+      # throttling/blocks; the JS runtime (Deno) + curl-cffi extra are installed
+      # in "Install ffmpeg + yt-dlp" above.
+      YT_DLP_IMPERSONATE: "1"
       ARXIV_HOST_MIN_GAP_MS: "3000"
       # ---- build-time public origin (Variable, not secret) ----
       PUBLIC_WORKER_URL: ${{ vars.PUBLIC_WORKER_URL }}
@@ -80,12 +84,13 @@ jobs:
 
       # ffmpeg is required to decode podcast audio for local Whisper transcription;
       # yt-dlp fetches media for the YouTube/podcast sources.
-      - name: Install ffmpeg + yt-dlp
+      - name: Install ffmpeg + yt-dlp (with JS runtime for n-challenge)
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg
-          sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
-            -o /usr/local/bin/yt-dlp && sudo chmod a+rx /usr/local/bin/yt-dlp
+          sudo apt-get install -y ffmpeg python3-pip
+          pip install --break-system-packages -U "yt-dlp[default,curl-cffi]"   # bundles yt-dlp-ejs + curl_cffi for impersonation
+          curl -fsSL https://deno.land/install.sh | sh
+          echo "$HOME/.deno/bin" >> "$GITHUB_PATH"
 
       # Transformers model cache: local Whisper (podcast STT fallback). Static key —
       # models change rarely; restore-keys lets a bumped key still reuse the prior.
