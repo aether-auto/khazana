@@ -259,7 +259,8 @@ with ledger URLs (prefer High-tier / primary OOB documents); (c) the **phase bre
 phases the `<BattleMap>` will carry, one per narrative beat, each with the units/movements/fronts it
 shows and its source; (d) which component anchors which beat (`<Map>`/`<RouteMap>` early,
 `<OrderOfBattle>`/`<ForceComparison>` for the forces, `<BattleMap>` at the core, `<ForceComparison>`/
-`<Sankey>` for the reckoning). Then confirm **every** strength, casualty, movement, and position you
+`<Sankey>` for the reckoning) — consult `../component-catalog.json` for the full palette + live
+usage before defaulting to the usual few. Then confirm **every** strength, casualty, movement, and position you
 intend to render is a row in the claims table with a ledger URL — load-bearing OOB and casualty facts
 corroborated. Any fact not in the table → mark `[UNSUPPORTED]` now (research it or cut it). If the
 ledger can't support real phases, stop and plan a `FAIL`. Do not write prose yet.

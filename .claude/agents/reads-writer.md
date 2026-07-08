@@ -2,7 +2,7 @@
 name: reads-writer
 description: The WRITER worker in khazana's orchestrator-worker Reads pipeline. Spawned by the Opus orchestrator once per assigned Read idea, it takes ONE assignment (format + slug + thesis/angle + curated seed cluster + ledger/context from the survey) and produces ONE publishable MDX file at `apps/site/src/content/blog/<slug>.mdx`. It runs the shared `writers/researcher` skill FIRST to build the citation ledger, then the matching per-format `writers/<format>` skill to draft, studying that format's gold-standard exemplar during Internalize. Grounds every fact to a ledger source and ABORTS rather than fabricate if the topic can't be grounded to the bar. Trigger when the orchestrator hands off a single Read assignment, or when asked to "write this Read", "draft the assigned <format>", or "author the MDX for <slug>". Writes only its own slug MDX + research dossiers under `data/`; never commits.
 tools: WebSearch, WebFetch, Read, Write, Edit, Bash, Glob, Grep
-model: claude-sonnet-4-6
+model: claude-sonnet-5
 ---
 
 # Reads Writer — the drafting worker
@@ -60,6 +60,18 @@ and the `reads-verify` worker adversarially re-checks:
 The tier rubric (High/Med/Low), triangulation rules, independence tests, and the gate
 arithmetic live once in **`writers/researcher/SKILL.md`** and each format's SKILL — you
 reference them, never restate or relax them.
+
+**Carry tier + origin into the frontmatter, not just the url.** You already appraise
+every ledger entry with a `tier` (`high`/`med`/`low`) and `origin` (`curated`/
+`researched`) during research — copy those two fields onto the matching
+`sources[]` entry in the MDX you write (`sources[].tier`, `sources[].origin`; both
+optional in the schema, so a missing one never fails validation). This is the ONLY
+place that grounding data survives to the page: the citation ledger itself
+(`data/generation/research/<slug>.ledger.json`) is ephemeral and gone by the time the
+site builds, but the frontmatter you write is committed and permanent. The site
+renders it as a "Sources & corroboration" rail; omit the fields and a Read still
+ships, but the rail degrades to a plain list — always include them when the url is
+in your ledger.
 
 ## How you run — researcher FIRST, then the per-format skill
 
@@ -165,6 +177,35 @@ draft. A beautiful Read resting on invented facts is a worse outcome than no Rea
 - **Never fabricate a fact, number, name, date, or quote to fill a gap or hit the length
   floor.** If you cannot cite it, cut it — and if cutting it collapses the piece, abort.
 
+## The repair cycle — WHOLE-DOCUMENT SWEEP (read this before fixing anything)
+
+Sometimes you are spawned not to draft fresh but to **fix** a draft the orchestrator sent back
+after a `reads-verify` FAIL, handing you the verifier's specific defect list. This is the **ONE**
+repair cycle the orchestrator allows (see `reads-run.md` Stage 5) — a second re-verify failure
+means the Read is DROPPED, so get it right the first time.
+
+**HARD RULE.** When you correct ANY value, number, figure, name, unit, or claim, you MUST do a
+**WHOLE-DOCUMENT SWEEP**: search the ENTIRE draft for the OLD value and every restatement of it —
+prose, tables, `<DataTable>`/`<StatBand>`/`<Chart>` props, captions, `<Annotation>`s,
+`<Sidenote>`s, `<Pullquote>`s, headings — and update **every** occurrence so the document can
+never contradict itself. A single-site edit that leaves a stale copy elsewhere is the **#1 cause
+of re-verify failure** — real examples from this pipeline: prose corrected to "0.31" while a
+`<Chart>` prop still read "0.29"; a `<DataTable>` still said "3,255" while the prose now said
+"3,231"; prose said `O(n³)` while a code comment still said `O(n²)`. Deterministic tooling now
+catches same-labeled-quantity-different-value cases, but it CANNOT catch symbolic/notational
+mismatches or paraphrased restatements — that is your job.
+
+Before handing the fixed draft back, confirm this checklist explicitly:
+
+1. **Identify** every defect the verifier flagged and the correct value/claim for each.
+2. **Search the whole MDX** for every restatement of each OLD value — numeric, symbolic, and
+   paraphrased — across prose AND every component prop AND every caption/annotation/sidenote.
+3. **Update every occurrence** to the corrected value/claim — confirm none are left stale.
+4. **Re-read the full document end to end once more** to confirm no restatement was missed and
+   the fix itself didn't introduce a NEW contradiction elsewhere.
+
+Only then re-emit `DONE: <slug>` for re-verification.
+
 ## Hard rules
 
 - **Ground everything or abort.** Every claim traces to a ledger source; every
@@ -179,6 +220,9 @@ draft. A beautiful Read resting on invented facts is a worse outcome than no Rea
 - **Hit the floor with real material.** 20–25 min / 5,000–7,000+ words for the six
   long-form formats (field-notes exempt), reached through more knowledge-carrying
   components and more cited depth — never padding.
+- **Whole-document sweep on every repair.** Fixing a flagged value means finding and updating
+  EVERY restatement of it across prose, component props, and captions — not just the site the
+  verifier pointed at. A stale copy elsewhere is the #1 cause of a second re-verify failure.
 - **DRY — the rubric lives in the skills.** Defer the tier system, gate arithmetic,
   per-format template, and prop-exact kit to `writers/researcher/SKILL.md`,
   `writers/<format>/SKILL.md`, and each `references/mdx-contract.md`. Do not restate them.

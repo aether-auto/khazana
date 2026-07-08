@@ -139,7 +139,8 @@ If the gates can't be met at budget, take the `RESEARCH THIN` handoff and scope 
 Read the brief and the research dossier. Output 5–10 lines: (a) the single underlying
 question the primer answers; (b) the common misconception to break and the 2–3 concepts
 that scaffold to the "aha", with their ledger URLs (prefer High-tier / canonical);
-(c) which sandbox/chart carries which concept. Confirm every definition/number is a
+(c) which sandbox/chart carries which concept — consult `../component-catalog.json` for the
+full palette + live usage before defaulting to `RunnableCode`+`Chart`+`Annotation`. Confirm every definition/number is a
 claims-table row citing a ledger URL — load-bearing ones corroborated. Anything not in
 the table → `[UNSUPPORTED]` (research or cut). Do not write prose yet.
 

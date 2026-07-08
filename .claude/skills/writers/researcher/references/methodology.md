@@ -3,15 +3,16 @@
 This is the operational detail behind `SKILL.md`'s six phases. It adapts the
 deep-research harness (orchestrator → parallel researchers → appraisal tiers →
 triangulation → convergence → cited synthesis with quality gates) to khazana's
-constraints: one Claude Code Action, Sonnet for the work, Opus only for the hardest
-credibility calls, free tools only (`WebSearch`, `WebFetch`, `scripts/fetch-data.py`),
+constraints: one Claude Code Action, Sonnet 5 for the work (writing, research, and
+verification), Opus only for the orchestrator's own slate curation/QC, free tools only
+(`WebSearch`, `WebFetch`, `scripts/fetch-data.py`),
 and a daily $0 cron budget. We keep the *methodology* and drop the *plumbing*.
 
 ## What we took from deep-research, and what we changed
 
 | deep-research | khazana researcher | why |
 |---|---|---|
-| Opus orchestrator + parallel Sonnet researcher sub-agents, file-based comms | One Action; you run the loop yourself, Sonnet for work, Opus only for the hardest credibility calls | $0/subscription; no session-dir machinery |
+| Opus orchestrator + parallel Sonnet researcher sub-agents, file-based comms | One Action; you run the loop yourself, Sonnet 5 for the work, Opus only for the orchestrator's slate curation/QC | $0/subscription; no session-dir machinery |
 | Gemini/OpenRouter model routing | `WebSearch` + `WebFetch` + `fetch-data.py` only | free tools, no paid APIs |
 | High/Med/Low source-quality tiers | Same three tiers, tightened to the ledger's `high`/`med`/`low` with primary-document = High | shared with the fact-check gate |
 | Triangulation + agreement score (≥60% multi-source) | Claims table with per-claim corroboration; ≥60% of **load-bearing** claims ≥2 independent sources | maps to the exact gate |

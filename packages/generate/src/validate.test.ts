@@ -1,8 +1,9 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import matter from "gray-matter";
 import { expect, test } from "vitest";
-import { KNOWN_COMPONENTS, RETIRED_COMPONENTS, validateDraft } from "./validate.js";
+import { BlogFrontmatterSchema, KNOWN_COMPONENTS, RETIRED_COMPONENTS, validateDraft } from "./validate.js";
 import { CONTRACT_COMPONENTS } from "./component-contract.js";
 
 // Parse the actual site mdx barrel and return every component it exports as a
@@ -104,8 +105,12 @@ test("a hallucinated component name fails", () => {
 
 test("component allow-list matches the mdx barrel (minus retired), no drift", () => {
   const barrel = barrelComponents();
-  // Every retired component is exported by the barrel but MUST be excluded.
-  for (const r of RETIRED_COMPONENTS) expect(barrel.has(r)).toBe(true);
+  // Retired components are fully removed from the barrel (not merely blocked
+  // from the allow-list) once confirmed at 0 live uses — see RETIRED_COMPONENTS
+  // in validate.ts. Filtering them out of `barrel` here is a no-op today but
+  // keeps this test correct if a future retirement is kept in the barrel for
+  // backwards-compat instead.
+  for (const r of RETIRED_COMPONENTS) expect(barrel.has(r)).toBe(false);
   const expected = [...barrel].filter((c) => !RETIRED_COMPONENTS.includes(c as never)).sort();
   expect([...KNOWN_COMPONENTS].sort()).toEqual(expected);
 });
@@ -151,4 +156,97 @@ test("the retired NarrativeScene component is rejected", () => {
   const r = validateDraft(mdx(VALID_FM, body), KNOWN_URLS);
   expect(r.ok).toBe(false);
   expect(r.errors.join(" ")).toContain("NarrativeScene");
+});
+
+test("a DataTable cell that contradicts a prose restatement of the same quantity fails (numeric-consistency)", () => {
+  const body = `<DataTable
+  caption="Casualty figures by theater."
+  columns={[
+    { key: "country", label: "Country", type: "string" },
+    { key: "casualties", label: "Casualties", type: "number" }
+  ]}
+  rows={[
+    { country: "France", casualties: "3,255" }
+  ]}
+/>
+
+Historians estimate France suffered 3,231 casualties in the campaign, a staggering toll.
+`;
+  const r = validateDraft(mdx(VALID_FM, body), KNOWN_URLS);
+  expect(r.ok).toBe(false);
+  expect(r.errors.join(" ")).toMatch(/numeric-consistency/);
+});
+
+// ── source tier/origin schema back-compat (COMP-2: on-page corroboration rail) ──
+// `sources[].tier` / `sources[].origin` are NEW, OPTIONAL fields. Every Read
+// shipped before they existed has plain `{ title, url }` sources — this proves
+// the schema change never breaks a single one of them.
+function blogDir(): string {
+  const here = dirname(fileURLToPath(import.meta.url));
+  return join(here, "..", "..", "..", "apps", "site", "src", "content", "blog");
+}
+
+test("every committed Read's frontmatter still parses against BlogFrontmatterSchema (back-compat)", () => {
+  const dir = blogDir();
+  const files = readdirSync(dir).filter((f) => f.endsWith(".mdx"));
+  expect(files.length).toBeGreaterThan(0); // guard against a silently-empty fixture dir
+  for (const file of files) {
+    const raw = readFileSync(join(dir, file), "utf8");
+    const { data } = matter(raw);
+    const result = BlogFrontmatterSchema.safeParse(data);
+    expect(result.success, `${file}: ${result.success ? "" : JSON.stringify(result.error.issues)}`).toBe(true);
+    if (result.success) {
+      // None of the pre-existing Reads carry tier/origin yet — confirms this
+      // really is exercising the back-compat (undefined-optional-fields) path,
+      // not silently upgrading old fixtures.
+      for (const s of result.data.sources) {
+        expect(s.tier).toBeUndefined();
+        expect(s.origin).toBeUndefined();
+      }
+    }
+  }
+});
+
+test("a source WITH tier + origin parses (forward-compat with newly-authored Reads)", () => {
+  const result = BlogFrontmatterSchema.safeParse({
+    title: "T",
+    format: "dispatch",
+    channels: ["ai"],
+    summary: "s",
+    publishedAt: "2026-06-23T00:00:00.000Z",
+    sources: [{ title: "A primary source", url: "https://e.com/1", tier: "high", origin: "researched" }],
+    draft: false,
+  });
+  expect(result.success).toBe(true);
+  if (result.success) {
+    expect(result.data.sources[0]).toMatchObject({ tier: "high", origin: "researched" });
+  }
+});
+
+test("an invalid tier/origin value fails validation (still a closed enum)", () => {
+  const result = BlogFrontmatterSchema.safeParse({
+    title: "T",
+    format: "dispatch",
+    channels: ["ai"],
+    summary: "s",
+    publishedAt: "2026-06-23T00:00:00.000Z",
+    sources: [{ title: "A", url: "https://e.com/1", tier: "gold", origin: "curated" }],
+    draft: false,
+  });
+  expect(result.success).toBe(false);
+});
+
+test("a draft with internally-consistent numbers passes the numeric-consistency check", () => {
+  const body = `<StatBand
+  caption="Peak throughput"
+  stats={[
+    { value: 989, decimals: 0, suffix: " TFLOPS", label: "H100 peak BF16 (dense)" }
+  ]}
+/>
+
+The H100 peak BF16 (dense) throughput is 989 TFLOPS, astonishing for its era.
+`;
+  const r = validateDraft(mdx(VALID_FM, body), KNOWN_URLS);
+  expect(r.ok).toBe(true);
+  expect(r.errors).toEqual([]);
 });

@@ -1,7 +1,8 @@
 import matter from "gray-matter";
 import { z } from "zod";
-import { CHANNELS, FORMAT_NAMES } from "@khazana/core";
+import { CHANNELS, FORMAT_NAMES, SourceOriginSchema, SourceTierSchema } from "@khazana/core";
 import { lintMdxJsxAttributes } from "./mdx-lint.js";
+import { checkNumericConsistency } from "./numeric-consistency.js";
 
 // Mirrors apps/site/src/content.config.ts `blog` collection EXACTLY so generated
 // MDX builds under astro:content. Field names + constraints must not drift.
@@ -14,13 +15,28 @@ export const BlogFrontmatterSchema = z.object({
   channels: z.array(channelEnum).min(1),
   summary: z.string(),
   publishedAt: z.coerce.date(),
-  sources: z.array(z.object({ title: z.string(), url: z.string().url() })).default([]),
+  sources: z
+    .array(
+      z.object({
+        title: z.string(),
+        url: z.string().url(),
+        // OPTIONAL — see content.config.ts for why (ledger tier/origin, baked
+        // into the committed frontmatter since the ledger itself is ephemeral).
+        tier: SourceTierSchema.optional(),
+        origin: SourceOriginSchema.optional(),
+      }),
+    )
+    .default([]),
   draft: z.boolean().default(false),
 });
 export type BlogFrontmatter = z.infer<typeof BlogFrontmatterSchema>;
 
-// Retired components that MUST NOT be authored, even if still exported from the
-// barrel for backwards-compat. Kept out of the allow-list on purpose.
+// Retired components that MUST NOT be authored. NarrativeScene was confirmed at
+// 0 live uses across content/blog/*.mdx and its export was removed from the
+// barrel entirely (apps/site/src/components/mdx/index.ts) — not merely blocked
+// here. It stays in this list as a permanent name-reservation: so it can never
+// be silently re-added to KNOWN_COMPONENTS, and so an old MDX file that still
+// references it fails validation with a clear "unknown component" error.
 export const RETIRED_COMPONENTS = ["NarrativeScene"] as const;
 
 // Single source of truth for authorable MDX components. This MUST stay in sync
@@ -160,6 +176,14 @@ export function validateDraft(
   // mdx so line numbers match the file (frontmatter offset preserved).
   for (const issue of lintMdxJsxAttributes(mdx)) {
     errors.push(`mdx-syntax: line ${issue.line}:${issue.column}: ${issue.message}`);
+  }
+
+  // Numeric consistency: catch the "one-shot fix left a stale copy elsewhere"
+  // defect class — the same labeled quantity rendered with different values
+  // in different places (table vs prose, chart vs prose, two components).
+  // Deterministic, no LLM — see numeric-consistency.ts for scope/precision notes.
+  for (const finding of checkNumericConsistency(mdx)) {
+    errors.push(`numeric-consistency: ${finding.message}`);
   }
 
   return { ok: errors.length === 0, slug, errors };

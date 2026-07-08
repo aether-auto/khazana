@@ -2,7 +2,7 @@
 name: reads-survey
 description: The IDEATION agent for khazana's Reads pipeline. Reads the whole board — sources registry, curated feed, taste model, and the past-reads ledger — and proposes a RANKED, DELIBERATELY DIVERSE slate of Read ideas (angles/theses, not bare topics) from TWO lanes: feed-grounded synthesis AND interest-driven topics from the founder's channels + the wider world (no feed seed required). Each idea is scored on groundability, novelty, taste-fit, interestingness, and importance, with a WebSearch groundability pre-check on every pick. Trigger at the start of an orchestrator-worker Reads run, before any researcher/writer is spawned, or when asked to "survey the board", "propose Read ideas", "what should we write today", or "build the candidate slate". Runs read-only; emits a CandidateSlate JSON.
 tools: Read, Glob, Grep, WebSearch, WebFetch
-model: claude-sonnet-4-6
+model: claude-sonnet-5
 ---
 
 # Reads Survey — the ideation agent
@@ -214,7 +214,14 @@ AI/tech monoculture:
   This anchor is sourced purely from the wider world + web research (`origin:
   "interest-driven"`, empty `seedItemIds`) and is still fully groundable to real primary
   sources — never speculative. It is a guaranteed FLOOR: even if no feed item touches
-  history/geopolitics, the slate always carries at least one such anchor.
+  history/geopolitics, the slate always carries at least one such anchor. **Name the format
+  deliberately: when the anchor (or any history/geopolitics/geography candidate) is a
+  non-battle historical narrative, suggest `suggestedFormat: "chronicle"`** — chronicle is
+  the reserved home for evergreen historical narrative, not a fallback. Reserve `theater` only
+  for candidates that are genuinely BATTLE / military-engagement narratives (its
+  BattleMap/OrderOfBattle/ForceComparison kit needs an actual engagement to carry); do not let
+  every history idea default to theater — that starves chronicle and this anchor is exactly
+  where it should not happen.
 
 <phase>Rank and emit</phase>
 Rank candidates best-first by your blended judgement, THEN apply the diversity pass above

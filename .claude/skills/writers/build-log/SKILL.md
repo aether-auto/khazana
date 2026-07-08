@@ -147,7 +147,8 @@ Read the brief and the research dossier. Output 5–10 lines: (a) what's being b
 one sentence; (b) the parts list with each part's ledger URL (prefer the datasheet/
 official docs); (c) the 2–3 steps where things genuinely went wrong (the high-value
 failures) and their ledger sources; (d) which component carries the parts list vs
-runnable logic. Confirm every part/command/number is a claims-table row citing a ledger
+runnable logic — consult `../component-catalog.json` for the full palette + live usage
+before defaulting to `DataTable`+`RunnableCode`+`Annotation`. Confirm every part/command/number is a claims-table row citing a ledger
 URL — load-bearing specifics corroborated. Anything not in the table → `[UNSUPPORTED]`
 (research or cut). Do not write prose yet.
 

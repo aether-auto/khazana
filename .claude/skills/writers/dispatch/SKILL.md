@@ -160,7 +160,8 @@ budget, take the `RESEARCH THIN` handoff and scope down.
 Read the brief and the research dossier. Output 5–10 lines: (a) the single quantifiable
 question and its one-line answer; (b) the 2–3 strongest data points and each one's
 ledger URL + tier (a `fetch-data.py` dataset, or a High-tier report/paper);
-(c) which chart type carries which idea. Confirm every number you intend to use is a
+(c) which chart type carries which idea — consult `../component-catalog.json` for the full
+palette + live usage before defaulting to Chart/DataTable/Annotation. Confirm every number you intend to use is a
 claims-table row citing a ledger URL — load-bearing numbers corroborated. Any number not
 in the table → `[UNSUPPORTED]` (research or cut). Do not write prose yet.
 

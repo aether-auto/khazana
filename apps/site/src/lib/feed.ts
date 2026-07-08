@@ -361,6 +361,20 @@ export function dropBelowFeedFloor(
 }
 
 /**
+ * The featured-bento eligibility gate, shared by `splitFeaturedGated` and
+ * `selectBalancedBento` so the two selectors can never disagree on WHICH
+ * items are allowed into the hero — only on how they're ordered/interleaved.
+ * Content-agnostic: a video with a long transcript is exactly as featurable
+ * as an article of equal length; a link-only stub or a short item is not.
+ */
+function isFeatureEligible(
+  it: FeedItem,
+  readMinutesOf: (item: FeedItem) => number,
+): boolean {
+  return Boolean(it.body) && readMinutesOf(it) >= FEATURE_MIN_MINUTES;
+}
+
+/**
  * Like `splitFeatured`, but with a content-agnostic HARD GATE: only items
  * whose rendered body produces a reading time of ≥ FEATURE_MIN_MINUTES appear
  * in the featured bento. The check is purely on `readTimeFromHtml(body)` with
@@ -385,7 +399,7 @@ export function splitFeaturedGated(
   const rest: FeedItem[] = [];
 
   for (const it of items) {
-    if (featured.length < count && it.body && readMinutesOf(it) >= FEATURE_MIN_MINUTES) {
+    if (featured.length < count && isFeatureEligible(it, readMinutesOf)) {
       featured.push(it);
     } else {
       rest.push(it);
@@ -393,4 +407,134 @@ export function splitFeaturedGated(
   }
 
   return { featured, rest };
+}
+
+// ── Channel-balanced bento (selectBalancedBento) ──────────────────────────────
+//
+// Ground truth this fixes: the curated feed is ~337 items, but the pure-rank
+// bento (`splitFeaturedGated`) let high-volume channels (tech/ai) crowd out
+// healthy-sized but lower-scoring channels — e.g. history's ~68 items (≈20%
+// of the corpus) rarely cracked the top 30 and got relegated entirely to the
+// below-the-fold "browse by topic" rails. `selectBalancedBento` reshapes
+// WHICH eligible items land in the hero, without ever touching eligibility
+// itself or WITHIN-channel ordering.
+
+/**
+ * Maximum share of the hero bento a single channel may occupy, as a fraction
+ * of `count`. Applies to the channel's TOTAL presence (the single hero
+ * feature slot + its mosaic-body picks combined) — without this cap a
+ * dominant channel would fill nearly the whole mosaic on pure rank alone.
+ * 0.34 ≈ "no more than about a third of the hero," tuned to comfortably beat
+ * a single high-volume channel's natural share of a ~337-item corpus while
+ * still leaving most of the bento to be filled by its own best items.
+ */
+export const BENTO_CHANNEL_CAP_RATIO = 0.34;
+
+/**
+ * The minimum number of hero slots a channel is structurally guaranteed once
+ * it has at least this many eligible items AND `count` is at least the
+ * number of distinct channels present in the eligible pool. Not enforced by
+ * a standalone check — it falls out of `selectBalancedBento`'s "always give
+ * the next slot to whichever channel currently has the FEWEST bento picks"
+ * scheduler: every channel with eligible content gets a turn before any
+ * channel gets a second one, so nobody with real signal is shut out.
+ */
+export const BENTO_CHANNEL_FLOOR = 1;
+
+/**
+ * Select the top `count` items for the Feed's hero bento, BALANCED across
+ * channels instead of pure global rank — so under-represented channels
+ * (history, geopolitics, geography, quantum, diy…) surface in the showcase
+ * instead of being crowded out by high-volume channels (tech, ai).
+ *
+ * Semantics:
+ *  - Eligibility is IDENTICAL to `splitFeaturedGated` (`isFeatureEligible`):
+ *    an item must have a body rendering to ≥ FEATURE_MIN_MINUTES. Nothing
+ *    ineligible is ever promoted for diversity's sake.
+ *  - The single HERO FEATURE slot (bento index 0, rendered full-width by
+ *    `assignBento`) is always the top-ranked eligible item overall — exactly
+ *    what `splitFeaturedGated` picked before. Balancing only reshapes the
+ *    mosaic BODY beneath it.
+ *  - The body is filled by a fair round-robin scheduler over
+ *    `bucketByChannel` of the remaining eligible pool (each bucket is already
+ *    rank-sorted): at every step, the slot goes to whichever channel
+ *    currently has the FEWEST bento picks so far (ties broken by the order
+ *    each channel's best item appears in the global ranking), taking that
+ *    channel's next-best UNUSED item. This guarantees every channel with
+ *    eligible content gets a turn before any channel gets a second pick,
+ *    while leftover budget still favors higher-quality/volume channels once
+ *    every channel has had an equal share.
+ *  - `BENTO_CHANNEL_CAP_RATIO` bounds a channel's TOTAL share (feature +
+ *    body). The scheduler only offers slots to under-cap channels; a
+ *    channel at its cap is skipped in favor of any other channel with
+ *    content left.
+ *  - Cap relaxation is the LAST resort: if every channel with remaining
+ *    items is already at cap (too little diversity to fill `count` any
+ *    other way), the scheduler keeps going — still fair, least-filled-first
+ *    — rather than leaving the hero short. `count` is honored whenever
+ *    enough eligible items exist; diversity is best-effort, never at the
+ *    cost of an emptier hero.
+ *  - Within a channel, items are always taken in rank order — only the
+ *    CROSS-channel interleaving changes, so per-channel quality is untouched.
+ *  - Pure and deterministic: same input → same output.
+ *
+ * @param readMinutesOf optional precomputed read-time accessor (see
+ * `dropBelowFeedFloor`) — pass the Feed page's precomputed map so this never
+ * re-parses a body's HTML.
+ * @param opts.channelCapRatio override for `BENTO_CHANNEL_CAP_RATIO` (tests).
+ */
+export function selectBalancedBento(
+  items: FeedItem[],
+  count: number,
+  readMinutesOf: (item: FeedItem) => number = (it) => readTimeFromHtml(it.body),
+  opts: { channelCapRatio?: number } = {},
+): FeedItem[] {
+  const eligible = items.filter((it) => isFeatureEligible(it, readMinutesOf));
+  const n = Math.max(0, Math.min(count, eligible.length));
+  if (n === 0) return [];
+
+  const feature = eligible[0]!;
+  const pool = eligible.slice(1);
+  if (n === 1 || pool.length === 0) return eligible.slice(0, n);
+
+  const bodyTarget = n - 1;
+  const capRatio = opts.channelCapRatio ?? BENTO_CHANNEL_CAP_RATIO;
+  const cap = Math.max(1, Math.round(count * capRatio));
+
+  // Each bucket is rank-sorted (bucketByChannel preserves `pool`'s order);
+  // Map insertion order = the order each channel's best item first appears
+  // in the global ranking — used only as the tie-break below.
+  const buckets = bucketByChannel(pool);
+  const channelOrder = [...buckets.keys()];
+  const channelRank = new Map(channelOrder.map((ch, i) => [ch, i]));
+  const pointer = new Map(channelOrder.map((ch) => [ch, 0]));
+  const picks = new Map<string, number>();
+  const featureChannel = feature.topics[0];
+  if (featureChannel) picks.set(featureChannel, 1);
+
+  const remaining = (ch: string) => buckets.get(ch)!.length - (pointer.get(ch) ?? 0);
+  const body: FeedItem[] = [];
+
+  while (body.length < bodyTarget) {
+    let candidates = channelOrder.filter((ch) => remaining(ch) > 0 && (picks.get(ch) ?? 0) < cap);
+    if (candidates.length === 0) {
+      // No under-cap channel has content left — relax the cap so `count` can
+      // still be honored (see doc above). Still fair: least-filled first.
+      candidates = channelOrder.filter((ch) => remaining(ch) > 0);
+    }
+    if (candidates.length === 0) break; // pool truly exhausted
+
+    candidates.sort((a, b) => {
+      const byPicks = (picks.get(a) ?? 0) - (picks.get(b) ?? 0);
+      return byPicks !== 0 ? byPicks : channelRank.get(a)! - channelRank.get(b)!;
+    });
+    const ch = candidates[0]!;
+    const idx = pointer.get(ch)!;
+    const chosen = buckets.get(ch)![idx]!;
+    pointer.set(ch, idx + 1);
+    picks.set(ch, (picks.get(ch) ?? 0) + 1);
+    body.push(chosen);
+  }
+
+  return [feature, ...body];
 }

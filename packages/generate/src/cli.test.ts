@@ -137,6 +137,49 @@ test("verify with no slugs checks all drafts (unchanged behavior)", async () => 
   expect(report.drafts).toHaveLength(2);
 });
 
+test("verify's report.json carries a richness score for every draft", async () => {
+  writeFileSync(
+    join(contentDir, "dispatch-thin.mdx"),
+    `---
+title: "Dispatch"
+format: dispatch
+channels:
+  - ai
+summary: "s"
+publishedAt: 2026-06-21T00:00:00.000Z
+sources:
+  - { title: "A1", url: "https://e.com/a1" }
+---
+<Chart data={[]} /> <DataTable columns={[]} rows={[]} />
+Some real prose body for this dispatch draft, several words long.
+`,
+  );
+  const code = await main(["verify"], { dataDir, repoRoot: root, contentDir, now: NOW });
+  expect(code).toBe(0);
+  const report = JSON.parse(readFileSync(join(dataDir, "generation", "report.json"), "utf8"));
+  const d = report.drafts[0];
+  expect(d.richness).toBeDefined();
+  expect(d.richness.format).toBe("dispatch");
+  expect(d.richness.distinctIslandComponents.sort()).toEqual(["Chart", "DataTable"]);
+});
+
+test("catalog writes a component catalog snapshot under .claude/skills/writers/", async () => {
+  writeFileSync(
+    join(contentDir, "some-read.mdx"),
+    `---\ntitle: "X"\n---\n<Annotation term="a" note="b" /> <Chart data={[]} />\n`,
+  );
+  const code = await main(["catalog"], { dataDir, repoRoot: root, contentDir, now: NOW });
+  expect(code).toBe(0);
+  const catalog = JSON.parse(
+    readFileSync(join(root, ".claude", "skills", "writers", "component-catalog.json"), "utf8"),
+  );
+  expect(catalog.generatedAt).toBe(NOW);
+  const chart = catalog.components.find((c: { name: string }) => c.name === "Chart");
+  expect(chart.usageCount).toBe(1);
+  const orphan = catalog.components.find((c: { name: string }) => c.name === "Model3D");
+  expect(orphan.usageCount).toBe(0);
+});
+
 test("unknown subcommand returns a non-zero code", async () => {
   const code = await main(["frobnicate"], { dataDir, repoRoot: root, contentDir, now: NOW });
   expect(code).toBe(2);

@@ -151,7 +151,8 @@ If the gates can't be met at budget, take the `RESEARCH THIN` handoff and scope 
 Read the brief and the research dossier fully. Output 5–10 lines: (a) the single narrative spine (whose
 story, what turning point); (b) the 2–3 strongest *citeable* scene details and
 their ledger URLs (prefer High-tier / primary); (c) which component anchors which beat
-(`<Map>`/`<Timeline>` early, `<Scrolly>` at the peak). Then confirm **every** fact you
+(`<Map>`/`<Timeline>` early, `<Scrolly>` at the peak) — consult `../component-catalog.json` for the
+full palette + live usage before defaulting to the usual few. Then confirm **every** fact you
 intend to dramatize is a row in the claims table with a ledger URL — load-bearing spine
 facts corroborated. Any fact not in the table → mark `[UNSUPPORTED]` now (research it or
 cut it). If the ledger can't support real scenes, stop and plan a `FAIL`. Do not write prose yet.

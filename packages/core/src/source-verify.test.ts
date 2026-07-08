@@ -2,7 +2,9 @@ import { expect, test } from "vitest";
 import type { SourceEntry } from "./registry.js";
 import {
   DISABLE_THRESHOLD,
+  REPROBE_AFTER_MS,
   applyFetchResult,
+  isReprobeEligible,
   reconcileRegistry,
   type FetchOutcome,
 } from "./source-verify.js";
@@ -181,4 +183,121 @@ test("reconcileRegistry recovery resets a previously-failing source", () => {
   expect(r.consecutiveFailures).toBe(0);
   expect(r.status).toBe("active");
   expect(r.lastError).toBeUndefined();
+});
+
+// ── Bounded self-healing re-probe ─────────────────────────────────────────
+
+test("REPROBE_AFTER_MS is a sane default (7 days)", () => {
+  expect(REPROBE_AFTER_MS).toBe(7 * 24 * 60 * 60 * 1000);
+});
+
+test("crossing the disable threshold stamps disabledAt (so the reprobe window has a start)", () => {
+  const after = applyFetchResult(src({ consecutiveFailures: DISABLE_THRESHOLD - 1 }), permanent(), { now: NOW });
+  expect(after.status).toBe("disabled");
+  expect(after.disabledAt).toBe(NOW);
+});
+
+// ── isReprobeEligible (pure predicate) ────────────────────────────────────
+
+test("a live (enabled) source is never reprobe-eligible", () => {
+  const live = src({ enabled: true, status: "active" });
+  expect(isReprobeEligible(live, NOW)).toBe(false);
+});
+
+test("a manually/scout disabled source (enabled:false, no disabled status) is never reprobe-eligible", () => {
+  const manuallyOff = src({ enabled: false, status: undefined });
+  expect(isReprobeEligible(manuallyOff, NOW)).toBe(false);
+});
+
+test("a just-disabled source is NOT reprobe-eligible before the window elapses", () => {
+  const justDisabled = src({ enabled: false, status: "disabled", disabledAt: NOW });
+  const stillInsideWindow = new Date(Date.parse(NOW) + REPROBE_AFTER_MS - 1000).toISOString();
+  expect(isReprobeEligible(justDisabled, stillInsideWindow)).toBe(false);
+});
+
+test("a disabled source becomes reprobe-eligible once the window elapses", () => {
+  const disabled = src({ enabled: false, status: "disabled", disabledAt: NOW });
+  const afterWindow = new Date(Date.parse(NOW) + REPROBE_AFTER_MS).toISOString();
+  expect(isReprobeEligible(disabled, afterWindow)).toBe(true);
+});
+
+test("a legacy disabled source with no disabledAt is immediately reprobe-eligible", () => {
+  // The 208 youtube sources killed by the videos.xml discovery outage were
+  // disabled before this field existed. They must self-heal on the very next
+  // run once the endpoint recovers, without a manual registry edit.
+  const legacy = src({ enabled: false, status: "disabled", disabledAt: undefined });
+  expect(isReprobeEligible(legacy, NOW)).toBe(true);
+});
+
+// ── applyFetchResult: re-probing a disabled source ────────────────────────
+
+test("re-probe SUCCESS re-enables the source and clears disable state", () => {
+  const disabled = src({
+    enabled: false,
+    status: "disabled",
+    consecutiveFailures: DISABLE_THRESHOLD,
+    disabledAt: EARLIER,
+    lastError: { kind: "permanent", code: 404, at: EARLIER },
+  });
+  const after = applyFetchResult(disabled, ok({ itemCount: 5 }), { now: NOW });
+  expect(after.enabled).toBe(true);
+  expect(after.status).toBe("active");
+  expect(after.consecutiveFailures).toBe(0);
+  expect(after.disabledAt).toBeUndefined();
+  expect(after.lastError).toBeUndefined();
+  expect(after.lastOkAt).toBe(NOW);
+});
+
+test("re-probe SUCCESS with zero items marks the source dormant, still re-enabled", () => {
+  const disabled = src({ enabled: false, status: "disabled", consecutiveFailures: DISABLE_THRESHOLD, disabledAt: EARLIER });
+  const after = applyFetchResult(disabled, ok({ itemCount: 0 }), { now: NOW });
+  expect(after.enabled).toBe(true);
+  expect(after.status).toBe("dormant");
+});
+
+test("re-probe FAILURE (permanent — still 404) pushes the window out; never re-disables via a fresh strike count", () => {
+  const disabled = src({
+    enabled: false,
+    status: "disabled",
+    consecutiveFailures: DISABLE_THRESHOLD,
+    disabledAt: EARLIER,
+  });
+  const after = applyFetchResult(disabled, permanent(), { now: NOW });
+  expect(after.enabled).toBe(false);
+  expect(after.status).toBe("disabled");
+  expect(after.disabledAt).toBe(NOW); // window restarted from this probe
+  expect(after.lastError).toEqual({ kind: "permanent", code: 404, at: NOW });
+});
+
+test("re-probe FAILURE (transient — e.g. a 503 during the probe) ALSO pushes the window out, never leaves the source in an un-reprobable limbo", () => {
+  const disabled = src({
+    enabled: false,
+    status: "disabled",
+    consecutiveFailures: DISABLE_THRESHOLD,
+    disabledAt: EARLIER,
+  });
+  const after = applyFetchResult(disabled, transient(), { now: NOW });
+  // Must stay status:"disabled" (not "failing") or isReprobeEligible's
+  // `status !== "disabled"` gate would permanently exclude it from ever being
+  // reprobed again — a silent, permanent death via a different code path.
+  expect(after.enabled).toBe(false);
+  expect(after.status).toBe("disabled");
+  expect(after.disabledAt).toBe(NOW);
+  expect(isReprobeEligible(after, new Date(Date.parse(NOW) + REPROBE_AFTER_MS).toISOString())).toBe(true);
+});
+
+test("a bounded re-probe never hammers more than once per window: immediately after a failed probe, the source is not yet eligible again", () => {
+  const disabled = src({ enabled: false, status: "disabled", consecutiveFailures: DISABLE_THRESHOLD, disabledAt: EARLIER });
+  const after = applyFetchResult(disabled, permanent(), { now: NOW });
+  expect(isReprobeEligible(after, NOW)).toBe(false); // window just restarted
+});
+
+// ── Schema backward-compatibility ─────────────────────────────────────────
+
+test("legacy entry with no disabledAt parses (backward-compatible schema)", () => {
+  const legacy = src({ status: "disabled", enabled: false, consecutiveFailures: DISABLE_THRESHOLD });
+  expect((legacy as { disabledAt?: string }).disabledAt).toBeUndefined();
+  // applyFetchResult must not throw / must treat it exactly like an entry
+  // whose disabledAt was explicitly stamped, once reduced.
+  expect(() => applyFetchResult(legacy, ok(), { now: NOW })).not.toThrow();
 });

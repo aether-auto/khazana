@@ -16,8 +16,9 @@ front of their chain and refuse to draft until its outputs exist.
 **What this skill is NOT.** It is not the deep-research harness's plumbing. It borrows
 that harness's *methodology* — plan → fan-out explore → appraise → triangulate →
 converge → synthesize with quality gates — but runs entirely inside one Claude Code
-Action on the subscription (Sonnet for the work, Opus only for the hardest credibility
-calls), uses only free tools (`WebSearch`, `WebFetch`, `scripts/fetch-data.py`), and
+Action on the subscription (Sonnet 5 for every format's writing, research, and
+verification; Opus only for the orchestrator's own slate curation/QC), uses only free
+tools (`WebSearch`, `WebFetch`, `scripts/fetch-data.py`), and
 writes khazana artifacts, not `ai-docs/sessions`. No Gemini, no OpenRouter, no paid
 data APIs, no session-dir machinery.
 
@@ -190,6 +191,16 @@ checklist and the fact-check gate's audit target: if the draft asserts something
 the table, or cites a URL not in the ledger, it fails verification. Research is the
 foundation the ~15-min PhD-thesis depth is *earned* from — depth comes from real cited
 evidence, never from padding.
+
+**The ledger's `tier`/`origin` must reach the frontmatter, not just gate the draft.**
+The ledger you emit here is ephemeral (gitignored under `data/generation/research/`) —
+it does not survive to when the site builds. So the writer must copy each cited url's
+`tier` and `origin` from your ledger entry onto that same url's `sources[]` entry in
+the committed MDX (`sources[].tier`, `sources[].origin` — both optional, so this never
+blocks validation, but the site's on-page "Sources & corroboration" rail can only show
+real grounding tier/provenance if the writer carries it over). Order the ledger
+High-first (per Emit, above) partly *because* this makes that copy step easy to do
+correctly.
 
 ## Resources
 - `references/methodology.md` — the deep-research adaptation in depth: query craft for

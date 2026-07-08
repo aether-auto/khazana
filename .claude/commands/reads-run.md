@@ -67,6 +67,16 @@ quality bar gates volume:
   the same channel unless both are exceptional; spread format and channel; check each pick against
   the ledger entries the survey surfaced so you don't ship two adjacent pieces in one day or repeat
   last cycle's territory.
+- **The slate must be format-diverse and channel-diverse — never let one format or channel
+  dominate a run.** Enforce this explicitly, not just as a side effect of the novelty check above.
+- **Chronicle is first-class, not a leftover.** When the slate contains a groundable non-battle
+  history / geography / geopolitics idea, prefer the **chronicle** format for it and actively
+  reserve a chronicle slot when a fresh, groundable historical narrative is available. Reserve
+  **theater** for genuine BATTLE / military-engagement narratives that actually earn its
+  BattleMap/OrderOfBattle/ForceComparison kit — do NOT let theater absorb every history idea and
+  starve chronicle.
+- If both a battle idea and a broader-history idea are groundable in the same run, they can
+  **coexist** (theater + chronicle) rather than picking two theaters.
 
 Record your picks as explicit **assignments**, one per Read. Each assignment carries: `format`
 (a real FORMAT_NAME), `slug` (kebab-case, unique — must not collide with an existing
