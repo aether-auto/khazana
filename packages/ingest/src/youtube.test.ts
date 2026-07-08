@@ -746,7 +746,14 @@ describe("fetchYouTubeTranscriptResult - direct fallback", () => {
     expect(order).not.toContain("watch");
   });
 
-  it("falls through yt-dlp → watch-page → proxy when each prior tier fails", async () => {
+  it("gives up (kind: none) without ever touching watch-page or proxy when yt-dlp is available but fails", async () => {
+    // Regression test for the live incident: a ~1000-video YouTube discovery
+    // burst falling through yt-dlp → watch-page → proxy meant hundreds of
+    // items each firing several real undici fetches at youtube.com/proxy
+    // hosts, which tripped a rare Node/undici parser AssertionError and
+    // crashed the whole ~720-source ingest run. When yt-dlp is on PATH it
+    // must be the ONLY tier tried — a failure there yields "no transcript"
+    // for that video, never more fetch-based fallback load.
     process.env["ALLOW_DIRECT_YOUTUBE"] = "1";
     const order: string[] = [];
     const mockWatchHtml = `var ytInitialPlayerResponse = {"captions":{"playerCaptionsTracklistRenderer":{"captionTracks":[]}}};`;
@@ -765,10 +772,8 @@ describe("fetchYouTubeTranscriptResult - direct fallback", () => {
       });
       expect(result.kind).toBe("none");
     });
-    expect(order[0]).toBe("ytdlp");
-    expect(order).toContain("watch");
-    expect(order.indexOf("ytdlp")).toBeLessThan(order.indexOf("watch"));
-    expect(order.indexOf("watch")).toBeLessThan(order.indexOf("proxy"));
+    // yt-dlp ran, and NOTHING else — no fetch() calls at all for this video.
+    expect(order).toEqual(["ytdlp"]);
   });
 });
 

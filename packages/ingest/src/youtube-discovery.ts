@@ -44,8 +44,18 @@ import { sharedYtDlpGateInstance, type YtDlpGate } from "./youtube.js";
  * small on purpose: this is a discovery poll (not a backfill), and a small N
  * keeps subprocess volume + noise down across a ~208-channel run. Configurable
  * via `YT_DLP_DISCOVERY_LIMIT` for tuning without a code change.
+ *
+ * Lowered 5 → 3 after a live `feed-refresh` run crashed the whole ingest
+ * process (undici parser `AssertionError` inside Node's HTTP client, thrown
+ * asynchronously from a socket event — no try/catch stops it). Root cause:
+ * this discovery poll went from ~0 usable YouTube items (the legacy
+ * videos.xml RSS endpoint 404s for ~90-95% of channels) to up to
+ * `208 channels * limit` new items in one run, each of which is then run
+ * through `enrichContent`'s YouTube branch. 3 trims the worst-case burst by
+ * 40% without materially hurting freshness (a discovery poll running 2x/day
+ * only needs to catch a channel's last few uploads).
  */
-export const DEFAULT_YT_DLP_DISCOVERY_LIMIT = 5;
+export const DEFAULT_YT_DLP_DISCOVERY_LIMIT = 3;
 
 /** Resolve the per-channel discovery limit from env, falling back to the default. */
 export function ytDlpDiscoveryLimit(): number {

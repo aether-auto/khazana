@@ -579,12 +579,25 @@ export async function fetchYouTubeTranscriptResult(
   const ytDlp = deps.ytDlp ?? fetchYtDlpTranscript;
 
   if (isDirectYouTubeEnabled()) {
-    // 1. yt-dlp first — the working path from a non-blocked IP.
+    // 1. yt-dlp first — the working path from a non-blocked IP, AND the only
+    // tier that never touches undici (it's a subprocess). When yt-dlp is on
+    // PATH we rely on it EXCLUSIVELY: a discovery run can hand this function
+    // up to ~1000 video ids in one process, and the two tiers below
+    // (`fetchDirectYouTubeTranscript`, `fetchProxyTranscript`) each issue
+    // several real HTTP fetches per video through Node's built-in undici
+    // client. Repeatedly hammering youtube.com/proxy hosts via undici at that
+    // volume is what tripped a rare Node/undici parser `AssertionError`
+    // thrown asynchronously off a socket event — uncatchable by any
+    // try/catch here — and crashed the entire ~720-source ingest run. So a
+    // failed/blocked yt-dlp now just yields "no transcript" for that one
+    // video instead of falling through to more undici load.
     if (ytDlpAvailable()) {
       const ytdlp = await ytDlp(videoId);
-      if (ytdlp) return { kind: "transcript", text: ytdlp };
+      return ytdlp ? { kind: "transcript", text: ytdlp } : { kind: "none" };
     }
 
+    // yt-dlp unavailable (e.g. local dev without the binary) — these are true
+    // fallbacks, not the common CI path, so the fetch cost is acceptable.
     // 2. Direct watch-page next.
     const direct = await fetchDirectYouTubeTranscript(videoId, fetchFn);
     if (direct) return { kind: "transcript", text: direct };
