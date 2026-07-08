@@ -1,0 +1,501 @@
+---
+title: "The Optimal Guess: How the Kalman Filter Sees Through Noise"
+format: teardown
+channels:
+  - tech
+  - embedded
+  - science
+summary: "The Kalman filter estimates a hidden state from noisy measurements in one recursive predict-update cycle — and it is the provably optimal linear estimator under Gaussian noise because its gain formula is exactly the Bayesian posterior mean."
+publishedAt: 2026-07-07T09:00:00.000Z
+sources:
+  - title: "Kalman, R.E. (1960). A New Approach to Linear Filtering and Prediction Problems. ASME Journal of Basic Engineering, 82(1):35–45."
+    url: "https://asmedigitalcollection.asme.org/fluidsengineering/article-pdf/82/1/35/5518977/35_1.pdf"
+  - title: "Kalman, R.E. & Bucy, R.S. (1961). New Results in Linear Filtering and Prediction Theory. ASME Journal of Basic Engineering, 83(1):95–108."
+    url: "https://www.semanticscholar.org/paper/New-Results-in-Linear-Filtering-and-Prediction-K%C3%A1lm%C3%A1n-Bucy/5c2f635fd11d2d001b7f9921007c6d3cf201eebf"
+  - title: "Applications of Kalman Filtering in Aerospace 1960 to the Present — IEEE Control Systems Magazine"
+    url: "https://ieeexplore.ieee.org/document/5466132/"
+  - title: "Kalman filter — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Kalman_filter"
+  - title: "Rudolf E. Kálmán — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Rudolf_E._K%C3%A1lm%C3%A1n"
+  - title: "Honoring a Legacy Algorithm — Aerospace America / AIAA"
+    url: "https://aerospaceamerica.aiaa.org/departments/honoring-a-legacy-algorithm/"
+  - title: "Rudolf Kalman — MacTutor History of Mathematics, University of St Andrews"
+    url: "https://mathshistory.st-andrews.ac.uk/Biographies/Kalman/"
+  - title: "Demystifying Kalman Filters: From Classical Estimation to Bayesian Inference"
+    url: "https://livey.github.io/posts/2025-03-22-kalman-filters/"
+  - title: "Sensor Fusion of GNSS and IMU Data for Robust Localization via Smoothed Error State Kalman Filter — MDPI Sensors 2023"
+    url: "https://www.mdpi.com/1424-8220/23/7/3676"
+  - title: "In Memoriam: Rudolf E. Kalman — IEEE/UCI"
+    url: "https://georgiou.eng.uci.edu/publications/asme.pdf"
+  - title: "Kalman filter in Quantitative Finance — Quant Analysis"
+    url: "https://quantanalysis.org.uk/financial-markets/kalman-filter"
+  - title: "The Art of Navigation: Origins of the Kalman Filter — Rohit Bhatta (2023)"
+    url: "https://bhatta.io/2023/09/07/origins-of-the-kalman-filter/"
+  - title: "Apollo Guidance Computer — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Apollo_Guidance_Computer"
+  - title: "Stanley F. Schmidt Oral History Transcript — NASA NACA Oral History Project, July 2014"
+    url: "https://www.nasa.gov/wp-content/uploads/2024/11/schmidtsf-7-15-14.pdf"
+  - title: "Math Invented for Moon Landing Helps Your Flight Arrive on Time — NASA Aeronautics"
+    url: "https://www.nasa.gov/aeronautics/math-invented-for-moon-landing-helps-your-flight-arrive-on-time/"
+draft: false
+---
+
+import { RunnableCode, Chart, Annotation, StatBand, Pullquote, Diagram, Math, LayerStack, EventCascade, DataTable, Quiz, Callout, Detail, Definition, Sidenote } from "../../components/mdx";
+
+Apollo 11, July 20, 1969. The lunar module Eagle is descending toward the Sea of Tranquility at 7,000 feet. The onboard <Annotation client:load term="Apollo Guidance Computer" note="The Block II AGC carried 2,048 words of erasable core memory and 36,864 words of fixed rope memory (16-bit words — approximately 4 KB RAM and 72 KB ROM). Source: Wikipedia, Apollo Guidance Computer." href="https://en.wikipedia.org/wiki/Apollo_Guidance_Computer" /> has 4 kilobytes of RAM and a processor roughly as fast as a pocket calculator from 1978. And yet it is doing something remarkable: every second, it takes noisy radar altimeter readings, fuses them with data from the inertial measurement unit, and produces the best possible estimate of the spacecraft's altitude, velocity, and attitude. No batch processing. No data recorded and re-analyzed. Just two equations, repeated, forever.
+
+That algorithm was 9 years old. Rudolf Kálmán, a Hungarian-American mathematician working in a Baltimore research institute, had worked it out in January 1959 and published it in March 1960 — in an engineering mechanics journal, because the controls community wasn't convinced it would work. By the time Neil Armstrong stepped onto the lunar surface, it was running in every major aerospace navigation system on Earth.
+
+This teardown derives the Kalman filter from scratch. Not the formula — any textbook has the formula. The *derivation*. Because the reason the filter works, and why it is the provably optimal estimator, is a Bayesian argument that is far more illuminating than the engineering formula it produces. Once you see why the gain K is exactly what it is, you will also understand why every nonlinear extension — the Extended Kalman Filter, the Unscented Kalman Filter, the particle filter — is a different approximation of the same underlying idea.
+
+<StatBand client:visible caption="The problem Kálmán solved, by the numbers."
+  stats={[
+    { value: 1960, label: "YEAR OF THE PAPER", sub: "ASME J. Basic Engineering, 82(1):35–45", group: false, href: "https://asmedigitalcollection.asme.org/fluidsengineering/article-pdf/82/1/35/5518977/35_1.pdf" },
+    { value: 4, suffix: " KB", label: "APOLLO GUIDANCE COMPUTER RAM", sub: "the filter ran on this — recursively", href: "https://en.wikipedia.org/wiki/Apollo_Guidance_Computer" },
+    { value: 2, label: "EQUATIONS PER STEP", sub: "predict + update — that's the whole algorithm", group: false },
+    { value: 5, suffix: " m", label: "GPS POSITION ACCURACY", sub: "enabled by tightly-coupled Kalman fusion", href: "https://www.mdpi.com/1424-8220/23/7/3676" }
+  ]} />
+
+---
+
+## The problem: every sensor lies
+
+Start with the hard constraint. Every physical measurement is corrupted by noise. A radar altimeter measuring the lunar module's height is accurate to within some tolerance — call it σ_v. An inertial measurement unit measuring acceleration is accurate to within some tolerance — call it σ_w. You want to know the true state of the system (altitude, velocity, attitude), but you can only observe noisy proxies.
+
+There are two naive approaches, and both are wrong.
+
+**Trust only the sensor.** Every time a measurement arrives, take it at face value. Altitude = whatever the radar says. Velocity = whatever the IMU says. The problem: sensors are noisy, and noise averages out slowly. A single bad measurement sends your estimate careening. In a low-noise environment this might be acceptable; on a lunar descent with a cramped computer, it is not.
+
+**Trust only the model.** Use physics to propagate your state estimate forward: if I was at altitude 7,000 ft with velocity −20 ft/s, in 1 second I should be at 6,980 ft with a slightly updated velocity from the engine thrust. No measurements needed. The problem: model errors accumulate. Even a tiny bias in the thrust model — one percent — compounds into dozens of feet of error over a 12-minute descent. Navigation based on pure model propagation is <Definition client:visible term="dead reckoning" def="estimating current position by projecting forward from a known past position using velocity and heading, without reference to external landmarks or signals. Error accumulates with time." />, and dead reckoning has killed ships.
+
+Kálmán's insight: **you need both, and the right way to combine them is to weight each by how trustworthy it is.** A sensor with low noise variance should be trusted heavily. A model with low process noise should be trusted heavily. The filter should lean toward whichever source has smaller uncertainty at each step. The mathematics of doing this optimally — minimizing expected squared error — produces the filter's famous gain formula.
+
+---
+
+## The 1D intuition: blending two Gaussians
+
+Before any matrices, work the simplest possible case. You are estimating a scalar position x. Your model says x ≈ 50 with uncertainty 10 (meaning your prior is Gaussian with mean 50, variance 100). Your sensor reports z = 60 with noise variance 25.
+
+What is the optimal estimate?
+
+Two sources of information, both uncertain, both modeled as Gaussians. The product of two Gaussians is another Gaussian, and its mean is a weighted average: estimates with smaller variance get more weight. Specifically, if you combine a prior N(μ₁, σ₁²) with a likelihood N(μ₂, σ₂²), the posterior mean is:
+
+$$\mu_{post} = \mu_1 + \frac{\sigma_1^2}{\sigma_1^2 + \sigma_2^2}(\mu_2 - \mu_1)$$
+
+The fraction σ₁²/(σ₁²+σ₂²) is the <Annotation client:load term="Kalman gain in 1D" note="In one dimension with H=1: K = P_prior / (P_prior + R). When the prior is uncertain (large P_prior), K is large and the measurement dominates. When the prior is tight, K is small and the prediction dominates." href="https://en.wikipedia.org/wiki/Kalman_filter" /> — call it K. The update is simply: x̂_post = x̂_prior + K·(z − x̂_prior). And the posterior variance shrinks: σ²_post = (1−K)·σ²_prior.
+
+Run it. The numbers make the intuition concrete:
+
+<RunnableCode client:visible caption="1D Kalman update — combining a prior belief with a noisy measurement. Edit P_prior or R and watch K shift."
+  code={`// 1D Kalman update: blending a Gaussian prior with a Gaussian measurement.
+// Prior:       x̂ = 50,  variance P = 100  (std dev 10 — uncertain)
+// Measurement: z = 60,  variance R = 25   (std dev 5  — more precise)
+
+function kalman1DUpdate(xPrior, P, z, R) {
+  const K = P / (P + R);              // Kalman gain: prior variance / total variance
+  const xPost = xPrior + K * (z - xPrior);  // update toward measurement by K
+  const Ppost = (1 - K) * P;         // posterior variance: always < P and < R
+  return { K, xPost, Ppost };
+}
+
+const { K, xPost, Ppost } = kalman1DUpdate(50, 100, 60, 25);
+
+console.log("Kalman gain K:   ", K.toFixed(3),
+  " (prior σ²=100 vs measurement σ²=25 → trust measurement more)");
+console.log("Prior:           ", 50, " ± ", Math.sqrt(100).toFixed(1));
+console.log("Measurement:     ", 60, " ± ", Math.sqrt(25).toFixed(1));
+console.log("Posterior:       ", xPost.toFixed(2), " ± ", Math.sqrt(Ppost).toFixed(2),
+  " <- smaller than both inputs");
+
+// What happens when the model is MORE trusted than the sensor?
+const { K: K2, xPost: xp2, Ppost: pp2 } = kalman1DUpdate(50, 9, 60, 25);
+console.log("\\nWith a tighter prior (P=9, R=25): K =", K2.toFixed(3),
+  "→ posterior stays near", xp2.toFixed(2), "(model wins)");
+return "Posterior uncertainty (" + Math.sqrt(Ppost).toFixed(2) +
+  ") is smaller than both prior (10.0) and measurement (5.0)";`} />
+
+Run it. With P=100 and R=25, K=0.8 — the measurement pulls the estimate strongly because the prior is more uncertain than the sensor. Flip to P=9 and R=25 and K drops to 0.26 — the model is now tighter, so the new reading barely moves the estimate. That ratio, prior variance over total variance, is the entire intuition behind the Kalman gain. Everything else is the multivariate version of this.
+
+<Callout kind="key-insight" title="The gain is a credibility ratio">
+K = P/(P+R) says: "how much of the total uncertainty belongs to my prior?" If my model is very uncertain (large P) and my sensor is precise (small R), K is large — trust the measurement. If my model is tight and the sensor is noisy, K is small — trust the prediction. At K=0, measurements are ignored entirely. At K=1, the prior is discarded and the estimate jumps to the measurement.
+</Callout>
+
+---
+
+## The five equations
+
+The full multivariable filter operates on a vector state x_k (e.g., position and velocity in three dimensions) and produces vector observations z_k (e.g., pseudoranges from four GPS satellites, or radar altitude). The system is modeled by two linear equations:
+
+<Math client:visible
+  tex="x_k = F x_{k-1} + w_k, \quad w_k \sim \mathcal{N}(0, Q)"
+  label="(1)"
+  caption="State evolution: F is the state-transition matrix (physics of how state moves), Q is the process noise covariance (model uncertainty)."
+  steps={[
+    { tex: "x_k \\in \\mathbb{R}^n", note: "state vector at time k (hidden — never observed directly)" },
+    { tex: "F \\in \\mathbb{R}^{n \\times n}", note: "state-transition matrix — encodes your system model (e.g., constant-velocity kinematics)" },
+    { tex: "w_k \\sim \\mathcal{N}(0, Q)", note: "process noise: unmodeled disturbances, actuation errors, wind — treated as zero-mean Gaussian" }
+  ]} />
+
+<Math client:visible
+  tex="z_k = H x_k + v_k, \quad v_k \sim \mathcal{N}(0, R)"
+  label="(2)"
+  caption="Observation model: H maps the hidden state to measurement space. R is the measurement noise covariance."
+  steps={[
+    { tex: "z_k \\in \\mathbb{R}^m", note: "measurement vector (observed — what your sensor returns)" },
+    { tex: "H \\in \\mathbb{R}^{m \\times n}", note: "observation matrix — the relationship between state and what you can measure" },
+    { tex: "v_k \\sim \\mathcal{N}(0, R)", note: "measurement noise: sensor inaccuracy, quantization, thermal drift" }
+  ]} />
+
+Given these two models, the <Annotation client:load term="Kalman filter" note="Named after Rudolf Emil Kálmán (1930–2016). The filter is sometimes called the Kalman-Bucy filter to credit Richard Bucy, who co-developed the continuous-time version in 1961. Source: Wikipedia, Kalman filter." href="https://en.wikipedia.org/wiki/Kalman_filter" /> runs exactly five equations per time step — two for predict, three for update:
+
+<Math client:visible
+  tex="\hat{x}_{k|k-1} = F \hat{x}_{k-1|k-1}"
+  label="(3)"
+  caption="Predict step 1: project the state estimate forward through the system model. No measurement involved yet."
+/>
+
+<Math client:visible
+  tex="P_{k|k-1} = F P_{k-1|k-1} F^\top + Q"
+  label="(4)"
+  caption="Predict step 2: the uncertainty grows. F rotates the covariance through the state transition; Q adds process noise. This is where dead reckoning accumulates error — P inflates every step until a measurement arrives."
+/>
+
+<Math client:visible
+  tex="K_k = P_{k|k-1} H^\top \left(H P_{k|k-1} H^\top + R\right)^{-1}"
+  label="(5)"
+  caption="The Kalman gain: the ratio of prior state uncertainty (mapped to measurement space) to total uncertainty. This is the heart of the algorithm. Source: Kálmán (1960) §4; Wikipedia Kalman filter."
+/>
+
+<Math client:visible
+  tex="\hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k \left(z_k - H \hat{x}_{k|k-1}\right)"
+  label="(6)"
+  caption="Update step 1: move the estimate toward the measurement by the Kalman gain. The term (z_k − H x̂) is called the innovation — how much the measurement surprised the prediction."
+/>
+
+<Math client:visible
+  tex="P_{k|k} = \left(I - K_k H\right) P_{k|k-1}"
+  label="(7)"
+  caption="Update step 2: the posterior uncertainty is always smaller than the prior. Incorporating a measurement always reduces uncertainty (as long as R is finite). The filter becomes more confident with each observation."
+/>
+
+Equations (3)–(7) are the complete algorithm. <Sidenote n={1} href="https://www.mdpi.com/1424-8220/23/7/3676" source="MDPI Sensors 2023">In practice, the numerically stable "Joseph form" of the covariance update — P = (I−KH)P(I−KH)ᵀ + KRKᵀ — is preferred over equation (7) because floating-point rounding can make the naive form non-positive-definite. The result is mathematically identical; the form matters only for 64-bit precision.</Sidenote> The predict step runs whenever time advances (even with no measurement). The update step runs whenever a measurement arrives. On a GPS receiver, predict runs at 100 Hz from the IMU, and update runs at 1–10 Hz when satellite pseudoranges are available.
+
+---
+
+## The architecture
+
+Here is what those five equations look like as a data-flow system. The diagram makes one thing visible that the equations obscure: the predict-update cycle is a feedback loop. The posterior at step k is the prior at step k+1.
+
+<Diagram client:visible caption="The Kalman filter predict-update cycle as a data-flow pipeline. Arrows show how state and covariance flow through each stage."
+  nodes={[
+    { id: "prior", label: "Prior state\n(x̂_{k-1}, P_{k-1})", x: 0, y: 1, kind: "input" },
+    { id: "predict", label: "PREDICT\nEqs. (3)–(4)", x: 1, y: 1, kind: "process" },
+    { id: "sensor", label: "Sensor\nmeasurement z_k", x: 2, y: 0, kind: "input" },
+    { id: "gain", label: "Kalman gain K\nEq. (5)", x: 2, y: 2, kind: "decision" },
+    { id: "update", label: "UPDATE\nEqs. (6)–(7)", x: 3, y: 1, kind: "process" },
+    { id: "posterior", label: "Posterior state\n(x̂_k, P_k)", x: 4, y: 1, kind: "output" }
+  ]}
+  edges={[
+    { from: "prior", to: "predict", label: "advance time", kind: "data" },
+    { from: "predict", to: "gain", label: "P_{k|k-1}", kind: "data" },
+    { from: "predict", to: "update", label: "x̂_{k|k-1}", kind: "data" },
+    { from: "sensor", to: "update", label: "innovation ỹ = z − Hx̂", kind: "data" },
+    { from: "gain", to: "update", label: "weight K", kind: "control" },
+    { from: "update", to: "posterior", label: "posterior", kind: "data" },
+    { from: "posterior", to: "prior", label: "feeds next step k→k+1", kind: "async" }
+  ]} />
+
+The cycle arrows matter. After the update at step $k$, the posterior $(\hat{x}_{k|k},\ P_{k|k})$ becomes the input to the predict step at $k+1$. The filter never re-processes old measurements — it just carries their effect forward through the covariance $P$. That is what makes it recursive: the entire history of observations is summarized in the current $(\hat{x},\ P)$ pair, and nothing else is needed.
+
+This is also why the filter ran on the Apollo Guidance Computer's 4 kilobytes of RAM: it does not accumulate measurements; it consumes them one by one, discards them, and moves on. A batch estimator would have needed to store every radar ping since engine ignition. The Kalman filter needed only the current state vector and covariance matrix — a handful of numbers no matter how long the mission had been running.
+
+---
+
+## Why K is exactly what it is: the Bayesian proof
+
+The gain formula (5) looks arbitrary unless you derive it. The derivation is short, and it is worth doing once — it converts the filter from a formula you memorize into a result you understand.
+
+The setup: at the predict step, you have a Gaussian prior over the state:
+
+$$p(x_k | z_1, \ldots, z_{k-1}) = \mathcal{N}(\hat{x}_{k|k-1},\ P_{k|k-1})$$
+
+A measurement z_k arrives. By the observation model, the likelihood of z_k given x_k is also Gaussian:
+
+$$p(z_k | x_k) = \mathcal{N}(H x_k,\ R)$$
+
+The posterior is proportional to prior × likelihood. Both are Gaussian, and the product of Gaussians is Gaussian. The posterior mean minimizes the expected squared error — it is the <Definition client:visible term="MAP estimator" def="Maximum A Posteriori: the estimate that maximizes the posterior distribution p(x|z). For a Gaussian posterior, the MAP equals the mean and minimizes expected squared error (MMSE)." /> and the MMSE estimate simultaneously.
+
+To find it, complete the square in the log-posterior:
+
+<Math client:visible
+  tex="\ln p(x_k | z_k) \propto -\frac{1}{2}\left[(z_k - Hx_k)^\top R^{-1}(z_k - Hx_k) + (x_k - \hat{x}_{k|k-1})^\top P_{k|k-1}^{-1}(x_k - \hat{x}_{k|k-1})\right]"
+  label="(8)"
+  caption="The log-posterior is the sum of two quadratic penalty terms: one for deviation from the prior, one for deviation from the measurement. Minimizing this is the Bayesian estimator. Source: Livey 2025 (Bayesian Kalman derivation); Wikipedia Kalman filter."
+  steps={[
+    { tex: "\\text{likelihood term: } (z_k - Hx_k)^\\top R^{-1}(z_k - Hx_k)", note: "penalizes states that predict a measurement far from what we observed" },
+    { tex: "\\text{prior term: } (x_k - \\hat{x}_{k|k-1})^\\top P_{k|k-1}^{-1}(x_k - \\hat{x}_{k|k-1})", note: "penalizes states far from the predicted mean — weighted by prior precision" }
+  ]} />
+
+Expanding, collecting x_k terms, and completing the square yields the posterior mean and covariance:
+
+<Math client:visible
+  tex="\hat{x}_{k|k} = \hat{x}_{k|k-1} + P_{k|k-1} H^\top \underbrace{\left(H P_{k|k-1} H^\top + R\right)^{-1}}_{= S_k^{-1}} (z_k - H\hat{x}_{k|k-1})"
+  label="(9)"
+  caption="The posterior mean, derived by completing the square in the log-posterior. The underlined term is the inverse innovation covariance. The factor P·Hᵀ·S⁻¹ is exactly the Kalman gain K — equation (5)."
+  steps={[
+    { tex: "K_k = P_{k|k-1} H^\\top S_k^{-1}", note: "K is the ratio: prior covariance (mapped to measurement space) over total covariance" },
+    { tex: "P_{k|k} = \\left(P_{k|k-1}^{-1} + H^\\top R^{-1} H\\right)^{-1}", note: "posterior precision = prior precision + measurement precision — information adds" },
+    { tex: "P_{k|k} = (I - K_k H) P_{k|k-1}", note: "equivalent form (via Woodbury identity) — this is equation (7)" }
+  ]} />
+
+The gain $K_k = P_{k|k-1} H^\top (H P_{k|k-1} H^\top + R)^{-1}$ is not an arbitrary engineering choice. It is the exact coefficient that minimizes the posterior uncertainty — derived directly from Bayes' theorem applied to two Gaussian distributions. <Annotation client:load term="This result has a name: the Kalman filter is the minimum mean-square error (MMSE) estimator for linear-Gaussian systems" note="Kálmán (1960) Theorem 8 proved that the filter minimizes E[(x̂−x)²] among all linear estimators. For Gaussian noise, it also minimizes among ALL estimators, linear or not. Source: Wikipedia Kalman filter; Kálmán 1960 ASME §4." href="https://asmedigitalcollection.asme.org/fluidsengineering/article-pdf/82/1/35/5518977/35_1.pdf" />. When noise is Gaussian, no other filter — linear or nonlinear — can do better.
+
+The 1D formula from the intuition section is exactly this with H=1: K = P/(P+R). The derivation confirms it was right all along.
+
+<Detail summary="Go deeper: the information form and why precision adds" defaultOpen={false}>
+The posterior covariance P = (P⁻¹ + Hᵀ R⁻¹ H)⁻¹ shows that **information (inverse covariance) adds linearly.** Each measurement contributes Hᵀ R⁻¹ H bits of information. This is the "information filter" form of the update — equivalent to equation (7) but numerically different. When you have many sensors feeding in at once (like 12 GPS satellites), the information filter computes the combined update by summing their contributions, then inverting once. The standard form (equation 7) is equivalent but applies updates sequentially. For the Kalman-Bucy continuous-time filter (1961), the Riccati differential equation dP/dt = FP + PFᵀ + Q − PHᵀ R⁻¹ HP takes this additive-information form naturally.
+</Detail>
+
+---
+
+## Running the full filter
+
+One equation at a time is clear. Running it on actual data reveals the behavior: how the estimate smooths out measurement noise, how the covariance converges, how changing Q and R shifts the filter's personality.
+
+<RunnableCode client:visible caption="Full 1D Kalman filter tracking a hidden sinusoidal state. Adjust Q (process noise) and R (measurement noise) on lines 6–7 and observe how the filter response changes."
+  code={`// Seeded LCG pseudo-random for reproducibility
+let seed = 42;
+function rand() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 0xFFFFFFFF; }
+function randn() { const u = rand() || 1e-10; return Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*rand()); }
+
+const Q = 1.0;  // process noise variance — try 0.1 (smooth) or 10.0 (responsive)
+const R = 9.0;  // measurement noise variance — try 1.0 (trust sensor) or 25.0 (distrust)
+const N = 30;
+
+// True hidden state: slow sine wave (the system the filter can't directly observe)
+const truth = Array.from({length: N}, (_, k) => 10 * Math.sin(2 * Math.PI * k / 15));
+// Noisy measurements: truth + Gaussian noise
+const meas  = truth.map(x => x + Math.sqrt(R) * randn());
+
+// Kalman filter: x̂ starts at 0, P starts at 20
+let x = 0, P = 20;
+const est = [];
+for (let k = 0; k < N; k++) {
+  // PREDICT: F=1 (constant-position model), no control input
+  const Ppred = P + Q;
+  // UPDATE: H=1 (we measure the state directly)
+  const K = Ppred / (Ppred + R);
+  x = x + K * (meas[k] - x);
+  P = (1 - K) * Ppred;
+  est.push({ k, truth: truth[k], meas: meas[k], est: x, gain: K });
+}
+
+// Print first 12 steps
+console.log("k   truth  meas    est    gain");
+est.slice(0, 12).forEach(r =>
+  console.log(r.k.toString().padStart(2) + "   " +
+    r.truth.toFixed(1).padStart(5) + "  " +
+    r.meas.toFixed(1).padStart(6) + "  " +
+    r.est.toFixed(1).padStart(5) + "  " +
+    r.gain.toFixed(3))
+);
+
+// RMS errors
+const filterErr = Math.sqrt(est.reduce((s,r) => s + (r.truth - r.est)**2, 0) / N);
+const measErr   = Math.sqrt(est.reduce((s,r) => s + (r.truth - r.meas)**2, 0) / N);
+console.log("");
+console.log("RMS error — raw measurement:", measErr.toFixed(2));
+console.log("RMS error — Kalman estimate: ", filterErr.toFixed(2));
+return "Filter reduces noise by " + ((1 - filterErr/measErr)*100).toFixed(0) + "% RMS — try adjusting Q and R";`} />
+
+Run it with the defaults (Q=1, R=9) and the filter reduces RMS noise by roughly 40–50%. Now set Q=0.1 and R=9: with a tight process model, the filter trusts its own prediction heavily and barely moves when measurements arrive — smooth but slow to respond to genuine state changes. Set Q=10 and R=1: with an uncertain model and a precise sensor, K approaches 1 and the estimate tracks the measurements closely, accepting their noise. Q and R are the knobs that encode your *engineering judgment* about which source to trust. The mathematics then does the optimal blending.
+
+---
+
+## The Riccati equation and convergence
+
+There is a deep result buried in equations (4) and (7): under constant F, H, Q, R, and mild technical conditions (the system must be <Definition client:visible term="observable" def="A system is observable if you can infer the complete state from a finite history of measurements. Formally, the observability matrix has full rank. An unobservable state dimension cannot be corrected by any measurements, so the filter's uncertainty in that dimension grows without bound." />), the covariance P converges to a fixed steady-state value P_∞ regardless of the initial P_0.
+
+The update equation $P_{k+1} = F (I-KH) P_k F^\top + Q$ is a discrete <Definition client:visible term="Riccati equation" def="A nonlinear matrix difference (or differential) equation of the form P_{k+1} = f(P_k). Named after Jacopo Riccati (1724). Appears in optimal control (LQR) as well as Kalman filtering, because they are mathematical duals — a connection Kálmán himself noted in his 1960 paper." href="https://asmedigitalcollection.asme.org/fluidsengineering/article-pdf/82/1/35/5518977/35_1.pdf" />. It contracts: P_∞ is the fixed point. In 1D, P_∞ satisfies P_∞ = R·P_∞/(P_∞+R) + Q, which gives P_∞ = (Q + √(Q²+4QR))/2. The corresponding steady-state gain K_∞ = P_∞/(P_∞+R) can be precomputed offline and hardcoded into the embedded system — no matrix inversion required at runtime.
+
+<Chart client:visible mark="line" x="step" y="gain" height={280}
+  caption="Kalman gain K converging to its steady state (K_∞ ≈ 0.282) over 10 update steps. Initial uncertainty P₀ = 50 gives K ≈ 0.85 on the first measurement — the filter leans heavily on the sensor because it knows nothing yet. By step 5, K has settled to within 5% of the asymptote. Parameters: Q = 1, R = 9, F = H = 1."
+  data={[
+    { step: 0, gain: 0.85 },
+    { step: 1, gain: 0.49 },
+    { step: 2, gain: 0.375 },
+    { step: 3, gain: 0.327 },
+    { step: 4, gain: 0.305 },
+    { step: 5, gain: 0.293 },
+    { step: 6, gain: 0.288 },
+    { step: 7, gain: 0.285 },
+    { step: 8, gain: 0.284 },
+    { step: 9, gain: 0.283 }
+  ]} />
+
+The steep drop in the first two steps is typical: the filter rapidly learns from early measurements and the gain plummets toward its asymptote. After step 5, the gain is essentially constant. This is why embedded Kalman implementations often skip the covariance update entirely and use a precomputed fixed gain — valid for linear, stationary systems with stable Q and R.
+
+The second chart shows how the steady-state gain responds to the ratio of process noise to measurement noise. When your model is noisy relative to your sensor (high Q/R), the filter rightly trusts the measurements more. When the model is tight relative to the sensor (low Q/R), the predictions dominate.
+
+<Chart client:visible mark="line" x="qr" y="gain" height={280}
+  caption="Steady-state Kalman gain K_∞ as a function of the process-to-measurement noise ratio Q/R (with R = 1, varying Q). At Q/R = 1, K_∞ = 1/φ ≈ 0.618 — the golden ratio. At high Q/R, the gain approaches 1 (discard the prediction, trust the sensor). At low Q/R, the gain approaches 0 (trust the model, ignore the sensor)."
+  data={[
+    { qr: 0.01, gain: 0.095 },
+    { qr: 0.1, gain: 0.27 },
+    { qr: 1, gain: 0.618 },
+    { qr: 2, gain: 0.732 },
+    { qr: 5, gain: 0.855 },
+    { qr: 10, gain: 0.913 }
+  ]} />
+
+The golden ratio at Q/R=1 is not a coincidence — it falls out of the quadratic formula for P_∞ when Q=R, and 1/φ is the positive root of K² + K − 1 = 0. <Sidenote n={2} href="https://en.wikipedia.org/wiki/Kalman_filter" source="Wikipedia">The Kalman filter and the Linear Quadratic Regulator (LQR) optimal controller are mathematical duals. The Riccati equation for the filter covariance is identical in structure to the Riccati equation for the LQR cost matrix — with time running backwards. Kálmán recognized this duality in his 1960 paper and used it in the proof. It means designing an optimal estimator and designing an optimal controller are literally the same computation.</Sidenote>
+
+---
+
+## 1960: the paper and the Moon
+
+Rudolf Emil Kálmán was born in <Annotation client:load term="Budapest, Hungary, on May 19, 1930" note="Source: Wikipedia, Rudolf E. Kálmán; MacTutor History of Mathematics, University of St Andrews biography of Kalman." href="https://en.wikipedia.org/wiki/Rudolf_E._K%C3%A1lm%C3%A1n" />. He emigrated to the United States, earned his bachelor's and master's degrees from MIT in 1953 and 1954, and completed his doctorate at Columbia University in 1957<Sidenote n={3} href="https://mathshistory.st-andrews.ac.uk/Biographies/Kalman/" source="MacTutor">MacTutor (University of St Andrews) records that Kálmán submitted his thesis and was awarded the D.Sci. in 1958; Wikipedia gives 1957. The discrepancy likely reflects thesis submission versus degree conferral date.</Sidenote>. By 1958, he was a research mathematician at the Research Institute for Advanced Studies (RIAS) in Baltimore — not a controls lab, but a theoretical institution that gave him the freedom to think broadly.
+
+He worked out the core idea in January 1959 and presented it to the American Society of Mechanical Engineers in March of that year. The paper was received by the ASME on February 24, 1959 and published in the <Annotation client:load term="ASME Journal of Basic Engineering" note="Vol. 82, No. 1, 1960, pp. 35–45. The paper appeared in a mechanical engineering journal rather than an electrical engineering or controls venue because the controls community was skeptical. Source: Kálmán (1960) DOI:10.1115/1.3662552; georgiou.eng.uci.edu/publications/asme.pdf (IEEE/UCI memorial)." href="https://asmedigitalcollection.asme.org/fluidsengineering/article-pdf/82/1/35/5518977/35_1.pdf" /> on March 1, 1960. Title: "A New Approach to Linear Filtering and Prediction Problems."
+
+The controls community was not immediately convinced. The Wiener filter — which solved the same problem in the frequency domain, for stationary signals, using batch processing — had dominated signal processing since the 1940s. Kálmán's paper claimed a recursive solution that worked for non-stationary signals without storing any measurement history. It seemed too good to be true.
+
+The reception changed in fall 1960. Kálmán visited Stanley F. Schmidt at <Annotation client:load term="NASA Ames Research Center" note="Mountain View, California. Schmidt was chief of the Dynamic Analysis Branch (per NASA Aeronautics), leading a team of eight engineers working on circumlunar navigation for the Apollo program. Source: NASA Aeronautics ('Math Invented for Moon Landing'); Bhatta (2023), citing McGee-Schmidt NASA Tech Memo 1985 and Schmidt oral history 2014; IEEE aerospace history paper (ieeexplore.ieee.org/document/5466132/)." href="https://www.nasa.gov/aeronautics/math-invented-for-moon-landing-helps-your-flight-arrive-on-time/" /> in Mountain View, California. Schmidt's team was wrestling with a navigation problem the Wiener filter could not solve: fusing radar altimeter readings and IMU data on a spacecraft flying a non-stationary trajectory, on a computer with kilobytes of memory. Stationary signals, batch processing, frequency domain — none of that fit.
+
+<Pullquote cite="Stanley F. Schmidt, oral history transcript (NASA NACA Oral History Project, July 2014), as reproduced in Bhatta (2023)" href="https://www.nasa.gov/wp-content/uploads/2024/11/schmidtsf-7-15-14.pdf" kind="quote">
+They all sat there, listening to Rudy, and I did, too. When he got through, I don't think any of them understood, and I didn't understand much, but after his discussion of it, I said, 'I think this might have something to do with the [navigation problem].
+</Pullquote>
+
+Schmidt's team spent the next several months adapting the filter for the nonlinear case — linearizing the dynamics around the current trajectory estimate — and by early 1961, they had validated it through simulations. The technique had been extended for nonlinear problems even before the original linear paper had circulated widely. <Annotation client:load term="The Extended Kalman Filter was loaded onto Apollo 11" note="Source: Aerospace America / AIAA 'Honoring a Legacy Algorithm'; IEEE Kalman Filtering Aerospace Applications 1960–present (ieeexplore.ieee.org/document/5466132/)." href="https://ieeexplore.ieee.org/document/5466132/" /> — the Apollo Guidance Computer used it to estimate position, velocity, and attitude from radar measurements and inertial sensors throughout the lunar descent and ascent.
+
+The continuous-time extension, the <Annotation client:load term="Kalman-Bucy filter" note="Kálmán, R.E. & Bucy, R.S. (1961). 'New Results in Linear Filtering and Prediction Theory.' ASME Journal of Basic Engineering, 83(1):95–108. Extended the 1960 discrete-time filter to continuous-time stochastic differential equations." href="https://www.semanticscholar.org/paper/New-Results-in-Linear-Filtering-and-Prediction-K%C3%A1lm%C3%A1n-Bucy/5c2f635fd11d2d001b7f9921007c6d3cf201eebf" />, followed in 1961, coauthored with Richard Bucy. The filter now had both a discrete form (useful for digital computers sampling at fixed intervals) and a continuous form (expressed as a stochastic differential equation, useful for analog systems and theoretical analysis). Kálmán later received the National Medal of Science — presented by President Obama in 2009 — the Charles Stark Draper Prize, and the IEEE Medal of Honor for work that touches every navigation system built since 1960.
+
+---
+
+## What breaks: the linear-Gaussian assumption
+
+The filter's optimality proof rests on two assumptions: that the state evolution and observation are **linear** (F and H are constant matrices, not functions of x_k) and that the noise is **Gaussian**. Break either and the proof fails. Different extensions break it in different ways — and each is a different approximation of the same underlying Bayesian update.
+
+<LayerStack client:visible
+  caption="The Bayesian filter family: from exact optimality (bottom) to practical approximations (top). Each layer sacrifices exactness for computability."
+  layers={[
+    { label: "Particle Filter (Sequential Monte Carlo)", note: "Arbitrary nonlinearity, arbitrary noise distributions. Represents the posterior as a weighted set of random 'particles' drawn from a proposal distribution. Asymptotically exact as particle count → ∞. Cost: O(N_particles) per step; degrades in high dimensions (curse of dimensionality).", detail: "Works for any system — but computational cost explodes with state dimension. Used in robot localization, radar tracking, financial filtering." },
+    { label: "Unscented Kalman Filter (UKF)", note: "Nonlinear systems, Gaussian-assumed noise. Uses a deterministic set of 2n+1 sigma points to propagate mean and covariance through the nonlinearity exactly to second order — without computing Jacobians. More accurate than EKF for moderate nonlinearity.", detail: "Julier & Uhlmann (1997). Sigma points capture the mean and covariance exactly; after propagation through f(x), the resulting mean and covariance are accurate to 3rd order (2nd order for Gaussian noise). No Jacobian required." },
+    { label: "Extended Kalman Filter (EKF)", note: "Nonlinear systems, Gaussian-assumed noise. Linearizes f(x) and h(x) via first-order Taylor expansion around the current estimate. Requires computing the Jacobian matrices F_k = ∂f/∂x and H_k = ∂h/∂x at each step.", detail: "Schmidt's adaptation for Apollo (1961). Works well when the system is 'nearly linear' on the timescale of a single step. Can diverge for strongly nonlinear systems — the linearization error is not bounded." },
+    { label: "Kalman Filter (linear-Gaussian)", note: "Linear state evolution and observation, Gaussian noise. EXACT: the posterior is Gaussian, and equations (3)–(7) compute it exactly. Minimum mean-square error, provably optimal. Source: Kálmán (1960), Theorem 8.", detail: "The only case where the Bayesian posterior is analytically tractable and computable in O(n³) time. Every other filter is approximating what this one computes exactly." }
+  ]} />
+
+The layering is the argument: each filter above is trying to compute the same Bayesian posterior, p(x_k | z_1, …, z_k). In the linear-Gaussian case, that posterior is exactly Gaussian, and the Kalman filter computes it exactly. Break linearity (EKF, UKF) and you have to approximate the propagation of the Gaussian through a nonlinear function. Break Gaussianity (particle filter) and you abandon the parametric form entirely and represent the posterior with samples.
+
+<EventCascade client:visible caption="What goes wrong when each assumption breaks, and the consequence."
+  nodes={[
+    { kind: "cause", label: "System dynamics are nonlinear: x_{k+1} = f(x_k) + w_k, f ≠ Fx_k",
+      detail: "The predict step P_{k|k-1} = F P F^T + Q requires a linear F. With a nonlinear f, the Gaussian prior is mapped to a non-Gaussian predicted distribution — the Kalman formula for the predicted covariance is no longer exact." },
+    { kind: "effect", label: "EKF: linearize f around the current estimate using the Jacobian",
+      detail: "F_k = ∂f/∂x|_{x̂} turns the nonlinear update into an approximately linear one. Works when x stays near the linearization point, but the first-order Taylor error grows with the curvature of f." },
+    { kind: "effect", label: "EKF divergence: when linearization error dominates, estimates become overconfident and ignore measurements",
+      detail: "If the true state departs from the linearization trajectory by more than the noise level, the filter's covariance underestimates true uncertainty. K drops, measurements are down-weighted, and the estimate locks onto a wrong value." },
+    { kind: "turning-point", label: "UKF: bypass Jacobians with sigma points — more accurate, same cost",
+      detail: "Choose 2n+1 deterministic points that match the Gaussian's mean and covariance exactly. Propagate each through f(x). The output mean and covariance capture nonlinear effects to 3rd order." },
+    { kind: "cause", label: "Noise is non-Gaussian: impulsive, multimodal, or heavy-tailed",
+      detail: "GPS multipath creates bimodal pseudorange errors. Radar clutter creates impulsive spikes. A single outlier measurement with a Gaussian assumption will corrupt the estimate for many subsequent steps." },
+    { kind: "effect", label: "Particle filter: abandon Gaussian assumption, represent posterior with N weighted samples",
+      detail: "Any noise distribution, any nonlinearity. At N=1,000 particles in 3D, the posterior is well-represented. But N must scale exponentially with state dimension — a 10D state needs millions of particles for coverage." }
+  ]} />
+
+The practical message: **reach for the Kalman filter when your system is linear or nearly linear and your noise is roughly Gaussian.** Use the EKF for mildly nonlinear systems where computing Jacobians is feasible. Use the UKF when computing Jacobians is painful or the nonlinearity is stronger. Use the particle filter when the posterior is multimodal, when noise is impulsive, or when the state dimension is small enough to afford it.
+
+---
+
+## Where it runs today
+
+The filter Kálmán published in a mechanical engineering journal in 1960 now runs in approximately every serious navigation system on Earth. The applications share a structure: hidden state, noisy measurements, Gaussian-ish noise, need for real-time estimates.
+
+**GPS/IMU sensor fusion.** The companion primer on [how GPS actually locates you](/blog/how-gps-finds-you) showed how four satellite pseudoranges give a position fix via least-squares. What it deferred: between satellite measurement updates (available at 1–10 Hz), the receiver's IMU accelerometers and gyroscopes propagate the state at 100–400 Hz. A <Annotation client:load term="tightly coupled Kalman filter" note="In tightly coupled integration, the Kalman filter's state vector includes receiver position, velocity, clock bias, and IMU biases. Measurements are raw pseudoranges from individual satellites (not position fixes from a standalone GNSS solver). This enables operation with fewer than 4 satellites and directly models measurement noise. Source: MDPI Sensors 2023 (mdpi.com/1424-8220/23/7/3676)." href="https://www.mdpi.com/1424-8220/23/7/3676" /> fuses these directly: state vector = [position, velocity, clock bias, IMU biases], measurement vector = raw pseudoranges. When the satellite count drops below four, the IMU-propagated prediction keeps the estimate alive. In urban canyons where multipath corrupts pseudoranges, the filter downweights those measurements through inflated R entries.
+
+**Rocket landing.** SpaceX Falcon 9 first-stage landings use state estimation throughout the powered descent. The dynamics are highly nonlinear (thrust vector control, varying mass as propellant burns, aerodynamic forces at low altitude) — this is firmly EKF or UKF territory. The state vector includes position, velocity, attitude quaternion, thrust direction, and fuel mass. Measurements come from radar altimetry, GPS, and onboard IMU. The filter must run reliably under vibration, aerodynamic perturbation, and engine gimbaling. A divergent estimator means a missed landing.
+
+**Quantitative finance.** Asset prices are not the state — they are noisy observations of a hidden underlying process (fair value, momentum regime, volatility). A <Annotation client:load term="financial state-space model" note="Observation equation: y_t = Z x_t + noise. State equation: x_{t+1} = T x_t + noise. The Kalman filter estimates the hidden state x_t (e.g., trend, volatility, hedge ratio) from noisy prices y_t. Used in pairs trading, volatility forecasting, and yield curve modeling. Source: Quant Analysis (quantanalysis.org.uk/financial-markets/kalman-filter)." href="https://quantanalysis.org.uk/financial-markets/kalman-filter" /> models the price as an observation of a hidden state (trend + noise), and the Kalman filter tracks that hidden state recursively, adapting as new prices arrive. The key advantage over a rolling window: the filter weights older data naturally through the Riccati equation, without a hard cutoff.
+
+**Weather and climate modeling.** The <Annotation client:load term="Ensemble Kalman Filter (EnKF)" note="A Monte Carlo variant of the Kalman filter for very high-dimensional systems (e.g., numerical weather prediction with millions of state variables). Approximates the covariance P with an ensemble of N model runs (typically N=20–100), keeping the computational cost tractable. Widely used in operational numerical weather prediction." href="https://en.wikipedia.org/wiki/Kalman_filter" /> is the backbone of modern numerical weather prediction. The state is the global atmosphere — on the order of 10⁷ variables. The full covariance matrix would be 10¹⁴ entries, computationally impossible. The EnKF approximates it with an ensemble of ~50–100 perturbed model runs, and updates all of them when observations (radiosonde data, satellite retrievals, surface stations) arrive.
+
+---
+
+## Failure modes
+
+Every teardown owes you the edges. The filter is optimal inside its assumptions. Here is what happens at those edges:
+
+<DataTable client:load caption="Kalman filter failure modes, root causes, and mitigations."
+  columns={[
+    { key: "mode", label: "Failure mode", type: "string" },
+    { key: "cause", label: "Root cause", type: "string" },
+    { key: "symptom", label: "Observable symptom", type: "string" },
+    { key: "fix", label: "Mitigation", type: "string" }
+  ]}
+  rows={[
+    { mode: "Filter divergence", cause: "Q is set too low — filter believes its model is perfect and stops incorporating measurements", symptom: "Gain K → 0; estimate locks onto wrong value; innovation grows unbounded", fix: "Increase Q to reflect real model uncertainty. Use adaptive noise estimation or innovation monitoring." },
+    { mode: "EKF linearization failure", cause: "System is strongly nonlinear; first-order Taylor approximation introduces large errors", symptom: "Covariance collapses (overconfident) while true error grows; catastrophic divergence on highly curved trajectories", fix: "Switch to UKF (sigma points) or particle filter. Reduce step size so linearization is valid over each step." },
+    { mode: "Non-Gaussian outliers", cause: "Sensor returns occasional large-error measurements (GPS multipath, radar clutter) not modeled by Gaussian R", symptom: "A single bad measurement corrupts estimate for many steps; RMS error spikes", fix: "Robust filtering: chi-squared innovation test to gate outliers; Huber loss instead of squared error; particle filter for non-Gaussian R." },
+    { mode: "Unobservable state dimensions", cause: "Observation matrix H does not span the full state space — some dimensions are invisible to measurements", symptom: "P grows without bound in unobservable directions; those state dimensions drift freely", fix: "Add sensors to cover unobservable modes, or remove unobservable dimensions from the state vector. Check the observability Gramian." },
+    { mode: "Computational: P matrix O(n³) cost", cause: "Full covariance update requires n×n matrix multiplication and inversion — cubic in state dimension", symptom: "Intractable for large state vectors (e.g., 10⁷-dimensional weather model)", fix: "Information filter form; ensemble Kalman filter (low-rank P approximation); covariance inflation + localization for geophysical models." }
+  ]} />
+
+The most common failure in practice is the first: underspecified process noise Q. Engineers who are proud of their model set Q to zero or near-zero. The filter then places infinite confidence in its own predictions and the gain drops toward zero — measurements stop being incorporated. Any real disturbance sends the estimate irrecoverably astray. The fix is counter-intuitive: admit that your model is wrong, specify Q generously to reflect genuine model uncertainty, and let the filter do its job of weighting the model against the sensor.
+
+---
+
+## Check your understanding
+
+<Quiz client:visible caption="The Kalman filter — check the crux"
+  questions={[
+    {
+      prompt: "The Kalman gain K = P·Hᵀ·(H·P·Hᵀ + R)⁻¹ can be interpreted as a ratio. What ratio?",
+      choices: [
+        "Sensor precision divided by model precision",
+        "Prior state uncertainty (projected into measurement space) divided by total uncertainty in measurement space",
+        "The number of measurements divided by the state dimension",
+        "The ratio of process noise Q to measurement noise R"
+      ],
+      answer: 1,
+      explain: "H·P·Hᵀ is the prior covariance projected into measurement space; R is the measurement noise. Their sum is the total innovation covariance S. K = P·Hᵀ·S⁻¹ asks: what fraction of the total measurement-space uncertainty comes from my prior belief? That fraction is how much the new measurement should move the estimate."
+    },
+    {
+      prompt: "Why is the Kalman filter recursive — why does it not need to store all past measurements?",
+      choices: [
+        "It assumes measurements are independent so the past is irrelevant",
+        "The current (x̂, P) pair is a sufficient statistic for all past observations under the Gaussian model — the full posterior is captured in two numbers (vector and matrix)",
+        "It compresses measurements using run-length encoding",
+        "Older measurements are assumed to be less accurate"
+      ],
+      answer: 1,
+      explain: "Under the linear-Gaussian model, the posterior p(x_k | z_1, …, z_k) is fully described by its mean x̂_{k|k} and covariance P_{k|k}. These two quantities are sufficient statistics — they carry the same information as the entire measurement history. The predict-update cycle propagates them forward in time without storing anything else."
+    },
+    {
+      prompt: "The Extended Kalman Filter linearizes the nonlinear dynamics around the current state estimate. What failure mode does this cause?",
+      choices: [
+        "The filter becomes too computationally expensive to run in real time",
+        "The covariance update requires storing the full measurement history",
+        "Linearization error can make the filter overconfident — covariance P collapses while true error grows, and subsequent measurements are ignored",
+        "The filter cannot handle multivariate states"
+      ],
+      answer: 2,
+      explain: "First-order linearization introduces an error that is second-order in the degree of nonlinearity. If that error is large, P underestimates true uncertainty. A small P means a small gain K, which means measurements are down-weighted. The filter locks onto an incorrect estimate and stops correcting itself — divergence."
+    }
+  ]} />
+
+---
+
+## The mental model to take away
+
+Three ideas, one algorithm.
+
+**Predict with a model. Update with a measurement. Weight by uncertainty.** This is the complete description. The model propagates your best guess forward and inflates your uncertainty (P grows). The measurement arrives, and you fold it in — weighted by how much of the total uncertainty it explains (K). The posterior is tighter than either input alone, because two independent sources of information about the same quantity always reduce uncertainty.
+
+**The gain K is the Bayesian posterior in closed form.** Equations (5)–(7) are not engineering heuristics. They fall out of completing the square in the log-posterior of two Gaussians. Kálmán proved in 1960 that this derivation produces the minimum mean-square error estimator among all linear filters — and under Gaussian noise, among all filters. When engineers say the Kalman filter is "optimal," this is what they mean: there is a proof, not just a track record.
+
+**Every nonlinear extension is an approximation of the same computation.** The EKF approximates the Gaussian-to-Gaussian propagation with a first-order Taylor expansion. The UKF approximates it with a carefully chosen set of sigma points accurate to third order. The particle filter abandons the Gaussian assumption entirely and represents the posterior as a cloud of weighted samples. Each is trading computational tractability for exactness — and each is trying to compute the same thing: the Bayesian posterior update that the Kalman filter computes exactly when the linear-Gaussian assumption holds.
+
+The next time you see a GPS position fix update smoothly rather than jittering between noisy satellite readings, or watch a Falcon 9 land on a drone ship in 30-knot winds, or see a quant model track a time-varying spread — somewhere in that system, a pair of matrix equations is running every few milliseconds, asking the same question Kálmán worked out in Baltimore in January 1959: given everything I knew before, and this one new noisy measurement, what is the best estimate I can make now?
+
+The answer has not changed in 65 years.

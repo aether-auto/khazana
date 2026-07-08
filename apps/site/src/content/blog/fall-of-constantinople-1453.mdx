@@ -1,0 +1,517 @@
+---
+title: "The Last Wall: The Fifty-Four-Day Siege That Ended Rome"
+format: theater
+channels:
+  - history
+  - geopolitics
+summary: "In fifty-four days of siege, Ottoman artillery engineering, an audacious overland ship transport, and a single commander's wound brought down the walls that had protected the last fragment of the Roman Empire for a thousand years."
+publishedAt: 2026-07-07T09:00:00.000Z
+sources:
+  - title: "The Siege of Constantinople (1453) — Nicolo Barbaro's Diary (De Re Militari translation)"
+    url: "https://www.deremilitari.org/RESOURCES/SOURCES/constantinople3.htm"
+  - title: "The Siege of Constantinople in 1453 — George Sphrantzes (De Re Militari translation)"
+    url: "https://deremilitari.org/2016/08/the-siege-of-constantinople-in-1453-according-to-george-sphrantzes/"
+  - title: "Fall of Constantinople — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Fall_of_Constantinople"
+  - title: "1453: The Fall of Constantinople — World History Encyclopedia"
+    url: "https://www.worldhistory.org/article/1180/1453-the-fall-of-constantinople/"
+  - title: "Fall of Constantinople — Britannica"
+    url: "https://www.britannica.com/event/Fall-of-Constantinople-1453"
+  - title: "Basilic (cannon) — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Basilic_(cannon)"
+  - title: "The Guns of Constantinople — HistoryNet"
+    url: "https://historynet.com/the-guns-of-constantinople/"
+  - title: "Giovanni Giustiniani — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Giovanni_Giustiniani"
+  - title: "George Sphrantzes — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/George_Sphrantzes"
+  - title: "Leonard of Chios — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Leonard_of_Chios"
+  - title: "Nicolò Barbaro — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Nicol%C3%B2_Barbaro"
+  - title: "Michael Critobulus — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Michael_Critobulus"
+  - title: "Theodosian Walls — World History Encyclopedia"
+    url: "https://www.worldhistory.org/Theodosian_Walls/"
+  - title: "Lycus (river of Constantinople) — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Lycus_(river_of_Constantinople)"
+  - title: "The Siege of Constantinople as Witnessed by a Physician, 1453 — Hektoen International"
+    url: "https://hekint.org/2024/10/28/the-siege-of-constantinople-as-witnessed-by-a-physician-1453/"
+  - title: "The Mystery of the Kerkoporta — Hispanatolia"
+    url: "https://hispanatolia.com/en/the-mystery-of-the-kerkoporta-did-an-open-gate-cause-the-fall-of-constantinople/"
+draft: false
+---
+
+import { getImage } from "astro:assets";
+import terrain from "./_assets/fall-of-constantinople-1453/constantinople-terrain.png";
+
+import {
+  BattleMap,
+  OrderOfBattle,
+  ForceComparison,
+  Sankey,
+  RouteMap,
+  Timeline,
+  EventCascade,
+  CastGrid,
+  StatBand,
+  Pullquote,
+  Annotation,
+  Callout,
+  Detail,
+  Definition,
+} from "../../components/mdx";
+
+export const battleMap = await getImage({ src: terrain, width: 1200 });
+
+It is the last hour before dawn on 29 May 1453, and <Annotation client:load term="Constantine XI Palaiologos" note="Constantine XI Dragases Palaiologos, last emperor of the Byzantine (Eastern Roman) Empire, reigned 1449–1453. He was the eighth and final emperor of the Palaiologos dynasty. — George Sphrantzes, Chronicon Minus; Wikipedia, Fall of Constantinople." /> stands at the inner wall of the Theodosian ramparts, in the valley where the little Lykos River crosses beneath the stones. All around him the darkness is alive with noise — the deep percussion of the great Ottoman bombard still cooling after its last shot, the creak of scaling ladders against damaged stonework, and somewhere to the north the horn calls of the Janissary regiments beginning to dress their ranks. He has perhaps seven thousand men to defend six and a half kilometres of ancient wall. The sultan beyond those walls has brought sixty to eighty thousand.
+
+The emperor knows the wall at his back has stood for a thousand years. What he cannot know yet is that it will not stand another hour.
+
+---
+
+## Rome's Last Redoubt
+
+<StatBand client:visible caption="The scale of the last siege — Constantinople, April–May 1453"
+  stats={[
+    { value: 4773, label: "GREEK DEFENDERS", sub: "per Sphrantzes' census", href: "https://deremilitari.org/2016/08/the-siege-of-constantinople-in-1453-according-to-george-sphrantzes/" },
+    { value: 70000, label: "OTTOMAN TROOPS", sub: "modern scholarly estimate (range: 60–80k)", href: "https://www.britannica.com/event/Fall-of-Constantinople-1453" },
+    { value: 69, label: "OTTOMAN CANNON", sub: "in 14–15 batteries", href: "https://historynet.com/the-guns-of-constantinople/" },
+    { value: 54, label: "DAYS OF SIEGE", sub: "6 April – 29 May 1453", group: false, href: "https://en.wikipedia.org/wiki/Fall_of_Constantinople" },
+    { value: 1058, label: "YEARS ROME HELD", sub: "the city first fell in 1453", group: false, href: "https://www.worldhistory.org/article/1180/1453-the-fall-of-constantinople/" },
+    { value: 70, label: "SHIPS HAULED OVERLAND", sub: "portaged into the Golden Horn (eyewitness Barbaro recorded 72)", href: "https://www.deremilitari.org/RESOURCES/SOURCES/constantinople3.htm" }
+  ]} />
+
+To understand why Constantinople fell in 1453, you first have to understand why it had not fallen in the centuries before. The city is built on a triangular peninsula. Two sides are water — the Golden Horn to the north, the Sea of Marmara to the south — and any fleet that wanted to take those shores had to break through the city's own naval screen first. The landward side, barely six and a half kilometres wide, was sealed by the most sophisticated defensive system in the medieval world: the <Annotation client:load term="Theodosian Walls" note="The Theodosian Walls were constructed 408–413 AD under the emperor Theodosius II. They defined the western edge of the Constantinople peninsula and are among the most complete surviving examples of late Roman military engineering. — Theodosian Walls, World History Encyclopedia." />, built in 413 AD and never successfully stormed until this siege.
+
+The system was not one wall but three. An attacker crossing the open ground had first to bridge a <Annotation client:load term="moat twenty metres wide and seven metres deep" note="The outer ditch measured approximately 20 metres wide and 7 metres deep, and could be flooded from pipes when required. — Theodosian Walls, World History Encyclopedia." />, then scale a low outer wall, then cross the peribolos terrace — a killing ground between the walls — before reaching the inner wall proper: <Annotation client:load term="nearly five metres thick, twelve metres high, studded with ninety-six towers" note="The inner wall was almost 5 metres thick and 12 metres high; 96 projecting towers rose to 20 metres and were spaced approximately 70 metres apart. — Theodosian Walls, World History Encyclopedia; Fall of Constantinople, Wikipedia." /> rising to twenty metres where they projected. Each tower could carry artillery; the terrace between inner and outer walls was too narrow for siege engines but wide enough to shelter reserves. Armies had battered at these land walls for a thousand years — the Huns, the Avars, the Umayyads twice, the Bulgars — and every one had turned away unsatisfied. The Fourth Crusade had sacked Constantinople in 1204, but by breaching the sea walls of the Golden Horn, not by storming this landward face; the Theodosian land walls themselves had never been successfully stormed.
+
+By 1453 the city behind those walls had shrunk almost to nothing. Three decades of civil war, the Black Death, and the collapse of Byzantine trade had reduced <Annotation client:load term="Constantinople's population" note="By 1453 Constantinople's population had declined precipitously from its medieval peak of perhaps 400,000. Wikipedia says 'probably fewer than 50,000'; Britannica gives 40,000–50,000. The city was in economic and demographic collapse. — Fall of Constantinople, Wikipedia; Fall of Constantinople, Britannica." /> from hundreds of thousands at its height to probably fewer than 50,000, perhaps as few as 40,000 — a capital city containing the ruin of an empire, a magnificent shell on a valuable strait.
+
+What the city still possessed was its strategic position: the hinge between Europe and Asia, the passage between the Black Sea and the Mediterranean. Control of that passage was the prize that twenty-one-year-old <Annotation client:load term="Sultan Mehmed II" note="Mehmed II ('the Conqueror', Fatih Sultan Mehmed) was twenty-one years old when he launched the 1453 siege. His father Murad II had attempted Constantinople in 1422 and failed. Mehmed had been planning the siege from his accession in 1451. — Fall of Constantinople, Wikipedia; Britannica." /> had spent two years preparing to seize.
+
+<RouteMap client:visible
+  caption="The strategic geography, 1453: Constantinople at the hinge between the Ottoman Empire's European and Asian dominions — and the allies who did not come"
+  routes={[
+    { from: [26.56, 41.68], to: [28.98, 41.01], label: "March from Edirne — Mehmed and Orban's bombard (230 km, six weeks travel)", kind: "march" },
+    { from: [8.93, 44.41], to: [28.98, 41.01], label: "Giustiniani's 700 mercenaries from Genoa (arrived January 1453)", kind: "march" },
+    { from: [12.33, 45.44], to: [28.98, 41.01], label: "Venetian ships (partial aid; no land army dispatched)", kind: "arc" }
+  ]}
+  points={[
+    { at: [28.98, 41.01], label: "Constantinople" },
+    { at: [26.56, 41.68], label: "Edirne (Adrianople) — Orban cast the bombard here" },
+    { at: [8.93, 44.41], label: "Genoa" },
+    { at: [12.33, 45.44], label: "Venice" },
+    { at: [12.50, 41.90], label: "Rome (Pope Nicholas V — called for crusade; none came)" }
+  ]}
+  values={{ TUR: 90, BGR: 70, SRB: 60, GRC: 20, HUN: 40, ITA: 50 }}
+  labels={{ TUR: "Ottoman Empire (core)", BGR: "Ottoman Balkans", SRB: "Serbia (vassal)", GRC: "Byzantine remnant", HUN: "Hungary (potential ally)", ITA: "Venice / Italian city-states (commercial rival / partial ally)" }}
+/>
+
+---
+
+## The Forces
+
+<OrderOfBattle
+  caption="Order of battle — Siege of Constantinople, 6 April – 29 May 1453"
+  sides={[
+    {
+      id: "byzantine",
+      label: "Byzantine Empire (defenders)",
+      commander: "Emperor Constantine XI Palaiologos",
+      tone: "friendly",
+      formations: [
+        {
+          name: "Byzantine garrison", kind: "other", strength: "≈4,773 Greeks (Sphrantzes census)",
+          commander: "Emperor Constantine XI",
+          note: "Deployed along the Theodosian Land Walls and the sea walls of the Golden Horn and Marmara",
+          units: [
+            { name: "Land wall sector (Mesoteichion and flanks)", strength: "bulk of the garrison", note: "The critical western approach; weakest at the Lykos valley" },
+            { name: "Blachernae sector (NW corner)", note: "Single-thickness wall — most vulnerable section of the whole enceinte" }
+          ]
+        },
+        {
+          name: "Latin volunteers (Genoese, Venetian, other)", kind: "other", strength: "≈200 documented foreigners + ~800 Venetian sailors",
+          commander: "Giovanni Giustiniani (Genoese, commander of land defense)",
+          note: "Giustiniani arrived January 1453 with 700 mercenaries from Chios and Genoa; posted at the critical St. Romanos sector",
+          units: [
+            { name: "Genoese contingent (Giustiniani)", strength: "≈700", note: "Held the Mesoteichion; Giustiniani's departure in the final assault was decisive" },
+            { name: "Venetian sailors (Alvise Diedo's fleet)", strength: "≈800", note: "Crew of the Venetian galleys; fought on the sea walls" }
+          ]
+        },
+        {
+          name: "Byzantine and allied fleet", kind: "fleet", strength: "26 ships",
+          commander: "Alvise Diedo (Venetian captain general)",
+          note: "10 Byzantine, 8 Venetian, 5 Genoese, plus Catalan, Anconitan, and Provençal vessels; protected the boom chain across the Golden Horn"
+        }
+      ]
+    },
+    {
+      id: "ottoman",
+      label: "Ottoman Empire (besiegers)",
+      commander: "Sultan Mehmed II",
+      tone: "enemy",
+      formations: [
+        {
+          name: "Ottoman field army", kind: "army", strength: "≈60,000–80,000 (modern scholarly estimate; contemporary accounts exaggerated to 160,000–300,000)",
+          commander: "Sultan Mehmed II",
+          note: "Deployed in three main corps opposite the land walls; the sultan's personal tent was pitched on high ground overlooking the Lykos valley",
+          units: [
+            { name: "Bashi-bazouks (irregular frontier troops)", note: "First wave of the final assault — expendable; used to tire the defenders" },
+            { name: "Anatolian regulars", note: "Second wave — better equipped than the Bashi-bazouks; pressed harder in the final assault" },
+            { name: "Janissaries (elite palace infantry)", strength: "≈5,000–10,000", note: "Third and decisive wave; Mehmed committed them personally" }
+          ]
+        },
+        {
+          name: "Artillery park", kind: "other", strength: "≈69 cannon in 14–15 batteries",
+          commander: "Orban (Urban) — Hungarian cannon-founder",
+          note: "Arranged around the land walls; the largest batteries targeted the Mesoteichion. Organized as 'the bear with cubs' — the great bombard supported by smaller pieces",
+          units: [
+            { name: "The Basilica (Orban's great bombard)", strength: "27 ft long, 19 tons; fired 1,200-lb stone ball", note: "Positioned opposite the Mesoteichion at the Gate of St. Romanos" },
+            { name: "Supporting medium bombards (500–800 lb shot)", note: "Fired more frequently than the Basilica; coordinated in salvoes" }
+          ]
+        },
+        {
+          name: "Ottoman fleet", kind: "fleet", strength: "≈110 vessels (31 large warships + smaller craft)",
+          commander: "Baltaoğlu Süleyman Bey (until April 20), then Hamza Bey",
+          note: "Deployed in the Bosphorus; first attempt to rush the boom chain failed on 12 April. About 70–72 ships portaged overland into the Golden Horn on 22 April (eyewitness Barbaro's diary says 72; secondary sources round to 70)"
+        }
+      ]
+    }
+  ]} />
+
+The numbers above say everything about the odds — and yet the walls had refused worse odds before. The real asymmetry was not bodies but technology. Read the two rosters against each other and what leaps out is not the troop ratio (roughly ten to one, by the most careful modern estimates) but the artillery column. <Annotation client:load term="Sixty-nine Ottoman cannon in fourteen or fifteen batteries" note="The Ottoman artillery park comprised approximately 69 cannons arranged in 14–15 batteries along the land walls. — The Guns of Constantinople, HistoryNet; Fall of Constantinople, Britannica." /> against a Byzantine garrison that had almost none capable of answering them. And at the centre of those batteries, a weapon the world had never seen before.
+
+<ForceComparison client:visible
+  caption="Going into the siege — Constantinople, April 1453"
+  sides={[
+    { label: "Byzantine defenders", tone: "friendly" },
+    { label: "Ottoman besiegers", tone: "enemy" }
+  ]}
+  metrics={[
+    { label: "Troops", values: [7000, 70000], unit: "men" },
+    { label: "Artillery", values: [12, 69], unit: "guns" },
+    { label: "Ships", values: [26, 110], unit: "vessels" }
+  ]} />
+
+The troop ratio makes the outcome seem inevitable. It was not — the triple walls had held one-in-ten odds before. What made 1453 different was the second bar. The Byzantines had a handful of light artillery pieces, several of which cracked when fired because their powder charges were too powerful for the barrels. The Ottomans had sixty-nine modern cannon and the largest bronze gun in the world.
+
+---
+
+## Orban's Engine
+
+Before the first stone ball flew at the Theodosian Walls, there was a negotiation that failed and an arms deal that succeeded.
+
+<Pullquote cite="George Sphrantzes, Chronicon Minus, c. 1478 — recording Emperor Constantine's census of defenders" href="https://deremilitari.org/2016/08/the-siege-of-constantinople-in-1453-according-to-george-sphrantzes/" kind="document">
+In spite of the great size of our City, our defenders amounted to 4,773 Greeks, as well as just about 200 foreigners.
+</Pullquote>
+
+The cannon-founder who signed the death warrant of Constantinople was a <Annotation client:load term="Hungarian engineer named Orban (Urban in some sources)" note="Orban (or Urban, Vrban) was a Hungarian metalworker and cannon-founder who approached Constantine XI Palaiologos first, offering to build artillery for the Byzantines. He was turned away — the emperor could not afford his fee. He then approached Mehmed II, who paid whatever he asked. — Fall of Constantinople, Wikipedia; The Guns of Constantinople, HistoryNet." />. He had come to Constantinople first, offering his services to Constantine XI. The emperor could not pay. Orban crossed to the Ottoman court at Edirne, and Mehmed paid whatever he asked.
+
+What Orban produced in the foundry at Edirne in the autumn of 1452 was not a larger version of existing cannon. It was a different category of weapon. <Annotation client:load term="The Basilica, as the Byzantines called it" note="The great bombard is referred to as the 'Basilica' or 'Basilic' in Western sources. Leonard of Chios called it an astonishing weapon. Some sources call it the 'Urban cannon.' — Basilic (cannon), Wikipedia; Fall of Constantinople, Wikipedia." /> measured <Annotation client:load term="twenty-seven feet (8.2 metres) long" note="The Basilica was approximately 27 feet (8.2 metres) in length, with a barrel diameter of roughly 30 inches (760 mm) and walls 8 inches (200 mm) thick. Total weight: approximately 19 tons. — Basilic (cannon), Wikipedia." />, weighed nineteen tons, and had a barrel roughly thirty inches (760 mm) across. It was cast in two sections and bolted together with iron rings — the only method the metallurgy of the era could sustain for a gun this size. A stone ball of roughly <Annotation client:load term="1,200 pounds (540 kg)" note="The Basilica fired stone balls weighing approximately 1,200 pounds (540 kg) by the most commonly cited contemporary accounts; the World History Encyclopedia gives 500 kg; these figures are consistent. — Basilic (cannon), Wikipedia; World History Encyclopedia." /> could be lobbed over a mile.
+
+The rate of fire was the weapon's hardest constraint. <Annotation client:load term="Seven shots per day, at most" note="The Basilica could fire approximately seven times per day. The barrel had to be swabbed, the stone ball seated, and the superheated bronze allowed to cool between shots — a process requiring hours. — Basilic (cannon), Wikipedia; The Guns of Constantinople, HistoryNet." /> The barrel ran so hot after firing that it had to be packed in oil-soaked cloth to prevent cold air from cracking the fissures that inevitably opened in the metal. After several weeks of operation, the Basilica cracked catastrophically — it was field-repaired with iron hoops and returned to action, though never at full capacity again.
+
+Getting this thing from Edirne to Constantinople required its own small army. <Annotation client:load term="Two hundred men and sixty oxen, six weeks at perhaps four kilometres a day" note="Transporting the Basilica from Edirne to the siege lines before Constantinople required approximately 200 men and 60 oxen; the journey of roughly 230 km took an estimated six weeks at about 4 km per day — the gun sank into soft ground, requiring constant relaying of timbers. — The Guns of Constantinople, HistoryNet." /> A road of sawn timbers was laid ahead of it. Villages were cleared out of the way. The oxen teams had to be rotated because the gun's sheer dead weight killed them. When the Basilica arrived at the Ottoman camp west of the Theodosian Walls in early April 1453, it was the most expensive single military instrument in the world — and it was pointed at the weakest section of the most formidable walls in Europe.
+
+<CastGrid caption="The cast — Constantinople, 1453"
+  cast={[
+    { name: "Constantine XI Palaiologos", role: "Emperor of Byzantium",
+      note: "The last Roman emperor. Refused Ottoman vassalage, chose to fight. His exact fate in the final assault remains unknown.",
+      sourceUrl: "https://en.wikipedia.org/wiki/Fall_of_Constantinople" },
+    { name: "Giovanni Giustiniani", role: "Genoese commander of the land defense",
+      note: "Arrived with 700 mercenaries in January 1453. His innovative wall-repair tactics held the Mesoteichion for 53 days. His wounding in the final hour was decisive.",
+      sourceUrl: "https://en.wikipedia.org/wiki/Giovanni_Giustiniani" },
+    { name: "Mehmed II (Fatih)", role: "Sultan of the Ottoman Empire",
+      note: "Twenty-one years old. Had planned the siege for two years. Personally directed the Janissary assault in the final hour.",
+      sourceUrl: "https://en.wikipedia.org/wiki/Fall_of_Constantinople" },
+    { name: "Orban (Urban)", role: "Hungarian cannon-founder",
+      note: "Built the great Basilica bombard at Edirne. Came to Byzantium first — was turned away for lack of funds — then went to Mehmed.",
+      sourceUrl: "https://historynet.com/the-guns-of-constantinople/" },
+    { name: "Nicolò Barbaro", role: "Venetian ship's surgeon and diarist",
+      note: "Wrote the most detailed day-by-day account of the siege — the 'Giornale dell'Assedio di Costantinopoli.' Considered the most complete Western eyewitness record: dates, ships, cannon, and the exact sequence of the final assault.",
+      sourceUrl: "https://en.wikipedia.org/wiki/Nicol%C3%B2_Barbaro" },
+    { name: "George Sphrantzes", role: "Byzantine court official and chronicler",
+      note: "Close confidant of Constantine XI. Conducted the secret census of defenders (4,773 Greeks; ≈200 foreigners). Enslaved after the fall, later ransomed.",
+      sourceUrl: "https://en.wikipedia.org/wiki/George_Sphrantzes" }
+  ]} />
+
+---
+
+## The Fifty-Four Days
+
+Here is the siege on the ground — the walls, the water, and the phases by which the oldest fortification in the Christian world gave way. Step through the scrubber. Each phase is one move in a contest that lasted fifty-four days and ended the Roman Empire.
+
+<BattleMap client:visible
+  src={battleMap.src}
+  width={battleMap.attributes.width}
+  height={battleMap.attributes.height}
+  alt="Schematic map of Constantinople and its surroundings: the Theodosian Land Walls on the west, the Golden Horn inlet to the north, the Sea of Marmara to the south, the Galata colony across the Golden Horn, and the Bosphorus to the east"
+  caption="The 1453 siege — six phases from the first bombardment to the fall of the city"
+  sides={[
+    { id: "byz", label: "Byzantine / Latin defenders", tone: "friendly" },
+    { id: "ott", label: "Ottoman forces (Mehmed II)", tone: "enemy" }
+  ]}
+  phases={[
+    {
+      title: "The situation before the assault",
+      time: "Early April 1453",
+      note: "<strong>Byzantine garrison</strong> holds the Theodosian Walls (western land side) and sea walls. The <strong>boom chain</strong> blocks the mouth of the Golden Horn. The <strong>Ottoman army</strong> encamps west of the land walls; its fleet anchors in the Bosphorus.",
+      units: [
+        { side: "byz", type: "infantry", label: "Byzantine garrison", strength: "≈7,000 total", at: [0.14, 0.42] },
+        { side: "byz", type: "naval", label: "Allied fleet (26 ships)", strength: "inside the boom", at: [0.34, 0.28] },
+        { side: "ott", type: "hq", label: "Mehmed II HQ", at: [0.05, 0.37] },
+        { side: "ott", type: "artillery", label: "Orban's Basilica + 68 guns", at: [0.04, 0.51] },
+        { side: "ott", type: "naval", label: "Ottoman fleet (≈110 vessels)", strength: "Bosphorus", at: [0.82, 0.12] }
+      ],
+      fronts: [
+        { side: "byz", kind: "line", points: [[0.13, 0.25], [0.13, 0.40], [0.13, 0.52], [0.13, 0.67]] }
+      ]
+    },
+    {
+      title: "The bombardment opens",
+      time: "6 April 1453",
+      note: "The <strong>Basilica bombard</strong> opens on the <strong>Mesoteichion</strong> — the Lykos valley section, lowest and weakest. Ottoman batteries fire in sequence; stone balls weighing up to 1,200 lb. crack towers and bring sections of the outer wall down. Byzantine defenders work through the night filling breaches with timber, earth, and barrels of soil.",
+      units: [
+        { side: "ott", type: "artillery", label: "Basilica bombard", strength: "1,200-lb shot", at: [0.03, 0.51] },
+        { side: "ott", type: "artillery", label: "Supporting batteries", at: [0.04, 0.40] },
+        { side: "ott", type: "artillery", label: "Supporting batteries", at: [0.04, 0.58] },
+        { side: "byz", type: "infantry", label: "Defenders (Giustiniani)", strength: "repairing nightly", at: [0.15, 0.51] },
+        { side: "byz", type: "hq", label: "Constantine XI", at: [0.14, 0.44] }
+      ],
+      movements: [
+        { side: "ott", from: [0.04, 0.51], to: [0.13, 0.52], kind: "attack", label: "Basilica targets Mesoteichion" },
+        { side: "ott", from: [0.04, 0.40], to: [0.13, 0.38], kind: "attack", label: "supporting fire" }
+      ],
+      fronts: [
+        { side: "byz", kind: "line", points: [[0.13, 0.25], [0.13, 0.40], [0.13, 0.52], [0.13, 0.67]] },
+        { side: "ott", kind: "line", points: [[0.08, 0.30], [0.07, 0.45], [0.07, 0.58], [0.08, 0.68]] }
+      ]
+    },
+    {
+      title: "About 70–72 ships cross Galata — 22 April",
+      note: "The boom chain still holds. Mehmed orders <strong>about 70 galleys portaged overland across the Galata hills</strong> on greased wooden rollers (eyewitness Barbaro's diary counts 72) — bypassing the chain entirely and launching them directly into the Golden Horn. The defenders must now split their forces to guard the northern sea walls they had considered safe.",
+      time: "22 April 1453",
+      units: [
+        { side: "ott", type: "naval", label: "about 70–72 galleys (overland, arriving)", strength: "portaged overnight", at: [0.28, 0.26] },
+        { side: "byz", type: "naval", label: "Allied fleet (inside boom, threatened)", at: [0.34, 0.28] },
+        { side: "byz", type: "infantry", label: "Defenders now split", note: "forced to cover northern sea walls", at: [0.18, 0.28] },
+        { side: "ott", type: "artillery", label: "Basilica (continuing bombardment)", at: [0.03, 0.51] }
+      ],
+      movements: [
+        { side: "ott", from: [0.78, 0.08], to: [0.28, 0.26], kind: "advance", label: "about 70–72 ships portaged over Galata hills" }
+      ],
+      fronts: [
+        { side: "byz", kind: "line", points: [[0.13, 0.25], [0.13, 0.40], [0.13, 0.52], [0.13, 0.67]] },
+        { side: "ott", kind: "line", points: [[0.08, 0.30], [0.07, 0.45], [0.07, 0.58], [0.08, 0.68]] }
+      ]
+    },
+    {
+      title: "Weeks of artillery and earthworks",
+      time: "Late April – 26 May 1453",
+      note: "The gun and the earthwork trade blows daily. The Basilica opens holes; defenders fill them with timber frames packed with earth. Ottoman forces probe the <strong>Blachernae</strong> (NW) and attempt to tunnel under the walls — Byzantine engineer <strong>Johannes Grant</strong> detects and collapses each tunnel. The city holds.",
+      units: [
+        { side: "ott", type: "artillery", label: "Basilica (cracked, repaired)", at: [0.03, 0.51] },
+        { side: "byz", type: "infantry", label: "Giustiniani's repair crews", strength: "nightly earthworks", at: [0.15, 0.52] },
+        { side: "ott", type: "naval", label: "Ottoman fleet in Golden Horn", strength: "≈70–72 galleys", at: [0.32, 0.26] },
+        { side: "ott", type: "infantry", label: "Mining parties (Blachernae sector)", at: [0.11, 0.28] }
+      ],
+      fronts: [
+        { side: "byz", kind: "line", points: [[0.13, 0.25], [0.13, 0.40], [0.13, 0.52], [0.13, 0.67]] },
+        { side: "ott", kind: "line", points: [[0.07, 0.25], [0.06, 0.42], [0.06, 0.55], [0.07, 0.67]] }
+      ]
+    },
+    {
+      title: "The three-wave assault — 29 May, before dawn",
+      time: "29 May 1453, c. 01:30",
+      note: "<strong>Three waves</strong> in sequence: irregular Bashi-bazouks (first, spent by the defenders), Anatolian regulars (second, pressed harder), then the <strong>Janissaries</strong>. At the critical moment, <strong>Giustiniani is wounded</strong> and carried from the wall — his Genoese troops follow. The sector at the Mesoteichion is suddenly undermanned.",
+      units: [
+        { side: "ott", type: "infantry", label: "Bashi-bazouks (1st wave, spent)", at: [0.08, 0.44] },
+        { side: "ott", type: "infantry", label: "Anatolian regulars (2nd wave)", at: [0.07, 0.50] },
+        { side: "ott", type: "infantry", label: "Janissaries (3rd wave)", strength: "≈5,000–10,000", at: [0.06, 0.52] },
+        { side: "byz", type: "infantry", label: "Giustiniani (wounded)", strength: "departing", at: [0.17, 0.48] },
+        { side: "byz", type: "hq", label: "Constantine XI", at: [0.14, 0.52] },
+        { side: "ott", type: "hq", label: "Mehmed II", at: [0.04, 0.51] }
+      ],
+      movements: [
+        { side: "ott", from: [0.07, 0.44], to: [0.13, 0.48], kind: "attack", label: "1st wave — Bashi-bazouks" },
+        { side: "ott", from: [0.06, 0.50], to: [0.13, 0.52], kind: "attack", label: "2nd wave — Anatolians" },
+        { side: "ott", from: [0.05, 0.52], to: [0.14, 0.53], kind: "attack", label: "Janissaries surge the breach" }
+      ],
+      fronts: [
+        { side: "ott", kind: "line", points: [[0.06, 0.30], [0.06, 0.45], [0.06, 0.55], [0.06, 0.67]] }
+      ]
+    },
+    {
+      title: "The city falls — 29 May 1453",
+      time: "29 May 1453, dawn",
+      note: "Ottoman forces pour through the <strong>Mesoteichion breach</strong> near the Gate of St. Romanos. The city's defenses collapse. <strong>Constantine XI</strong> makes his last stand at the walls — his fate unknown, but universally accepted as death in the fighting. Ottoman flags rise over the towers.",
+      units: [
+        { side: "ott", type: "infantry", label: "Ottoman forces (in the city)", at: [0.22, 0.38] },
+        { side: "ott", type: "infantry", label: "Ottoman forces (in the city)", at: [0.28, 0.44] },
+        { side: "byz", type: "hq", label: "Constantine XI (last stand)", at: [0.14, 0.53] },
+        { side: "ott", type: "hq", label: "Mehmed II (at the breach)", at: [0.07, 0.51] }
+      ],
+      movements: [
+        { side: "ott", from: [0.14, 0.52], to: [0.26, 0.40], kind: "advance", label: "Ottoman forces fan into the city" },
+        { side: "ott", from: [0.14, 0.53], to: [0.30, 0.45], kind: "advance", label: "Sack begins" }
+      ],
+      fronts: [
+        { side: "ott", kind: "area", points: [[0.14, 0.25], [0.55, 0.25], [0.55, 0.55], [0.14, 0.55]] }
+      ]
+    }
+  ]} />
+
+### Phase 1 — The walls that had never fallen
+
+Look at the map before the first gun fires. The city sits on its triangle of stone and water, the Theodosian Walls sealing the only approach by land. For the attacker, those walls are not a single obstacle but a sequence of three — moat, outer wall, inner wall — each one taller than the last and each separated by a belt of exposed ground. You cannot charge them. You cannot mine all three simultaneously with any medieval technology. You cannot flank them, because the sea closes in on both sides and the Byzantine fleet sits inside the Golden Horn behind its boom. Every army that came before had looked at this system and turned away.
+
+Mehmed did not turn away. He had read the accounts of every previous siege carefully enough to understand what they had all missed: the walls had a structural fault, one place where geography undercut the engineering. <Annotation client:load term="The Mesoteichion — the 'middle wall section' — where the Lykos River valley crossed the land walls" note="The Mesoteichion (Greek: 'middle wall') was the section of the Theodosian Land Walls that crossed the valley of the Lykos River. The valley floor ran lower than the flanking ground, which meant this section of the wall was lower and more exposed to fire from the surrounding heights. It was widely recognised as the weakest point in the enceinte. — Lycus (river of Constantinople), Wikipedia; Fall of Constantinople, Wikipedia." /> sat lower than the walls to either side. Cannon on the surrounding ridges could drop their shot directly onto this section at a shallow angle that maximised impact. Mehmed pitched his personal tent on the heights above it and pointed Orban's bombard directly at the gate of St. Romanos, at the valley's heart.
+
+The defenders knew the Mesoteichion was their weakest point too. <Annotation client:load term="Giovanni Giustiniani Longo" note="Giovanni Giustiniani Longo, a Genoese condottiere and military engineer, arrived in Constantinople on 29 January 1453 with 700 mercenaries from Chios and Genoa. Constantine XI appointed him Protostrator (commander of the land defense). He posted himself at the Mesoteichion precisely because it was the most vulnerable sector. — Giovanni Giustiniani, Wikipedia." /> posted himself there for exactly that reason — he was the best defensive engineer the city had, and the Mesoteichion was where the city needed him most.
+
+### Phase 2 — The gun against the wall
+
+At dawn on 6 April, the Basilica fired for the first time at the Theodosian Walls.
+
+The physics of what happened next were new to military history. Previous siege artillery had been useful for harassment and for taking lighter medieval structures. Nothing before this had been powerful enough to bring down a Roman double wall in any reasonable time. <Annotation client:load term="The stone ball struck at roughly the same point each time" note="The Ottoman tactic was to direct multiple cannon — the Basilica and supporting pieces — at the same structural section, concentrating damage to bring down towers and wall stretches. By the end of the siege the artillery had opened 'nine substantial holes in the outer wall.' — The Guns of Constantinople, HistoryNet." /> The Basilica targeted the base of the wall; the supporting medium bombards walked their fire up the face. Towers cracked, then leaned, then fell. By mid-April entire sections of the outer wall had been reduced to rubble.
+
+But rubble did not mean breach. <Annotation client:load term="Giustiniani's repair solution" note="Giustiniani's tactical innovation was to cushion artillery impacts with soft materials (earth-filled barrels, bundled brushwood, wooden frames packed with soil) that absorbed rather than shattered under shot, and to use night-time repair parties to fill each day's damage before the next morning's bombardment. — Giovanni Giustiniani, Wikipedia; Fall of Constantinople, Wikipedia." /> built his earthworks every night. Parties of defenders worked in the dark, filling the gaps with timber cribbing packed with earth — a surface that absorbed the bombard's impacts better than stone. Every morning the Basilica faced not a pile of rubble but a patched earthwork revetment. Every morning it had to break through again. It was <Annotation client:load term="consuming 55,000 pounds of gunpowder and delivering an estimated 5,000 shots over the 47-day bombardment" note="Over approximately 47 days of continuous artillery fire, the Ottoman batteries expended an estimated 55,000 pounds of gunpowder and delivered around 5,000 shots — an enormous industrial commitment for 1453. — The Guns of Constantinople, HistoryNet." /> over the 47 days of active bombardment — a logistical commitment of a scale that had never been attempted in siege warfare.
+
+<Callout kind="key-insight" title="The new equation of the walls">
+The Theodosian triple wall had been designed for the pre-artillery world: an attacker had to break through three separate barriers in sequence under fire from above. Orban's bombard changed the equation. Given enough time and enough stone balls, it could create a passable gap in all three lines simultaneously at one point — but only at one point, and only if the defenders stopped filling in the overnight. The siege became a race between the gun and the shovel, and after seven weeks of nights the shovel was still winning.
+</Callout>
+
+### Phase 3 — The ships that crossed a hill
+
+The boom chain worked. That was the problem. As long as the boom held and the Ottoman fleet stayed outside the Golden Horn, the city's northern sea walls were effectively undefended — there was no reason to station men there. Mehmed needed ships inside that inlet, and the boom meant he could not sail them in.
+
+On the night of <Annotation client:load term="21–22 April 1453" note="The overland portage of Ottoman vessels was accomplished on the night of 21–22 April 1453. Nicolo Barbaro recorded in his diary that 72 small fuste were dragged over the hill. — Nicolo Barbaro's Diary, De Re Militari; Fall of Constantinople, Wikipedia." />, Ottoman engineers executed one of the most extraordinary feats of military improvisation in medieval history. They levelled a track across the hills of Galata — the Genoese colony on the far bank of the Golden Horn — and covered it with <Annotation client:load term="greased wooden rollers" note="The Ottoman method was to use greased wooden rollers or logs; ships were loaded onto wooden cradles and hauled by oxen and teams of men over the heights. Barbaro records that 'no one would ever have thought it possible that dogs such as these should drag these fuste over the hill.' — Nicolo Barbaro's Diary, De Re Militari; Fall of Constantinople, Britannica." />. About seventy ships — Barbaro, the eyewitness, counted seventy-two — the smaller galleys and fighting vessels of the Ottoman fleet, were hauled up the slope on their cradles, dragged over the crest, and slid down the far side into the Golden Horn. <Annotation client:load term="Barbaro's astonishment at the feat" note="Nicolo Barbaro, watching from the city, wrote that the Turks were seen 'dragging their fuste over the hill, bringing across as many as seventy-two into the harbour' — a feat he found difficult to believe even as he witnessed it. Secondary sources round this to 70; Barbaro's diary, the closest eyewitness record, says 72. — Nicolo Barbaro's Diary, De Re Militari." />
+
+The boom chain was now irrelevant. Ottoman galleys — about seventy, seventy-two by Barbaro's count — floated in the Golden Horn that the chain was supposed to protect. The defenders who had not needed to watch the northern sea walls now had to. A garrison already thin across six and a half kilometres of land wall had to find men to cover another stretch of shoreline.
+
+<Callout kind="note" title="The Genoese problem">
+The Galata colony was supposed to be neutral. Its Genoese inhabitants had trade agreements with both the Byzantines and the Ottomans and were officially uninvolved in the siege. In practice, Barbaro — whose account is the most detailed we have — was convinced the Genoese facilitated the portage, or at least did nothing to stop it. Mehmed had built the portage route across Genoese-administered territory. Whatever the truth of their complicity, their neutrality enabled the manoeuvre that bypassed the boom chain.
+</Callout>
+
+### Phase 4 — The city holds
+
+For the next five weeks, the siege settled into an attritional rhythm that slowly favoured the Ottomans. Every day the guns fired; every night the defenders repaired. <Annotation client:load term="Ottoman mining operations" note="Ottoman forces also attempted to tunnel under the Theodosian Walls at several points (at Blachernae and elsewhere), but a Byzantine counter-mining expert, identified in sources as Johannes Grant (a German or Scottish engineer), detected the tunnels by listening through the ground and dug counter-mines to collapse them. — Fall of Constantinople, Wikipedia; World History Encyclopedia." /> tried to bring down the walls from below, digging tunnels under the foundations; the Byzantine counter-mining expert Johannes Grant listened through the ground, found each tunnel, and collapsed them one by one.
+
+On 20 April, four Christian ships — three Genoese galleys carrying grain and one Byzantine vessel — broke through the Ottoman fleet outside the harbor boom and reached the city. <Annotation client:load term="The Ottoman fleet failed to stop them" note="On 20 April 1453, three Genoese supply ships and one Byzantine grain ship fought their way through the Ottoman naval blockade after a prolonged sea battle and reached Constantinople. The Ottoman fleet's failure infuriated Mehmed, who reportedly considered executing his admiral. — Nicolo Barbaro's Diary, De Re Militari; Fall of Constantinople, Wikipedia." /> The Venetian surgeon Barbaro watched from the walls, recording the sea fight in his diary. The Ottoman fleet, vastly larger, could not stop four determined ships with a following wind.
+
+Mehmed made one attempt at negotiation. On 21 May, <Annotation client:load term="he sent terms" note="On 21 May 1453, Mehmed II sent terms to Constantine XI offering safe conduct and property rights for all defenders and inhabitants if the city was surrendered. Constantine refused, reportedly saying he was willing to give his life for the city but could not surrender it. — Fall of Constantinople, Wikipedia; World History Encyclopedia." /> offering safe passage and property rights for all if the city surrendered without assault. Constantine refused. The reply, reported by multiple sources, was that the emperor would die with his city.
+
+By late May, the walls at the Mesoteichion were a patchwork of earthwork repairs, improvised timber buttresses, and crumbling masonry. They had held. But they had held against an artillery campaign that was, by any measure, running out of walls to hit. On 26 May, Mehmed held a council of war and set the date for the final assault.
+
+### Phase 5 — The three waves
+
+The assault order went out on the evening of 28 May. It was to begin <Annotation client:load term="roughly one and a half hours after midnight" note="Barbaro records the assault starting 'three hours before dawn'; other sources place it just after midnight. Modern historians generally date the start of the main assault at approximately 01:30 on 29 May 1453. — Nicolo Barbaro's Diary, De Re Militari; Fall of Constantinople, Wikipedia." /> on 29 May. The full Ottoman force — land and sea — would attack simultaneously, to prevent any reinforcement of one section from another. And it would come in three waves, each one designed to exhaust the defenders a little further before the decisive blow.
+
+The <Definition client:visible term="Bashi-bazouks" def="Irregular Ottoman frontier troops, often non-Muslims fighting for plunder, used as expendable first-wave attackers to tire enemy defenders before the regular army committed. Their casualties in the first wave of the 1453 assault were severe and expected." /> came first — irregular troops, undisciplined and lethal, hurled at the walls to wear the defenders down. For two hours, the Byzantines and their Latin allies killed them in numbers that are hard to credit. <Annotation client:load term="Barbaro estimates a good twenty carts could have been filled with the dead" note="Nicolo Barbaro wrote that 'a good twenty carts could have been filled with the corpses of the first Turks' — an indication of the ferocity of the first wave's repulse and the scale of the Ottoman irregular losses. — Nicolo Barbaro's Diary, De Re Militari." /> The first wave broke and was pulled back. The defenders sagged with exhaustion.
+
+The second wave, Anatolian regulars in better armour and under better discipline, pressed harder. They had scaling ladders; they had momentum behind them; they pressed the earthwork revetment in the Lykos valley until defenders were fighting on two levels of the shattered outer works. This wave also broke, finally, after another hour of close fighting. But by now the men on the wall had been fighting for three hours in the dark and were barely able to stand.
+
+Then came the Janissaries.
+
+<Annotation client:load term="The Janissaries" note="The Janissaries (Yeniçeri, 'new soldiers') were the Ottoman sultan's elite household infantry, recruited through the devşirme system (levy of Christian boys converted to Islam and trained as soldiers). They were the most disciplined and best-equipped infantry in the world at the time. At Constantinople their numbers are variously given as 5,000–12,000. — Fall of Constantinople, Wikipedia; Britannica." /> were the best infantry in the world in 1453. They advanced in silence, in disciplined ranks, with Mehmed himself at the rear urging them forward. Unlike the two waves before them, they did not break on contact. They pressed the breach in the earthworks with coordinated effort, unit by unit, and held the gains each push made.
+
+---
+
+## The Decisive Hour
+
+<EventCascade client:visible caption="How the wall broke — the causal chain of the final assault"
+  nodes={[
+    { kind: "cause", label: "Giustiniani is shot — and asks to be carried to his ship",
+      detail: "During the Janissary assault, a cannon ball or crossbow bolt struck Giovanni Giustiniani. The nature of his wound is disputed — Barbaro claimed he fled uninjured, but modern scholarship (and Genoese diplomatic correspondence) supports that he was genuinely wounded. He asked Emperor Constantine for the key to the inner gate to be carried to the harbor." },
+    { kind: "effect", label: "His Genoese troops follow him off the wall",
+      detail: "When the defender who had held the Mesoteichion for 53 days left, his troops went with him. The sector of the wall he had kept alive through engineering and example suddenly had a fraction of its defenders. The moment was visible — and Mehmed saw it." },
+    { kind: "effect", label: "A gap in the earthworks goes unmanned",
+      detail: "The Janissaries reached the outer earthwork and found a section where the defenders had thinned. Some accounts report the small Kerkoporta postern gate in the Blachernae wall was also found unbarred (Doukas alone records this; most other sources do not mention it). Whether by the gap or the gate, Ottoman soldiers were suddenly on the wall above the city." },
+    { kind: "turning-point", label: "The Ottoman flag rises on the towers — the cry goes through the city",
+      detail: "When the first Ottoman soldiers reached the top of the inner wall and raised their standard, the cry that the city was taken spread faster than the defenders could respond. Constantine XI's remaining men broke and ran. The emperor, stripped of his imperial insignia to avoid capture, is last seen charging into the incoming Janissaries near the Gate of St. Romanos. His body was never positively identified." }
+  ]} />
+
+The cascade above is the end of the Roman Empire in four steps, and the cruelest detail is not the numbers but the timing. <Annotation client:load term="Giustiniani's wound" note="Giovanni Giustiniani Longo was wounded during the final Janissary assault on 29 May 1453. He died of his wounds on 1 June, on the island of Chios. His departure from the wall, whether cowardly (per Barbaro, who was hostile to the Genoese) or forced by genuine injury (per Genoese sources and modern scholarship including Marios Philippides, 2011), caused the collapse of the Mesoteichion's defence. — Giovanni Giustiniani, Wikipedia." /> came at the worst possible moment: after three hours of fighting, at the point when the Janissaries had reached the earthworks and were pushing hardest. Had Giustiniani held his position another hour, the assault might have broken like the two before it. He did not, and the wall that had stood against everything for a thousand years came apart in minutes.
+
+<Annotation client:load term="The Kerkoporta incident" note="Doukas, a Byzantine historian writing after the fact, reports that a small postern gate called the Kerkoporta in the Blachernae wall was left unbarred, allowing Ottoman troops to enter and ascend to the tops of the towers. Most other eyewitness accounts — including Barbaro, Leonard of Chios, and Sphrantzes — do not mention this. Modern historians, including Turkish scholar Fahameddin Basar, regard the Kerkoporta story as likely embellishment; the real breach came through the Mesoteichion. — Fall of Constantinople, Wikipedia; the mystery of the Kerkoporta, Hispanatolia." /> is one of history's persistent arguments. Doukas, writing after the fact, reported that a small postern called the Kerkoporta had been left unbarred in the Blachernae wall, allowing Ottoman soldiers to climb to the tower-tops and raise their banners above the city. Most other eyewitness accounts — Barbaro, Leonard of Chios, Sphrantzes — do not mention it. The weight of modern scholarship places the decisive breach at the Mesoteichion, where Giustiniani's departure emptied the sector the Janissaries were pressing. Whether the Kerkoporta was open or not, the wall broke where the engineering had been failing for fifty-four days and the commander had just been carried away.
+
+<Annotation client:load term="Constantine XI's death" note="The exact circumstances of Constantine XI's death are unknown. Sphrantzes wrote that 'my late master and emperor, Lord Constantine, was killed' but that he himself was not present. Barbaro says the emperor 'threw himself into the fight' after his officers were killed. He had stripped his imperial insignia to avoid capture; his body was never definitively identified. Some accounts say he died in the breach; at least one says he died fleeing. The majority scholarly view is that he died fighting at or near the Mesoteichion. — George Sphrantzes, De Re Militari; Nicolo Barbaro, De Re Militari; Fall of Constantinople, Wikipedia." /> The last Roman emperor died somewhere in the chaos of the Mesoteichion on the morning of 29 May 1453. His precise fate is one of the few genuinely unresolvable questions in the history of this siege. Sphrantzes was not there — the emperor had sent him to inspect another wall section. What is agreed by every source is that Constantine did not surrender and did not flee. He had said he would die with his city. He did.
+
+---
+
+## The Reckoning
+
+<Pullquote cite="Nicolò Barbaro, Giornale dell'Assedio di Costantinopoli, 1453 — on the aftermath of the final assault" href="https://www.deremilitari.org/RESOURCES/SOURCES/constantinople3.htm" kind="quote">
+The blood flowed in the city like rainwater in the gutters after a sudden storm.
+</Pullquote>
+
+For three days, by the conventions Mehmed had promised his army, Constantinople was given over to sack. <Annotation client:load term="Perhaps 4,000 killed in the assault and its immediate aftermath" note="David Nicolle's estimate, cited in Wikipedia, gives approximately 4,000 inhabitants killed during the assault and sacking. Other sources give different figures; 4,000 is a commonly cited modern scholarly estimate. — Fall of Constantinople, Wikipedia." /> The surviving population — men, women, and children — were property of whoever could hold them. <Annotation client:load term="Around 30,000 enslaved" note="The number enslaved is given as 'around 30,000' in some sources and 'as many as sixty thousand' in others. Wikipedia cites the lower figure as the more cautious modern estimate. — Fall of Constantinople, Wikipedia." />
+
+<ForceComparison client:visible
+  caption="The toll — Constantinople, 29 May 1453"
+  sides={[
+    { label: "Defenders (Byzantine / Latin)", tone: "friendly" },
+    { label: "Attackers (Ottoman)", tone: "enemy" }
+  ]}
+  metrics={[
+    { label: "Killed in assault", values: [4000, 0], unit: "est.", higherIsWorse: true },
+    { label: "Enslaved", values: [30000, 0], unit: "persons", higherIsWorse: true },
+    { label: "Ships in the Golden Horn (est.)", values: [0, 70], unit: "vessels" }
+  ]} />
+
+<Detail summary="Go deeper: why Ottoman casualties are not in the comparison">
+Ottoman casualties in the 1453 siege were real but are not reliably quantified in any surviving source. The Bashi-bazouks suffered heavily in the first wave of the final assault (Barbaro's estimate of "twenty cartloads" is dramatic but vague). The Janissaries took losses pressing the breach. But no Ottoman order-of-battle return for killed or wounded survives, and the Byzantine and Latin sources — who were on the receiving end — had no way to count enemy dead. The honesty is: we do not know the Ottoman casualty figure. The comparison above is therefore not a symmetric battle ledger; it shows what is documented — the fate of the city's population — not a false-precise total that fabricates an uncounted number.
+</Detail>
+
+<Sankey client:visible
+  caption="What became of Constantinople's people — 29 May 1453"
+  unit="persons"
+  nodes={[
+    { id: "city", label: "Population in the city at the fall (est. ≈37,000)" },
+    { id: "killed", label: "Killed in assault and sack" },
+    { id: "enslaved", label: "Enslaved (conservative estimate)" },
+    { id: "escaped", label: "Escaped by sea (Venetian ships broke through the boom)" }
+  ]}
+  links={[
+    { source: "city", target: "killed", value: 4000 },
+    { source: "city", target: "enslaved", value: 30000 },
+    { source: "city", target: "escaped", value: 3000 }
+  ]} />
+
+<Detail summary="Go deeper: the population figures are attributed ranges">
+The Sankey uses defensible midpoints. Total population at the siege: Constantinople had declined from its medieval peak of perhaps 400,000 to probably fewer than 50,000 by 1453 (Britannica gives 40,000–50,000; Wikipedia says "probably fewer than 50,000"); many districts were semi-abandoned. The 4,000 killed figure comes from modern historian David Nicolle (via Wikipedia). The 30,000 enslaved is the more conservative of two common estimates (the other is 50,000–60,000). The 3,000 escape figure is schematic — Barbaro's diary records that Venetian ships broke through the boom after the city fell, and that "the whole of the Turkish fleet was unarmed and all the captains and crews had gone into the city to sack it," allowing some to escape. Sphrantzes himself was enslaved on 29 May and ransomed on 1 September 1453. The Sankey shows shape, not false precision.
+</Detail>
+
+After three days, Mehmed called a halt. <Annotation client:load term="He rode to Hagia Sophia" note="Mehmed II entered Constantinople on 29 May 1453 and reportedly visited the Hagia Sophia immediately, interrupting a soldier who was chipping the marble floors and ordering the sack to be conducted without destruction of the buildings. He converted the Hagia Sophia into a mosque; it became the principal mosque of the Ottoman Empire. — Fall of Constantinople, Wikipedia; World History Encyclopedia." /> and is said to have wept at the desolation, reciting a Persian couplet: "The spider is the curtain-holder in the palace of the Caesars; the owl hoots its watch in Afrasiab's towers." He converted the Hagia Sophia to a mosque the same day. Constantinople became Istanbul — or, more precisely, was now universally called by the name its Greek inhabitants had been using informally for centuries: "eis tin polin," into the city.
+
+<Timeline client:load caption="After the walls — the strategic arc from 29 May 1453"
+  events={[
+    { date: "1453-05-29", label: "Constantinople falls", detail: "The last Roman emperor dies at the Mesoteichion. The Ottoman Empire has a new capital; the city is renamed Istanbul." },
+    { date: "1453-06-01", label: "Giustiniani dies", detail: "Giovanni Giustiniani Longo dies of his wounds on Chios. The man who held the Mesoteichion for 53 days outlasts the city by three days." },
+    { date: "1453-09-01", label: "Sphrantzes ransomed", detail: "George Sphrantzes, enslaved on the day of the fall, is ransomed. He will write his Chronicon Minus — the closest we have to an insider account — in retirement on Corfu." },
+    { date: "1453-10-01", label: "Greek scholars begin leaving for Italy", detail: "The fall accelerates a migration of Byzantine scholars, manuscripts, and classical texts to Italy that had been underway for decades. Plethon, Bessarion, and others carry Greek learning westward." },
+    { date: "1454-01-01", label: "Ottoman consolidation of the Balkans", detail: "Mehmed turns to consolidate his European dominions. Serbia falls in 1459, the Peloponnese (Morea) in 1460." },
+    { date: "1461-01-01", label: "Trebizond falls — the last Byzantine state extinguished", detail: "The Empire of Trebizond, a Byzantine successor state on the Black Sea, surrenders to Mehmed II. The last remnant of Rome is gone." },
+    { date: "1480-01-01", label: "Ottoman raid on Otranto, southern Italy", detail: "Ottoman forces briefly occupy Otranto, demonstrating that the fall of Constantinople had not halted Ottoman expansion westward. Fear of Ottoman advance drives Italian city-states to invest in fortifications." }
+  ]} />
+
+---
+
+## What the Walls Decided
+
+The fall of Constantinople is remembered as the end of the Middle Ages — a convenient periodisation, though history rarely respects calendrical categories. What is precise and true is narrower: it ended the Roman Empire. Not the Rome of the Republic or the Principate, not the empire of Augustus or Constantine, but the last institutional continuous line from ancient Rome, the chain of sovereignty that had run through a thousand years of Byzantium without a gap. <Annotation client:load term="From the founding of Constantinople in 330 AD to its fall in 1453" note="Constantine I founded the city as Nova Roma in 330 AD; it became known as Constantinople (Konstantinopolis) after him. The Eastern Roman Empire, centred there, ran as a continuous Roman state from the permanent Theodosian division in 395 AD until 29 May 1453 — 1,058 years (1453 − 395 = 1,058). — Fall of Constantinople, Wikipedia; World History Encyclopedia." /> is 1,123 years. No political entity in Western history has lasted as long.
+
+What ended it was not a frontal triumph of numbers over courage, though the numbers were badly mismatched. The siege of Constantinople 1453 is better understood as a systems engineering contest, fought across three distinct technical domains:
+
+**Artillery range.** Orban's bombard was not just a bigger cannon. It was a category break — a weapon whose stone ball weighed as much as a loaded oxcart, fired from a range at which no defender could damage the gun. The Theodosian Walls had been designed against everything except this. Their towers, spaced to allow archers to cover the approaches, were exactly the right targets for a weapon that could knock a twenty-metre stone tower off its foundations from a mile away.
+
+**Naval geometry.** The boom chain solved the city's flanks for a millennium. No fleet had ever gotten inside the Golden Horn except by Byzantine invitation. Mehmed's engineers solved it not by attacking the chain but by routing around it — across a hill. <Annotation client:load term="About seventy ships portaged over Galata in a single night" note="The overland portage of Ottoman ships across the Galata hills into the Golden Horn on 21–22 April 1453 is confirmed by Nicolo Barbaro (who witnessed it), Wikipedia, and Britannica. Barbaro, the primary eyewitness, counted 72; secondary sources round to 70. The exact distance of the portage is not precisely documented in surviving sources; it was a route of several kilometres across the Galata ridge." /> The manoeuvre cost the defenders the sea wall they had not needed to guard and forced them to thin an already inadequate garrison.
+
+**Human fragility.** The garrison held for fifty-three days against a ten-to-one mismatch in numbers and a categorical disadvantage in artillery. It held because Giustiniani was there — because one man with engineering skill and battlefield authority could repair the unrepairable every night, could animate defenders who had every reason to despair, could make the earthworks do what the old stone could not. When he was carried off the wall wounded, the garrison did not hold for another hour.
+
+Three systems failures, all necessary, none sufficient alone. The Basilica cracked the Mesoteichion; the portage split the garrison; Giustiniani's wound emptied the critical sector. Without any one of the three, the city might have held long enough for relief that never came — the Venetian fleet that was too slow, the crusade that was never launched, the Hungarian alliance that did not materialise. <Annotation client:load term="Sphrantzes' lament for Christian disunity" note="Sphrantzes wrote bitterly of the failure of Christian allies: 'No aid whatsoever was dispatched by other Christians.' Constantine XI had appealed to the Pope, to Venice, to Genoa, to Hungary — none sent an army in time. — George Sphrantzes, Chronicon Minus; De Re Militari translation." />
+
+The city fell in the early morning of Tuesday, 29 May 1453. By noon the cannon fire had stopped. By afternoon the Ottoman flag flew from every tower of the Theodosian Walls that had stood for a thousand years and held against everything — until a Hungarian gunsmith offered his services to the man who could afford to pay for them, and sixty oxen hauled the future into position against the weakest section of the ancient wall.
+
+Rome's last city took fifty-four days to fall. It had taken eleven centuries to build.
