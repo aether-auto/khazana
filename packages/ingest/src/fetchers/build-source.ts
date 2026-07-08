@@ -1,6 +1,8 @@
 import type { FeedItem, FetchContext, Source, SourceEntry } from "@khazana/core";
 import { fetchReddit } from "./reddit.js";
 import { parseRssFeed } from "./rss.js";
+import { isDirectYouTubeEnabled, isYtDlpAvailable } from "../youtube.js";
+import { fetchYouTubeChannelVideos } from "../youtube-discovery.js";
 
 export interface FetchResult {
   ok: boolean;
@@ -121,6 +123,16 @@ export function buildSource(
       // reddit: JSON listing API (rich) → bounded 429/403 backoff → .rss fallback.
       // See fetchReddit; it owns its own UA, retry, and graceful degradation.
       if (entry.type === "reddit") return fetchReddit(entry, fetchFn, ctx);
+
+      // youtube: the registry's `feeds/videos.xml?channel_id=` endpoint now 404s
+      // for ~90-95% of channels, so discovery routes through yt-dlp
+      // --flat-playlist (see youtube-discovery.ts) whenever the direct-youtube
+      // path is gated on AND a yt-dlp binary is present — same gating idiom as
+      // transcript/metadata fetching. Falls through to the RSS path below when
+      // either is unavailable (local/dev without ALLOW_DIRECT_YOUTUBE or yt-dlp).
+      if (entry.type === "youtube" && isDirectYouTubeEnabled() && isYtDlpAvailable()) {
+        return fetchYouTubeChannelVideos(entry, ctx);
+      }
 
       // Generic (rss / eng-blog / news / arxiv) feed fetch: send a browser-like
       // UA (unblocks bot-UA-gated origins) and a feed-appropriate Accept (fixes
