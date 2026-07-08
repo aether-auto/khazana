@@ -14,7 +14,28 @@
 > produced 8 grounded YouTube items) on branch **`improve/feed-reads-components`** as **PR #3 to
 > `main`** — the only open item is founder merge (§3 item 1).
 
-**Latest session (2026-07-07) — pipeline hardening, YouTube restore, Atlas plan.** One Opus
+**Latest session (2026-07-08) — Atlas plan v2: founder interview → 8-spec family.** A deep
+founder interview produced a **binding decision record**
+(`docs/superpowers/specs/2026-07-07-atlas-founder-decisions.md`, D1–D12) that supersedes the
+original five Atlas specs wherever they conflict: **private world-data repo** (`khazana-world-data`;
+ingest compute stays in the public repo, pushes via token), **maximal density mandate** ("put in
+literally everything" — all 16 Extras greenlit, GeM/CPPP scraper pulled forward), the Ledger
+re-conceived as a data-driven **Country Report** plus a new **Indicator Browser** (zero AI prose
+anywhere in the world-data path), event card = spectrum-diverse top-N + **corroborated core**, a
+full **war mode**, and **two faces with a designed switch transition** (D11). A 5-agent research
+sweep (dossiers under `.superpowers/research/atlas/`, gitignored) verified access/format/license
+for every newly named source. All five 07-07 specs amended in place, and three NEW specs written:
+**Conflict Theaters** (spec 6 — curated theater registry, `geometryStatus` license posture;
+DeepState/ISW front-line geometry is PERMISSION-PENDING with a Wikipedia CC BY-SA fallback),
+**Government Structure** (spec 7 — data-driven PowerFlow diagrams; the country-onboarding
+mechanism), **Two Faces** (spec 8 — study/atlas atmospheres via server-stamped `data-face`,
+cross-document view-transition switch). The Atlas family is now **specs 1–8**, all on
+`improve/feed-reads-components` (PR #3). Founder model policy for agent work: **Sonnet 5
+subagents, Opus only for complex work** (D12). Next Atlas steps: implementation planning
+(writing-plans) after PR #3 merges, and the DeepState/ISW permission emails (founder action,
+tracked in spec 6).
+
+**Prior session (2026-07-07) — pipeline hardening, YouTube restore, Atlas plan.** One Opus
 orchestrator + serialized Sonnet-5 subagents across four workstreams, all committed to
 `improve/feed-reads-components` (PR #3, unmerged):
 - **WS1 pipeline reliability (done, committed).** Confirmed the zero-publish root cause: the Reads
@@ -70,6 +91,8 @@ orchestrator + serialized Sonnet-5 subagents across four workstreams, all commit
   enforcement + first-class provenance/uncertainty), atlas-globe (cobe), atlas-bias-lab (computed
   scores + attribution-only rater overlay), atlas-government-ledger (52 keys → 200+ records/country,
   balanced-not-accusatory, India-deep), atlas-extras (16 features, 3 waves) (`072e63d`).
+  **Superseded in part by the 2026-07-08 Atlas plan v2** (see Latest session above): all five
+  amended in place + decision record + three new specs (6–8).
 
 ---
 
@@ -200,11 +223,12 @@ Browser-verify sparingly (playwright-core + system Chrome, gate-bypass via
 ## 6. Git / process
 - Branch **`main`** (remote `aether-auto/khazana`, public). Append meaningful work to
   `.superpowers/sdd/progress.md`; keep this HANDOFF current.
-- **In flight (2026-07-07):** `improve/feed-reads-components`, opened as **PR #3 to `main`**, carries
-  this session's pipeline hardening (WS1), YouTube-transcript + YouTube-discovery restore + undici
-  crash backstop (WS2/WS2b/WS2c), UI perf + First Light hero (WS3), and the Atlas planning specs
-  (WS4) — all done and verified end-to-end. Awaiting founder merge — see §3 item 1. Rebase before
-  starting further branch work if `main` has moved.
+- **In flight (2026-07-08):** `improve/feed-reads-components`, opened as **PR #3 to `main`**, carries
+  the 07-07 pipeline hardening (WS1), YouTube-transcript + YouTube-discovery restore + undici
+  crash backstop (WS2/WS2b/WS2c), UI perf + First Light hero (WS3), and the **full Atlas plan v2**
+  — the founder decision record, the five amended specs, and the three new specs (Conflict
+  Theaters, Government Structure, Two Faces) — all done and verified end-to-end. Awaiting founder
+  merge — see §3 item 1. Rebase before starting further branch work if `main` has moved.
 - **Committed:** Reads MDX under `apps/site/src/content/blog/`, and now **`data/feed/archive.json`**
   (the rolling feed archive — a gitignore exception; `curated.json`/`raw.json` stay ignored).
 - Gitignored (local/ephemeral): `data/feed/*` (except archive.json), `data/sources.json`,
