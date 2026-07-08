@@ -160,6 +160,26 @@ Made and recorded here so they're auditable:
 Atlas and Feed/Reads share Shell chrome, design tokens, and the deploy pipeline — not
 data. (Founder-selected, unchanged from the original specs.)
 
+## D11. Two facets, two feels, one designed transition (added later same-day)
+
+Founder, verbatim: *"the idea is that khazana has two main facets, each feels different
+and there is a transition when you switch."* This sharpens D10: the faces share the
+design **system** (tokens, type, motion doctrine) but each carries its **own atmosphere**
+— the personal face (Feed/Reads/Workshop) and Atlas must be recognizably different worlds,
+and switching between them is a **designed signature transition**, not a nav click. This
+partially supersedes the original specs' "shares the Shell chrome" phrasing: shared bones,
+distinct skin. Gets its own design spec: `2026-07-07-khazana-two-faces-design.md`
+(spec 8 — face identities + the switch transition + Atlas's top-level IA, which the Globe
+spec had explicitly left unowned).
+
+## D12. Full autonomy, research-grounded expansion, model policy (added later same-day)
+
+Founder invoked ultracode: full autonomy to improve and expand the Atlas plan using
+internet research — *"add as much as you want."* Every added source/feature must be
+research-verified (access, format, license → tier, cadence) before it enters a spec, per
+the reliability clause in D3. Model policy for the work itself: **Sonnet 5 for
+subagents; Opus only for complex work** (deep synthesis / the new-spec writing).
+
 ---
 
 ## Open-question ledger — what this record closes
