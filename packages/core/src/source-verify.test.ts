@@ -204,9 +204,14 @@ test("a live (enabled) source is never reprobe-eligible", () => {
   expect(isReprobeEligible(live, NOW)).toBe(false);
 });
 
-test("a manually/scout disabled source (enabled:false, no disabled status) is never reprobe-eligible", () => {
-  const manuallyOff = src({ enabled: false, status: undefined });
+test("a source disabled with an explicit non-'disabled' status (e.g. a human flipped enabled:false on a previously-active source) is never reprobe-eligible", () => {
+  const manuallyOff = src({ enabled: false, status: "active" });
   expect(isReprobeEligible(manuallyOff, NOW)).toBe(false);
+});
+
+test("a legacy entry disabled with NO status field at all (status undefined) is immediately reprobe-eligible — status absent is indistinguishable from our own pre-`status`-field auto-disable path (the ~208 youtube sources), so it defaults to self-healing rather than being stuck forever", () => {
+  const legacyNoStatus = src({ enabled: false, status: undefined, disabledAt: undefined });
+  expect(isReprobeEligible(legacyNoStatus, NOW)).toBe(true);
 });
 
 test("a just-disabled source is NOT reprobe-eligible before the window elapses", () => {
@@ -290,6 +295,31 @@ test("a bounded re-probe never hammers more than once per window: immediately af
   const disabled = src({ enabled: false, status: "disabled", consecutiveFailures: DISABLE_THRESHOLD, disabledAt: EARLIER });
   const after = applyFetchResult(disabled, permanent(), { now: NOW });
   expect(isReprobeEligible(after, NOW)).toBe(false); // window just restarted
+});
+
+// ── applyFetchResult must route legacy absent-status disabled entries through
+// the SAME "disabled entry" branch as isReprobeEligible treats them, or a
+// successful reprobe would leave `enabled:false` (the live-branch success case
+// never touches `enabled`) while flipping `status` away from "disabled" —
+// orphaning the source forever (isReprobeEligible would then see a defined,
+// non-"disabled" status and never offer it again). ─────────────────────────
+
+test("re-probe SUCCESS on a legacy absent-status disabled entry fully re-enables it (does not orphan it with enabled:false + status:active)", () => {
+  const legacyDisabled = src({ enabled: false, status: undefined, disabledAt: undefined, failureCount: 0 });
+  const after = applyFetchResult(legacyDisabled, ok({ itemCount: 5 }), { now: NOW });
+  expect(after.enabled).toBe(true);
+  expect(after.status).toBe("active");
+  expect(after.consecutiveFailures).toBe(0);
+});
+
+test("re-probe FAILURE on a legacy absent-status disabled entry stays disabled (status stamped) and restarts the window, rather than free-striking from 0", () => {
+  const legacyDisabled = src({ enabled: false, status: undefined, disabledAt: undefined, failureCount: 0 });
+  const after = applyFetchResult(legacyDisabled, permanent(), { now: NOW });
+  expect(after.enabled).toBe(false);
+  expect(after.status).toBe("disabled");
+  expect(after.disabledAt).toBe(NOW);
+  // Still findable by isReprobeEligible next window — not orphaned.
+  expect(isReprobeEligible(after, new Date(Date.parse(NOW) + REPROBE_AFTER_MS).toISOString())).toBe(true);
 });
 
 // ── Schema backward-compatibility ─────────────────────────────────────────
