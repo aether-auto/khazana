@@ -796,6 +796,14 @@ const delay = (i: number) => Math.min(i, 8) * 60;
     gap: var(--s-4);
     padding: var(--s-3) var(--s-2);
     border-bottom: var(--hair) solid var(--rule);
+    /* content-visibility: as the register/archive grows into hundreds of rows,
+       skip layout/paint/style for whichever batches are off-screen — a cheap
+       hedge against the tail getting expensive. contain-intrinsic-size is a
+       placeholder box (≈ one hairline row) so scroll position/scrollbar don't
+       jump before an off-screen row has ever been measured. Purely a
+       rendering-cost optimization — visual output is unchanged. */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 52px;
     /* color-only hover — no transform, no glass, cheap at scale */
     transition: background var(--dur-fast) var(--ease-out);
   }
@@ -907,6 +915,10 @@ const delay = (i: number) => Math.min(i, 8) * 60;
     border: var(--hair) solid var(--rule);
     border-radius: var(--r-md);
     background: var(--bg-card);
+    /* same content-visibility hedge as the list row above, sized for a card
+       (thumb + title + 2-line clamp summary + foot row). */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 360px;
     transition: border-color var(--dur-fast) var(--ease-out);
   }
   .reg-list[data-view="card"] :global(.reg-card:hover) {
