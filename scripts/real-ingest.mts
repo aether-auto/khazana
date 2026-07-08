@@ -15,9 +15,29 @@ import { readRawFeed, readEvents, runCurate, writeCuratedFeed, makeLlmClientFrom
 // specifier) — root-level scripts run via `tsx` can't resolve the workspace
 // package name (matches fetch-events.mts's convention).
 import { reconcileRegistry, extractSourceHealth } from "../packages/core/src/index.ts";
+import type { FeedItem } from "../packages/core/src/index.ts";
+import { installCrashBackstop } from "./lib/crash-backstop.mts";
 
 const dataDir = new URL("../data/", import.meta.url).pathname;
 const now = new Date().toISOString();
+
+// ── Crash backstop (defense-in-depth) ───────────────────────────────────────
+// A live run once crashed the WHOLE ~720-source ingest with an uncaught
+// Node/undici HTTP-parser AssertionError thrown asynchronously off a socket
+// event — a class of failure no try/catch around a fetch() call can stop.
+// Installed FIRST, before runIngest starts, so no async failure window during
+// the run is left uncovered. `preEnrichItems` is filled by `onPreEnrich`
+// below the instant source-fetch finishes (i.e. before the enrich phase,
+// where that crash class lives) so a fatal error mid-enrichment can still
+// salvage every source's already-collected raw items instead of losing the
+// whole run. See scripts/lib/crash-backstop.mts for the full incident write-up.
+let preEnrichItems: FeedItem[] | null = null;
+installCrashBackstop({
+  getSalvageItems: () => preEnrichItems,
+  writeFeed: (items) => {
+    writeFeed(dataDir, items);
+  },
+});
 const LIMIT = Number(process.env.LIMIT ?? 4);
 // Optional sourceType filter: SOURCE_TYPES=youtube,podcast
 const SOURCE_TYPES = process.env.SOURCE_TYPES
@@ -57,6 +77,13 @@ const { items, results, fetchResults } = await runIngest(registry, {
   now,
   limitPerSource: LIMIT,
   ...(EXTRACT ? {} : { extract: { enabled: false } }),
+  // Salvage anchor for the crash backstop above: fires once source-fetch has
+  // fully collected + deduped every source's items, right before the enrich
+  // phase (YouTube transcript fetches et al.) — where the undici crash class
+  // lives — starts.
+  onPreEnrich: (pre) => {
+    preEnrichItems = pre;
+  },
   onProgress: (p) => {
     const dueByTime = Date.now() - lastBeatAt >= HEARTBEAT_MS;
     const dueByCount = p.done - lastBeatDone >= HEARTBEAT_EVERY;

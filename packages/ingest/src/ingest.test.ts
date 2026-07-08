@@ -98,6 +98,56 @@ test("runIngest works with onProgress omitted (no throw)", async () => {
   ).resolves.toBeDefined();
 });
 
+// ── onPreEnrich salvage hook — the uncaughtException backstop in
+// scripts/real-ingest.mts depends on this firing with the fully-collected,
+// deduped items BEFORE the enrich phase (where the undici-crash class lives)
+// so a caller can stash a live reference and persist it if the process is
+// later killed asynchronously mid-enrichment. ──────────────────────────────
+
+test("onPreEnrich fires once with the deduped items before enrichment runs", async () => {
+  const fetchFn: FetchFn = async (url) => ({
+    ok: true, status: 200, text: async () => RSS("Hi", `${url}#1`), json: async () => ({}),
+  });
+  const calls: number[][] = [];
+  const { items } = await runIngest(registry, {
+    now: "2026-06-23T00:00:00.000Z",
+    fetchFn,
+    extract: { enabled: false },
+    onPreEnrich: (pre) => calls.push([pre.length]),
+  });
+  expect(calls).toHaveLength(1);
+  // Same count as the final result — fired after dedup, with everything collected.
+  expect(calls[0]).toEqual([items.length]);
+});
+
+test("onPreEnrich hands back the SAME array reference enrichContent mutates (so a stashed reference stays live)", async () => {
+  const fetchFn: FetchFn = async (url) => ({
+    ok: true, status: 200, text: async () => RSS("Hi", `${url}#1`), json: async () => ({}),
+  });
+  let stashed: unknown;
+  const { items } = await runIngest(registry, {
+    now: "2026-06-23T00:00:00.000Z",
+    fetchFn,
+    extract: { enabled: false },
+    onPreEnrich: (pre) => { stashed = pre; },
+  });
+  expect(stashed).toBe(items);
+});
+
+test("a throwing onPreEnrich hook never breaks the run", async () => {
+  const fetchFn: FetchFn = async (url) => ({
+    ok: true, status: 200, text: async () => RSS("Hi", `${url}#1`), json: async () => ({}),
+  });
+  await expect(
+    runIngest(registry, {
+      now: "2026-06-23T00:00:00.000Z",
+      fetchFn,
+      extract: { enabled: false },
+      onPreEnrich: () => { throw new Error("boom"); },
+    }),
+  ).resolves.toBeDefined();
+});
+
 // ── Bounded self-healing re-probe: the fetch set includes reprobe-eligible
 // disabled sources alongside enabled ones. ──────────────────────────────────
 
