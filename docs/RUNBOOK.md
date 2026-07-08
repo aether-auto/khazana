@@ -89,6 +89,22 @@ so newly-committed Reads go live within ~3h.
 > authors and pushes MDX on its own cadence — Actions only builds/deploys what's
 > committed.
 
+> **Permission mode — pin this at registration, every time.** The routine runs
+> **unattended**, so it must be registered **headless / non-interactive**:
+> `bypassPermissions`, or an explicit allowlist covering every tool it uses
+> (Read/Write/Edit/Bash/WebSearch/WebFetch/Glob/Grep + the `Agent` calls it makes
+> to spawn `reads-survey`/`reads-writer`/`reads-verify`). If a re-registration (a
+> Claude app update, a settings reset, re-creating the routine) ever leaves it in
+> the default interactive/`ask` mode, the run does not fail loudly — it just
+> **stalls forever** the first time a tool needs a permission prompt nobody is
+> there to answer, silently eating the scheduled slot with no error and no Read.
+> After any re-registration, do a manual dry run (or `--drill`) and confirm it
+> completes end-to-end without a prompt hanging in the routine's log/UI before
+> trusting the next unattended firing. The `data/reads-run-log.jsonl` ledger (see
+> `scripts/record-reads-run.mts`) is the check: a scheduled slot with no new
+> ledger line means the routine never got far enough to record — check its
+> permission mode first.
+
 ---
 
 ### `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` — Worker deploy
