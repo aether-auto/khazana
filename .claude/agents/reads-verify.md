@@ -93,12 +93,15 @@ Always pass the slug. The gate grounds each draft's cited URLs against the *fres
 (`data/generation/research/<slug>.ledger.json`); an unscoped run would also re-check already-published
 Reads whose research ledgers are not retained and spuriously FAIL. Scope to your one draft.
 
-This runs `runVerify()` → `validateDraft` + the `factChecker` gate (`checkClaims` in
-`fact-checker.ts`) over that draft against its ledger. It is the **deterministic backstop** to
-your judgement, not a replacement for it: your adversarial re-fetch catches claims that *cite a
-valid ledger URL which nonetheless doesn't support them* — something a pure URL-set gate cannot
-see. Report the command's PASS/FAIL and any violations it printed. If the deterministic gate and
-your manual read disagree, say so explicitly and treat the stricter of the two as binding.
+This runs `runVerify()` → `validateDraft` (grounding / MDX-lint / numeric-consistency / citation-stats)
+over that draft against its ledger. **It does NOT run the `factChecker` gate (`checkClaims` in
+`fact-checker.ts`)** — `packages/generate/src/cli.ts`'s `main()` builds `CliDeps` with no
+`factChecker`, so that branch never executes from the CLI. The ≥90% coverage / ≥60% corroboration
+claims-coverage and corroboration check is exclusively **your own manual arithmetic** in the
+previous phase — do not assume this command covers it; if a future prompt edit ever appears to
+skip that phase believing the CLI already gates it, that is a bug, not a shortcut. Report the
+command's PASS/FAIL and any violations it printed. If the deterministic gate and your manual read
+disagree, say so explicitly and treat the stricter of the two as binding.
 
 **`generate verify` now also runs a DETERMINISTIC numeric-consistency gate** — it flags any
 same-labeled quantity that takes different values across `<StatBand>`/`<DataTable>`/`<Chart>`

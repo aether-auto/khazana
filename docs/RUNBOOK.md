@@ -243,8 +243,9 @@ bundle at build time and used by the events fetch.
   workflow. `pipeline` accepts an optional `limit` input (per-source item cap).
 - **Change source registry:** edit `data/sources.seed.json` (validated by
   `RegistrySchema`) or let `scout-discover.yml` grow it weekly.
-- **Retention:** the pipeline keeps `RETENTION_DAYS` (default 3) days of Reads;
-  older ones are pruned and the removal is committed back.
+- **Retention:** the pipeline keeps `RETENTION_DAYS` (currently 14, set in
+  `pipeline.yml`'s job env) days of Reads; older ones are pruned and the
+  removal is committed back.
 - **Reads cadence:** new Reads come from the Claude routine (2×/day), not the
   pipeline. It commits MDX; `feed-refresh.yml` publishes it within ~3h.
 - **Costs stay $0:** public-repo Actions minutes are free; Pages + Worker + KV
