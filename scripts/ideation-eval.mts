@@ -89,17 +89,39 @@ function digestItem(it: FeedItem): FeedDigestItem {
   };
 }
 
-function loadCurated(): FeedItem[] {
-  const path = join(DATA_DIR, "feed", "curated.json");
-  if (!existsSync(path)) return [];
-  const raw: unknown = JSON.parse(readFileSync(path, "utf8"));
-  const arr = Array.isArray(raw) ? raw : [];
-  const out: FeedItem[] = [];
-  for (const c of arr) {
-    const r = FeedItemSchema.safeParse(c);
-    if (r.success) out.push(r.data);
+/**
+ * Load the curated feed for ideation, preferring the fresh ingest snapshot but
+ * falling back to the committed rolling archive when it's absent.
+ *
+ * `data/feed/curated.json` is gitignored and written ONLY by the ingest GitHub
+ * Action — in a fresh clone (exactly what the twice-daily Reads routine runs
+ * against) it does not exist, so `loadCurated` used to silently return `[]`
+ * and the entire feed-grounded ideation lane went dark on every run (P0).
+ * `data/feed/archive.json` is a small, committed, display-only projection
+ * (see `packages/core/src/archive.ts`'s `toArchiveItem`) that already
+ * satisfies `FeedItemSchema` — so it doubles as a feed-grounded fallback with
+ * zero shape adaptation needed.
+ */
+export function loadCurated(dataDir: string = DATA_DIR): FeedItem[] {
+  for (const name of ["curated.json", "archive.json"]) {
+    const path = join(dataDir, "feed", name);
+    if (!existsSync(path)) continue;
+    const raw: unknown = JSON.parse(readFileSync(path, "utf8"));
+    const arr = Array.isArray(raw) ? raw : [];
+    const out: FeedItem[] = [];
+    for (const c of arr) {
+      const r = FeedItemSchema.safeParse(c);
+      if (r.success) out.push(r.data);
+    }
+    if (out.length > 0) return out;
   }
-  return out;
+  console.warn(
+    "[ideation-eval] MISSING DATA: neither data/feed/curated.json (gitignored, ingest-only) nor " +
+      "the committed data/feed/archive.json produced any usable feed items — the feed-grounded " +
+      "ideation lane is EMPTY this run. This is a missing-precondition, NOT evidence the feed is " +
+      "genuinely empty; investigate before treating this as a quality signal.",
+  );
+  return [];
 }
 
 function loadRegistry(): Registry {
@@ -261,4 +283,9 @@ function main(): void {
   }
 }
 
-main();
+// Only run when invoked directly (so the unit test can import loadCurated
+// without triggering a real snapshot write against live repo data) — mirrors
+// the same guard already used by prune-history.mts / build-resilient.mts.
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  main();
+}
