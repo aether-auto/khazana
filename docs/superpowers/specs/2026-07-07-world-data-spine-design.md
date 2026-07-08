@@ -1,15 +1,38 @@
 # Atlas — World Data Spine (design spec)
 
 > *khazana's second face: a world-facing intelligence surface with a live news Globe, a
-> news-outlet Bias Lab, and a deep Government Ledger. This spec is the foundation all
-> three sit on — the normalized schemas + the $0 ingest architecture. Nothing here
-> renders a pixel; everything downstream depends on it.*
+> news-outlet Bias Lab, a deep Government Ledger — and, post-founder-review, Conflict
+> Theaters and Government Structure diagrams. This spec is the foundation all of them sit
+> on — the normalized schemas + the $0 ingest architecture. Nothing here renders a pixel;
+> everything downstream depends on it.*
 
-**Status:** Proposed — spec 1 of 5 (Atlas: Spine → Globe → Bias Lab → Ledger → Extras)
+**Status:** Proposed — spec 1 of 7 (Atlas: Spine → Globe → Bias Lab → Ledger → Extras →
+Conflict Theaters → Government Structure)
 **Date:** 2026-07-07
 **Owner:** Arnav (founder) + Claude (cofounder)
 **Cost target:** $0 recurring — the same binding constraint as khazana v1. No paid APIs, no
 paid hosting, no always-on machine beyond the existing free Cloudflare Worker.
+
+> **Amended 2026-07-07 after founder interview.** This spec was reworked against the
+> binding decision record (`2026-07-07-atlas-founder-decisions.md`), which wins wherever
+> it contradicts this document's original text. What changed, integrated into the body
+> below (decision IDs cited inline where each applies):
+>
+> - **Private world-data repo (D2)** — all world data (`data/world/`,
+>   `data/world-sources.json`, `data/world-sources.seed.json`, and every downstream
+>   derived layer) moves to a new **private** repo, `khazana-world-data`. Ingest
+>   workflows keep running in the public repo and push outputs there via a repo-scoped
+>   token; the site build checks the private repo out at build time. Rewritten: §1.2,
+>   §2, §3.7, §4.2, §4.3; §8's retention question relaxed. §4.4 (Worker KV mirror)
+>   unchanged.
+> - **New binding decisions (§1)** — private-indefinitely / public-ready-by-construction
+>   audience (D1); the density mandate: sources and indicators are open-ended floors,
+>   not ceilings (D3); zero AI prose anywhere in the world-data path (D4).
+> - **Density-mandate consequences (D3)** — §3.7 and §5 recast the ~15 hand-curated
+>   sources as the seed, not the boundary; §3.6/§7 pull the GeM/CPPP India procurement
+>   scraper forward into the main build; §8's GeM timing question is closed.
+> - **Two new downstream specs (§6)** — spec 6, Conflict Theaters (D6), and spec 7,
+>   Government Structure (D5); header renumbered spec 1 of 5 → spec 1 of 7.
 
 ---
 
@@ -32,12 +55,13 @@ corpora, procurement records — into three things:
 existing `apps/site` Astro build, sharing the design-token system, the Shell chrome, and
 the deploy pipeline. There is no `apps/atlas`.
 
-This document is spec **1 of 5**. It defines nothing about the Globe/Bias Lab/Ledger UI —
-it defines the data those three specs will read: the zod schemas that make every world
+This document is spec **1 of 7**. It defines nothing about any downstream UI —
+it defines the data those surfaces will read: the zod schemas that make every world
 datum self-describing (source, method, license, uncertainty) and the ingest architecture
-that gets those data into `data/world/` for $0. Specs 2–4 (Globe, Bias Lab, Government
-Ledger) and spec 5 (Extras) are written *against* this contract; §6 below lists exactly
-what each will need from it.
+that gets those data into `data/world/` — in the **private `khazana-world-data` repo**
+(D2, §2) — for $0. Specs 2–4 (Globe, Bias Lab, Government Ledger), spec 5 (Extras),
+spec 6 (Conflict Theaters), and spec 7 (Government Structure) are written *against* this
+contract; §6 below lists exactly what each will need from it.
 
 ---
 
@@ -48,10 +72,12 @@ These are decided, not open — every downstream spec treats them as fixed:
 1. **One site, two faces.** Atlas lives inside `apps/site` as a top-level switch, sharing
    the design system. Not a separate app.
 2. **$0 recurring, static + serverless.** No paid APIs, no always-on machines. Ingest runs
-   in GitHub Actions cron; outputs are committed static JSON under `data/`. Near-live
-   freshness comes from a **high-frequency cron** + the existing **free Cloudflare Worker**
-   summary endpoint + **light client polling**. "Live pinging globe" means *build-cadence
-   data*, not websockets — there is no persistent connection anywhere in this system.
+   in GitHub Actions cron (in the **public** repo, where Actions minutes are unlimited);
+   outputs are committed static JSON under `data/` of the **private `khazana-world-data`
+   repo** (D2, §2/§4.3) — never the public repo. Near-live freshness comes from a
+   **high-frequency cron** + the existing **free Cloudflare Worker** summary endpoint +
+   **light client polling**. "Live pinging globe" means *build-cadence data*, not
+   websockets — there is no persistent connection anywhere in this system.
 3. **Methodology transparency is first-class.** Every datum carries provenance: source,
    method/formula citation (URL), license tier, a computed-vs-referenced flag, and an
    uncertainty representation (CI / SE / rater-spread / sample-n). **No bare numbers ever
@@ -69,13 +95,30 @@ These are decided, not open — every downstream spec treats them as fixed:
    (via a `superRefine` cross-check, §3.1) makes it structurally impossible for a
    `derived-only` datum to claim raw redistribution. This is enforced at parse time, not
    left to renderer discipline.
+5. **Private indefinitely, public-ready by construction (D1).** Atlas is for the founder
+   alone, behind the existing site gate, indefinitely — but going public later must be a
+   **repo-visibility toggle, not a rebuild or a data audit**. Concretely: the private
+   audience relaxes *nothing*. License-tier enforcement (decision 4), the
+   balanced-not-accusatory framing contract, and attribution-only handling of reference
+   raters all remain fully binding even though nobody but the founder sees the output.
+6. **The density mandate (D3).** The source list and indicator catalog in this spec are
+   **open-ended floors, not ceilings**. Founder-verbatim: ingest *everything that can be
+   found/calculated reliably* — full WDI/V-Dem/OWID catalogs, not hand-picked subsets.
+   Every named-source enumeration below (§3.7's ~15 sources, §4.2's lane tables, §7's
+   phases) is a seed set with a standing growth mechanism (§5's recipe), never a
+   boundary.
+7. **Zero AI prose anywhere in the world-data path (D4).** Every figure, label, and
+   sentence downstream of this Spine is deterministic: computed values, templated
+   micro-copy, schema-carried provenance. No LLM writes, summarizes, or paraphrases
+   anywhere between a source API and the rendered Atlas surface — never stale, never
+   hallucinated.
 
 ---
 
 ## 2. Architecture at a glance
 
 ```
-┌─ GitHub Actions (cron, cloud, $0, own concurrency group) ───────────────────────┐
+┌─ GitHub Actions (cron — defined & run in the PUBLIC repo, unlimited free minutes) ┐
 │  FAST lane   (~every 20 min)  GDELT events/GKG → geocode/dedupe → WorldEvent    │
 │  MEDIUM lane (daily)          ACLED · USAspending/TED/OCDS/GeM → Contract       │
 │                                outlet corpus scan → BiasProfile recompute        │
@@ -83,21 +126,43 @@ These are decided, not open — every downstream spec treats them as fixed:
 │               upstreams are    Freedom House · FRED · Open Budget Survey/BOOST · │
 │               quarterly/annual) NITI SDG Index · RBI DBIE · Lok Dhaba ·          │
 │                                Open Budgets India → Indicator / CountryProfile   │
-│  → commits static JSON under data/world/ (see §4.3)                            │
-└──────────────────────────────────────────────────────────────────────────────────┘
-        │ static build (Astro, Atlas surface)          ▲ near-live mirror (fast lane only)
-        ▼                                                │
+│  → pushes static JSON to the PRIVATE data repo (D2, see §4.3)                   │
+│  → fast lane also PUTs latest rollup to the Worker KV mirror (§4.4) ────────────┼──┐
+└──────────────────────────────────────────────────────────────────────────────────┘  │
+        │ push via repo-scoped fine-grained token (Actions secret)                    │
+        ▼                                                                             │
+┌─ khazana-world-data (NEW, PRIVATE repo — D2) ─────────┐                             │
+│ data/world-sources.json · data/world-sources.seed.json │                            │
+│ data/world/**  +  all downstream derived layers        │                            │
+└─────────────────────────────────────────────────────────┘                           │
+        │ checked out at site-build time (actions/checkout + same token)              │
+        ▼                                                                             ▼
 ┌─ GitHub Pages (free, existing) ────────┐   ┌─ Cloudflare Worker + KV (existing, free) ─────┐
 │ Atlas: Globe / Bias Lab / Ledger        │──▶│ GET /world/latest  (public, cached rollup)    │
 │ shares Shell + design tokens w/ v1      │   │ PUT /world/ingest  (token-gated, fast lane)   │
 └──────────────────────────────────────────┘   └────────────────────────────────────────────────┘
 ```
 
-Same ethos as v1's architecture: **data lives in the repo.** The only new piece of
-*external* state is a small KV mirror of the fast lane's latest `WorldEvent` rollup — it
-exists purely so the Globe can show something newer than the last full site build without
-adding a live-connection dependency. It is a read-through cache of committed data, not a
-second source of truth.
+Same ethos as v1's architecture: **data lives in a repo** — but per D2, not the *public*
+one. All world data (`data/world/`, `data/world-sources.json`, `data/world-sources.seed.json`,
+and every downstream derived layer) lives in a new **private** repo, `khazana-world-data`.
+The rationale is that the site gate protects the *site*, not the data: anything committed
+to the public repo is world-readable regardless of the gate. Compute and data split
+cleanly along the free-tier boundary — the ingest **workflows stay in the public repo**,
+because public repos get unlimited free Actions minutes while private repos get only
+2,000/month, nowhere near enough for a ~20-minute fast lane — and push their outputs to
+the private repo via a repo-scoped fine-grained token (or GitHub App installation token)
+held as an Actions secret. The public repo's site build checks the private repo out at
+build time (`actions/checkout` with the same token) to read `data/world/`. Two bonuses
+fall out of this split: the fast lane's 20-minute-cadence commits no longer bloat the
+public repo's git history, and going public later (D1) is just flipping
+`khazana-world-data`'s visibility — the license-tier discipline (§1.4) already guarantees
+everything in it is legally redistributable per its tier.
+
+The only new piece of *external* state is a small KV mirror of the fast lane's latest
+`WorldEvent` rollup — it exists purely so the Globe can show something newer than the
+last full site build without adding a live-connection dependency. It is a read-through
+cache of committed data, not a second source of truth, and it is unchanged by D2 (§4.4).
 
 ---
 
@@ -307,7 +372,8 @@ export type CountryProfile = z.infer<typeof CountryProfileSchema>;
 
 `CountryProfile` is a **build-time aggregation, not a second source of truth** — it's
 assembled by grouping the country's `Indicator` records (already committed under
-`data/world/indicators/`, §4.3) by `field`, plus the subnational rows for countries where
+`data/world/indicators/` in the private data repo, §4.3) by `field`, plus the
+subnational rows for countries where
 a source ships that grain. It is regenerated whenever the slow lane runs; nothing writes
 to it directly.
 
@@ -440,15 +506,16 @@ export const ContractSchema = z.object({
 export type Contract = z.infer<typeof ContractSchema>;
 ```
 
-**Phased build, comparators-first.** USAspending, TED, and OCDS-native feeds ship
-structured, queryable APIs today — phase 1 targets those directly. **India (GeM/CPPP)
-ships thinner and later, on purpose**: neither exposes an OCDS-native API; getting India
-procurement data requires a bespoke scraper + an OCDS mapper (prior art: the
-`mcp-india-tenders` project — worth studying its scraping approach and mapping choices
-before building khazana's own). Rather than block the whole Ledger's procurement view on
-that harder build, `Contract` ships for comparators in phase 1; the India scraper is
-phase 2, tracked as its own task once this Spine and the Ledger's read side both exist.
-See §7 for the full phasing and §8 for the one open timing question this raises.
+**Comparators-first sequencing — but GeM/CPPP is in the main build (D3).** USAspending,
+TED, and OCDS-native feeds ship structured, queryable APIs today — those are the first
+`Contract` fetchers built. India (GeM/CPPP) is genuinely harder: neither exposes an
+OCDS-native API, so India procurement needs a bespoke scraper + an OCDS mapper (prior
+art: the `mcp-india-tenders` project — worth studying its scraping approach and mapping
+choices before building khazana's own). Per the density mandate, that harder build is
+**part of the main initiative, not a deferred phase 2**: it is sequenced *after* the
+API-backed comparator fetchers so it never blocks the Ledger's procurement view, but it
+is a scheduled task inside this build, not a someday follow-up. See §7 for the full
+phasing; the original open timing question this raised is closed (§8, D3).
 
 ### 3.7 `WorldSourceEntry` + `WorldRegistry` — the world-data source registry
 
@@ -489,12 +556,23 @@ export function parseWorldRegistry(json: unknown): WorldRegistry {
 }
 ```
 
-Lives at `data/world-sources.json` (parallel to `data/sources.json`), seeded from a
-`data/world-sources.seed.json`, same "data, not config-as-code" ethos as the existing
-Source Scout registry — though Scout-style *automatic* discovery is explicitly **out of
-scope for v1**: the ~15 world sources named in this spec are hand-curated because each
-one requires a bespoke fetcher/mapper (SDMX, OCDS, CSV bulk downloads, scraped HTML), not
-the generic "any RSS/Reddit/HN feed qualifies" model Scout was built for.
+Lives at `data/world-sources.json` **in the private `khazana-world-data` repo** (D2 —
+parallel in spirit to the public repo's `data/sources.json`), seeded from a
+`data/world-sources.seed.json` in the same repo, same "data, not config-as-code" ethos as
+the existing Source Scout registry — though Scout-style *automatic* discovery is
+explicitly **out of scope for v1**: each world source requires a bespoke fetcher/mapper
+(SDMX, OCDS, CSV bulk downloads, scraped HTML), not the generic "any RSS/Reddit/HN feed
+qualifies" model Scout was built for.
+
+The ~15 world sources named in this spec are hand-curated — but per the density mandate
+(D3) they are the **seed, not the boundary**. The registry is expected to grow
+continuously: full WDI/V-Dem/OWID catalogs rather than hand-picked subsets, plus every
+further source that can be ingested reliably. §5's "How to add a world source" recipe is
+the standing mechanism for that growth — each addition is one registry entry + one
+fetcher + one fixture test, no schema change required — and the Ledger spec's
+**Indicator Browser** is the downstream surface designed to absorb unbounded catalog
+growth (thousands of keys × countries × periods) without bloating the curated country
+reports.
 
 ---
 
@@ -535,7 +613,7 @@ packages/world-ingest/src/
     ted.ts                 ocds.ts               transparency-cpi.ts
     polity5.ts             freedom-house.ts      fred.ts
     open-budget-survey.ts  acled.ts              allsides.ts
-    adfontes.ts            mbfc.ts               gem-india.ts   # phase 2, see §7
+    adfontes.ts            mbfc.ts               gem-india.ts   # main build, sequenced after comparators (§7, D3)
     niti-sdg.ts            rbi-dbie.ts           lok-dhaba.ts
     open-budgets-india.ts
   aggregate/
@@ -576,14 +654,22 @@ export interface WorldContractSource {
 | **Medium** | ACLED, USAspending/TED/OCDS/GeM contract awards, outlet corpus scan → `BiasProfile` recompute | daily | These update at most daily upstream; a daily job is both sufficient and cheap. |
 | **Slow** | WDI, WGI, IMF SDMX, UCDP, CPI, Polity5, Freedom House, FRED, Open Budget Survey/BOOST, NITI SDG Index, RBI DBIE, Lok Dhaba, Open Budgets India | weekly poll | Every one of these upstreams is quarterly-or-slower in practice; a weekly cron is a cheap "did anything change" check, not a meaningful cadence requirement. |
 
-Two new workflows, mirroring the existing `feed-refresh.yml` / `pipeline.yml` split:
+Two new workflows, mirroring the existing `feed-refresh.yml` / `pipeline.yml` split.
+Both are **defined and run in the public repo but commit to the private
+`khazana-world-data` repo** (D2): public repos get unlimited free Actions minutes while
+private repos get only 2,000/month — not enough for a ~20-minute fast lane — so compute
+lives public and data lives private. Each job authenticates its push with the repo-scoped
+fine-grained token (or GitHub App token) held as an Actions secret (§2).
 
-- **`world-refresh.yml`** (fast lane, ~every 20 min): fetch → commit `data/world/events/`
-  → PUT the latest rollup to the Worker (§4.4). **No Astro rebuild, no Pages deploy** —
-  this is a cheap commit-only job.
-- **`world-pipeline.yml`** (medium + slow lanes, daily): fetch → commit
-  `data/world/{contracts,outlets,indicators,countries}/` → full Astro rebuild → Pages
-  deploy (Atlas surface picks up the day's indicators/contracts/bias profiles).
+- **`world-refresh.yml`** (fast lane, ~every 20 min): fetch → push `data/world/events/`
+  to the private repo → PUT the latest rollup to the Worker (§4.4). **No Astro rebuild,
+  no Pages deploy** — this is a cheap commit-only job, and its 20-minute-cadence commits
+  now land in the private repo's history, not the public one's (D2).
+- **`world-pipeline.yml`** (medium + slow lanes, daily): fetch → push
+  `data/world/{contracts,outlets,indicators,countries}/` to the private repo → full
+  Astro rebuild (the build job checks the private repo out via `actions/checkout` + the
+  same token to read `data/world/`) → Pages deploy (Atlas surface picks up the day's
+  indicators/contracts/bias profiles).
 
 Both use their **own concurrency group** (`khazana-world-ingest`), deliberately separate
 from the existing `khazana-pages-deploy` group that `pipeline.yml`/`feed-refresh.yml`
@@ -595,31 +681,41 @@ existing `khazana-pages-deploy` group at implementation time if daily-cadence co
 turn out to matter in practice — flagged as an implementation-time call, not a spec
 decision, since it depends on observed Actions run overlap.
 
-Public-repo Actions minutes are free and unlimited (per `RUNBOOK.md`), so cost is not the
-constraint — job *count* and *overlap discipline* are (see §8's open question on exact
-fast-lane frequency vs. GDELT's own rate limits).
+Public-repo Actions minutes are free and unlimited (per `RUNBOOK.md`) — which is exactly
+why the workflows stay in the public repo even though every byte they produce lands in the
+private one (D2). Cost is therefore not the constraint — job *count* and *overlap
+discipline* are (see §8's open question on exact fast-lane frequency vs. GDELT's own rate
+limits).
 
-### 4.3 Static JSON layout under `data/world/`
+### 4.3 Static JSON layout — rooted in the private `khazana-world-data` repo (D2)
 
 ```
-data/
-  world-sources.json            # WorldRegistry — mirrors data/sources.json
-  world-sources.seed.json
-  world/
-    indicators/<ISO3>/<field>.json   # Indicator[] for that country+field, all periods
-    countries/<ISO3>.json            # CountryProfile — build-time aggregation (§3.3)
-    outlets/outlets.json              # Outlet[] with BiasProfile
-    events/
-      <YYYY-MM-DD>.json               # daily WorldEvent shard, fast lane, rolling window
-      latest.json                     # small rollup of most recent N events (mirrors the Worker mirror payload)
-    contracts/<ISO3>/<YYYY>.json      # Contract[] shards, comparators first (§3.6, §7)
+khazana-world-data/                    # NEW, PRIVATE repo — all world data lives here (D2)
+  data/
+    world-sources.json            # WorldRegistry — mirrors the public repo's data/sources.json in spirit
+    world-sources.seed.json
+    world/
+      indicators/<ISO3>/<field>.json   # Indicator[] for that country+field, all periods
+      countries/<ISO3>.json            # CountryProfile — build-time aggregation (§3.3)
+      outlets/outlets.json              # Outlet[] with BiasProfile
+      events/
+        <YYYY-MM-DD>.json               # daily WorldEvent shard, fast lane, rolling window
+        latest.json                     # small rollup of most recent N events (mirrors the Worker mirror payload)
+      contracts/<ISO3>/<YYYY>.json      # Contract[] shards, comparators first (§3.6, §7)
 ```
+
+Downstream derived layers (the Bias Lab's divergence outputs, Conflict Theaters' theater
+layers, Government Structure's diagrams — specs 3, 6, 7) also commit under this repo, not
+the public one: the D2 boundary is "all world data, including everything derived from it,
+is private". The ingest workflows (§4.2) push here from the public repo; the site build
+checks this repo out read-only at build time (§2).
 
 Sharding by country (and by year for contracts, by day for events) follows the same
 reasoning as the existing `data/feed/archive.json` rolling-window pattern: bounded file
 size, cheap incremental merge (union by `id`, fresh wins), and a retention window for the
-fast lane's event shards (see §8 — exact window is an open question, likely mirroring the
-existing `ARCHIVE_WINDOW_DAYS`/`RETENTION_DAYS` knobs).
+fast lane's event shards (see §8 — the private repo removes the public-history bloat
+pressure the original spec worried about, but the exact window is still tunable, likely
+mirroring the existing `ARCHIVE_WINDOW_DAYS`/`RETENTION_DAYS` knobs).
 
 ### 4.4 Worker summary-endpoint contract for near-live hydration
 
@@ -643,11 +739,14 @@ PUT  /world/ingest
 ```
 
 Same CORS/no-PII/founder-only ethos as the existing Worker: `/world/latest` is public
-because it carries no personal data (it's the same committed `WorldEvent` data the site
-will ship anyway, just fresher), and `/world/ingest` is write-gated exactly like the
+because it carries no personal data (it's the same `WorldEvent` rollup committed to the
+private data repo, just fresher), and `/world/ingest` is write-gated exactly like the
 existing `/events` export endpoint, just inverted (push instead of pull). No new
 always-on component — same Worker, same KV namespace, two new key-prefixes
-(`world:latest`, mirroring the existing `evt:` prefix convention).
+(`world:latest`, mirroring the existing `evt:` prefix convention). **This contract is
+unchanged by D2**: the mirror already carries only the small capped rollup, and the site
+consuming it is gated anyway — moving the full dataset to a private repo doesn't change
+what this endpoint exposes.
 
 ---
 
@@ -679,10 +778,15 @@ always-on component — same Worker, same KV namespace, two new key-prefixes
 
 ### How to add a world source (mirrors CLAUDE.md's "How to add a source")
 
-1. Add an entry to `data/world-sources.json` (or `.seed.json`) matching
-   `WorldSourceEntrySchema` — set `licenseTier` correctly per decision #4's two buckets
-   (get this wrong and the `Provenance` schema will reject every datum the fetcher
-   produces).
+This recipe is not just onboarding documentation — per the density mandate (D3) it is the
+**standing growth mechanism** for the registry: the ~15 seed sources are a floor, and
+this four-step loop is how the catalog grows continuously toward "everything that can be
+found/calculated reliably".
+
+1. Add an entry to `data/world-sources.json` (or `.seed.json`) **in the private
+   `khazana-world-data` repo** (§4.3, D2) matching `WorldSourceEntrySchema` — set
+   `licenseTier` correctly per decision #4's two buckets (get this wrong and the
+   `Provenance` schema will reject every datum the fetcher produces).
 2. Create `packages/world-ingest/src/sources/<id>.ts` implementing the matching
    `WorldIndicatorSource` / `WorldEventSource` / `WorldContractSource` interface — one
    file, one `fetch(ctx)`.
@@ -691,10 +795,11 @@ always-on component — same Worker, same KV namespace, two new key-prefixes
 
 ---
 
-## 6. Dependency note — this is spec 1 of 5
+## 6. Dependency note — this is spec 1 of 7
 
-Everything downstream is written *against* this contract. What each spec will pull from
-the Spine:
+Everything downstream is written *against* this contract. The sequence is Spine → Globe →
+Bias Lab → Ledger → Extras → Conflict Theaters → Government Structure. What each spec
+will pull from the Spine:
 
 - **Spec 2, the Globe** — `WorldEvent` (incl. `geo`, `time`, `category`, `severity`,
   `reportings[]`) for map placement and event clustering; `Outlet` (via
@@ -715,6 +820,22 @@ the Spine:
   for Atlas, etc.) turns out to need; likely reads `WorldSourceEntry`/`WorldRegistry` for
   a Sources-explorer-style Atlas equivalent, and `Provenance` for a shared "methodology"
   UI component reusable across Globe/Bias Lab/Ledger.
+- **Spec 6, Conflict Theaters** (`2026-07-07-atlas-conflict-theaters-design.md`, D6) —
+  reads `WorldEvent` in full: the `conflict` category, `severity`, `geo`, and
+  `reportings[]` are its raw material for theater pages, the globe-wide conflict lens,
+  and escalated event cards. It adds its own theater-owned schemas in a new flat core
+  file, `packages/core/src/world-theater.ts` (front-line/control-area layers, OSINT
+  source entries) — owned by spec 6, following the same "the derived layer owns its own
+  schemas" discipline as the Bias Lab's divergence index (§3.5) and its
+  `world-bias-lab.ts`: the Spine stays the stable source-of-truth layer while the
+  theater methodology iterates freely downstream.
+- **Spec 7, Government Structure** (`2026-07-07-atlas-government-structure-design.md`,
+  D5) — adds a new flat core file, `packages/core/src/world-government.ts`
+  (structure/power-flow schemas: system type, branches, chambers, federal levels,
+  appointment/accountability flows), owned by spec 7 under the same discipline. Its
+  dataset spine (Comparative Constitutions Project, DPI, V-Dem institutional variables,
+  ParlGov, IDEA) registers through `WorldSourceEntry` and carries `Provenance` like
+  every other world datum.
 
 ---
 
@@ -726,39 +847,50 @@ the Spine:
    ACLED, AllSides/Ad Fontes/MBFC — all have queryable APIs or clean bulk downloads.
    Ships the Globe, Bias Lab, and a *global* Government Ledger without touching India's
    harder sources.
-3. **India depth, phase 2**: NITI SDG Index, RBI DBIE, Lok Dhaba, Open Budgets India
+3. **India depth**: NITI SDG Index, RBI DBIE, Lok Dhaba, Open Budgets India
    (all have workable APIs/bulk data — these are NOT the blocker) feed
-   `CountryProfile.subnational[]` for India. The genuine blocker is **GeM/CPPP
+   `CountryProfile.subnational[]` for India. The genuinely hard piece is **GeM/CPPP
    procurement**, which needs a bespoke scraper + OCDS mapper (study `mcp-india-tenders`
-   first) — tracked as its own follow-up task once comparators-first `Contract` data is
-   live, not a gate on shipping the rest of India's depth.
+   first) — **pulled forward into the main build (D3)**, no longer a deferred phase 2.
+   It is sequenced after comparators-first `Contract` data is live so it never gates
+   shipping the rest of India's depth, but it is a scheduled task inside this
+   initiative, not a someday follow-up.
+4. **Continuous densification (D3)**: beyond the named seed sources, ingestion is
+   open-ended — the full WDI/V-Dem/OWID catalogs and any further reliably-ingestable
+   source get added continuously via §5's "How to add a world source" recipe, with the
+   Ledger spec's Indicator Browser absorbing the resulting catalog growth.
 
 ---
 
-## 8. Open questions for founder review
+## 8. Open questions — status after the 2026-07-07 founder review
 
-- **Fast-lane frequency.** ~20 min is this spec's proposal, balanced against GDELT's own
-  update cadence (~15 min) and Actions runner overhead per invocation. Worth confirming
-  against GDELT's actual rate-limit/ToS once the fetcher is being built, not assumed here.
-- **India GeM/CPPP scraper timing.** Build it as part of this initiative, or defer
-  entirely to whenever the Government Ledger spec's own build window lands? §7 phases it
-  as "comparators first," but the founder may want India procurement sooner given it's
-  likely the single most personally interesting dataset here.
-- **Reference-rater ToS.** AllSides/Ad Fontes/MBFC each have their own terms of use for
-  fetching/caching their ratings, even as attribution-only overlay data (never
+- **Fast-lane frequency — still open.** ~20 min is this spec's proposal, balanced against
+  GDELT's own update cadence (~15 min) and Actions runner overhead per invocation. Worth
+  confirming against GDELT's actual rate-limit/ToS once the fetcher is being built, not
+  assumed here.
+- **India GeM/CPPP scraper timing — CLOSED (D3).** Pulled forward into the main build:
+  sequenced after the API-backed comparator fetchers (§3.6, §7) but a scheduled task
+  inside this initiative, not a deferral. The "study `mcp-india-tenders` first" note
+  stands.
+- **Reference-rater ToS — still open.** AllSides/Ad Fontes/MBFC each have their own terms
+  of use for fetching/caching their ratings, even as attribution-only overlay data (never
   redistributed as khazana's own score). Worth a quick ToS read — possibly a Sonnet
   credibility-reasoning pass mirroring how Source Scout handles borderline sources —
   before `outlet-ingest` fetchers are built against them.
-- **`Contract.value` currency normalization.** Store native currency only (as specified in
-  §3.6), or also carry a USD-normalized figure with its own `Provenance` (FX rate source +
-  date)? Cross-country procurement comparison in the Ledger likely wants the latter; this
-  spec left `Contract` single-currency to keep v1 buildable and defers the normalized-USD
-  field to whichever of specs 2–4 first needs cross-country contract comparison.
-- **Fast-lane retention window.** `data/world/events/<date>.json` needs a bound (mirrors
-  the existing `ARCHIVE_WINDOW_DAYS`/`RETENTION_DAYS` pattern) — exact number of days
-  wasn't fixed here since it trades off "how far back can the Globe scroll" against
-  committed-repo size, a call better made once real event volume is observed.
-- **`world-pipeline.yml`'s concurrency group.** §4.2 flags folding the daily
+- **`Contract.value` currency normalization — still open.** Store native currency only (as
+  specified in §3.6), or also carry a USD-normalized figure with its own `Provenance` (FX
+  rate source + date)? Cross-country procurement comparison in the Ledger likely wants the
+  latter; this spec left `Contract` single-currency to keep v1 buildable and defers the
+  normalized-USD field to whichever downstream spec first needs cross-country contract
+  comparison.
+- **Fast-lane retention window — RELAXED by D2.** `data/world/events/<date>.json` still
+  needs a bound (mirrors the existing `ARCHIVE_WINDOW_DAYS`/`RETENTION_DAYS` pattern), but
+  the original tension — "how far back can the Globe scroll" vs. bloating the *public*
+  repo's committed history — is mostly gone now that event shards land in the private
+  `khazana-world-data` repo (§4.3). The exact window is still tunable, a call better made
+  once real event volume is observed, but it is now a housekeeping knob, not an
+  architecture pressure.
+- **`world-pipeline.yml`'s concurrency group — still open.** §4.2 flags folding the daily
   medium/slow-lane deploy job into the existing `khazana-pages-deploy` group as an
   implementation-time call rather than settling it here — depends on observed overlap
   between it and the existing `pipeline.yml`/`feed-refresh.yml` runs.
