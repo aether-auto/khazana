@@ -171,17 +171,35 @@ collection) and reports it in `apps/site/dist/_quarantine-report.json`. Then:
 
 Never commit on a red verify, a broken build, or with any of this run's quarantined slugs staged.
 
-Then commit and push **only** the kept Reads (all of which built clean):
+**Record the run's telemetry before committing.** So a future "published zero" is never confused
+with "the routine never fired," every run — this one included — ends by appending one line to the
+committed run-log ledger:
 
 ```bash
-git add apps/site/src/content/blog/
+pnpm exec tsx scripts/record-reads-run.mts --json '{
+  "candidates": <size of the surveyed CandidateSlate>,
+  "picked": <ideas picked in Stage 2>,
+  "published": <Reads kept and about to be committed>,
+  "dropped": [{"slug": "<slug>", "reason": "<why it did not ship>"}, ...],
+  "notes": "<optional free text>"
+}'
+```
+
+`dropped` must list **every** picked idea that did not make it to publish (writer abort, verify FAIL
+after the one repair cycle, build-resilient quarantine, ...) with a short reason each.
+
+Then commit and push **only** the kept Reads (all of which built clean) **plus** the run-log ledger:
+
+```bash
+git add apps/site/src/content/blog/ data/reads-run-log.jsonl
 git commit -m "chore: reads run $(date -u +%F)"
 git push
 ```
 
-Commit **only** `apps/site/src/content/blog/` — nothing else (not the ideation snapshot, not data
-artifacts, not report files). If, after all drops, **no** MDX remains staged, **do not commit and
-do not push** — exit cleanly having authored nothing.
+Commit only `apps/site/src/content/blog/` and `data/reads-run-log.jsonl` — nothing else (not the
+ideation snapshot, not data artifacts, not report files). If, after all drops, **no** MDX remains
+staged, do not commit the blog dir — but still record and commit the ledger (see the empty-slate
+path below) so the run is never silently invisible.
 
 **Rebase-and-retry on push, always.** `main` also receives concurrent pushes from the daily
 `pipeline.yml` and the weekly `scout-discover.yml` — a bare `git push` can be rejected as
@@ -198,22 +216,47 @@ silently drop a verified, built Read just because the first push attempt raced a
 
 You run unattended, so be robust:
 
-- **Nothing clears the bar in Stage 2** → author nothing, commit nothing, exit cleanly. This is a
-  valid outcome, not an error.
-- **Every writer aborts / every draft is dropped** → same: nothing to publish, commit nothing,
-  exit cleanly.
+- **Nothing clears the bar in Stage 2** → author nothing, exit clean — see *Empty-slate exit* below
+  (still record + commit the run-log ledger; never the blog dir).
+- **Every writer aborts / every draft is dropped** → same: nothing to publish — still record +
+  commit the run-log ledger, exit clean.
 - **Empty kept set (either of the two cases above)** → do **not** run `generate verify` at all —
   never with no slugs (it now errors by design) and never with `--all` (that would validate
   already-published Reads against this run's empty ledger and risk a spurious un-publish). Skip
-  straight to exit-clean.
+  straight to the empty-slate exit.
 - **`ideation-eval.mts` fails** → fall back to running `reads-survey` against the raw data dirs.
 - **`generate verify` stays red after dropping the flagged draft** → do not force a commit; drop
-  drafts until it exits 0 (in the worst case, commit nothing).
+  drafts until it exits 0 (in the worst case, commit nothing to the blog dir — still record + commit
+  the ledger).
 - **A Read gets quarantined by `build-resilient.mts` (fails the real build)** → drop that slug from
   the commit; never `git add` a Read that doesn't build. If the build ABORTS systemically, commit
-  nothing and investigate.
+  nothing to the blog dir (still record + commit the ledger) and investigate.
 - A single failed writer or verifier never aborts the whole run — drop that one Read and continue
   with the rest.
+
+### Empty-slate exit (record the run even when you author nothing)
+
+A run that authors zero Reads is a **valid, successful outcome** — but it must still be
+**distinguishable from the routine never having fired at all**. So even on this path, before
+exiting:
+
+```bash
+pnpm exec tsx scripts/record-reads-run.mts --json '{
+  "candidates": <size of the surveyed CandidateSlate, 0 if survey itself failed>,
+  "picked": <ideas picked in Stage 2, usually 0 here>,
+  "published": 0,
+  "dropped": [{"slug": "<slug or idea title>", "reason": "<why it did not ship>"}, ...],
+  "notes": "<why the slate was empty, e.g. nothing cleared the groundability/novelty/taste bar>"
+}'
+git add data/reads-run-log.jsonl
+git commit -m "chore: reads run $(date -u +%F) (no Reads authored)"
+git pull --rebase --autostash origin main
+git push
+```
+
+Never `git add` `apps/site/src/content/blog/` on this path — there is nothing kept to commit there.
+Use the same rebase-and-retry pattern as the publish path (up to 3 attempts) if the push is
+rejected as non-fast-forward.
 
 ---
 
