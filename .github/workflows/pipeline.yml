@@ -35,6 +35,7 @@ permissions:
   contents: write # commit generated MDX + push
   pages: write # deploy to GitHub Pages
   id-token: write # OIDC for actions/deploy-pages
+  issues: write # open/update the quarantined-Reads tracking issue (see "Escalate quarantined Reads")
 
 jobs:
   run:
@@ -181,6 +182,7 @@ jobs:
         run: pnpm tsx scripts/build-resilient.mts
 
       - name: Report quarantined Reads
+        id: quarantine-report
         if: always()
         run: |
           if [ -f apps/site/dist/_quarantine-report.json ]; then
@@ -188,12 +190,58 @@ jobs:
             cat apps/site/dist/_quarantine-report.json
             echo "::endgroup::"
             count=$(node -e "process.stdout.write(String((require('./apps/site/dist/_quarantine-report.json').quarantined||[]).length))")
+            echo "count=$count" >> "$GITHUB_OUTPUT"
             if [ "$count" != "0" ]; then
-              echo "::warning::$count Read(s) were quarantined (skipped) this build — see the quarantine report above."
+              echo "::error::$count Read(s) were quarantined (skipped) this build — deploy proceeds without them (build-resilient isolates one bad Read rather than blocking the site). See the quarantine report above; a tracking issue is opened/updated next."
             fi
           else
+            echo "count=0" >> "$GITHUB_OUTPUT"
             echo "No quarantine report emitted."
           fi
+
+      # Quarantine must be VISIBLE without blocking the deploy: the step above already
+      # annotates the run; this opens (or updates, if one is already open) a single
+      # deduplicated tracking issue listing the quarantined slugs. Never exits non-zero
+      # — build-resilient's whole point is to ship the good site while isolating the bad
+      # Read, and this step must preserve that.
+      - name: Escalate quarantined Reads (tracking issue)
+        if: always() && steps.quarantine-report.outputs.count != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const label = "read-quarantined";
+            const title = "⚠️ Read(s) quarantined from build";
+            const report = JSON.parse(fs.readFileSync("apps/site/dist/_quarantine-report.json", "utf8"));
+            const quarantined = report.quarantined || [];
+            const list = quarantined.map((q) => `- \`${q.slug}\`: ${q.reason}`).join("\n");
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = `${quarantined.length} Read(s) failed to build and were quarantined out of this deploy (the site still shipped — the deploy is NOT blocked).\n\n${list}\n\n- Workflow: ${context.workflow}\n- Run: ${runUrl}\n- Time: ${new Date().toISOString()}`;
+
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: label,
+            });
+            const existing = openIssues.find((issue) => issue.title === title);
+
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: [label],
+              });
+            }
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
