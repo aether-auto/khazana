@@ -183,6 +183,15 @@ Commit **only** `apps/site/src/content/blog/` — nothing else (not the ideation
 artifacts, not report files). If, after all drops, **no** MDX remains staged, **do not commit and
 do not push** — exit cleanly having authored nothing.
 
+**Rebase-and-retry on push, always.** `main` also receives concurrent pushes from the daily
+`pipeline.yml` and the weekly `scout-discover.yml` — a bare `git push` can be rejected as
+non-fast-forward simply because one of those landed a commit first. Never treat that rejection as
+a failure to publish: before pushing, and again on any rejection, run
+`git pull --rebase --autostash origin main` and retry the push, up to 3 attempts total. Only after
+3 rebase-and-retry attempts still fail should you stop and report the push as genuinely broken
+(e.g. a real conflict on `apps/site/src/content/blog/` requiring manual attention) — do not
+silently drop a verified, built Read just because the first push attempt raced another workflow.
+
 ---
 
 ## Empty-slate / robustness handling (this is a routine)
