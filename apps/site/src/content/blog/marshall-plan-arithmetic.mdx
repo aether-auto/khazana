@@ -1,0 +1,344 @@
+---
+title: "The Marshall Plan Arithmetic: Why $13 Billion Was Never Enough to Explain the Miracle"
+format: dispatch
+channels:
+  - history
+  - geopolitics
+  - finance
+summary: "Marshall Plan dollars were too small — under 3% of recipient GDP — to have financed Western Europe's postwar boom by themselves; the 1991 econometric reassessment that proved it found the real lever was the market-liberalizing conditions attached to the money, not the money."
+publishedAt: 2026-07-08T09:00:00.000Z
+sources:
+  - title: "J. Bradford De Long & Barry Eichengreen, “The Marshall Plan: History's Most Successful Structural Adjustment Program,” NBER Working Paper No. 3899 (Oct. 1991)"
+    url: "https://www.nber.org/papers/w3899"
+    tier: high
+    origin: curated
+  - title: "George C. Marshall, Address at Harvard University, 5 June 1947 (George C. Marshall Foundation archive)"
+    url: "https://www.marshallfoundation.org/the-marshall-plan/speech/"
+    tier: high
+    origin: curated
+  - title: "World Bank / Government of Ukraine / European Commission / UN, Fourth Rapid Damage and Needs Assessment (RDNA4), 25 Feb. 2025"
+    url: "https://www.worldbank.org/en/news/press-release/2025/02/25/updated-ukraine-recovery-and-reconstruction-needs-assessment-released"
+    tier: high
+    origin: researched
+  - title: "Groningen Growth and Development Centre, Maddison Project Database 2023 (Bolt & van Zanden), GDP per capita — data pulled via Our World in Data's grapher export"
+    url: "https://www.rug.nl/ggdc/historicaldevelopment/maddison/releases/maddison-project-database-2023"
+    tier: high
+    origin: researched
+  - title: "U.S. National Archives, Milestone Documents: The Marshall Plan (1948)"
+    url: "https://www.archives.gov/milestone-documents/marshall-plan"
+    tier: high
+    origin: researched
+  - title: "U.S. Department of State, Office of the Historian, Milestones 1945-1952: The Marshall Plan"
+    url: "https://history.state.gov/milestones/1945-1952/marshall-plan"
+    tier: high
+    origin: researched
+  - title: "Global Donor Platform for Rural Development, “OECD: Official Development Assistance (ODA) 2023 Figures and Trends”"
+    url: "https://www.donorplatform.org/post/oecd-official-development-assistance-oda-2023-figures-and-trends/"
+    tier: med
+    origin: researched
+  - title: "Council on Foreign Relations, “It Takes More Than Money to Make a Marshall Plan”"
+    url: "https://www.cfr.org/blog/it-takes-more-money-make-marshall-plan"
+    tier: med
+    origin: researched
+  - title: "Wikipedia, “Marshall Plan”"
+    url: "https://en.wikipedia.org/wiki/Marshall_Plan"
+    tier: med
+    origin: researched
+  - title: "Statista, “Distribution of Marshall Plan aid per country, 1948-1952” (ECA-derived disbursement figures)"
+    url: "https://www.statista.com/statistics/1227834/distribution-marshall-plan-by-country/"
+    tier: med
+    origin: researched
+  - title: "Harvard Gazette, “70 years ago, a Harvard Commencement speech outlined the Marshall Plan, and calmed a continent” (2017)"
+    url: "https://news.harvard.edu/gazette/story/2017/05/70-years-ago-a-harvard-commencement-speech-outlined-the-marshall-plan-and-calmed-a-continent/"
+    tier: med
+    origin: researched
+draft: false
+---
+
+import { Chart, Scrolly, ScrollyStep, DataTable, Annotation, StatBand, Pullquote, Callout, Detail, Definition, Diagram, EventCascade, Slopegraph, Scatter, Math, Sidenote } from "../../components/mdx";
+
+Here is the number everyone repeats: $13 billion. The Marshall Plan, the aid program that rebuilt Europe after the war, the textbook case for why foreign aid works when it's done right. Point to the rubble of 1945 and the boom of the 1950s and the money is the obvious explanation sitting between them.
+
+In 1991, two economists sat down and actually ran the arithmetic. J. Bradford De Long and Barry Eichengreen — writing a working paper for a conference on how to rebuild Eastern Europe after communism, using the Marshall Plan as the model everyone wanted to copy — tried to trace the dollars through the machinery of recovery: into factories, into roads, into the coal and steel that a starving continent needed. The dollars were real. Western Europe's boom was real. But when De Long and Eichengreen tried to connect the two with a number, the number kept coming out too small.
+
+<Chart
+  client:load
+  mark="line"
+  x="year"
+  y="gdp"
+  series="country"
+  height={380}
+  caption="Real GDP per capita, 1938–1990 (2011 international $, Maddison Project Database via Our World in Data). West Germany after 1945. Argentina — as rich as Continental Europe in 1938 — is the control case that never received Marshall aid."
+  data={[
+    { year: 1938, gdp: 7119, country: "France" }, { year: 1946, gdp: 6145, country: "France" }, { year: 1948, gdp: 7002, country: "France" }, { year: 1951, gdp: 8705, country: "France" }, { year: 1955, gdp: 9881, country: "France" }, { year: 1960, gdp: 11792, country: "France" }, { year: 1970, gdp: 18187, country: "France" }, { year: 1980, gdp: 23537, country: "France" }, { year: 1990, gdp: 28129, country: "France" },
+    { year: 1938, gdp: 7960, country: "Germany" }, { year: 1946, gdp: 3534, country: "Germany" }, { year: 1948, gdp: 4517, country: "Germany" }, { year: 1951, gdp: 6704, country: "Germany" }, { year: 1955, gdp: 9240, country: "Germany" }, { year: 1960, gdp: 12282, country: "Germany" }, { year: 1970, gdp: 17277, country: "Germany" }, { year: 1980, gdp: 22497, country: "Germany" }, { year: 1990, gdp: 25391, country: "Germany" },
+    { year: 1938, gdp: 9988, country: "United Kingdom" }, { year: 1946, gdp: 10751, country: "United Kingdom" }, { year: 1948, gdp: 10753, country: "United Kingdom" }, { year: 1951, gdp: 11354, country: "United Kingdom" }, { year: 1955, gdp: 12541, country: "United Kingdom" }, { year: 1960, gdp: 13780, country: "United Kingdom" }, { year: 1970, gdp: 17162, country: "United Kingdom" }, { year: 1980, gdp: 20612, country: "United Kingdom" }, { year: 1990, gdp: 26189, country: "United Kingdom" },
+    { year: 1938, gdp: 4981, country: "Italy" }, { year: 1946, gdp: 3805, country: "Italy" }, { year: 1948, gdp: 4814, country: "Italy" }, { year: 1951, gdp: 5958, country: "Italy" }, { year: 1955, gdp: 7453, country: "Italy" }, { year: 1960, gdp: 9430, country: "Italy" }, { year: 1970, gdp: 15492, country: "Italy" }, { year: 1980, gdp: 20959, country: "Italy" }, { year: 1990, gdp: 26003, country: "Italy" },
+    { year: 1938, gdp: 6491, country: "Argentina" }, { year: 1946, gdp: 7436, country: "Argentina" }, { year: 1948, gdp: 8372, country: "Argentina" }, { year: 1951, gdp: 8086, country: "Argentina" }, { year: 1955, gdp: 8348, country: "Argentina" }, { year: 1960, gdp: 8861, country: "Argentina" }, { year: 1970, gdp: 11639, country: "Argentina" }, { year: 1980, gdp: 13080, country: "Argentina" }, { year: 1990, gdp: 10254, country: "Argentina" }
+  ]} />
+
+Look at the shape of it. Germany's line collapses hardest during the war and rockets hardest after 1948. Argentina's line — a country as rich as Continental Europe going into the 1940s, and one that never received a dollar of Marshall aid — just plods, then eventually drops. That contrast is the whole paper in one picture, and almost none of it is explained by who got the biggest check. Britain, in fact, got the biggest check of all, and grew the slowest of the four.
+
+<StatBand
+  client:visible
+  caption="The headline numbers, and the ones that don't add up to a miracle. De Long & Eichengreen, NBER Working Paper 3899 (1991)."
+  stats={[
+    { value: 13.2, prefix: "$", suffix: "B", decimals: 1, label: "TOTAL MARSHALL AID", sub: "1948–1951, all recipients", href: "https://www.nber.org/papers/w3899" },
+    { value: 3, suffix: "%", label: "SHARE OF RECIPIENT GDP", sub: "combined, 1948–51", href: "https://www.nber.org/papers/w3899" },
+    { value: 20, suffix: "%", label: "SHARE OF GROSS INVESTMENT", sub: "in recipient countries", href: "https://www.nber.org/papers/w3899" },
+    { value: 2, suffix: "%", label: "MODELED INCOME BOOST", sub: "cumulative, via investment, by 1951", href: "https://www.nber.org/papers/w3899" }
+  ]} />
+
+Thirteen-point-two billion dollars, spread across four years and roughly a dozen countries, came to under three percent of those countries' combined national income and less than a fifth of their total investment. Run that through the standard growth arithmetic of the time — De Long and Eichengreen do exactly this, step by step — and the most generous estimate of the investment the Plan financed accounts for a national income about two percent higher than it otherwise would have been by 1951. Not two percent a year. Two percent, total, spread over the whole program. That is a real number and a genuinely useful cushion. It is not a miracle, and the two economists who ran the numbers say so in their own words: the effect was "hardly the sort of dramatic change trumpeted by champions of the Marshall Plan."
+
+This is not a story about the Marshall Plan being a failure or a waste. De Long and Eichengreen are emphatic on that point, more than once: "our central conclusion is that the Marshall Plan did matter." What they found is stranger and more useful than either the myth or a debunking — the dollars mattered, but not by being dollars. They mattered because of what receiving them required a government to do.
+
+## The speech that launched a myth
+
+The plan traces to one speech, and the speech is worth reading before the econometrics, because the conditionality argument is hiding inside it from the very beginning. On 5 June 1947, Secretary of State George Marshall stood in Harvard Yard's Tercentenary Theatre in front of some fifteen thousand people gathered for Commencement<Sidenote n={1} href="https://news.harvard.edu/gazette/story/2017/05/70-years-ago-a-harvard-commencement-speech-outlined-the-marshall-plan-and-calmed-a-continent/" source="Harvard Gazette, 2017">By most accounts the address “seemed unremarkable to most listeners at the time” — no numbers, no drama, delivered as one more item on a long Commencement program. Its significance became visible only in how European governments moved to respond to it over the following days.</Sidenote> and described an economy coming apart at the seams — not the visible rubble, but the invisible machinery underneath it.
+
+<Pullquote cite="George C. Marshall, Harvard University, 5 June 1947" href="https://www.marshallfoundation.org/the-marshall-plan/speech/" kind="document">
+The visible destruction was probably less serious than the dislocation of the entire fabric of European economy… The modern system of the division of labor upon which the exchange of products is based is in danger of breaking down.
+</Pullquote>
+
+That diagnosis was not exaggerated for effect. Two and a half years after V-E Day, Western Europe's postwar recovery had genuinely stalled. Foreign-asset reserves were depleted, export earnings couldn't cover the raw materials and machinery only the United States could still supply, and — per the U.S. State Department memoranda of the period, which De Long and Eichengreen quote directly — officials in Washington worried in earnest about <Annotation client:load term="a full breakdown of the division of labor" note="De Long & Eichengreen, NBER WP 3899, §II.A: internal State Department memoranda in 1946-47 warned of “an approaching breakdown of the division of labor between town and country” and feared economic collapse once wartime humanitarian aid ceased." /> between city and countryside, industry and agriculture. Prices in Italy had risen to thirty-five times their prewar level; France had knocked four zeroes off the franc. A brutal winter and a failed 1947 harvest left Western Europe with roughly four-fifths of its 1938 food supply feeding a population that had grown, not shrunk, since the war.
+
+What is easy to miss, reading the speech seventy-nine years later with the benefit of knowing what came next, is that Marshall never actually promised a check. He promised a negotiation.
+
+<Pullquote cite="George C. Marshall, Harvard University, 5 June 1947" href="https://www.marshallfoundation.org/the-marshall-plan/speech/" kind="quote">
+It would be neither fitting nor efficacious for this Government to undertake to draw up unilaterally a program designed to place Europe on its feet economically. This is the business of the Europeans… The initiative, I think, must come from Europe.
+</Pullquote>
+
+The program, Marshall insisted, had to be "a joint one, agreed to by a number, if not all, European nations," and American assistance should "provide a cure rather than a mere palliative." Conditionality — the idea that the money comes bundled with requirements about what the recipient government must do to get it — was not something bolted onto the Marshall Plan afterward by suspicious accountants in Washington. It was there in the founding sentence.
+
+Congress didn't act on the offer for ten months. Truman signed the Economic Cooperation Act of 1948 on 3 April 1948, creating the Economic Cooperation Administration to run it, and <Annotation client:load term="$13.3 billion" note="U.S. National Archives, Milestone Documents: The Marshall Plan — “Congress appropriated $13.3 billion for European recovery over four years.” The U.S. State Department's Office of the Historian gives the same figure. De Long and Eichengreen's own calculation from Economic Cooperation Administration disbursement records comes to $13.2 billion — the two-figure gap is ordinary rounding/accounting-window variance across sources, not a real disagreement." /> began flowing to sixteen countries plus West Germany, from mid-1948 through the end of 1951.
+
+## The postwar that didn't repeat the last one
+
+Before testing the money against the recovery, it's worth testing an assumption baked into the whole "aid explains it" story: that Western Europe's recovery was somehow *owed* to it, because the alternative — a repeat of what happened after the First World War — was the default. De Long and Eichengreen build their entire analysis around exactly this comparison, and it cuts against the folk image before a single Marshall dollar enters the picture.
+
+World War II was, by any measure, the worse catastrophe. More than forty million Europeans died by violence or starvation — more than half of them Soviet citizens, but even west of the postwar Soviet border, roughly one in twenty people were killed, closer to one in twelve in Central Europe. World War I's destruction, by contrast, was concentrated along a narrow, static trench line; World War II's bombing campaigns and mobile fronts spread material damage across the whole continent. By 1946, per-capita output in the three largest Western European economies had fallen more than 25% below 1938 levels — half again as steep a collapse as production had suffered relative to 1913 after the *first* war.
+
+And yet the second recovery outran the first one at every turn it can be measured. By 1949 — four years after the war — national income per capita in Britain, France, and West Germany combined was, in De Long and Eichengreen's words, "within a hair" of prewar levels: two years ahead of the pace set after 1918. By 1951, six years out, it stood more than 10% above prewar levels — a threshold post-World War I Europe hadn't reached even by 1929, on the eve of the Depression that would erase the gain anyway. Steel production surpassed its prewar level five years after 1945; after 1918 the same milestone took nine years. Cement production ran three years ahead of its post-WWI pace. Put plainly: it took post-WWI Europe roughly sixteen years to reach a level of recovery that post-WWII Europe reached in six — despite starting from a deeper hole.
+
+<DataTable client:load caption="Europe's external position, immediate postwar years — billions of 1946-47 dollars, annualized. De Long & Eichengreen (1991), Table 1, from United Nations balance-of-payments data."
+  columns={[
+    { key: "line", label: "Balance-of-payments line", type: "string" },
+    { key: "postww2", label: "1946–47", type: "number", align: "right" },
+    { key: "postww1", label: "1919–20", type: "number", align: "right" }
+  ]}
+  rows={[
+    { line: "European imports", postww2: 11.2, postww1: 11.8 },
+    { line: "European exports", postww2: 5.2, postww1: 4.6 },
+    { line: "Trade account", postww2: -6.0, postww1: -7.2 },
+    { line: "Net investment income", postww2: 0.4, postww1: 1.1 },
+    { line: "Total current account", postww2: -6.7, postww1: -4.8 },
+    { line: "Loans + grants from U.S.", postww2: 4.9, postww1: 2.8 }
+  ]} />
+
+This table is the detail that makes the "just add money" story hardest to sustain. Postwar Europe in 1946-47 — the two years *before* the Marshall Plan existed — was already receiving nearly twice the American loans and grants, in real terms, that it had received in the equivalent years after World War I ($4.9 billion versus $2.8 billion, annualized). And its current-account deficit was still *worse* than the 1919-20 shortfall, not better, because the collapse in Europe's overseas invisible earnings and the adverse shift in its terms of trade outran the extra aid. UNRRA and interim aid — the pre-Marshall Plan assistance — were already larger, in real terms, than total post-WWI financing had been, and postwar Europe was still stuck. Whatever changed the trajectory after 1948, it evidently wasn't simply "more dollars than last time": there had already been more dollars than last time, for two years, without a comparable turn.
+
+What was different, De Long and Eichengreen argue, was political. Post-WWI Europe spent the 1920s locked in what the authors call "wars of attrition" — protracted fights among labor, capital, and government over who would absorb the costs of reconstruction, fights that produced alternating hyperinflation and deflation instead of resolution. Germany's hyperinflation didn't peak until six years after 1918; France's postwar inflation ran for eight. Post-WWII Europe, still bearing worse physical damage and (through 1947) a worse external deficit, achieved financial stabilization in four. Explaining that four-versus-six-to-eight-year gap — not the dollar totals — is the puzzle the rest of the paper is built to solve.
+
+## Follow the money
+
+Start with the simplest possible test of the folk story: if the money explains the recovery, the countries that got the most money should have recovered the fastest.
+
+<Scrolly client:visible caption="Nine countries, one program, no obvious pattern">
+  <ScrollyStep graphic={
+      <Chart client:visible mark="bar" x="country" y="aid" height={340}
+        caption="Marshall Plan aid disbursed, 1948–1951 ($ millions). De Long & Eichengreen give the top four directly; the rest are standard ECA-derived disbursement figures."
+        data={[
+          { country: "Britain", aid: 3200 }, { country: "France", aid: 2700 }, { country: "Italy", aid: 1500 }, { country: "W. Germany", aid: 1400 }, { country: "Netherlands", aid: 1128 }, { country: "Belgium", aid: 777 }, { country: "Austria", aid: 488 }, { country: "Denmark", aid: 385 }, { country: "Norway", aid: 372 }
+        ]} />
+    }>
+    **Step one — who got the checks.** Britain received the single largest transfer of Marshall Plan money, $3.2 billion — nearly a quarter of the entire program. France was second at $2.7 billion. Austria, Denmark, and Norway each received under half a billion. If dollars build recoveries, this bar chart should predict the next one almost exactly.
+  </ScrollyStep>
+  <ScrollyStep graphic={
+      <Chart client:visible mark="bar" x="country" y="growth" height={340}
+        caption="Real GDP per capita growth, 1948→1951 (%). Maddison Project Database via Our World in Data."
+        data={[
+          { country: "Britain", growth: 5.6 }, { country: "France", growth: 24.3 }, { country: "Italy", growth: 23.8 }, { country: "W. Germany", growth: 48.4 }, { country: "Netherlands", growth: 9.9 }, { country: "Belgium", growth: 14.4 }, { country: "Austria", growth: 43.2 }, { country: "Denmark", growth: 13.1 }, { country: "Norway", growth: 10.2 }
+        ]} />
+    }>
+    **Step two — who actually grew.** It doesn't predict the next chart at all. West Germany's per-capita output rose 48% in three years — the fastest of any recipient — on the fourth-largest aid package. Austria, a small recipient at under $500 million, still managed 43% growth. Britain, the biggest check by far, grew a modest 5.6%: dead last of the nine.
+  </ScrollyStep>
+  <ScrollyStep graphic={
+      <Scatter client:visible x="aid" y="growth" fit="linear" height={340}
+        xLabel="aid received, 1948–51 ($B)" yLabel="GDP per capita growth, 1948→51 (%)"
+        caption="No positive relationship between aid received and growth achieved (r ≈ −0.14, n = 9). Sources: De Long & Eichengreen (top four); Statista/ECA disbursement figures (remainder); growth from Maddison Project Database."
+        data={[
+          { country: "Britain", aid: 3.2, growth: 5.6 }, { country: "France", aid: 2.7, growth: 24.3 }, { country: "Italy", aid: 1.5, growth: 23.8 }, { country: "W. Germany", aid: 1.4, growth: 48.4 }, { country: "Netherlands", aid: 1.128, growth: 9.9 }, { country: "Belgium", aid: 0.777, growth: 14.4 }, { country: "Austria", aid: 0.488, growth: 43.2 }, { country: "Denmark", aid: 0.385, growth: 13.1 }, { country: "Norway", aid: 0.372, growth: 10.2 }
+        ]} />
+    }>
+    **Step three — put them on one axis.** Plot aid received against growth achieved and the fitted line is close to flat, if anything tilting slightly the *wrong* way. Nine countries is a small sample and this is not a rigorous regression — but it is exactly the pattern De Long and Eichengreen flag as "intriguing" in their own conclusion: American leverage was strongest in Germany and weakest in Britain, and growth ran in that same order.
+  </ScrollyStep>
+</Scrolly>
+
+<Callout kind="key-insight" title="The pattern the folk image can't explain">
+If Marshall dollars financed the recovery directly, the size of a country's check should predict the size of its boom. It doesn't — not even loosely. That single fact is what sends De Long and Eichengreen looking for a different mechanism.
+</Callout>
+
+## Channel one: did the dollars build the factories?
+
+The most obvious channel for aid to matter is investment: postwar Europe was capital-starved, and dollars could, in principle, have bought the machine tools and material a shattered continent couldn't otherwise afford. De Long and Eichengreen chase this channel with real numbers, drawing on a companion calculation by Eichengreen and Marc Uzan, and the chain of arithmetic is worth walking end to end — because it is the paper's central falsification, laid out in the authors' own words.
+
+<EventCascade client:visible caption="The investment channel, arithmetic by arithmetic. De Long & Eichengreen (1991); investment-split estimate from Eichengreen & Uzan (1991)."
+  nodes={[
+    { kind: "cause", label: "Marshall aid = under 3% of combined recipient national income, 1948–51",
+      detail: "$13.2 billion spread across four years and roughly a dozen economies — and less than a fifth of their combined gross investment. On its face, too small to have financed a reconstruction boom by itself." },
+    { kind: "effect", label: "Of every aid dollar, about 65¢ went to current production and 35¢ to new investment",
+      detail: "Eichengreen & Uzan (1991), cited in De Long & Eichengreen: countries that received more Marshall aid did invest more — the channel is real, just small. The estimated social return on that investment was high, roughly 50% a year: an extra dollar invested raised output by about 50 cents the following year." },
+    { kind: "effect", label: "Aid worth 3% of output raised the investment share of national income by about 1 percentage point",
+      detail: "And a one-point rise in the investment share of national income raises the growth rate by roughly half a percentage point a year — a standard, unremarkable growth-accounting relationship for the period." },
+    { kind: "turning-point", label: "Cumulative effect over the four Marshall Plan years: national income about 2% higher than it otherwise would have been by 1951",
+      detail: "In the authors' own words: “hardly the sort of dramatic change trumpeted by champions of the Marshall Plan… not enough to make the Marshall Plan a decisive factor in the long boom of the post-World War II period.”" }
+  ]}
+/>
+
+Two percent is not nothing — it is a genuine, real, measurable cushion, and De Long and Eichengreen never say otherwise. But it is a rounding error next to what the “folk image” of the Marshall Plan claims for it, and it cannot be the mechanism behind growth rates that ran at 6-12% a year in the fastest-recovering economies.
+
+<Detail summary="Go deeper: De Long & Eichengreen weren't the first to say the money was too small">
+The paper positions itself explicitly against — and partly alongside — the British economic historian Alan Milward, whose 1984 book *The Reconstruction of Western Europe 1945-51* had already argued the Marshall Plan's direct economic contribution was overstated, and that Western Europe's recovery would likely have proceeded on a similar timetable without it. De Long and Eichengreen credit Milward as “correct in arguing that Marshall Plan aid was simply not large enough to significantly stimulate Western European growth by accelerating the replacement and expansion of its capital stock” — the investment-channel finding above is, in effect, a formal econometric confirmation of Milward's qualitative claim. But they explicitly part ways with him on the conclusion: where Milward's skepticism about the investment channel shaded into skepticism about the Marshall Plan's importance overall, De Long and Eichengreen argue that skepticism is “overstated,” because it misses the channel that did matter. The disagreement in the literature, in other words, isn't about whether the dollars were small — everyone by 1991 agreed they were — it's about whether smallness meant irrelevance.
+</Detail>
+
+## Channel two: did the dollars rebuild the roads and rails?
+
+The second obvious channel is public infrastructure — the bridges, rail yards, and ports that Allied strategic bombing and retreating German demolition crews had spent years destroying. Here the paper's finding is almost the opposite of what the folk image assumes: by the time Marshall aid started flowing in 1948, there wasn't much infrastructure left to fix.
+
+<DataTable client:load caption="Western European rail freight recovery, indexed to 1938 = 100. De Long & Eichengreen (1991), citing the UN Economic Survey of Europe, 1948 — quoted figures, not chart estimates."
+  columns={[
+    { key: "measure", label: "Measure", type: "string" },
+    { key: "period", label: "Period", type: "string" },
+    { key: "value", label: "Index (1938 = 100)", type: "number", align: "right" }
+  ]}
+  rows={[
+    { period: "1938", measure: "Tons of freight loaded", value: 100 },
+    { period: "Q4 1946", measure: "Tons of freight loaded (incl. Britain)", value: 97 },
+    { period: "1947", measure: "Freight, ton-kilometers (distance-weighted)", value: 125 }
+  ]} />
+
+By the last quarter of 1946 — a full eighteen months before the first Marshall Plan ship sailed — Western European railways were already loading freight at 97% of their prewar volume. Weighted for distance traveled, 1947 rail traffic actually ran a quarter *above* prewar levels. Water systems and the electrical grid saw comparably fast repair. The bridges got rebuilt, the track got relaid, and none of it waited for the Economic Cooperation Administration. Marshall Plan dollars did not go toward public spending shares rising, either: De Long and Eichengreen note that countries receiving large amounts of aid actually saw government spending *fall* as a share of national income relative to other countries — the opposite of what a public-works-financed reconstruction story would predict.
+
+## Channel three: did the dollars break the bottlenecks?
+
+The third candidate channel is more subtle: even a market that's basically working can seize up if one critical input — coal, say — is scarce enough to choke everything downstream of it. Marshall dollars, being hard currency in a dollar-starved world, could buy the coal Europe couldn't otherwise afford. De Long and Eichengreen run the numbers on exactly this scenario, twice, from two different angles.
+
+<DataTable client:load caption="The coal-bottleneck ceiling, two ways. De Long & Eichengreen (1991), §V — back-of-envelope calculation and the 1950 Italian input-output table (U.S. Mutual Security Agency, 1953)."
+  columns={[
+    { key: "calc", label: "Calculation", type: "string" },
+    { key: "detail", label: "Basis", type: "string" },
+    { key: "ceiling", label: "Max. output loss without imports", type: "string" }
+  ]}
+  rows={[
+    { calc: "Back-of-envelope, Western Europe", detail: "460Mt consumed in 1938 vs 400Mt produced in 1948; ~7% of consumption came from U.S. imports", ceiling: "≤ 3%" },
+    { calc: "Italy input-output table, 1950", detail: "$72M (13 billion lire) of coal imports; Leontief production functions, no substitution allowed", ceiling: "3.2% of national product" }
+  ]} />
+
+Even under the harshest assumption the input-output table allows — that Italian industry could not substitute at all, and idle resources stayed idle — losing every ton of imported coal would have cost the economy about three percent of a year's output. That is the *upper bound* on the whole bottleneck channel, coal being the worst-supplied input of the period. It is a real cost. It is not remotely large enough to be the difference between the stagnation of the 1930s and the supergrowth of the 1950s.
+
+<Callout kind="note" title="Three channels, three small numbers">
+Investment: ~2% cumulative income boost. Infrastructure: negligible — mostly repaired before the aid arrived. Bottlenecks: ≤3% ceiling on output, at the single worst-supplied input. None of the three folk-image channels, even added together, gets close to explaining a boom that ran at double the prewar and interwar growth rate for two decades.
+</Callout>
+
+## The Argentina mirror
+
+If the money wasn't doing the direct work, De Long and Eichengreen needed a counterfactual — some way to see what postwar Europe might plausibly have looked like *without* whatever the Marshall Plan actually supplied. They found one sitting in plain sight: Argentina.
+
+Before the war, Argentina was not a developing country by any reasonable definition. In 1913, Buenos Aires ranked among the top twenty cities in the world for telephones per capita; by 1929 Argentina had roughly the same density of motor vehicles as France or Germany. From 1870 to 1950, De Long and Eichengreen write, Argentina belonged "in the same class as Canada or Australia." It received no Marshall Plan aid, no American reconstruction dollars, no counterpart-fund conditionality — nothing. And in response to the Depression and the war, its government under Juan Perón chose a different economic path than Western Europe did: price and import controls, a marketing board that suppressed farm prices to subsidize urban wages, hostility to foreign capital, and a redistribution of income enforced through bureaucratic allocation rather than markets.
+
+Perón's program worked, for a while — nearly half a decade of rapid growth, redistributing income from rural exporters to urban workers who, by his lights, had never received their fair share. Then the trade cycle turned and the arithmetic of the policy caught up with it. Suppressed farm prices discouraged production even as domestic consumption rose; squeezed between the two, exports collapsed to a fraction of their already-depressed 1930s level. That left the government facing a foreign-exchange shortage and three unpalatable options: devalue (which would cut the urban living standards Perón's coalition depended on), borrow abroad (a political non-starter for a nationalist government), or ration imports directly. Argentina's economist Carlos Díaz Alejandro, in the account De Long and Eichengreen lean on, describes what rationing meant in practice — <Annotation client:load term="raw materials for existing factories came first, machinery for new capacity came last" note="Carlos Díaz Alejandro, Essays on the Economic History of the Argentine Republic (1970), quoted in De Long & Eichengreen, NBER WP 3899, §VI.A: “First priority was given to raw materials and intermediate goods imports needed to maintain existing capacity in operation. Machinery and equipment for new capacity could neither be imported nor produced domestically. A sharp decrease in the rate of real capital formation…followed.”" /> — and a government that had built its coalition on redistribution never fully reversed the controls, because the political forces it had mobilized still had to be appeased. Investment in new capacity starved for a generation. Growth didn't collapse all at once; it just never restarted.
+
+<Slopegraph client:visible beforeLabel="1950 (index)" afterLabel="1990 (index)"
+  caption="GDP per capita, indexed to 1950 = 100. Real, sourced independently of De Long & Eichengreen's own Figure 9 — Maddison Project Database via Our World in Data, 1950–1990."
+  data={[
+    { label: "Italy", before: 100, after: 465.9 },
+    { label: "Germany", before: 100, after: 410.5 },
+    { label: "France", before: 100, after: 340.3 },
+    { label: "United Kingdom", before: 100, after: 236.8 },
+    { label: "Argentina", before: 100, after: 129.0 }
+  ]} />
+
+By 1990, Italy's real income per person had grown to more than four-and-a-half times its 1950 level; even Britain, the laggard among the four European economies, had grown to more than double. Argentina, still recovering from the same starting line, had grown by less than a third. By 1960, Argentina had already fallen behind Italy; within another generation it had, in De Long and Eichengreen's words, "dropped from First to Third World status" — the fate the two economists explicitly hold up as the road Western Europe did *not* take.
+
+<Pullquote cite="De Long & Eichengreen, NBER Working Paper 3899 (1991)" href="https://www.nber.org/papers/w3899" kind="quote">
+The Marshall Plan should thus be thought of as a large and highly successful structural adjustment program.
+</Pullquote>
+
+The comparison isn't offered as a controlled experiment — Argentina differs from postwar Europe in a dozen ways that have nothing to do with aid or policy. But it does the specific job De Long and Eichengreen need it to do: it shows that a rich, industrialized economy, hit by comparable economic shocks in the 1930s and 40s, *could* choose the overregulated, control-heavy path that many in Western Europe's own governments — with fresh memories of the Depression and deep distrust of unregulated markets — were seriously considering in 1947. <Definition client:visible term="structural adjustment" def="a package of policy conditions — market liberalization, fiscal discipline, exchange-rate stabilization — attached to foreign lending or aid, requiring the recipient government to change how its economy is run, not just receive more money." /> is a term more associated with the IMF and World Bank programs of the 1980s than with 1948. De Long and Eichengreen's use of it as their title is deliberately provocative: the argument is that the Marshall Plan invented the genre.
+
+## The lever that actually moved
+
+So what, mechanically, did the conditionality consist of? Not moral suasion. The Economic Cooperation Administration had real financial teeth, built into the plumbing of every single disbursement.
+
+<Diagram client:visible caption="The counterpart-fund mechanism: how $1 of aid bought control over $2 of real resources"
+  nodes={[
+    { id: "us", label: "U.S. Treasury", x: 0, y: 0, kind: "input" },
+    { id: "aid", label: "Marshall Plan dollar aid", x: 1, y: 0, kind: "process" },
+    { id: "imports", label: "ECA-approved U.S. imports", x: 2, y: -1, kind: "output" },
+    { id: "counterpart", label: "Recipient counterpart fund (matching local currency, 1:1)", x: 2, y: 1, kind: "store" },
+    { id: "eca", label: "ECA approval / veto", x: 3, y: 1, kind: "decision" },
+    { id: "budget", label: "Domestic budget, debt retirement, investment", x: 4, y: 1, kind: "output" }
+  ]}
+  edges={[
+    { from: "us", to: "aid", label: "appropriated", kind: "data" },
+    { from: "aid", to: "imports", label: "buys U.S. goods", kind: "data" },
+    { from: "aid", to: "counterpart", label: "matching deposit required", kind: "control" },
+    { from: "counterpart", to: "eca", label: "spend only with sign-off", kind: "control" },
+    { from: "eca", to: "budget", label: "released if stabilization terms met", kind: "control" }
+  ]} />
+
+For every dollar of Marshall Plan aid a country received, its government had to deposit a matching amount of its own currency into a "counterpart fund" — money that could then be spent internally only with Economic Cooperation Administration approval. De Long and Eichengreen call this exactly what it was: "each dollar of Marshall Plan aid thus gave the U.S. government control over two dollars' worth of real resources." The lever wasn't hypothetical. Britain's counterpart funds went overwhelmingly toward retiring public debt, at U.S. insistence. France's release was held up in 1948 until the government affirmed its commitment to a balanced budget — an episode French officials found genuinely infuriating, per De Long and Eichengreen's account of Vincent Auriol's memoirs. West Germany's release was delayed until its nationalized railway cut spending to match revenue. And when Britain's Labour government moved to nationalize the coal industries of the Ruhr — then under British occupation zone control — Marshall and General Lucius Clay lobbied against it and won: the U.S. was, as the authors put it bluntly, "not interested in having Marshall Plan aid support policies of nationalization."
+
+<Detail summary="Go deeper: the head of the whole operation was a car-company executive, on purpose">
+Congress deliberately kept the Marshall Plan out of the regular State Department bureaucracy. Republican senators, wary that aid money would either be wasted or used to entrench Democratic patronage the way New Deal programs had, insisted the Economic Cooperation Administration be a separate agency with a built-in sunset clause. Its chief, Paul Hoffman, had been president of Studebaker — Dean Acheson later described watching him preach "his doctrine of salvation by exports" to the British Foreign Secretary and called him, admiringly, "an evangelist" for market-oriented reconstruction. The institutional design mattered as much as the personnel: an agency built to expire, run by an outsider whose job was explicitly to make policy demands most professional diplomats would have shied from.
+</Detail>
+
+## The social contract nobody voted for
+
+There's a second, harder-to-quantify channel that De Long and Eichengreen treat as decisive even though they can't put a clean number on it: the Marshall Plan bought time for a political bargain that the postwar economies desperately needed and might not have reached on their own.
+
+Picture the alternative. If workers, employers, and government in a shattered economy all try to maximize their own current share of a shrunken pie — higher wages, higher profits, higher transfers, none of them affordable simultaneously — the result is exactly what happened across most of Europe after the *First* World War: alternating inflation and deflation, financial chaos, and years of stalled growth while competing groups fought a "war of attrition" over who would absorb the losses. Germany's post-WWI hyperinflation took six years to arrive and longer to fix; France's postwar inflation ran for eight. After the *Second* World War, internal price stabilization across Western Europe took four.
+
+Marshall aid, worth roughly two and a half percent of recipient national income, didn't make the underlying sacrifice disappear — someone still had to accept a lower real wage, a higher tax bill, a devalued currency. What it did was shrink how much sacrifice was needed to close the gap between what everyone wanted and what the economy could actually produce, at exactly the moment governments were negotiating who would bear it.
+
+<Callout kind="key-insight" title="The arithmetic behind the political payoff">
+De Long and Eichengreen's own illustration: if total claims on output exceeded what the economy actually produced by five to seven-and-a-half percent — plausible for a government trying to satisfy postwar wage demands, farm-price demands, and reconstruction needs at once — Marshall aid worth two-and-a-half percent of GDP could cut the remaining gap, and the sacrifice needed to close it, by a third to a half. (In their separate "war of attrition" illustration, they note that unresolved distributional conflict could just as easily push the excess-demand gap to seven or eight percent — the range in which financing the shortfall through money creation risks the kind of runaway inflation that consumed Weimar Germany and postwar France.) That is a small transfer doing an outsized political job: making compromise cheap enough that governments chose it instead of a ruinous standoff.
+</Callout>
+
+The pattern that emerges from the country data is consistent with this story in a way the raw aid numbers aren't: De Long and Eichengreen note, almost in passing, that American leverage over domestic policy was strongest in West Germany, weaker in France and Italy, and weakest in Britain — and that the postwar growth ranking ran in exactly that order, fastest to slowest. Where the conditions bit hardest, the reorientation toward markets happened fastest, and growth followed.
+
+De Long and Eichengreen frame this as a coordination problem, and the framing is worth spelling out because it explains why a modest transfer could tip a whole economy onto a different path. Labor and management in any postwar economy face a choice between two stable equilibria. In one, each side fights to maximize its current share — labor pushes wages up, management resists, government prints money to paper over the gap — and the result is the inflation-strikes-instability spiral that defined the 1920s. In the other, both sides trade current compensation for a credible promise of faster long-run growth: workers moderate wage demands, employers reinvest rather than distribute profits, and government commits to demand management that keeps employment high without stoking inflation. The second equilibrium makes everyone better off, eventually — but only if both sides trust the other to hold up their end, and nothing about a devastated, distrustful postwar economy manufactures that trust on its own. Marshall Plan money, and the labor-peace conditions quietly attached to it — non-Communist unions were the ones that received backing, and the labor movements that split over whether to welcome American aid at all left the continent's Communist parties isolated on the losing side of that argument — gave both sides a reason to believe the bargain would hold long enough to be worth taking. Once workers and management actually started coordinating on the cooperative equilibrium, in other words, neither side had an obvious reason to defect back to the fight — which is a plausible account of why the "social contract" didn't just start the boom but *sustained* it through two full decades of growth that ran at 4.8% a year between 1953 and 1973, more than double the pace of 1870-1913 or the interwar years.
+
+## So what: the arithmetic that still applies
+
+<Math client:visible tex="\underbrace{3\%\text{ of GDP}}_{\text{aid transfer}} \;\Rightarrow\; \underbrace{+1\text{pp}}_{\text{investment share}} \;\Rightarrow\; \underbrace{+0.5\text{pp/yr}}_{\text{growth}} \;\Rightarrow\; \underbrace{+2\%}_{\text{income, cumulative}}"
+  caption="The whole direct-transfer channel, in one line. It is real. It is also nowhere near large enough to be the mechanism — which is why De Long & Eichengreen go looking for the one that is." />
+
+This isn't an argument that money doesn't matter in postwar reconstruction. It's an argument about which number does the work. Every dollar-denominated reconstruction debate since 1991 keeps running into the same shape of question, and the Marshall Plan arithmetic is still the sharpest tool available for answering it.
+
+Take the live case. The World Bank, the government of Ukraine, the European Commission, and the UN jointly estimated in February 2025 that Ukraine's reconstruction and recovery needs run to <Annotation client:load term="$524 billion over the next decade" note="World Bank/Ukraine government/European Commission/UN, Fourth Rapid Damage and Needs Assessment (RDNA4), 25 Feb. 2025: $524B (€506B) total need through the next decade; direct damage of $176B as of 31 Dec. 2024; the total is approximately 2.8× Ukraine's estimated 2024 GDP." /> — about 2.8 times Ukraine's entire 2024 GDP. Inflation-adjusted estimates of the Marshall Plan's own value cluster around $135–140 billion in current dollars — a tight, well-corroborated range from two independent sources, not a single number to lean on too hard. Even generously scaled up, Ukraine's need dwarfs the historical comparison everyone reaches for, on sheer dollar terms.
+
+<StatBand client:visible caption="Money alone, then and now. Sources: World Bank RDNA4 (2025); CFR; OECD via Global Donor Platform."
+  stats={[
+    { value: 137.5, decimals: 1, prefix: "$", suffix: "B", label: "MARSHALL PLAN, INFLATION-ADJUSTED", sub: "≈$135–140B range, 4 recipient years", href: "https://www.cfr.org/blog/it-takes-more-money-make-marshall-plan" },
+    { value: 524, prefix: "$", suffix: "B", label: "UKRAINE RECONSTRUCTION NEED", sub: "next decade, RDNA4 (Feb. 2025)", href: "https://www.worldbank.org/en/news/press-release/2025/02/25/updated-ukraine-recovery-and-reconstruction-needs-assessment-released" },
+    { value: 208, prefix: "$", suffix: "B", label: "AFGHANISTAN + IRAQ RECONSTRUCTION", sub: "through 2017, worse outcomes", href: "https://www.cfr.org/blog/it-takes-more-money-make-marshall-plan" },
+    { value: 0.37, decimals: 2, suffix: "%", label: "DAC AID / DONOR GNI, 2023", sub: "vs. UN 0.7% target", href: "https://www.donorplatform.org/post/oecd-official-development-assistance-oda-2023-figures-and-trends/" }
+  ]} />
+
+But the dollar comparison is, per De Long and Eichengreen's own argument, close to the wrong comparison to be making. The Council on Foreign Relations makes essentially the same point from the other direction: U.S. reconstruction spending in Afghanistan and Iraq ran past $208 billion through 2017 — more than the entirety of Marshall aid, in nominal dollars, with nothing like the same result. CFR's own diagnosis lands almost exactly on De Long and Eichengreen's: Marshall-era Europe had "a capable, largely apolitical bureaucratic infrastructure" to execute a coherent program and a secured, uncontested territory to execute it in, and Afghanistan and Iraq had neither. Money without functioning institutions and enforceable conditions is not a smaller version of the Marshall Plan. It is a different kind of thing wearing the same price tag.
+
+<Detail summary="Go deeper: does today's aid system even attempt Marshall-style conditionality?">
+Global development assistance today runs on a different model almost entirely — the OECD's Development Assistance Committee members gave $223.7 billion in official development assistance in 2023, a record, but that came to just 0.37% of their combined national income, under half the long-standing UN target of 0.7%. It is also spread across dozens of donors and hundreds of recipient programs rather than one administrator with counterpart-fund veto power over a handful of allied governments rebuilding from a shared, bounded crisis. Some of that dispersion is a feature — a plural donor system is harder for any single government to dominate — but it also means the concentrated, high-leverage conditionality De Long and Eichengreen credit for the Marshall Plan's effect has no obvious modern equivalent at anything like the same scale.
+</Detail>
+
+None of this is an argument against reconstruction aid, in Ukraine or anywhere else. It's an argument about what question to ask before writing the check. "How much money" is the question the folk image of the Marshall Plan trains people to ask, because it's the question with the satisfying, single-number answer: $13 billion, or $524 billion, or $208 billion. De Long and Eichengreen's actual finding — run through investment channels, infrastructure channels, bottleneck channels, and found wanting at every one — is that the number was never where the leverage lived. The leverage lived in what a government had to agree to do differently to keep the money coming.
+
+<Callout kind="note" title="Methodology">
+<strong>Primary source.</strong> J. Bradford De Long & Barry Eichengreen, “The Marshall Plan: History's Most Successful Structural Adjustment Program,” NBER Working Paper No. 3899, read in full from the original PDF. All investment/infrastructure/bottleneck arithmetic, the Argentina comparison framing, the counterpart-fund mechanism, and all direct quotations are drawn from this paper unless otherwise cited. De Long and Eichengreen do not argue the Marshall Plan was ineffective — their explicit conclusion is that it mattered, via a different channel than popularly assumed, and this piece represents that distinction throughout rather than overstating a “debunking.”
+<br /><br />
+<strong>Data.</strong> Country-level GDP-per-capita series (1938–1990) are the Maddison Project Database 2023 (Bolt & van Zanden) via Our World in Data, pulled with <code>fetch-data.py</code> — an independent modern dataset used deliberately instead of hand-reading the values off De Long & Eichengreen's own scanned 1991 bar charts (their Figures 1, 2, 3, and 9), which report similar but not identical figures because they measure total GDP rather than GDP per capita over a different base year. The two sources agree on every qualitative pattern used here (Germany's sharpest wartime collapse and fastest postwar rebound; Britain's comparatively flat trajectory in both directions; Argentina's relative stagnation from the 1950s on) even though exact percentages differ by measure — that agreement across independent sources, not identity of the numbers, is what's load-bearing. The top-four Marshall aid figures (UK, France, Italy, West Germany) are De Long & Eichengreen's own; the remaining five countries' aid figures are standard ECA-derived disbursement figures via Statista, corroborated in rank order by Wikipedia's independently reported aid-share percentages.
+<br /><br />
+<strong>Where sources disagree.</strong> Total Marshall Plan aid is reported as $13.2 billion (De Long & Eichengreen's own reconstruction of ECA records) versus $13.3 billion (National Archives; State Department) — ordinary rounding variance across sources, not a substantive dispute. Inflation-adjusted "Marshall Plan in today's dollars" estimates vary by index and base year; this piece uses the $135–140 billion range where two independent sources (CFR at $135B/2018 dollars; Wikipedia at $137B/2025 dollars) closely agree, rather than citing outlier estimates as high as $200 billion found elsewhere. The nine-country aid-vs-growth scatter is illustrative, not a rigorous regression — nine data points cannot establish statistical significance, and it is presented as such.
+</Callout>

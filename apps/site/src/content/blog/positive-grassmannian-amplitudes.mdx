@@ -1,0 +1,358 @@
+---
+title: "The Positive Grassmannian: A 1930s Matrix Condition That Turned Out to Compute Particle Collisions"
+format: primer
+channels: ["science", "data-science", "ideas"]
+summary: "A strict notion of matrix positivity from the 1930s generates a cell decomposition of the Grassmannian that, seven decades later, turned out to be the exact combinatorics behind which particle-collision outcomes are physically allowed — with locality and unitarity falling out of the geometry rather than being assumed."
+publishedAt: 2026-07-08T09:00:00.000Z
+sources:
+  - title: "Postnikov, A. — \"Total Positivity, Grassmannians, and Networks\" (2006, arXiv:math/0609764)"
+    url: "https://arxiv.org/abs/math/0609764"
+    tier: high
+    origin: researched
+  - title: "Postnikov, A. — \"Positive Grassmannian and Polyhedral Subdivisions\" (ICM 2018 survey, arXiv:1806.05307)"
+    url: "https://math.mit.edu/~apost/papers/positive_Grassmannian.pdf"
+    tier: high
+    origin: researched
+  - title: "Arkani-Hamed, Bourjaily, Cachazo, Goncharov, Postnikov, Trnka — \"Scattering Amplitudes and the Positive Grassmannian\" (arXiv:1212.5605, CUP 2016)"
+    url: "https://arxiv.org/abs/1212.5605"
+    tier: high
+    origin: researched
+  - title: "Arkani-Hamed, N. & Trnka, J. — \"The Amplituhedron\" (arXiv:1312.2007, JHEP 2014)"
+    url: "https://arxiv.org/abs/1312.2007"
+    tier: high
+    origin: researched
+  - title: "Williams, L. K. — \"Enumeration of Totally Positive Grassmann Cells\" (Adv. Math. 190(2), 2005; arXiv:math/0307271)"
+    url: "https://arxiv.org/abs/math/0307271"
+    tier: high
+    origin: researched
+  - title: "\"What Is the Positive Grassmannian and Why Does It Show Up Everywhere?\" — Quanta Magazine (2026)"
+    url: "https://www.quantamagazine.org/what-is-the-positive-grassmannian-and-why-does-it-show-up-everywhere-20260625/"
+    tier: med
+    origin: curated
+  - title: "Wolchover, N. — \"A Jewel at the Heart of Quantum Physics\" — Quanta Magazine (Sept 17, 2013)"
+    url: "https://www.quantamagazine.org/physicists-discover-geometry-underlying-particle-physics-20130917/"
+    tier: med
+    origin: researched
+  - title: "\"Physicists Reveal a Quantum Geometry That Exists Outside of Space and Time\" — Quanta Magazine (Sept 25, 2024)"
+    url: "https://www.quantamagazine.org/physicists-reveal-a-quantum-geometry-that-exists-outside-of-space-and-time-20240925/"
+    tier: med
+    origin: researched
+  - title: "\"Amplituhedron\" — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Amplituhedron"
+    tier: med
+    origin: researched
+  - title: "\"Totally Positive Matrix\" — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Totally_positive_matrix"
+    tier: med
+    origin: researched
+  - title: "\"MHV Amplitudes\" — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/MHV_amplitudes"
+    tier: med
+    origin: researched
+draft: false
+---
+
+import { RunnableCode, Chart, Annotation, StatBand, Math, Callout, Definition, DataTable, Diagram, Stepper, Quiz, Pullquote } from "../../components/mdx";
+
+Suppose someone hands you a shape. Not a metaphor — an actual faceted, many-dimensional solid, built from nothing but the rule that all of its coordinates stay non-negative. Then they tell you that computing this shape's volume also answers a hard question in particle physics: which outcomes of a collision between subatomic particles are physically possible, and with what probability. Nowhere in the shape's own definition does space appear. Nowhere does time appear. Nowhere does a quantum field appear. And yet the volume comes out right.
+
+That is not a thought experiment. It is a real, working piece of mathematical physics, and its raw material is not exotic at all — it is a condition on matrices first written down in the 1930s, decades before anyone thought to point it at a particle collider. This primer builds the whole chain: what that matrix condition actually says, how it grows into a shape called the positive Grassmannian, how that shape gets sliced into cells by a purely combinatorial rule, and how, in 2013, physicists realized the cells were already computing something they had spent decades computing a much harder way.
+
+<StatBand client:visible caption="One object, discovered three times, in three different centuries' worth of mathematics."
+  stats={[
+    { value: 1930, label: "TOTAL POSITIVITY DEFINED", sub: "Schoenberg, zeros of polynomials", group: false, href: "https://en.wikipedia.org/wiki/Totally_positive_matrix" },
+    { value: 2006, label: "CELL DECOMPOSITION PROVEN", sub: "Postnikov, positroid stratification", group: false, href: "https://arxiv.org/abs/math/0609764" },
+    { value: 2013, label: "THE AMPLITUHEDRON", sub: "Arkani-Hamed & Trnka", group: false, href: "https://arxiv.org/abs/1312.2007" }
+  ]} />
+
+## The wrong model of "positive"
+
+Here is the mental model almost everyone brings to the word "positive matrix": a grid of numbers, each one greater than zero. That is the whole idea — a local, entrywise property, boring by construction. Under that model, a "positive Grassmannian" would just be a restatement of ordinary positivity dressed up in fancier language, and there would be no reason to expect it to encode anything as structured as which particle collisions are allowed.
+
+The wrong model breaks the moment you ask a slightly harder question of a 2×2 matrix: not "are the entries positive?" but "is the *determinant* positive?" Predict the answer, then run it.
+
+<RunnableCode client:visible caption="Every entry of this matrix is positive. Predict the determinant before you run it."
+  code={`// The naive model: "positive matrix" = every entry > 0. Nothing more.
+const A = [
+  [1, 4],
+  [1, 2],
+];
+
+const allEntriesPositive = A.flat().every(v => v > 0);
+const determinant = A[0][0] * A[1][1] - A[0][1] * A[1][0];
+
+console.log("Every entry positive? " + allEntriesPositive);
+console.log("The 2x2 minor (determinant) = " + determinant);
+return determinant;`} />
+
+The determinant comes back negative. Every single entry of `A` is strictly positive, and yet the one number that measures the matrix as a *whole* — the determinant, which is also the matrix's only 2×2 minor — is not. Entrywise positivity and the positivity of a matrix's minors are two entirely different conditions, and the gap between them is exactly where the interesting mathematics lives.
+
+<Callout kind="key-insight" title="The move that breaks the wrong model">
+"Positive matrix" (every entry &gt; 0) and <Annotation client:load term="totally positive matrix" note="A matrix in which every minor — the determinant of every square submatrix, of every size, using every choice of rows and columns — is strictly positive, not merely every entry. First defined by Schoenberg (1930) while estimating the number of real zeros of a polynomial; developed through the 1930s–40s by Gantmacher and Krein for the vibration theory of mechanical systems. Wikipedia, “Totally Positive Matrix.”" /> are not the same claim, and the second is vastly more restrictive. It is the second one — every minor, not just every entry — that turns out to matter.
+</Callout>
+
+## Total positivity, properly defined
+
+Fix the definition precisely, because everything downstream depends on getting it exactly right.
+
+<Math client:visible tex="\Delta_{I,J}(A) > 0 \quad \text{for every } I \subseteq \{1,\dots,m\},\ J \subseteq \{1,\dots,n\},\ |I| = |J|"
+  label="(1)"
+  numbered
+  caption="An m×n matrix A is totally positive when every minor Δ_{I,J}(A) — the determinant of the submatrix formed by rows I and columns J — is strictly positive, for every size and every choice of I and J. (“Totally nonnegative” relaxes “&gt; 0” to “≥ 0.”)"
+  steps={[
+    { tex: "\\Delta_{I,J}(A)", note: "the determinant of the submatrix using exactly the rows in I and the columns in J — one real number per choice of I, J" },
+    { tex: "|I| = |J| = 1", note: "the smallest minors are just the entries themselves, so total positivity implies entrywise positivity — but, as the sandbox above showed, not the reverse" },
+    { tex: "|I| = |J| = \\min(m,n)", note: "the largest possible minors are the maximal minors; on a Grassmannian these become the central object of this whole primer, the Plücker coordinates" }
+  ]} />
+
+The condition is old. Totally positive matrices were introduced by Schoenberg in 1930 while studying how many real roots a polynomial could have, and independently rediscovered through the 1930s by Gantmacher and Krein while analyzing the vibration modes of mechanical systems — springs, beams, strings under tension. Neither motivation had anything to do with combinatorics or geometry; total positivity showed up because it happened to be the exact condition that guaranteed certain oscillation patterns behaved themselves.
+
+The two motivations turn out to be more closely related than they look. Schoenberg's own route into the subject was through what he called a *variation-diminishing* property: multiply a sequence of numbers by a totally positive matrix, and the result can have no more sign changes — no more times it crosses from positive to negative and back — than the sequence you started with. A matrix with that property cannot manufacture new oscillations out of nothing; it can only smooth them away. That is precisely the behavior Gantmacher and Krein needed from the other direction, for entirely mechanical reasons: a vibrating beam's natural modes are ordered by how many times they cross zero along its length, and a system whose governing matrix is totally positive is one whose modes stay cleanly ordered rather than tangling into each other. Two unrelated problems — counting polynomial roots, and keeping a beam's oscillation modes untangled — turned out to need the exact same algebraic condition on a matrix, which is usually a sign that the condition is not an accident of either problem but a structural fact worth studying for its own sake. Schoenberg's variation-diminishing framing would later seed an entire field, spline theory, built on exactly this idea of a matrix that can only simplify a shape, never complicate it.
+
+Rather than take total positivity's structure on faith, verify one instance of it directly, using a construction Gantmacher and Krein themselves proved is totally positive: a <Annotation client:load term="Vandermonde matrix" note="V_{ij} = x_i^{\\,j} for a chosen sequence of numbers x_1 < x_2 < … The theorem — every minor of V is strictly positive whenever the x_i are positive and increasing — is due to Gantmacher and Krein (1930s–41). Wikipedia, “Totally Positive Matrix.”" /> built from three positive, increasing numbers. The sandbox below brute-forces *every* minor — all nineteen of them, from the nine individual entries up through the full 3×3 determinant — and checks that each one is strictly positive, exactly as equation (1) demands.
+
+<RunnableCode client:visible caption="A Vandermonde matrix from x = [1, 2, 3]. The code checks every minor of every size — not just the determinant."
+  code={`function det(M) {
+  const n = M.length;
+  if (n === 1) return M[0][0];
+  if (n === 2) return M[0][0] * M[1][1] - M[0][1] * M[1][0];
+  let sum = 0;
+  for (let j = 0; j < n; j++) {
+    const minor = M.slice(1).map(row => row.filter((_, c) => c !== j));
+    sum += (j % 2 === 0 ? 1 : -1) * M[0][j] * det(minor);
+  }
+  return sum;
+}
+
+function combinations(arr, k) {
+  const results = [];
+  function helper(start, combo) {
+    if (combo.length === k) { results.push(combo.slice()); return; }
+    for (let i = start; i < arr.length; i++) {
+      combo.push(arr[i]);
+      helper(i + 1, combo);
+      combo.pop();
+    }
+  }
+  helper(0, []);
+  return results;
+}
+
+// Vandermonde matrix: V[i][j] = x_i^j, for three positive, increasing nodes.
+const x = [1, 2, 3];      // <-- try other positive, increasing values
+const n = x.length;
+const ground = [0, 1, 2];
+const V = x.map(xi => Array.from({ length: n }, (_, j) => Math.pow(xi, j)));
+
+console.log("V =");
+V.forEach(row => console.log("  " + row.join("  ")));
+
+let allPositive = true;
+let count = 0;
+for (let k = 1; k <= n; k++) {
+  for (const rows of combinations(ground, k)) {
+    for (const cols of combinations(ground, k)) {
+      const sub = rows.map(r => cols.map(c => V[r][c]));
+      const m = det(sub);
+      count++;
+      if (m <= 0) allPositive = false;
+    }
+  }
+}
+console.log(count + " minors checked, every size, every row/column choice.");
+console.log("Every single one strictly positive? " + allPositive);
+return allPositive;`} />
+
+All nineteen minors come back positive. Nothing about this matrix was rigged by hand for the demo — it is the standard construction, and the theorem guarantees the result for *any* positive, strictly increasing set of nodes, of any size. That rigidity — a single ordering condition on three numbers forcing dozens of independent determinants to all land on the same side of zero — is the first hint that total positivity is not a decoration on a matrix but a deep structural constraint. The next step is to ask what happens when you stop thinking of the matrix as a grid of numbers and start thinking of it as a *point in a geometric space*.
+
+## From matrices to a shape: the Grassmannian
+
+A k×n matrix of rank k, up to row operations, is exactly the data needed to specify a k-dimensional linear subspace of n-dimensional space — pick k independent directions, and any invertible change of basis among them describes the same subspace. The space of *all* such k-planes is called the <Annotation client:load term="Grassmannian" note="Gr(k,n): the space whose points are the k-dimensional linear subspaces of n-dimensional space, each represented by a k×n matrix of rank k, modulo row operations (i.e., modulo the action of GL(k))." /> , written $\mathrm{Gr}(k,n)$. It generalizes objects you already know: $\mathrm{Gr}(1,n)$ is ordinary projective space (every line through the origin), and $\mathrm{Gr}(k,n)$ for larger k is the natural higher-dimensional analogue.
+
+A k×n matrix's maximal minors — its k×k determinants, one for every choice of k columns out of n — are called its <Definition client:visible term="Plücker coordinates" def="The maximal (k×k) minors of a k×n matrix representative of a point in Gr(k,n): the natural projective coordinates on the Grassmannian, defined up to one overall nonzero scale factor and constrained by algebraic identities called the Plücker relations." />. Row operations rescale every Plücker coordinate by the *same* overall nonzero factor, so — up to that one shared scale — they are honest coordinates on $\mathrm{Gr}(k,n)$, the exact higher-dimensional descendant of "slope" for a line. The <Annotation client:load term="positive Grassmannian" note="Written Gr_{≥0}(k,n): the subset of Gr(k,n) where some (equivalently, every, after fixing an orientation) representative matrix has all of its Plücker coordinates non-negative. Postnikov, “Total Positivity, Grassmannians, and Networks” (2006)." /> is the region where a representative matrix can be chosen so every one of those Plücker coordinates comes out non-negative — total positivity, promoted from a property of one matrix to a property that carves out a specific region of an entire geometric space.
+
+Two features of this construction are worth sitting with before the example, because both come back later. First, $\mathrm{Gr}(k,n)$ itself has dimension $k(n-k)$ — for $\mathrm{Gr}(2,4)$ that is 4, and that number will resurface as the dimension of the positive Grassmannian's largest cell. Second, "modulo row operations" is doing real work: two matrices that look completely different as grids of numbers can represent the *same* k-plane, and only the Plücker coordinates — not the raw entries — are the honest, basis-independent way to talk about a point of the Grassmannian. That is exactly why the definition of the positive region is stated in terms of them rather than in terms of any one matrix's entries.
+
+Try it directly. $\mathrm{Gr}(2,4)$ — two-planes in four-space — has $\binom{4}{2}=6$ Plücker coordinates, always tied together by one fixed algebraic identity no matter what matrix you plug in.
+
+<RunnableCode client:visible caption="Two points of Gr(2,4). One is positive; the other, from a single column swap, is not."
+  code={`function minor2(M, c1, c2) {
+  return M[0][c1] * M[1][c2] - M[0][c2] * M[1][c1];
+}
+
+function pluckers(M) {
+  const p12 = minor2(M, 0, 1), p13 = minor2(M, 0, 2), p14 = minor2(M, 0, 3);
+  const p23 = minor2(M, 1, 2), p24 = minor2(M, 1, 3), p34 = minor2(M, 2, 3);
+  return { p12, p13, p14, p23, p24, p34 };
+}
+
+function report(name, M) {
+  const p = pluckers(M);
+  const list = [p.p12, p.p13, p.p14, p.p23, p.p24, p.p34];
+  const relation = p.p12 * p.p34 - p.p13 * p.p24 + p.p14 * p.p23;
+  console.log(name + ": (p12,p13,p14,p23,p24,p34) = " + list.join(", "));
+  console.log("  Plücker relation p12*p34 - p13*p24 + p14*p23 = " + relation + " (an identity — always 0)");
+  console.log("  All six positive? " + list.every(v => v > 0));
+}
+
+// A point of Gr(2,4): a 2-plane in 4-space, as a 2x4 matrix.
+const M1 = [
+  [1, 1, 1, 1],
+  [0, 1, 2, 4],
+];
+
+// The same plane's neighbor, with the last two columns swapped.
+const M2 = [
+  [1, 1, 1, 1],
+  [0, 1, 4, 2],
+];
+
+report("M1", M1);
+report("M2", M2);
+return "compare M1 and M2";`} />
+
+Both matrices satisfy the Plücker relation — that identity holds for *every* 2×4 matrix, positive or not, because it is a fact of linear algebra, not a physical assumption. But only `M1` lands in the positive Grassmannian: all six of its Plücker coordinates are positive. Swap the order of two columns in `M2` and one coordinate flips sign, and the point falls outside $\mathrm{Gr}_{\ge 0}(2,4)$. Positivity, in other words, is not a property of the k-plane in isolation — it depends on a fixed labeling, a fixed order, of the n ambient directions. That dependence on ordering is not a bug to route around; it is the exact thing that lets the positive Grassmannian be sliced apart combinatorially, which is the next and most important idea in this primer.
+
+## Carving the shape into cells
+
+Here is the question Alexander Postnikov answered in 2006: inside $\mathrm{Gr}_{\ge 0}(k,n)$, some Plücker coordinates can be pushed all the way to zero while the point stays inside the positive region (the others just have to stay non-negative). Group every point by *which* Plücker coordinates are forced to vanish, and you partition the whole positive Grassmannian into pieces. Postnikov proved that this partition is extremely well-behaved.
+
+The simplest case makes the whole idea concrete without any of the higher-dimensional bookkeeping. For $k=1$, $\mathrm{Gr}(1,n)$ is projective space, and $\mathrm{Gr}_{\ge 0}(1,n)$ — points representable by a vector with every coordinate non-negative, up to positive rescaling — is exactly an $(n-1)$-simplex, the general positroid stratification's simplest case. A cell, in this case, is simply the set of points whose support (which coordinates are allowed to be nonzero) is a fixed subset of the n coordinate directions.
+
+<Diagram client:visible caption="The cell decomposition of Gr(1,3)_{≥0} — literally the face lattice of a triangle. Each cell is named by which coordinates are allowed to be nonzero."
+  nodes={[
+    { id: "123", label: "all three > 0\n(top cell, dim 2)", x: 2, y: 0, kind: "process" },
+    { id: "12", label: "x3 = 0\n(dim 1)", x: 0, y: 1, kind: "default" },
+    { id: "13", label: "x2 = 0\n(dim 1)", x: 2, y: 1, kind: "default" },
+    { id: "23", label: "x1 = 0\n(dim 1)", x: 4, y: 1, kind: "default" },
+    { id: "1", label: "only x1 > 0\n(dim 0)", x: 0, y: 2, kind: "output" },
+    { id: "2", label: "only x2 > 0\n(dim 0)", x: 2, y: 2, kind: "output" },
+    { id: "3", label: "only x3 > 0\n(dim 0)", x: 4, y: 2, kind: "output" }
+  ]}
+  edges={[
+    { from: "123", to: "12" }, { from: "123", to: "13" }, { from: "123", to: "23" },
+    { from: "12", to: "1" }, { from: "12", to: "2" },
+    { from: "13", to: "1" }, { from: "13", to: "3" },
+    { from: "23", to: "2" }, { from: "23", to: "3" }
+  ]} />
+
+One top-dimensional cell (the open triangle interior), three edges, three vertices — seven cells in total, and every nonempty subset of the three coordinates gets exactly one. That pattern generalizes cleanly: $\mathrm{Gr}(1,n)_{\ge 0}$ always decomposes into $2^n - 1$ cells, one per nonempty subset of the n coordinates. It already grows fast.
+
+<Chart client:visible mark="line" x="n" y="cells" height={300}
+  caption="Number of positroid cells in Gr(1,n) — one cell per nonempty subset of n coordinates, 2^n − 1. Even the simplest case (k=1) grows combinatorially; higher k grows far faster, which is exactly why an explicit counting formula mattered."
+  data={[
+    { n: 2, cells: 3 }, { n: 3, cells: 7 }, { n: 4, cells: 15 }, { n: 5, cells: 31 },
+    { n: 6, cells: 63 }, { n: 7, cells: 127 }, { n: 8, cells: 255 }, { n: 9, cells: 511 }, { n: 10, cells: 1023 }
+  ]} />
+
+For $k>1$, "which coordinates vanish" is no longer enough — you need "which *combinations* of columns fail to form a basis," which is precisely a <Definition client:visible term="matroid" def="The combinatorial pattern of which subsets of a collection of vectors are linearly independent — an abstraction of 'which columns can serve as a basis' that keeps none of the actual numbers, only the yes/no pattern." />. Postnikov's 2006 theorem is that the totally nonnegative part of each matroid stratum is, again, a single well-behaved cell, and — this is the load-bearing result — every such cell is homeomorphic to an open ball (his Theorem 3.5), so that gluing all of them together, across every dimension, builds $\mathrm{Gr}_{\ge 0}(k,n)$ as one <Definition client:visible term="CW complex" def="A space built by gluing cells (open balls) of increasing dimension along their boundaries — the way a cube's faces, edges, and vertices fit together, generalized to arbitrary dimension and arbitrary numbers of cells." />, with the decomposition also equal to the common refinement of n different Schubert decompositions.
+
+The "common refinement of n Schubert decompositions" phrase is worth unpacking, because it explains why the positroid decomposition is a genuinely new object and not a repackaging of something classical. The ordinary (non-positive) Grassmannian already has a well-known cell decomposition, due to Schubert in the nineteenth century: fix one ordering of the n coordinate directions, and stratify $\mathrm{Gr}(k,n)$ by comparing each k-plane against that single fixed flag. That decomposition is coarser and depends on the one ordering you chose. Postnikov's positroid cells are what you get by demanding compatibility with *every* cyclic rotation of the ordering at once — refining the Schubert cells n different ways and intersecting all of them. It is a strictly finer, strictly more symmetric decomposition, and total positivity is exactly the extra ingredient that makes the finer version tractable rather than combinatorially hopeless.
+
+Postnikov additionally proved the same cells can be labeled in at least five equivalent combinatorial languages — proof that this is genuine structure, not an artifact of one particular way of writing it down.
+
+<DataTable client:load caption="Five equivalent ways to name one positroid cell — Postnikov (2006) proves they all agree."
+  columns={[
+    { key: "object", label: "Combinatorial object", type: "string" },
+    { key: "description", label: "What it records", type: "string" }
+  ]}
+  rows={[
+    { object: "Decorated permutation", description: "A permutation of the n boundary points, with each fixed point marked either a “loop” or a “coloop”" },
+    { object: "Grassmann necklace", description: "A cyclic sequence of length n recording, at every step, which columns must stay in the basis" },
+    { object: "Plabic graph", description: "A planar bicolored network in a disk; the cell is parametrized by its boundary measurements" },
+    { object: "Γ-diagram", description: "A Young-diagram filling with 0s and 1s obeying a simple rectangle-avoidance rule" },
+    { object: "Alternating-strand diagram", description: "n strands drawn on a circle, crossing in one fixed alternating pattern" }
+  ]} />
+
+Walk the whole idea through the smallest genuinely two-dimensional case — $\mathrm{Gr}(2,4)$ — using the exact matrix from the sandbox above.
+
+<Stepper client:visible mode="reveal" caption="From a matrix to a named cell of Gr(2,4)_{≥0}"
+  steps={[
+    { title: "Fix a point of Gr(2,4)", body: "<p>Take a 2-plane in 4-space, in some basis a 2×4 matrix — such as M1 from the sandbox above. Its exact entries won’t matter for what follows; only which of its six Plücker coordinates happen to be zero does.</p>" },
+    { title: "Read off six numbers", body: "<p>Every 2×4 matrix produces six 2×2 minors, the Plücker coordinates <em>p12, p13, p14, p23, p24, p34</em>, always tied together by the same algebraic identity — the Plücker relation the sandbox printed and confirmed at exactly zero.</p>" },
+    { title: "Ask which ones are forced to vanish", body: "<p>Fix a pattern: say “p34 must be zero, and the rest are free.” That pattern of forced zeros is a matroid — pure combinatorics, with no reference to the actual numbers in the matrix, only to which columns can serve as a basis.</p>" },
+    { title: "Matroid plus positivity is the cell", body: "<p>A positroid cell is every point of Gr(2,4) sharing that exact zero-pattern, restricted to where every non-zero coordinate stays strictly positive. M1, with all six coordinates positive, sits in the unique top cell — nothing forced to vanish — of the full dimension k(n−k) = 2×2 = 4.</p>" },
+    { title: "Walk to the boundary — still a cell", body: "<p>Push one coordinate to zero, say p34 → 0, and the point falls onto a lower-dimensional stratum. Postnikov’s Theorem 3.5 says that stratum is, again, homeomorphic to an open ball — the cells nest and glue all the way down, the way a cube’s faces glue down to edges glue down to vertices.</p>" }
+  ]} />
+
+The dimension figure in step four — $k(n-k)$ — is the dimension of the positive Grassmannian itself, and the tree-level version of the same formula, $4k$, is about to matter a great deal, because it is exactly the number a physicist named Nima Arkani-Hamed rediscovered from a completely different direction.
+
+## A polynomial that keeps escaping pure math
+
+Before turning to physics, it's worth pausing on how strange the reach of this decomposition already is, purely within mathematics. Enumerating the cells of $\mathrm{Gr}_{\ge 0}(k,n)$ by dimension is itself a hard combinatorial problem — the $2^n-1$ count only worked because $k=1$ is the easy case — and it took until 2005 for Lauren Williams to produce an explicit generating function that counts the cells of $\mathrm{Gr}_{\ge 0}(k,n)$ by dimension for every k and n, a formula whose Euler characteristic works out to exactly 1 and which specializes to a new q-analog of the classical Eulerian numbers, interpolating between the Eulerian numbers, the Narayana numbers, and the ordinary binomial coefficients.
+
+<Pullquote cite="Lauren Williams, quoted by Quanta Magazine (2026)" href="https://www.quantamagazine.org/what-is-the-positive-grassmannian-and-why-does-it-show-up-everywhere-20260625/" kind="quote">
+Particles or waves that are being flung together and then they sort of repel in some way.
+</Pullquote>
+
+That is Williams's own attempt, decades later, to explain why the same counting polynomial she derived for abstract cell dimensions kept resurfacing in problems that have nothing to do with Grassmannians on their face: probability distributions for particle positions in traffic-flow models, ribosome movement along a strand of messenger RNA, the interaction of shallow water waves. None of those connections is the subject of this primer, and Quanta's report of them should be read as exactly what it is — an interview account of where Williams's own formula has kept turning up, not an independently verified theorem in each of those fields. But it sets the stage for the one place the connection *has* been worked out in full mathematical detail, which is the rest of this primer: particle scattering in quantum field theory.
+
+## The physics no one saw coming
+
+By the early 2010s, calculating the probability of a specific outcome from a particle collision — a <Annotation client:load term="scattering amplitude" note="A number (in general, a function of the particles' momenta and helicities) whose squared magnitude gives the probability of a specific collision outcome — the central quantity quantum field theory is used to compute." /> — meant summing over Feynman diagrams: every possible way the interaction could unfold internally, drawn out, each one contributing its own algebraic term. For simple processes this is fast. It is not simple processes that break the method.
+
+<StatBand client:visible caption="A single collision process, computed the traditional way."
+  stats={[
+    { value: 220, label: "FEYNMAN DIAGRAMS", sub: "one 2-gluon-to-4-gluon process", group: false, href: "https://www.quantamagazine.org/physicists-discover-geometry-underlying-particle-physics-20130917/" },
+    { value: 500, suffix: " pages", label: "ALGEBRA REQUIRED", sub: "an 8-gluon scattering process", group: false, href: "https://www.quantamagazine.org/physicists-discover-geometry-underlying-particle-physics-20130917/" },
+    { value: 1, label: "VOLUME, INSTEAD", sub: "the amplituhedron’s replacement for both", group: false, href: "https://www.quantamagazine.org/what-is-the-positive-grassmannian-and-why-does-it-show-up-everywhere-20260625/" }
+  ]} />
+
+In 2012, Arkani-Hamed and five collaborators — Bourjaily, Cachazo, Goncharov, Postnikov himself, and Trnka — found the reason those thousands of terms are so redundant. They showed that <Annotation client:load term="on-shell diagrams" note="Diagrams built from elementary three-particle amplitudes glued along internal lines that are put fully on their physical mass shell — not the virtual, off-shell lines Feynman diagrams use. arXiv:1212.5605." /> , a diagrammatic tool for building scattering amplitudes in a particular class of gauge theories, correspond one-to-one with the positroid cells of $\mathrm{Gr}(k,n)$ — the very cells Postnikov had classified six years earlier, for reasons that had nothing to do with physics. The physically important operation of <Annotation client:load term="BCFW recursion" note="Britto–Cachazo–Feng–Witten recursion: builds higher-point tree amplitudes from lower-point ones via a complex shift of two external momenta. Arkani-Hamed et al. showed BCFW deformations correspond to specific gluing operations on positroid cells. arXiv:1212.5605." /> , which builds bigger amplitudes out of smaller ones, turned out to correspond to a specific gluing move on the cells themselves. The amplitude for a given process is classified by an integer k that matches, exactly, the k in $\mathrm{Gr}(k,n)$ — physicists call the classification <Annotation client:load term="N^kMHV" note="Amplitudes are graded by 'MHV degree' k: k=0 is the maximally-helicity-violating (MHV) case, whose simple closed form was found by Parke and Taylor in 1986; k=1 is NMHV, and so on. In the Grassmannian language this k is literally the k of Gr(k,n). Wikipedia, “MHV Amplitudes”; arXiv:1312.2007." /> , and it lines up with Postnikov's k coordinate exactly.
+
+That correspondence — physics process to positroid cell — was already a striking discovery, and it comes with a concrete worked example small enough to write out. The first nontrivial case is k=1, the "NMHV" amplitude, and the constraint $n \ge k+4$ derived below already rules out four points as an example of it: at n=4 the amplitude is the trivial MHV case, computed by a single on-shell diagram — the paper's own eq. (2.20), the four-particle "box." The smallest genuine NMHV example is five points. There, the paper shows, up to relabeling there is exactly *one* NMHV object: the cell of $\mathrm{Gr}(1,5)$ with all five columns non-vanishing (the top cell of the $2^n-1$ decomposition from earlier in this primer), denoted by the five-bracket symbol $[1\,2\,3\,4\,5]$ (their eq. 12.1). That single R-invariant is not an arbitrary piece of bookkeeping — it corresponds to exactly that one positroid cell, and every other NMHV invariant, at any larger n, is the same object relabeled onto a different choice of five indices, $[a\,b\,c\,d\,e]$. The redundancy of Feynman diagrams and the cleanliness of the Grassmannian picture are two views of the same object: Feynman diagrams count physical processes one at a time without knowing they are secretly walking around a cell complex, while the Grassmannian picture sees the whole complex at once and reads off which cells contribute.
+
+The same 2012 paper, all 158 pages and 264 figures of it, also generalizes past tree-level processes to loop diagrams — the corrections that come from a particle briefly, virtually, looping back on itself before the collision completes. In the Grassmannian language, an L-loop amplitude is captured not by a single k-plane but by a k-plane together with L extra 2-planes living in the complementary directions, and the loop integrand is extracted by integrating a specific differential form over that whole positive-geometric configuration.
+
+What Arkani-Hamed and Trnka did with the whole picture the following year was stranger still.
+
+## The amplituhedron
+
+In 2013, Arkani-Hamed and Trnka defined a new geometric object by literally applying a linear map to every point of the positive Grassmannian at once, sweeping out a higher-dimensional shape they called the amplituhedron.
+
+<Math client:visible tex="Y_{\alpha I} = C_{\alpha a}\, Z_{aI}, \qquad C \in \mathrm{Gr}_{\ge 0}(k,n)"
+  label="(2)"
+  numbered
+  caption="The tree-level amplituhedron map. C ranges over the entire positive Grassmannian; Z is fixed “positive” external data encoding the n particles’ momenta. As C sweeps across the whole positive Grassmannian, the image Y traces out the amplituhedron A_{n,k}(Z), a shape in 4k dimensions. Arkani-Hamed & Trnka (2013)."
+  steps={[
+    { tex: "C \\in \\mathrm{Gr}_{\\ge 0}(k,n)", note: "C ranges over the ENTIRE positive Grassmannian — every one of Postnikov's cells, of every dimension, contributes a piece of the image" },
+    { tex: "Z_{aI}", note: "fixed “positive” external data, an n×(k+4) matrix built from the momenta of the n scattering particles, itself required to have all its own maximal minors positive" },
+    { tex: "Y = C \\cdot Z", note: "the amplituhedron A_{n,k}(Z) is the set of every such Y — living in 4k dimensions at tree level, and the object whose volume (more precisely, canonical form) is conjectured to equal the scattering amplitude" }
+  ]} />
+
+The claim — proven in specific cases, checked far more broadly, and treated by its own authors as a conjecture rather than a closed theorem — is that the scattering amplitude for n particles at a given loop order and MHV degree k is computed entirely by the geometry of $\mathcal{A}_{n,k,L}(Z)$: not summed from Feynman diagrams, not built up by BCFW recursion, but read off as a single geometric object's canonical differential form.
+
+Notice, too, that the same bookkeeping constraint from the on-shell-diagram construction reappears here in a sharper form: because $Z$ is an $n\times(k+4)$ matrix that itself needs $k+4$ independent rows to make sense of, this whole construction only makes sense once $n \ge k+4$ — the particle count has to leave enough room for the fixed four-dimensional complement the geometry needs to embed in. That is not a technicality bolted on afterward; it falls straight out of the shape of $Z$ in equation (2).
+
+<Callout kind="warning" title="What is proven, and what is not">
+Arkani-Hamed and Trnka's own paper is explicit: "the connection between the amplituhedron and scattering amplitudes is a conjecture which has passed a large number of non-trivial checks." It is not a theorem holding for arbitrary loop order and arbitrary k. And the setting in which it has been checked — <Annotation client:load term="planar N=4 supersymmetric Yang–Mills theory" note="A special, maximally supersymmetric gauge theory, chosen because its planar-limit amplitudes are unusually simple and tractable — not the real Standard Model. Extending the construction to more realistic (non-supersymmetric) theories is active, ongoing research. Wikipedia, “Amplituhedron”; Quanta Magazine (2024)." /> — is a highly symmetric toy theory, not the physical Standard Model. Extending the program to realistic particle physics is unfinished work, not a settled result.
+</Callout>
+
+Push past the caveat, though, and the geometric picture explains something that looked like an unrelated coincidence in the on-shell-diagram result above: where does the amplituhedron's *boundary* sit? The paper's answer is precise — a boundary appears exactly where a specific bracket $\langle Y\,Z_i\,Z_{i+1}\,Z_j\,Z_{j+1}\rangle$ vanishes, and that vanishing condition is, physically, the statement that a particular internal line of the process has gone on its mass shell: a particle becoming real rather than virtual, which is the technical definition of a *local* interaction. In the authors' own words, that is "the 'positive origin' of locality" — a term ordinarily built into a quantum field theory's foundational assumptions, appearing instead as a derived feature of where one geometric shape happens to stop.
+
+<Pullquote cite="Nima Arkani-Hamed, quoted in Wolchover, Quanta Magazine (2013)" href="https://www.quantamagazine.org/physicists-discover-geometry-underlying-particle-physics-20130917/" kind="quote">
+Both are hard-wired in the usual way we think about things. Both are suspect.
+</Pullquote>
+
+He is talking about locality and unitarity — the two pillars ordinary quantum field theory writes into its starting assumptions. The amplituhedron construction does not assume either one. Instead, as the paper puts it, "locality and unitarity emerge hand-in-hand from positive geometry" — they show up as consequences of where the shape's facets happen to sit, not as inputs anyone had to put in by hand.
+
+## How far the claim actually reaches
+
+It is worth being exact about what has and has not been shown, because the temptation to overreach here is large and the actual result is impressive enough without it.
+
+<Quiz client:visible caption="check your understanding of what's grounded here"
+  questions={[
+    { prompt: "A 2×2 matrix has every entry greater than zero. Is it automatically totally positive?", choices: ["Yes — that's the definition", "No — the 2×2 minor (its determinant) could still be negative", "No — total positivity only applies to matrices with more than 2 rows"], answer: 1, explain: "The sandbox at the top of this primer demonstrated exactly this: A = [[1,4],[1,2]] has every entry positive but a determinant of −2." },
+    { prompt: "Two points of Gr(2,4) lie in the same positroid cell when...", choices: ["they have identical Plücker-coordinate values", "the exact same subset of their Plücker coordinates is forced to vanish", "they came from the same original 2×4 matrix before row reduction"], answer: 1, explain: "A cell is a matroid stratum intersected with positivity — points with the same zero-pattern of Plücker coordinates, all the nonzero ones strictly positive." },
+    { prompt: "According to Arkani-Hamed & Trnka's own 2013 paper, the claim that the amplituhedron's volume equals the scattering amplitude is...", choices: ["a fully proved theorem for all k and all loop orders", "a conjecture that has passed many non-trivial checks but is not proven in general", "disproven beyond tree level, and now considered obsolete"], answer: 1, explain: "The paper's own words: “a conjecture which has passed a large number of non-trivial checks.” Verified broadly, not closed as a general theorem." }
+  ]} />
+
+The strongest, best-supported version of the claim is narrow and precise: for tree-level and many loop-level amplitudes in planar N=4 super Yang–Mills, the amplituhedron's canonical form reproduces the amplitude in every case checked, and the boundary structure of the shape reproduces the theory's known factorization and unitarity properties exactly. The weaker, more speculative version — that this means locality and unitarity are not fundamental features of physical law anywhere, that space and time themselves are emergent — is Arkani-Hamed's own extrapolation in interviews, not a claim the mathematics of the amplituhedron by itself establishes.
+
+As of 2024, extending the underlying ideas to theories without supersymmetry is itself a live research program, not a finished extension of the 2013 result. A newer technique its developers call <Annotation client:load term="surfaceology" note="A 2023–2024 generalization, developed by Arkani-Hamed's group, that replaces sums over Feynman diagrams with curves drawn on surfaces and applies to particles without requiring supersymmetry — a step toward realistic (non-toy) theories. Quanta Magazine, “Physicists Reveal a Quantum Geometry That Exists Outside of Space and Time” (2024)." /> replaces the sum over Feynman diagrams with curves drawn on a surface, and — unlike the original 2013 construction — works for ordinary particles, without requiring supersymmetry to keep the mathematics tractable. Alongside it, a separate 2022 finding by the Princeton graduate student Carolina Figueiredo, dubbed "hidden zeros," showed that three theories with no obvious relationship to one another — a scalar theory built from a cubic interaction, the theory of pions, and Yang–Mills gluon theory — all forbid an identical, specific set of particle collisions from happening at all. That kind of shared structural fingerprint across unrelated-looking theories is exactly the sort of clue that, in this field's history, has previously turned out to be the visible edge of a common positive-geometric object nobody had named yet. Whether that pattern holds is still an open, working question, not a settled result, and treating it as settled would be exactly the overreach this primer is trying to avoid.
+
+## Where this leaves you
+
+Trace the whole chain back to the start. A condition on matrices — every minor positive, not just every entry — was written down in 1930 to count polynomial roots and, independently, to describe how a beam vibrates. Applied to the Grassmannian instead of a single matrix, that condition carves out a region; Postnikov proved in 2006 that the region decomposes into cells with the same rigid structure as the faces of a simplex, each cell nameable in at least five equivalent combinatorial languages, none of which mention physics. In 2012 and 2013, physicists discovered that this exact cell structure was already secretly computing which outcomes of a gauge-theory particle collision are allowed — and that a single geometric shape, built by feeding the positive Grassmannian through one linear map, reproduces the scattering amplitude as its volume, with locality and unitarity showing up as consequences of the shape's boundary rather than assumptions fed in at the start.
+
+None of that required anyone to invent new mathematics for the physics to use. The mathematics was already there, sitting in a paper about vibrating beams and a paper about matroid strata, waiting for the right question to be pointed at it. The honest, still-open question the field itself has not answered is how much further the correspondence goes — whether it is a special feature of one highly symmetric toy theory, or the visible edge of something that reaches all the way to the physics actually running our universe. Next time a shape's geometry turns out to compute something you assumed required a law of physics to define, it is worth asking which one — the shape or the law — was more fundamental to begin with.
