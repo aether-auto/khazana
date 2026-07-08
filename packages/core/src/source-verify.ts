@@ -31,7 +31,7 @@
  * one per run, and is never left in an un-reprobable limbo.
  */
 
-import type { Registry, SourceEntry, SourceLastError } from "./registry.js";
+import type { Registry, SourceEntry, SourceHealthEntry, SourceHealthFile, SourceLastError } from "./registry.js";
 
 /** Permanent strikes required before a source is auto-disabled. */
 export const DISABLE_THRESHOLD = 3;
@@ -315,4 +315,77 @@ export function reconcileRegistry(
   });
 
   return { registry: { ...registry, sources }, actions, rediscover };
+}
+
+/**
+ * The genuinely-optional `SourceEntry` health fields — present only once a
+ * source has actually been reconciled at least once. Handled generically
+ * below. `enabled` and `failureCount` are NOT in this list: both carry
+ * always-present schema defaults (`true` / `0`), so "is it set" can't signal
+ * "has this source ever had a health event" the way it can for these — they
+ * get their own deviation-from-default check instead (see `extractSourceHealth`).
+ */
+const OPTIONAL_HEALTH_FIELDS = [
+  "status",
+  "consecutiveFailures",
+  "lastOkAt",
+  "lastError",
+  "resolvedUrl",
+  "disabledAt",
+  "lastFetchedAt",
+] as const satisfies readonly (keyof SourceEntry)[];
+
+/**
+ * Extract the committed-persistence health subset from a (typically just-
+ * reconciled) registry. Only sources that carry at least one recorded health
+ * signal are included — a pristine, never-touched seed entry needn't appear,
+ * which keeps `data/source-health.json` small and its diffs meaningful (only
+ * the sources that actually changed state show up). `enabled`/`failureCount`
+ * are included only when they deviate from their pristine defaults (`true` /
+ * `0`) — otherwise every one of hundreds of untouched seed sources would
+ * appear with `enabled: true, failureCount: 0` and swamp the file.
+ */
+export function extractSourceHealth(registry: Registry): SourceHealthFile {
+  const sources: SourceHealthEntry[] = [];
+  for (const entry of registry.sources) {
+    let health: SourceHealthEntry | undefined;
+    for (const field of OPTIONAL_HEALTH_FIELDS) {
+      const value = entry[field];
+      if (value === undefined) continue;
+      health ??= { id: entry.id };
+      (health as Record<string, unknown>)[field] = value;
+    }
+    if (entry.enabled === false) {
+      health ??= { id: entry.id };
+      health.enabled = false;
+    }
+    if ((entry.failureCount ?? 0) > 0) {
+      health ??= { id: entry.id };
+      health.failureCount = entry.failureCount;
+    }
+    if (health) sources.push(health);
+  }
+  return { version: 1, sources };
+}
+
+/**
+ * Layer committed `health` onto a freshly-loaded `base` registry (the seed, or
+ * a local `sources.json`). For each id present in `health`, its recorded
+ * fields win over whatever the base loaded (health is strictly more recent —
+ * it is written by the last reconciled run); entries with no recorded health
+ * are returned exactly as the base loaded them. Pure — never mutates either
+ * input, matching this module's other reducers.
+ */
+export function mergeSourceHealth(base: Registry, health: SourceHealthFile): Registry {
+  if (health.sources.length === 0) return base;
+  const byId = new Map(health.sources.map((h) => [h.id, h]));
+  return {
+    ...base,
+    sources: base.sources.map((entry) => {
+      const h = byId.get(entry.id);
+      if (!h) return entry;
+      const { id: _drop, ...fields } = h;
+      return { ...entry, ...fields };
+    }),
+  };
 }

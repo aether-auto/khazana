@@ -1,8 +1,20 @@
 // One-off real ingestion + curation over the full registry, with full-text
 // extraction ON and a per-source cap so the run stays tractable. Writes real
 // data/feed/raw.json + data/feed/curated.json (and taste.json best-effort).
-import { loadRegistry, saveRegistry, writeFeed, runIngest } from "../packages/ingest/src/index.ts";
+import {
+  loadRegistry,
+  saveRegistry,
+  saveSourceHealth,
+  writeFeed,
+  runIngest,
+  rediscoverMovedFeeds,
+  defaultFetch,
+} from "../packages/ingest/src/index.ts";
 import { readRawFeed, readEvents, runCurate, writeCuratedFeed, makeLlmClientFromEnv } from "../packages/curate/src/index.ts";
+// Import from the package SOURCE by relative path (not the "@khazana/core"
+// specifier) — root-level scripts run via `tsx` can't resolve the workspace
+// package name (matches fetch-events.mts's convention).
+import { reconcileRegistry, extractSourceHealth } from "../packages/core/src/index.ts";
 
 const dataDir = new URL("../data/", import.meta.url).pathname;
 const now = new Date().toISOString();
@@ -41,7 +53,7 @@ let lastBeatAt = runStart;
 let lastBeatDone = 0;
 const elapsedSec = () => Math.round((Date.now() - runStart) / 1000);
 
-const { items, results } = await runIngest(registry, {
+const { items, results, fetchResults } = await runIngest(registry, {
   now,
   limitPerSource: LIMIT,
   ...(EXTRACT ? {} : { extract: { enabled: false } }),
@@ -107,15 +119,48 @@ if (failed.length > 0) {
   }
 }
 
-// update registry health
-const byId = new Map(results.map((r) => [r.id, r]));
-for (const s of registry.sources) {
-  const r = byId.get(s.id);
-  if (!r) continue;
-  if (r.ok) { s.lastFetchedAt = now; s.failureCount = 0; }
-  else { s.failureCount += 1; }
+// ── Self-healing: fold this run's classified fetch outcomes into persisted
+// status + the real strike counter (mirrors packages/ingest/src/cli.ts's
+// wiring — this used to only bump the legacy `failureCount`, leaving
+// auto-disable/re-probe structurally inert on the production path). Success
+// resets strikes; transient failures never strike/disable; permanent
+// failures strike toward DISABLE_THRESHOLD (3 consecutive); a disabled source
+// gets one bounded re-probe every REPROBE_AFTER_MS (7 days) — see
+// packages/core/src/source-verify.ts.
+const { registry: reconciled, actions, rediscover } = reconcileRegistry(registry, fetchResults, { now });
+
+// Before finalizing an auto-disable, probe for a moved feed and repair it.
+const healed = await rediscoverMovedFeeds(reconciled, rediscover, defaultFetch, { now });
+
+// Keep the legacy `failureCount` last-run flag in sync for the site's
+// existing read (superseded by `consecutiveFailures` as the real strike counter).
+const okIds = new Set(results.filter((r) => r.ok).map((r) => r.id));
+const attempted = new Set(results.map((r) => r.id));
+for (const s of healed.sources) {
+  if (!attempted.has(s.id)) continue;
+  if (okIds.has(s.id)) s.failureCount = 0;
+  else s.failureCount += 1;
 }
-saveRegistry(dataDir, registry);
+saveRegistry(dataDir, healed);
+
+// Committed cross-clone persistence: data/sources.json (just written above) is
+// gitignored and never survives a fresh CI checkout, so status/
+// consecutiveFailures/disabledAt would otherwise reset to nothing every run —
+// the auto-disable/re-probe machinery would run but never accumulate state.
+// data/source-health.json is a small COMMITTED subset (status subset only,
+// not url/type/channels/...) that pipeline.yml commits back once/day;
+// loadRegistry layers it onto the seed on the next run that has no local
+// sources.json. feed-refresh.yml writes this file too but has no commit step
+// (contents:read) — that write is a harmless no-op in effect, consistent with
+// its deploy-only role.
+saveSourceHealth(dataDir, extractSourceHealth(healed));
+
+const disabledCount = actions.filter((a) => a.action === "disable").length;
+const repairedCount = rediscover.filter((r) => healed.sources.find((s) => s.id === r.id)?.status === "active").length;
+console.log(
+  `[real-ingest] source health: ${disabledCount} newly disabled, ${repairedCount} rediscovered, ` +
+    `${fetchResults.filter((r) => !r.ok).length} sources with fetch errors this run`,
+);
 const rawPath = writeFeed(dataDir, items);
 console.log(`[real-ingest] wrote ${rawPath}`);
 
