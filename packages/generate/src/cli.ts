@@ -43,11 +43,34 @@ function slugOf(file: string): string {
 }
 
 /**
- * Slug-scoped verify. With no slugs, checks every draft (unchanged contract).
- * With slugs, checks only the matching drafts; a requested slug with no matching
- * file is an error so the routine knows a draft it expected is missing.
+ * Slug-scoped verify. Whole-corpus verify (every draft in the collection) is
+ * gated behind an explicit `--all` flag — bare `verify` with no slugs is an
+ * ERROR, not a silent fall-through to whole-corpus.
+ *
+ * Why: an unattended Reads-run agent (see `.claude/commands/reads-run.md`
+ * Stage 5) invokes `generate verify` scoped to THIS run's newly-drafted
+ * slugs. If its kept set is ever empty, a bare `verify` with no args used to
+ * silently validate EVERY already-published draft in the collection against
+ * a near-empty ephemeral per-run ledger — guaranteed spurious FAILs on live
+ * Reads, which the recovery instructions could then DROP (delete the MDX and
+ * un-publish it on the next commit). Requiring `--all` makes whole-corpus
+ * verify an explicit, deliberate choice (used by tests/ops), never an
+ * accidental default.
  */
-async function runVerifyCmd(deps: CliDeps, slugs: string[] = []): Promise<number> {
+async function runVerifyCmd(deps: CliDeps, args: string[] = []): Promise<number> {
+  const all = args.includes("--all");
+  const slugs = args.filter((a) => a !== "--all");
+
+  if (!all && slugs.length === 0) {
+    console.error(
+      "[generate:verify] refusing to run with no slugs and no --all: bare `verify` no longer " +
+        "scopes to the whole corpus (P1a safety fix). Pass explicit slug(s) — " +
+        '`generate verify <slug1> <slug2> ...` — or `generate verify --all` to deliberately ' +
+        "check every draft in the collection.",
+    );
+    return 1;
+  }
+
   const curated = readCurated(deps.dataDir);
   const ledger = readLedger(deps.dataDir);
   let files = listDrafts(deps.contentDir);

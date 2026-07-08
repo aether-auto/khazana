@@ -118,17 +118,24 @@ Review each verdict:
   PASSes, keep it. If it still FAILs (or the fix can't be made without fabricating), **DROP** the
   Read — delete its MDX so it is not committed. Exactly one repair cycle; never loop.
 
-Once the kept set is settled, run the **deterministic backstop** — scoped to **only this run's
-newly-authored slugs**, listed explicitly:
+**If your kept set is empty at this point, do NOT run `generate verify` at all** — skip straight to
+the empty-slate exit-clean path below. There is nothing to verify, and `generate verify` now
+**requires** either explicit slugs or `--all` (see next paragraph); never invoke it bare.
+
+Once the kept set is settled (and non-empty), run the **deterministic backstop** — scoped to
+**only this run's newly-authored slugs**, listed explicitly:
 
 ```bash
 pnpm --filter @khazana/generate generate verify <slug1> <slug2> ...
 ```
 
-The scoping is deliberate: the gate validates **this run's NEW Reads** against the fresh per-slug
-ledgers (`data/generation/research/<slug>.ledger.json`), and never re-litigates already-published
-Reads — whose research ledgers are not retained locally, so an all-drafts run would fail on them
-spuriously. Pass exactly the slugs you kept; a listed slug with no draft on disk is an error.
+The scoping is deliberate and enforced: `generate verify` with no slugs and no `--all` now **errors**
+rather than silently falling through to whole-corpus verify. This is a safety fix — a whole-corpus
+verify validates **every already-published Read** against this run's near-empty ephemeral
+per-run ledger, which would fail them spuriously; the recovery step below would then **DROP** (delete
+the MDX for) a live, previously-published Read. Never pass `--all` from this routine — that flag is
+for tests/ops only. Always pass exactly the slugs **this run** drafted and kept; a listed slug with
+no draft on disk is an error.
 
 This runs `validateDraft` + `factChecker` and **must exit 0**. If it exits non-zero, it has caught
 a draft your agents let through — find the offending file from its output, DROP it (delete the MDX,
@@ -186,6 +193,10 @@ You run unattended, so be robust:
   valid outcome, not an error.
 - **Every writer aborts / every draft is dropped** → same: nothing to publish, commit nothing,
   exit cleanly.
+- **Empty kept set (either of the two cases above)** → do **not** run `generate verify` at all —
+  never with no slugs (it now errors by design) and never with `--all` (that would validate
+  already-published Reads against this run's empty ledger and risk a spurious un-publish). Skip
+  straight to exit-clean.
 - **`ideation-eval.mts` fails** → fall back to running `reads-survey` against the raw data dirs.
 - **`generate verify` stays red after dropping the flagged draft** → do not force a commit; drop
   drafts until it exits 0 (in the worst case, commit nothing).
