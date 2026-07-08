@@ -8,12 +8,22 @@
 > defines the data contract it consumes verbatim, and spec 2 (the Globe) hands it its
 > flagship view's raw material.*
 
-**Status:** Proposed — spec 3 of 5 (Atlas: Spine → Globe → **Bias Lab** → Ledger → Extras)
+**Status:** Proposed — spec 3 of 8 (Atlas: Spine → Globe → **Bias Lab** → Ledger → Extras →
+Conflict Theaters → Government Structure → Two Faces)
 **Date:** 2026-07-07
 **Owner:** Arnav (founder) + Claude (cofounder)
 **Cost target:** $0 recurring — same binding constraint as khazana v1, the Spine, and the
 Globe. No paid APIs, no paid hosting, no GPU, no always-on machine beyond the existing free
 Cloudflare Worker.
+
+**Amended 2026-07-07 after founder interview** — see
+`docs/superpowers/specs/2026-07-07-atlas-founder-decisions.md` (binding; D1–D12 cited
+inline below). Changes: renumbered into an eight-spec family (D5, D6, D11); outlet seed
+closed to global majors + a deep India set (D8, §0.3); reference-rater overlay settled
+default-visible (D9, §3.2); flagship divergence engine gains a corroborated-core
+sub-computation that now feeds the Globe's event card too (D7, §0.1, §4.5, §6.1); new
+wartime editorial physics for conflict-category events (D6.4, §4.7); world data moved to
+the private `khazana-world-data` repo (D2, §2, §6.3); §12 closed accordingly.
 
 **Reads first:** `docs/superpowers/specs/2026-07-07-world-data-spine-design.md` (spec 1 —
 the `Outlet`/`BiasProfile`/`WorldEvent`/`Reporting` schemas and the `Provenance`
@@ -21,7 +31,10 @@ uncertainty union this spec consumes verbatim, plus the derived-only vs.
 redistribute-raw license tiers that make Layer 2 attribution-only a *schema-enforced*
 fact, not a convention), `docs/superpowers/specs/2026-07-07-atlas-globe-design.md` (spec
 2 — the Globe hands this spec's flagship view a `WorldEvent.id` + resolved
-`reportings[].outletId[]`, §6.3's handoff contract), `docs/superpowers/specs/2026-06-23-khazana-design.md`
+`reportings[].outletId[]`, §6.3's handoff contract, and — after D7 — receives the
+corroborated core back for its own event card, §0.1), the forthcoming spec 6, Conflict
+Theaters (`2026-07-07-atlas-conflict-theaters-design.md`), which §4.7's wartime editorial
+physics draws its theater/belligerent data from, `docs/superpowers/specs/2026-06-23-khazana-design.md`
 (house vision/voice/altitude), and the Reads component kit under
 `apps/site/src/components/mdx/` (Chart/Scatter/Distribution/Slopegraph/RangePlot/
 ForceComparison/DataTable/… — every visualization in this spec reuses one of these; none
@@ -93,12 +106,41 @@ does not re-cluster or re-discover which outlets are in play — that work is Gl
 not this spec's, per spec 1 §3.5's explicit note that the divergence index is
 Bias-Lab-owned but `reportings[]` themselves are Spine-owned raw material.
 
+**The handoff now runs both ways (D7).** Once this spec's divergence engine computes a
+`corroboratedCore` (§4.5) for an event, that output feeds back to the Globe's own event
+card as its headline line (spec 2 §6, amended) — the Globe still owns event
+discovery/clustering and this spec still owns the divergence methodology, but the
+computed result now flows upstream to the surface that started the handoff, not just
+downstream to this spec's own story page (§8.4).
+
 ### 0.2 Relationship to the Government Ledger (spec 4)
 
 No direct data dependency — the Ledger's `Indicator`/`CountryProfile` schemas (spec 1
 §3.2–3.3) are disjoint from `Outlet`/`BiasProfile`. The only shared surface is the Shell
 chrome, design tokens, and the general "every number carries its own `Provenance`"
 discipline spec 1 established once for all three specs to inherit.
+
+### 0.3 The outlet seed set (D8 — closes §12)
+
+The founder interview closed §12's "which outlets to seed first" question: **~30–50
+global wire/major outlets** (Reuters, AP, AFP, BBC, NYT, WaPo, Guardian, Al Jazeera,
+Economist, FT, …) **plus a deep India set** (The Hindu, Times of India, Hindustan Times,
+Indian Express, NDTV, Republic, WION, Zee News, India Today, OpIndia, The Wire, Scroll,
+The Print, ANI, PTI, …) — D8.
+
+The rationale is specific to why the Bias Lab exists at all: AllSides, Ad Fontes, and
+MBFC's Layer 2 coverage (§3.2) barely reaches Indian outlets, so khazana's own Layer 1
+computation (§3.1) is doing the most work exactly where the reference-rater overlay is
+thinnest. In practice this means **India outlet profiles will often be Layer-1-only** —
+no Layer 2 attribution row, no cross-rater spread — for the foreseeable future, and every
+page that renders the Layer 2 row (§8.3) must present a Layer-1-only India profile as the
+**normal state**, not as missing or incomplete data.
+
+Per D3's density mandate, this seed is a **floor, not a ceiling**: any outlet that recurs
+in ingested `WorldEvent.reportings[]` beyond the seed list earns a provisional profile
+once it clears the §5.3 sample-size floor — the same "put in literally everything that
+can be found/calculated reliably" posture as the rest of Atlas. §4's per-outlet
+computations run identically over seeded and provisional outlets alike.
 
 ---
 
@@ -177,6 +219,11 @@ discipline spec 1 established once for all three specs to inherit.
 └──────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+**Repo boundary note (D2):** the diagram above shows logical data flow; physically,
+`data/world/` and `data/world/bias-lab/` now live in the private `khazana-world-data`
+repo, read by the public site's build at fetch time via a scoped token (spine §2/§4
+amendment) — orthogonal to the flow shown here.
+
 Same ethos as spec 1 and spec 2: **the page works from committed data with zero client-side
 ML inference** — every embedding/NLI/classifier computation happens once, in the cron, and
 is committed as static JSON; the browser only ever renders precomputed numbers.
@@ -216,6 +263,17 @@ three raters' own lean labels, mapped to a common −1..1 scale purely for sprea
 computation (spec 1 §3.4's own caveat: "not stored as anyone's official score") — is what
 this spec renders as the "uncertainty of the reference raters themselves" bar (§5.4, §8.3).
 
+**Default visibility: shown by default, not opt-in (D9 — closes §12).** The founder
+interview settled §12's "default vs. opt-in" question in Claude's favor per D9's grant of
+complete control: the reference-rater row renders **default-visible** on every outlet
+profile (§8.3). Rationale — transparency is the whole product here, and the audience is
+the founder alone for the foreseeable future (D1), so the anchoring risk of showing the
+more-familiar third-party labels alongside khazana's own (arguably more transparent)
+score is accepted rather than hedged against with an opt-in toggle. The accepted
+mitigation is layout, not concealment: §8.3's row order already places khazana's own
+lean/reliability row first and visually primary, with the reference-rater row and its
+`crossRaterSpread` bar directly beneath it, never above or beside it.
+
 ---
 
 ## 4. Computed indicators — ranked v1 lineup vs. v2-deferred
@@ -246,8 +304,10 @@ original paper's Alexa-rank feature, since Alexa was discontinued in 2022.
 matching the paper's own modeling choice, deliberately *not* a transformer (binding
 decision 2, §1) — trained once, offline, against a public bias/factuality-labeled seed
 set, producing a factuality score (mapped 0–100) and a lean bucket for every outlet in
-khazana's registry. **Which public label set to bootstrap the classifier's training
-supervision from is a genuine open question, not resolved here** — see §12.
+khazana's registry — the registry's seed set is closed (D8, §0.3); training-label
+supervision for the classifier itself is a separate, still-open question. **Which public
+label set to bootstrap the classifier's training supervision from is a genuine open
+question, not resolved here** — see §12.
 
 **Uncertainty:** a `confidenceInterval` from k-fold cross-validation resampling of the
 training fit — the cheapest calibrated interval available for a from-scratch classifier,
@@ -321,7 +381,7 @@ cobe-vs-hand-rolled-OGL question open until someone actually writes the hit-test
 
 ### 4.5 Same-story divergence + corroboration (FLAGSHIP)
 
-Two sub-computations over a single `WorldEvent`'s `reportings[]`:
+Three sub-computations over a single `WorldEvent`'s `reportings[]`:
 
 1. **Divergence index.** Embed each reporting's available text — the `headline` field
    guaranteed by the Spine, or a Bias-Lab-owned cached lead-paragraph snippet fetched from
@@ -335,6 +395,18 @@ Two sub-computations over a single `WorldEvent`'s `reportings[]`:
    pairwise across every reporting's available text, classifying each pair
    entail/contradict/neutral; corroboration % is the share of pairs that mutually entail
    (or at least don't contradict) the event's core claim.
+3. **Corroborated core (D7 — new, resolves Globe spec §12's biggest open).** From the
+   same pairwise NLI pass, select the claim-sentences that outlets **across the
+   spectrum** — not just any X of Y outlets, but X of Y whose `BiasProfile.lean` values
+   (§3.1) span both sides where coverage allows — mutually entail. Each selected claim is
+   emitted as a short **quoted/selected sentence from the source reportings' own text**
+   (the same headline-or-snippet depth already fetched for #1, §6.2) plus the list of
+   confirming outlets — never a generatively synthesized sentence, consistent with D4's
+   zero-AI-prose rule for the whole world-data path. Every rendering of this list is
+   labeled as **measured agreement, not khazana-asserted truth** — "corroborated by 9 of
+   12 outlets," never "this happened." It feeds two downstream views: the Globe's event
+   card headline line (spec 2 §6, amended per D7 — §0.1's handoff now runs both ways) and
+   this spec's own story page (§8.4).
 
 This automates exactly what AllSides does by hand in its "Headline Roundups" — the
 flagship's explicit positioning per the brief.
@@ -362,6 +434,47 @@ non-partisan fact-checking organization — an extra trust filter on top of the 
 not a second API. This is the **lowest-priority v1 indicator** — an add-on enrichment
 badge on the divergence view (§8.4: "already fact-checked, see X"), not a standalone
 score, and the natural candidate to ship as v1.5 rather than blocking the rest of v1.
+
+### 4.7 Wartime editorial physics (D6.4)
+
+For events whose category is `"conflict"`, or that belong to an active conflict theater
+(spec 6, Conflict Theaters), the founder interview settled a genuinely different
+methodology from §4.5's default civilian-news physics — propaganda is the norm in
+wartime coverage, and the divergence/corroboration engine has to be honest about that
+rather than treating a conflict event's `reportings[]` like any other story. This section
+is owned by the Bias Lab, not spec 6, because it's methodology over `reportings[]` — the
+same "methodology lives here, theater/belligerent data lives there" split spec 1 §3.5
+already drew for the divergence index in general.
+
+1. **Corroboration weighted toward opposing sides.** For conflict-category events, the
+   §4.5 corroborated-core computation weights confirmation toward claims entailed by
+   outlets on **opposing sides** of the conflict — outlet→side alignment is derived from
+   the new `OutletStateAffiliation` annotation (§6.1) plus each outlet's home country
+   against the theater's belligerents (spec 6's data). A `corroboratedCore` entry whose
+   confirming outlets all sit on one side (`spectrumSpan: false`, §6.1) is still displayed
+   — density over silence, per D3 — but rendered visually discounted and labeled
+   **"confirmed only within one side's media"**, never presented with the same weight as
+   a spectrum-spanning entry.
+2. **Single-sourced claims are skeptical-by-default.** A reporting whose claims have no
+   entailing edge (`CorroborationEdgeSchema.relation: "entails"`, §6.1) to any other
+   outlet's reporting on the same event renders with an explicit **"single-source claim"**
+   badge on the story page (§8.4) — not the neutral, unbadged presentation a single-
+   sourced claim gets outside conflict mode. No new field is needed for this: the badge is
+   derived directly from an absence of entailing edges touching that outlet in the
+   existing `DivergenceIndex.edges` array.
+3. **State-affiliated outlets carry an explicit label chip everywhere their reportings
+   render** — the Globe's event card, the story page's per-outlet rows (§8.4), and the
+   outlet profile header (§8.3) — sourced from the new `OutletStateAffiliation` annotation
+   (§6.1).
+
+**New derived data:** an illustrative `OutletStateAffiliation` annotation joins the
+Bias-Lab-owned derived layer (`data/world/bias-lab/state-affiliation.json`, §6.1, §6.3),
+sourced from free authoritative lists (the exact source list is being researched as part
+of spec 6, which also owns the theater/belligerent data this section consumes — see spec
+6 for both once it exists). Flagged explicitly, per §5's own discipline: **state-
+affiliation lists are themselves sources with provenance**, subject to the same
+sample-size/uncertainty honesty as every other Layer 1 signal in this spec, not a bare
+fact khazana asserts without a citation trail.
 
 ---
 
@@ -471,14 +584,34 @@ export const CorroborationEdgeSchema = z.object({
   confidence: z.number().min(0).max(1),
 });
 
+export const CorroboratedCoreClaimSchema = z.object({
+  /** selected/quoted claim-sentence text from the source reportings — never generated, D7 + D4. */
+  claim: z.string(),
+  confirmingOutletIds: z.array(z.string()),
+  /** do confirming outlets' BiasProfile.lean values span both sides where coverage allows? */
+  spectrumSpan: z.boolean(),
+});
+
 export const DivergenceIndexSchema = z.object({
   eventId: z.string(),                  // WorldEvent.id — the Globe handoff key, §0.1
   divergence: z.object({ score: z.number().min(0).max(100), uncertainty: UncertaintySchema }),
   corroborationPct: z.number().min(0).max(100),
   edges: z.array(CorroborationEdgeSchema),
   outletIds: z.array(z.string()),
+  /** the flagship's D7 output — always measured agreement, never khazana-asserted truth. */
+  corroboratedCore: z.array(CorroboratedCoreClaimSchema),
   /** honest about text depth used — never silently assume snippet depth, §6.2. */
   computedFrom: z.enum(["headline-only", "headline+snippet"]),
+  provenance: ProvenanceSchema,
+});
+
+/** D6.4's wartime editorial physics input — see §4.7. Illustrative, like the rest of this block. */
+export const OutletStateAffiliationSchema = z.object({
+  outletId: z.string(),
+  affiliation: z.enum(["state-controlled", "state-funded", "state-aligned", "none"]),
+  affiliatedCountry: z.string().optional(), // ISO country code, when known
+  /** which free authoritative list this was sourced from — provenance discipline applies here too. */
+  sourceListId: z.string(),
   provenance: ProvenanceSchema,
 });
 ```
@@ -503,6 +636,11 @@ given event's index used headline-only or headline+snippet depth, so the story p
 
 ### 6.3 File layout under `data/world/bias-lab/`
 
+**Private repo note (D2):** everything under `data/world/` — including this whole
+subtree — now lives in the private `khazana-world-data` repo, not the public
+`aether-auto/khazana` repo; the path below is unchanged, only the repo boundary moves
+(spine §2/§4 amendment).
+
 ```
 data/world/
   outlets/outlets.json                    # Spine (spec 1) — BiasProfile, UNCHANGED
@@ -513,8 +651,9 @@ data/world/
     wordfish.json                          # WordfishPosition[] (§4.4)
     nela-classifier.json                   # committed classifier coefficients + cv error (§4.3, trained once offline)
     nela-features/<outletId>.json          # NelaFeatureVector per outlet
-    divergence/<eventId>.json              # DivergenceIndex — top-N events/day only (§7)
+    divergence/<eventId>.json              # DivergenceIndex — top-N events/day only (§7), now carries corroboratedCore (D7)
     reporting-snippets/<eventId>.json      # cached lead-paragraph snippets (§6.2)
+    state-affiliation.json                 # OutletStateAffiliation[] — one per outlet (§4.7, D6.4)
 ```
 
 `CountryProfile`-style sharding discipline (one file per natural unit, bounded size)
@@ -535,7 +674,8 @@ the same category spec 1 already placed `aggregate/bias-profile.ts` and
 | GDELT tone timeline | medium (daily) | `bias-lab/gdelt-tone.ts` | GDELT itself is near-real-time, but the consuming views (profile timelines) don't need 20-minute granularity — no reason to put this on the fast lane |
 | NELA classifier application | medium (daily, per newly ingested article) | `bias-lab/nela-apply.ts` + one-time `scripts/train-nela-classifier.ts` (hand-run, documented, not cron) | training happens once; the cron only *scores* |
 | Wordfish scaling | medium (daily) or weekly — **open, §12** | `bias-lab/wordfish.ts` | the refit is the expensive step; daily is likely wasteful once the corpus stabilizes |
-| Same-story divergence + corroboration | medium (daily), **capped to the day's top-N events by reportings count** | `bias-lab/divergence.ts` | not the full fast-lane firehose — most GDELT-sourced events never accumulate enough reportings to be a "same story" case worth the compute |
+| Same-story divergence + corroboration | medium (daily), **capped to the day's top-N events by reportings count** | `bias-lab/divergence.ts` | not the full fast-lane firehose — most GDELT-sourced events never accumulate enough reportings to be a "same story" case worth the compute; also emits `corroboratedCore` (D7) and applies §4.7's wartime weighting for conflict-category events |
+| State-affiliation annotation | medium (daily) or on-demand refresh — low churn, no reason for tighter cadence | `bias-lab/state-affiliation.ts` (NEW) | sourced from free authoritative lists (§4.7); the belligerent/theater side of the annotation is owned by spec 6 |
 | ClaimBuster/fact-check triage | medium (daily), bolted onto the divergence job's output | `bias-lab/claim-check.ts` | |
 
 **Runtime honesty:** `transformers.js` WASM inference (Sentence-BERT + `roberta-large-
@@ -591,11 +731,13 @@ apps/site/src/pages/atlas/bias-lab/
 - **Wordfish position:** a single `RangePlot` row (position ± native SE), plotted
   alongside a couple of comparator outlets for context — `RangePlot`'s multi-row nature
   makes this a natural fit with no extra work.
-- **Reference-rater row (Layer 2):** three attribution chips (AllSides/Ad Fontes/MBFC
-  labels + outbound links), plus their spread rendered as **another** `RangePlot` row
-  directly beneath khazana's own lean row — so "the uncertainty of the reference raters
-  themselves" sits visually adjacent to khazana's own uncertainty, exactly as the brief
-  specifies, not hidden in an appendix.
+- **Reference-rater row (Layer 2, default-visible — D9, §3.2):** three attribution chips
+  (AllSides/Ad Fontes/MBFC labels + outbound links), plus their spread rendered as
+  **another** `RangePlot` row directly beneath khazana's own lean row — so "the
+  uncertainty of the reference raters themselves" sits visually adjacent to khazana's own
+  uncertainty, exactly as the brief specifies, not hidden in an appendix. This ordering is
+  the accepted mitigation for D9's anchoring-risk trade-off: khazana's own row is always
+  first and visually primary.
 
 ### 8.4 Same-story divergence (`story/[eventId].astro`) — THE FLAGSHIP
 
@@ -606,11 +748,21 @@ apps/site/src/pages/atlas/bias-lab/
   top-N events get one computed (§7). If absent, the page renders the `reportings[]`
   side-by-side without a divergence score, an honest "not yet analyzed" state, rather than
   computing on demand in the browser (already ruled out on cost/latency grounds, §7).
+- **Corroborated core line (D7):** when a `DivergenceIndex` exists, its
+  `corroboratedCore` claims render as a short lead list above the per-outlet rows — each
+  claim quoted verbatim from source text, tagged with its confirming-outlet count and a
+  "corroborated by N of M outlets" label, never phrased as khazana asserting the claim is
+  true. For conflict-category events (§4.7), same-side-only entries (`spectrumSpan:
+  false`) render visually discounted with the "confirmed only within one side's media"
+  label instead of the standard spectrum-spanning treatment.
 - **Per-outlet reporting rows:** headline, tone, stance, frame, a lean/reliability chip
   (via `Outlet.bias`), link out — the same content the Globe's event card already showed
   (spec 2 §6.1), but **all of them, unabridged**: Globe's own §6.2 open question ("how
   many reportings to show") is resolved *differently* on this dedicated page, where "the
-  full spread" is the job, not "a glance."
+  full spread" is the job, not "a glance." Conflict-category events (§4.7) add two
+  possible chips per row: a **"single-source claim"** badge (derived from an absence of
+  entailing edges touching that outlet in `DivergenceIndex.edges`) and a
+  **state-affiliation label chip** (from `OutletStateAffiliation`, §6.1) where applicable.
 - **Divergence index:** `RangePlot` (bootstrap CI, §4.5).
 - **Corroboration matrix:** `DataTable` rendered as an outlet × outlet grid (rows/columns
   = outlets, cells = entails/contradicts/neutral + confidence) — reuses `DataTable`
@@ -649,6 +801,7 @@ apps/site/src/pages/atlas/bias-lab/
 | GDELT tone timeline (§8.3) | `Chart` / `SmallMultiples` | time-series line/area with multi-series or topic-faceting already solved |
 | two-frame split (§8.4) | `ForceComparison` | a diverging paired-bar comparison is literally "N outlets framing as A vs. N as B" |
 | big top-line figures (e.g. a leaderboard header stat band) | `StatBand` | count-up big numbers, reduced-motion-safe by construction |
+| corroborated-core lead list (§4.5, §8.4) | plain labeled list, no chart | claim-sentence + confirming-outlet-count pairs read better as short quoted text than as a visualization — not a chart need at all, consistent with binding decision 7's "no new primitive" |
 | a reader-adjustable clustering-threshold slider, if ever built (§12) | the `ControlledChart` **architecture** (visx + live slider + stable readout), not its literal component | Bias Lab would need its own bespoke instance over a different underlying model — the pattern transfers, the component itself doesn't |
 
 No new visualization primitive is proposed for v1 — stated explicitly, since the brief
@@ -713,10 +866,17 @@ requires reuse over invention and this table is the receipt.
 
 ## 12. Founder open questions
 
-- **Which outlets to seed first?** A concrete initial `Outlet[]` + `WorldSourceEntry[]`
-  list is needed — the founder's own reading list, a "top-N by traffic" comparator set,
-  or a set matching whatever's already in `data/sources.json`'s existing RSS/eng-blog
-  entries so Bias Lab profiles line up with outlets already surfaced in the Feed.
+**Closed by the 2026-07-07 founder interview** (full record:
+`docs/superpowers/specs/2026-07-07-atlas-founder-decisions.md`):
+
+- ~~Which outlets to seed first?~~ **Closed — D8, §0.3.** Global majors + a deep India
+  set; the seed is a density floor, not a ceiling (D3).
+- ~~Reference-rater overlay shown by default, or opt-in?~~ **Closed — D9, §3.2.**
+  Default-visible; anchoring risk accepted, mitigated by layout (khazana's row visually
+  primary, rater rows beneath).
+
+**Still genuinely open** (implementation-time, not vision-level):
+
 - **Same-story clustering threshold aggressiveness.** How tight should the embedding-
   similarity cutoff be for "these are the same story"? Too loose merges genuinely distinct
   stories (false corroboration); too tight fragments one real story into many
@@ -725,11 +885,6 @@ requires reuse over invention and this table is the receipt.
   re-clustering — needs founder judgment against real examples once the pipeline is live,
   and should probably be resolved jointly with spec 2 §12's own open "how many reportings
   to show" question rather than as two independent guesses.
-- **Reference-rater overlay shown by default, or opt-in?** Showing AllSides/Ad
-  Fontes/MBFC labels by default risks anchoring readers to the more familiar third-party
-  labels over khazana's own (arguably more transparent) score; hiding them by default
-  undercuts the "expose the reference raters' own disagreement" transparency goal this
-  spec is built around. Genuinely unresolved either way.
 - **Which public label set trains the Baly-style classifier's supervision (§4.1)?** A
   public academic replication corpus, or bootstrapping directly from MBFC's own public
   labels used strictly as training signal (never redistributed, only trained on) — and
@@ -746,9 +901,11 @@ requires reuse over invention and this table is the receipt.
 - **Wordfish refit cadence (§7).** Daily (likely wasteful once the corpus stabilizes) vs.
   weekly (the stated likely-right default) — worth confirming once real corpus growth is
   observed rather than fixed here.
-- **Pairwise NLI cap for large-reportings events (§4.5, §7).** What N, and what fallback
-  clustering strategy, for a 30+-outlet breaking-news event? Mirrors spec 2 §12's own
-  unresolved question — the two specs should converge on one shared answer.
+- **Pairwise NLI cap for large-reportings events (§4.5, §4.7, §7).** What N, and what
+  fallback clustering strategy, for a 30+-outlet breaking-news event? The same cap now
+  also bounds the corroborated-core (D7) and wartime-weighting (D6.4) computations, since
+  both ride the same pairwise NLI pass. Mirrors spec 2 §12's own unresolved question — the
+  two specs should converge on one shared answer.
 - **Is the reader-adjustable clustering-threshold slider (§9) worth building in v1 at
   all?** It exposes methodology tuning to readers rather than just the founder — could
   instead be a founder-only debug view, not a public-facing control.
