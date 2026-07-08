@@ -1,5 +1,6 @@
 ---
 import Shell from "../layouts/Shell.astro";
+import FirstLight from "../components/FirstLight.tsx";
 import FeedCard from "../components/FeedCard.astro";
 import FeatureCard from "../components/FeatureCard.astro";
 import MediaRail from "../components/MediaRail.astro";
@@ -57,6 +58,17 @@ const ticker = tickerTitles(all, 8);
 // Live instrument readout: total signals + how many arrived in the last 24h
 const nowMs = Date.parse(now);
 const freshCount = all.filter((it) => nowMs - Date.parse(it.publishedAt) < 24 * 60 * 60 * 1000).length;
+
+// "First Light" seed data — the masthead's OGL point-field is DATA-DRIVEN, not
+// decorative: real per-channel counts (canonical CHANNELS order) + the real
+// total/fresh counts above become the field's lane density and "fresh signal"
+// highlight. Reuses bucketByChannel (already imported below) over the FULL
+// `all` array so the field represents the whole Feed, not just the tail.
+const allChannelBuckets = bucketByChannel(all);
+const channelCounts = CHANNELS.map((ch) => ({
+  channel: ch,
+  count: allChannelBuckets.get(ch)?.length ?? 0,
+}));
 
 // THE SHOWCASE vs THE TAIL.
 // curated.json is rank-ordered (best first); the FEATURED set is the top
@@ -179,8 +191,13 @@ const delay = (i: number) => Math.min(i, 8) * 60;
   feedPage={true}
   activeChannel={activeChannel}
 >
-  <!-- compact editorial masthead — no canvas, no WebGL -->
+  <!-- compact editorial masthead. "First Light" (art-direction.md §1, Signature
+       Moment A) lives here now, scoped to this band: a data-driven OGL
+       point-field that resolves out of the dark ONCE then settles, lazily
+       hydrated behind the title/copy so first paint is never blocked by
+       WebGL — see components/FirstLight.tsx for the full discipline. -->
   <div class="masthead" data-reveal>
+    <FirstLight channelCounts={channelCounts} totalCount={all.length} freshCount={freshCount} client:visible />
     <p class="mh-eyebrow">
       <span class="mh-dot" aria-hidden="true"></span>
       the observatory

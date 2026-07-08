@@ -148,11 +148,13 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
   </head>
   <body>
     <!-- The decorative mesh-gradient background was removed (art-direction §2.1:
-         it is the #1 vibecoded tell). There is no WebGL on the site today —
-         the Feed's "First Light" WebGL hero (art-direction.md §1, Signature
-         Moment A) is PLANNED but not yet built. Empty space is warm,
-         near-black, grain-textured stillness (global.css) — confidence, not
-         filler. -->
+         it is the #1 vibecoded tell). The ONLY WebGL on the site is the Feed's
+         "First Light" hero (art-direction.md §1, Signature Moment A) — a
+         data-driven OGL point-field behind the Feed masthead only (see
+         pages/index.astro + components/FirstLight.tsx), entrance-once then
+         settled, never a permanent background here in the shell. Everywhere
+         else, empty space stays warm, near-black, grain-textured stillness
+         (global.css) — confidence, not filler. -->
     <a class="skip-link" href="#main">Skip to content</a>
     <Ticker titles={tickerTitles} />
     <header class="topbar metal">

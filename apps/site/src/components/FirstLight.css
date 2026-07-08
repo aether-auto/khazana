@@ -1,0 +1,69 @@
+/* apps/site/src/components/FirstLight.css
+   First Light — the Feed masthead's data-driven point-field. Sits BEHIND the
+   masthead text (z-index below .mh-* content in index.astro), off the
+   critical render path: the masthead's title/copy render immediately from
+   SSR, this layers in behind once hydrated. Tokens from tokens.css. */
+.fl-host {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* transparent — sits ABOVE index.astro's existing `.masthead::before` amber
+     radial glow (both z-index:0; this is the later box in paint order), so
+     the point-field reads as stars gathering INSIDE that same warm haze
+     rather than replacing it with a second, competing background. */
+  -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 60%, transparent 100%);
+}
+
+.fl-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* baked static fallback — deterministic dot field, always present. Recedes
+   (doesn't vanish) once the live canvas is up, mirroring Model3D's
+   `:has(canvas)` fade so there is never a hard cut between the two. */
+.fl-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.fl-host:has(.fl-canvas) .fl-fallback {
+  opacity: 0.16;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+.fl-dot {
+  fill: var(--accent-dim);
+  opacity: 0.55;
+}
+.fl-dot--hot {
+  fill: var(--accent);
+  opacity: 0.9;
+  filter: drop-shadow(0 0 2px color-mix(in oklab, var(--accent) 60%, transparent));
+}
+
+/* honest empty state — "an empty night sky with one cold star" */
+.fl-host--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fl-lone-star {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  box-shadow: 0 0 8px rgba(140, 132, 112, 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fl-host:has(.fl-canvas) .fl-fallback {
+    transition: none;
+  }
+}
