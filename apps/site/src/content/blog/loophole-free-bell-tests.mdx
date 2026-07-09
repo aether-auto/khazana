@@ -1,0 +1,304 @@
+---
+title: "Closing the Last Loophole: How 2015 Ended 80 Years of Doubt About Local Realism"
+format: primer
+channels:
+  - quantum
+  - science
+summary: "In 2015 three independent teams — electron spins in Delft, photons in Boulder, photons in Vienna — closed the last two loopholes in an 80-year argument over whether the universe obeys local realism, finishing the throughline of work the 2022 Nobel Prize in Physics later recognized."
+publishedAt: 2026-07-09T09:00:00.000Z
+sources:
+  - title: "\"Einstein–Podolsky–Rosen paradox\" — Wikipedia (summarizing Phys. Rev. 47, 777, 1935)"
+    url: "https://en.wikipedia.org/wiki/Einstein%E2%80%93Podolsky%E2%80%93Rosen_paradox"
+    tier: med
+    origin: researched
+  - title: "Bell, J.S. — \"On the Einstein Podolsky Rosen Paradox\", Physics Physique Fizika 1, 195 (1964) — CERN Document Server archival copy"
+    url: "https://cds.cern.ch/record/111654"
+    tier: high
+    origin: researched
+  - title: "Hensen, B. et al. — \"Loophole-free Bell inequality violation using electron spins separated by 1.3 kilometres\", Nature 526, 682 (2015)"
+    url: "https://www.nature.com/articles/nature15759"
+    tier: high
+    origin: researched
+  - title: "Hensen, B. et al. — arXiv preprint 1508.05949"
+    url: "https://arxiv.org/abs/1508.05949"
+    tier: high
+    origin: researched
+  - title: "Shalm, L. K. et al. — \"Strong Loophole-Free Test of Local Realism\", Phys. Rev. Lett. 115, 250402 (2015) — NIST publication page"
+    url: "https://www.nist.gov/publications/strong-loophole-free-test-local-realism"
+    tier: high
+    origin: researched
+  - title: "Shalm, L. K. et al. — arXiv preprint 1511.03189"
+    url: "https://arxiv.org/abs/1511.03189"
+    tier: high
+    origin: researched
+  - title: "Giustina, M. et al. — \"Significant-Loophole-Free Test of Bell's Theorem with Entangled Photons\", Phys. Rev. Lett. 115, 250401 (2015) — NIST publication page"
+    url: "https://www.nist.gov/publications/significant-loophole-free-test-bells-theorem-entangled-photons"
+    tier: high
+    origin: researched
+  - title: "Giustina, M. et al. — arXiv preprint 1511.03190"
+    url: "https://arxiv.org/abs/1511.03190"
+    tier: high
+    origin: researched
+  - title: "The Nobel Prize in Physics 2022 — Press release"
+    url: "https://www.nobelprize.org/prizes/physics/2022/press-release/"
+    tier: high
+    origin: researched
+  - title: "Handsteiner, J. et al. — \"Cosmic Bell Test: Measurement Settings from Milky Way Stars\", Phys. Rev. Lett. 118, 060401 (2017) — arXiv preprint 1611.06985"
+    url: "https://arxiv.org/abs/1611.06985"
+    tier: high
+    origin: researched
+  - title: "Eberhard, P. H. — \"Background level and counter efficiencies required for a loophole-free Einstein-Podolsky-Rosen experiment\", Phys. Rev. A 47, R747 (1993) — NASA ADS abstract"
+    url: "https://ui.adsabs.harvard.edu/abs/1993PhRvA..47..747E/abstract"
+    tier: high
+    origin: researched
+  - title: "Garg, A. & Mermin, N. D. — \"Detector Inefficiencies in the Einstein-Podolsky-Rosen Experiment\", Phys. Rev. D 35, 3831 (1987) — NASA ADS abstract"
+    url: "https://ui.adsabs.harvard.edu/abs/1987PhRvD..35.3831G"
+    tier: high
+    origin: researched
+  - title: "Rosenfeld, W. et al. — \"Event-Ready Bell Test Using Entangled Atoms Simultaneously Closing Detection and Locality Loopholes\", Phys. Rev. Lett. 119, 010402 (2017) — arXiv preprint 1611.04604"
+    url: "https://arxiv.org/abs/1611.04604"
+    tier: high
+    origin: researched
+  - title: "\"Bell's Theorem\" — Stanford Encyclopedia of Philosophy"
+    url: "https://plato.stanford.edu/entries/bell-theorem/"
+    tier: high
+    origin: researched
+  - title: "\"Bell test\" — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Bell_test"
+    tier: med
+    origin: researched
+  - title: "\"CHSH inequality\" — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/CHSH_inequality"
+    tier: med
+    origin: researched
+  - title: "\"Bell's theorem\" — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Bell%27s_theorem"
+    tier: med
+    origin: researched
+  - title: "\"Explorers of Quantum Entanglement Win 2022 Nobel Prize in Physics\" — Scientific American"
+    url: "https://www.scientificamerican.com/article/explorers-of-quantum-entanglement-win-2022-nobel-prize-in-physics1/"
+    tier: med
+    origin: researched
+  - title: "\"Physicists address loophole in tests of Bell's inequality using 600-year-old starlight\" — Phys.org"
+    url: "https://phys.org/news/2017-02-physicists-loophole-bell-inequality-year-old.html"
+    tier: med
+    origin: researched
+  - title: "\"Aspect, Clauser, Zeilinger awarded 2022 Nobel Prize in Physics...\" — EurekAlert"
+    url: "https://www.eurekalert.org/news-releases/966888"
+    tier: med
+    origin: researched
+draft: false
+---
+
+import { RunnableCode, StatBand, Annotation, Pullquote, Math, Stepper, Quiz, ParameterPlay, DataTable, Timeline, Callout, Detail, Definition } from "../../components/mdx";
+
+Take two particles, entangle them, and send them to opposite ends of a city. Measure one, and the results on both ends line up more tightly than any pair of independent coin flips ever could — as if the two particles had somehow agreed on an answer in advance, no matter which of several questions you decide, at the last second, to ask each of them. That correlation is real, and it has been measured over and over. What it *means* is where the actual fight lives. Explaining it seems to force you to give up one of two ideas that both sound obviously true: **realism**, the assumption that a particle's properties exist, definitely, whether or not anyone looks; and **locality**, the assumption that no influence travels faster than light. Keep both, and the correlation looks impossible. Drop either, and quantum mechanics stops feeling like the physics you thought you understood.
+
+For thirty years after Einstein first pressed this objection in 1935, the disagreement stayed philosophy — two camps, no experiment, no way to referee it. Then in 1964 a CERN theorist named John Bell did something nobody had managed before: he turned a metaphysical argument into a number a laboratory could actually measure. Bell's inequality says that *any* theory obeying both realism and locality — call it "local realism" — puts a hard ceiling on how correlated two distant measurements can be. Quantum mechanics predicts you can climb higher than that ceiling. Every serious experiment since 1972 climbed higher. And yet for fifty-one years, a critic could always point to a crack in the experimental apparatus — not in the theory, in the *equipment* — through which a clever local mechanism might, in principle, still sneak the answer through. This primer builds the whole argument from the ground up: what Bell's inequality actually says, exactly how a fully local, fully realistic model can fake a violation of it, and what it took, mechanically, to seal every crack at once — first in 2015, in three independent laboratories, using three different physical systems, within about six weeks of each other.
+
+<StatBand client:visible caption="Local realism took eighty years to go from a philosophical objection to a falsified hypothesis — and the final nail landed three times in three months."
+  stats={[
+    { value: 1935, label: "THE PARADOX POSED", sub: "Einstein, Podolsky, Rosen", group: false, href: "https://en.wikipedia.org/wiki/Einstein%E2%80%93Podolsky%E2%80%93Rosen_paradox" },
+    { value: 1964, label: "THE TEST INVENTED", sub: "Bell's inequality", group: false, href: "https://cds.cern.ch/record/111654" },
+    { value: 51, label: "YEARS TO CLOSE BOTH LOOPHOLES AT ONCE", sub: "1964 to 2015", group: false },
+    { value: 3, label: "INDEPENDENT TEAMS, ONE SEASON", sub: "electron spins, then photons twice", group: false }
+  ]} />
+
+## The misconception that makes 1982 sound like the end of the story
+
+Most people who have heard of Bell tests at all believe the case closed decades before it actually did — that Alain Aspect's celebrated 1982 experiment, or one of its many descendants through the 1990s, already delivered an airtight verdict against local realism. It is easy to see why: those experiments genuinely did violate Bell's inequality, by enormous statistical margins, again and again. The wrong belief isn't that the data were fake. It's the assumption that *any* measured violation, by itself, rules out local realism. It doesn't — not automatically. A real experiment has real, imperfect equipment, and imperfect equipment opens **loopholes**: specific, physical gaps through which a fully local, fully deterministic mechanism could, in principle, produce exactly the same numbers a genuine violation would produce.
+
+The cleanest of these is the **detection loophole**, also called the fair-sampling loophole, and you do not have to take it on faith. Below is a completely local hidden-variable model — every particle's response to every possible question is fixed in advance, at the moment the pair is created, and nothing crosses the gap between the two measuring stations at measurement time. Its only trick is that each detector occasionally fails to register a click, and *which* trials get missed is allowed to depend on the particle's own pre-agreed answers and its own measurement setting — never on the far side's setting, never on the far side's outcome. That is a completely legal move for a local model: real detectors really do miss particles, and nothing about locality forbids a detector's efficiency from depending on the hidden state of the particle it's looking at. Run it and watch what a fully local system does to Bell's own bound.
+
+<RunnableCode client:visible caption="A fully local, deterministic model exploiting realistic (setting-dependent, not-signal-dependent) non-detection. Predict whether S can beat 2, then run. Try changing 0.5 and 0.9 to the same number and watch it collapse."
+  code={`// Four possible "hidden types," fixed at the source. Each type is a
+// complete, predetermined answer sheet: what THIS particle pair would
+// output at EACH of the two settings on EACH side. Nothing here reacts
+// to which setting is chosen -- the whole sheet exists before either
+// measurement happens.
+const TYPES = [
+  { a0: +1, a1: +1, b0: +1, b1: +1 },
+  { a0: +1, a1: -1, b0: +1, b1: -1 },
+  { a0: -1, a1: +1, b0: -1, b1: +1 },
+  { a0: -1, a1: -1, b0: -1, b1: -1 },
+];
+
+// The cheat: a detector's click probability may depend on its OWN
+// setting and the hidden type -- never on the far side's setting or
+// outcome. Still fully local. Alice under-clicks at a0, and Bob
+// under-clicks at b1, whenever the type is "boring" (index 0 or 3).
+function clickProb(typeIndex, side, setting) {
+  const boring = typeIndex === 0 || typeIndex === 3;
+  if (side === "A" && setting === "a0") return boring ? 0.5 : 0.9; // <-- edit me
+  if (side === "B" && setting === "b1") return boring ? 0.5 : 0.9; // <-- edit me
+  return 1.0; // every other setting: perfect (uniform) detection
+}
+
+function correlation(aSetting, bSetting, trials) {
+  let num = 0, den = 0;
+  for (let t = 0; t < trials; t++) {
+    const typeIndex = Math.floor(Math.random() * 4);
+    const T = TYPES[typeIndex];
+    const clicksA = Math.random() < clickProb(typeIndex, "A", aSetting);
+    const clicksB = Math.random() < clickProb(typeIndex, "B", bSetting);
+    if (clicksA && clicksB) {           // only counted if BOTH detect
+      num += T[aSetting] * T[bSetting];
+      den += 1;
+    }
+  }
+  return den === 0 ? 0 : num / den;
+}
+
+const N = 400000;
+const E_a0b0 = correlation("a0", "b0", N);
+const E_a0b1 = correlation("a0", "b1", N);
+const E_a1b0 = correlation("a1", "b0", N);
+const E_a1b1 = correlation("a1", "b1", N);
+const S = E_a0b0 - E_a0b1 + E_a1b0 + E_a1b1;
+
+console.log("E(a0,b0) = " + E_a0b0.toFixed(3));
+console.log("E(a0,b1) = " + E_a0b1.toFixed(3));
+console.log("E(a1,b0) = " + E_a1b0.toFixed(3));
+console.log("E(a1,b1) = " + E_a1b1.toFixed(3));
+console.log("CHSH S = " + S.toFixed(3) + "  (a purely local model is supposed to be capped at 2)");
+return S;`} />
+
+Run it and the naive model breaks immediately: S lands around 2.5, comfortably past the "impossible" ceiling of 2 — produced by a model with no signaling whatsoever, no randomness that isn't fixed at the source, nothing but a detector that is slightly pickier on two of the four setting combinations. Edit the two numbers marked `<-- edit me` down to equal values (say, both `0.7`) and the advantage vanishes; S collapses back toward 2, because now detection no longer correlates with the hidden type at all — the sample is *fair* again. That single edit is the entire content of the detection loophole: an experiment cannot claim to have refuted local realism unless it can rule out the possibility that its own detectors are quietly doing exactly what this code does on purpose.
+
+<Callout kind="key-insight" title="The loophole is a fact about the equipment, not the theory">
+Bell's inequality is a mathematical fact about local models with perfect detection. Once real detectors miss some fraction of particles, the inequality only still applies if you can prove the missed particles wouldn't have changed the answer — the "fair sampling" assumption. Every pre-2015 Bell test had to *assume* fair sampling rather than *prove* it, because detector efficiency was well below the threshold at which a model like the one above becomes mathematically impossible.
+</Callout>
+
+## Foundation: what Bell's inequality actually claims
+
+To see exactly where that threshold comes from, the inequality needs to be stated properly rather than gestured at. Consider an <Definition client:visible term="entangled pair" def="two particles produced together so that measurements on them are correlated beyond anything explainable by each particle carrying its own independent, pre-set properties -- the correlation exists between the pair, not within either particle alone." /> sent to two distant stations, Alice and Bob. Each chooses one of two possible measurement settings — Alice picks *a* or *a′*, Bob picks *b* or *b′* — and each gets back a result of +1 or −1. Repeat many times and compute the average correlation E(x,y) for each of the four setting combinations.
+
+<Annotation client:load term="Einstein, Podolsky and Rosen" note="EPR (1935) argued that if a quantity's value can be predicted with certainty without disturbing the system, it corresponds to a real 'element of reality' -- and that quantum mechanics, which denies particles definite properties before measurement, must therefore be an incomplete description. Einstein, Podolsky, Rosen, Phys. Rev. 47, 777 (1935)." /> had argued, in 1935, that quantum mechanics must be incomplete precisely because it denies particles have such definite properties in advance — their famous "elements of reality" argument. For thirty years that stayed a matter of taste: you could believe hidden, pre-existing values filled in the gaps, or you could accept quantum indeterminacy, and no experiment could tell you which. <Annotation client:load term="Bell" note="Bell's own words, quoted by the Stanford Encyclopedia of Philosophy: 'In this note that idea will be formulated mathematically and shown to be incompatible with the statistical predictions of quantum mechanics.' Locality is stated as the hypothesis that if the two measurements are made at places remote from one another, the orientation of one magnet does not influence the result obtained with the other. Bell, Physics Physique Fizika 1, 195 (1964)." /> changed that by proving a concrete mathematical consequence of assuming both realism (definite pre-existing values) and locality (no faster-than-light influence): those two assumptions together force a limit on how correlated the four E(x,y) values can possibly be, no matter what the hidden values are or how they're distributed.
+
+<Pullquote cite="J. S. Bell, quoted in the Stanford Encyclopedia of Philosophy, “Bell's Theorem”" href="https://plato.stanford.edu/entries/bell-theorem/" kind="quote">
+In this note that idea will be formulated mathematically and shown to be incompatible with the statistical predictions of quantum mechanics.
+</Pullquote>
+
+Clauser, Horne, Shimony and Holt sharpened Bell's original result in 1969 into the form every modern Bell test actually runs — the combination now called CHSH, built from all four setting pairs at once.
+
+<Math client:visible tex="S = E(a,b) - E(a,b') + E(a',b) + E(a',b')"
+  label="(1)"
+  caption="The CHSH combination: two settings per side, all four joint correlations, one deliberately placed minus sign."
+  numbered
+  steps={[
+    { tex: "E(x,y) = \\langle A(x)\\,B(y) \\rangle", note: "each correlation is the average, over many trials, of the product of Alice's and Bob's ±1 outcomes at settings x and y" },
+    { tex: "|S| \\le 2", note: "any local, realistic theory -- outcomes fixed in advance, nothing signaling between the wings -- is provably capped here (Bell 1964; sharpened to this form by Clauser, Horne, Shimony and Holt, 1969)" },
+    { tex: "|S| \\le 2\\sqrt{2} \\approx 2.828", note: "quantum mechanics predicts violations up to the Tsirelson bound -- strictly, measurably higher than any local model can ever reach" }
+  ]} />
+
+That gap between 2 and 2√2 ≈ 2.828 is the entire empirical content of the debate. It is small on paper and enormous in consequence: build an experiment that reliably lands above 2 by a wide enough statistical margin, with every possible local escape hatch closed, and you have not just supported quantum mechanics — you have proven that no theory respecting both realism and locality can describe your data, full stop. <Annotation client:load term="the classical, local bound of 2" note="Any deterministic assignment of ±1 outcomes to all four settings, averaged over any distribution of hidden variables, satisfies |S| ≤ 2 -- this is the content of the Bell/CHSH inequality itself. Wikipedia, 'CHSH inequality.'" /> The code above beat that ceiling using a fake — a model that isn't actually a violation, only a detector loophole dressed up as one. The whole discipline of loophole-free Bell testing exists to make that particular kind of fake structurally impossible.
+
+Notice what equation (1) does *not* say. It never mentions quantum mechanics, wavefunctions, or entanglement — it is a pure statement about any theory in which particles carry definite, pre-existing answers and cannot signal each other faster than light. That is exactly what makes it powerful as a test: you don't need to trust quantum theory to derive the bound of 2, only to trust realism and locality, two assumptions almost nobody in 1964 was prepared to give up. The reason a real entangled pair can climb past that bound at all is that quantum mechanics denies the first assumption outright — it says the pair's joint state is not a list of two separate, pre-agreed answers, but a single, genuinely undivided description (physicists write it as a superposition of both particles' outcomes at once) that only resolves into a definite +1 or −1 for *either* particle at the moment either one is measured. <Annotation client:load term="Tsirelson's bound of 2√2" note="Boris Tsirelson (1980) proved 2√2 is the absolute maximum any quantum state and measurement choice can produce for the CHSH combination -- quantum mechanics violates local realism, but not without limit. Wikipedia, 'CHSH inequality.'" /> caps how far even quantum correlations can climb; nature, it turns out, sits at a very specific, calculable distance beyond "classical," not at "anything goes."
+
+### Fifty years of almost
+
+None of this was obvious the moment Bell's paper appeared, and closing the gap between "mathematically possible" and "experimentally airtight" took decades of incremental engineering. <Annotation client:load term="Freedman and Clauser" note="Freedman and Clauser ran the first experimental Bell test in 1972, observing a violation of an early Bell-type inequality with entangled photon pairs -- but with detector efficiencies and a source-to-detector geometry far short of loophole-free by any later standard. Wikipedia, 'Bell test.'" /> ran the first real Bell test in 1972 and got a violation, using the photon-counting technology of the era — technology far too lossy to say anything about the detection loophole, and a setup with no attempt at spacelike separation at all. A decade later, <Annotation client:load term="Alain Aspect" note="Aspect's group (1981–82) switched the measurement setting on each side while the entangled photons were still in flight, addressing a version of the locality loophole; the detection loophole remained wide open, since photon-counting efficiency was nowhere near the required threshold. Wikipedia, 'Bell test'; Nobel Prize press release, 2022." /> and his collaborators took the first serious swing at the locality loophole, switching which measurement each side would perform *while the photons were still traveling* — so the choice genuinely couldn't have been anticipated by the particle source in advance, addressing exactly the concern Bell's own locality clause raises. It was a landmark, later recognized by the Nobel committee, and it still left the detection loophole completely open: 1980s photon detectors caught only a small fraction of the pairs produced. In 1998, a team in Innsbruck led by Anton Zeilinger pushed the locality closure further, using genuinely fast quantum random number generators and <Annotation client:load term="roughly 400 meters of separation" note="'The two stations to which the photon pairs are delivered are 400 m apart, a distance which light in vacuo traverses in 1.3 μs' -- Weihs et al., Phys. Rev. Lett. 81, 5039 (1998), as summarized in the Stanford Encyclopedia of Philosophy, 'Bell's Theorem.'" /> — better randomness, more distance, still no answer to detection. Every one of these experiments violated Bell's inequality. Every one of them left at least one loophole a determined skeptic could still walk through. That combination — real violation, real remaining loophole — is exactly the gap the misconception above glosses over, and exactly the gap 2015 finally closed.
+
+## Three ways a local, realistic universe could still be cheating
+
+The detection loophole is the easiest to demonstrate, but experimenters worried about (and eventually closed) three distinct gaps, each corresponding to an assumption Bell's proof quietly needs.
+
+<Stepper client:visible mode="reveal" caption="What has to be true for a Bell violation to actually mean something"
+  steps={[
+    { title: "The detection (fair-sampling) loophole", body: "<p>Not every particle gets detected. If the detected subsample isn't representative of the whole, a local model can exploit exactly the mechanism demonstrated above: quietly discard the trials that would have hurt the correlation, and the surviving sample lies. Closed by making detection efficiency high enough -- provably high enough -- that no such discarding strategy can reach the observed S.</p>" },
+    { title: "The locality (communication) loophole", body: "<p>Bell's proof assumes nothing travels between the wings faster than light. If Alice's choice of setting could, even in principle, reach Bob's station before his measurement finishes -- via any subluminal signal -- a local mechanism could adapt Bob's answer to Alice's choice and fake the correlation. Closed by making the setting choice and the full readout on each side <strong>spacelike separated</strong>: physically too fast, over too short a distance, for light itself to carry the information across in time.</p>" },
+    { title: "The freedom-of-choice (setting-independence) loophole", body: "<p>Bell's derivation assumes the experimenters' choice of measurement setting is statistically independent of the hidden variable governing the particles. If some common cause fixed both the 'random' setting choices and the particles' hidden properties in advance -- a position sometimes called superdeterminism -- the inequality could be satisfied locally while still appearing to be violated. Never fully closeable in principle, but pushable: the further back in time and space the randomness source is causally disconnected from the experiment, the smaller the surviving gap for a conspiracy to hide in.</p>" }
+  ]} />
+
+<Quiz client:visible caption="check your model of the three loopholes"
+  questions={[
+    { prompt: "Why is the detection loophole dangerous even though the detectors aren't lying about what they see?", choices: ["Detectors sometimes register the same particle twice", "An unrepresentative subsample of the detected pairs can mimic a Bell violation that the full sample, honestly counted, would not show", "Detectors are too expensive to deploy at scale"], answer: 1, explain: "The demonstrated model above shows exactly this: every recorded click is a genuine, correctly-read outcome. The cheat is entirely in which trials get discarded before you compute S." },
+    { prompt: "Why must the setting choice and the full outcome be spacelike separated?", choices: ["So the experiment finishes faster", "So that no signal, even one traveling at light speed, could carry the setting from one station to the far one before its measurement completes", "So the two detectors don't interfere electromagnetically"], answer: 1, explain: "If a light-speed signal could in principle reach the far station before its readout finishes, a local mechanism could in principle use it -- so the experiment has to physically outrun that possibility." },
+    { prompt: "What did the 2015 experiments do that Aspect's 1982 result did not?", choices: ["Used more entangled pairs overall", "Closed the detection loophole and the locality loophole at the same time, in the same run", "Ran the experiment in orbit"], answer: 1, explain: "Aspect's experiment closed a version of the locality loophole but not the detection loophole; earlier detection-loophole-free tests (e.g., with trapped ions) hadn't closed locality. 2015 was the first time both were closed simultaneously, in one run." }
+  ]} />
+
+## The locality loophole is a race against light itself
+
+The freedom-of-choice loophole is philosophically the deepest, but the locality loophole is the one you can turn into an actual number, because it is nothing more than special relativity applied to lab equipment. If your two measuring stations are a distance *L* apart, light itself takes *L*/*c* to cross that gap — and your setting-choice-plus-full-readout process, on both sides, has to finish inside that window, or a subluminal signal could in principle beat your own measurement to the far side.
+
+<ParameterPlay client:visible
+  params={[
+    { key: "electronics", label: "your setting-choice + full-readout time", min: 10, max: 5000, default: 4180, step: 10, unit: " ns" }
+  ]}
+  expr="x/299.792458 - electronics/1000"
+  xRange={[1, 2000]}
+  xLabel="separation between stations (m)"
+  yLabel="spacelike-separation margin (µs)"
+  readouts={[
+    { label: "minimum separation for zero margin", expr: "electronics * 0.299792458", unit: " m" }
+  ]}
+  caption="Positive margin means your setting-choice-to-readout process finishes before light could cross the gap -- the locality loophole is closed. At the default 4,180 ns (480 ns for Hensen et al.'s Delft team to choose a basis and begin driving the readout pulse, plus 3.7 µs of spin readout -- their full setting-choice-to-readout process), you need roughly 1.25 km of separation just to break even; they used 1.28 km, leaving a razor-thin margin of only about 90 ns (~2%)." />
+
+Drag the electronics slider down toward the 26-nanosecond setting-selection time Giustina's Vienna team achieved, and the minimum viable separation collapses to under eight meters — which is why their two stations, in the sub-basement of Vienna's Hofburg castle, only needed to sit roughly <Annotation client:load term="58 meters apart" note="Giustina et al. report a station separation of approximately 58 m and a fast optical phase-diffusion random number generator with roughly 26 ns processing time per setting choice. Phys. Rev. Lett. 115, 250401 (2015)." /> to close the loophole with comfortable margin. Push the slider up toward 4,180 nanoseconds — the full time it actually took the Delft team's nitrogen-vacancy-center electronics to choose a basis and complete spin readout (480 ns to select the setting and begin driving the readout pulse, plus 3.7 µs of spin readout) — and the required separation jumps to roughly 1.25 kilometers, which is exactly why <Annotation client:load term="the Delft pair sat 1.3 kilometres apart" note="Hensen et al. report electron-spin qubits in two labs 1,280 m apart. Their full setting-choice-to-readout process -- 480 ns to choose a basis and begin driving the readout, plus 3.7 µs of spin readout -- takes about 4.18 µs, inside the 4.27 µs light-travel-time budget across the separation but with only about 90 ns (roughly 2%) to spare. Nature 526, 682 (2015); arXiv:1508.05949." /> — the largest separation of the three 2015 experiments, dictated by how long their particular readout scheme took and by how little slack they were willing to risk against the light-travel-time budget.
+
+<Detail summary="Go deeper: why photon experiments could stay small while the electron-spin experiment needed a whole kilometre">
+The trade-off in the chart above cuts both ways. A team with fast electronics can use a small, cheap, well-controlled lab (Vienna's ~58 m, NIST's ~5.4 m). A team whose measurement process is intrinsically slower has only one lever left: distance. Delft's electron-spin qubits gave them something the photon experiments didn't have for free -- near-unit-efficiency readout of the actual physical qubit, sidestepping the photon-detection-efficiency problem almost entirely -- but reading out an electron spin took microseconds, not tens of nanoseconds, so the only way to stay spacelike-separated was to put a kilometre of optical fiber between the two labs. Different bottleneck, different architecture, same physics.
+</Detail>
+
+## Concept: why photons needed a trick that electrons didn't
+
+Photon experiments faced a second, independent problem the electron-spin experiment never had: single-photon detectors are lossy. A polarizer, a fiber coupler, a detector's own quantum efficiency — each stage loses photons, and for decades the naive threshold to close the detection loophole with a standard maximally-entangled photon pair sat close to <Annotation client:load term="82.8%" note="Garg and Mermin (1987) proved that closing the fair-sampling loophole with a maximally entangled CHSH state, without further assumptions, requires detection efficiency above 2(√2 − 1) ≈ 82.8% -- the baseline threshold Eberhard's 1993 result later improved on. Garg & Mermin, 'Detector Inefficiencies in the Einstein-Podolsky-Rosen Experiment', Phys. Rev. D 35, 3831 (1987)." /> end-to-end system efficiency, well beyond what 2010s photon-counting hardware could deliver. <Annotation client:load term="Eberhard" note="Eberhard (1993) proved that using a NON-maximally entangled state instead lowers the detection-efficiency threshold needed to close the fair-sampling loophole from that ~82.8% maximally-entangled baseline down toward a limiting value of 2/3 ≈ 66.7%. Phys. Rev. A 47, R747 (1993)." /> found the way out two decades earlier than anyone needed it: deliberately using a slightly *lopsided*, non-maximally-entangled state — instead of the "cleanest," most symmetric entangled pair — lowers the required efficiency dramatically, down toward a limiting value of two-thirds.
+
+<Callout kind="key-insight" title="Sometimes less entanglement is more useful">
+A maximally entangled pair is the most strongly correlated state quantum mechanics allows, but it is not the state that is easiest to defend against the detection loophole. Eberhard's 1993 result — theoretical, not directly re-derived by later teams, but the calculation every photonic 2015 experiment built on — showed that trading some of that entanglement away buys back a large chunk of tolerable detector loss. Both the Boulder and Vienna teams used a version of this trick.
+</Callout>
+
+That theoretical headroom is what actually made the photonic experiments buildable. NIST's team paired an Eberhard-style state with newly available high-efficiency detectors to reach a system detection efficiency of roughly <Annotation client:load term="75%" note="Shalm et al. report overall system detection efficiencies of 74.7 ± 0.3% and 75.6 ± 0.3% for the two measurement stations, built on superconducting nanowire single-photon detectors with 91 ± 2% intrinsic efficiency. Phys. Rev. Lett. 115, 250402 (2015)." /> on each side — safely above the roughly two-thirds Eberhard threshold, though still well below the naive 82.8% figure a maximally entangled pair would have required. Vienna's team, using transition-edge-sensor detectors, reached similar heralding efficiencies of <Annotation client:load term="about 78.6% and 76.2%" note="Giustina et al. report system heralding efficiencies of approximately 78.6% (Alice) and 76.2% (Bob), using transition-edge-sensor superconducting detectors. Phys. Rev. Lett. 115, 250401 (2015)." /> on their two stations. Neither number would have been good enough for the old, symmetric-state threshold. Both were comfortably good enough for the asymmetric one.
+
+## The three experiments, side by side
+
+Put the mechanisms together and the three 2015 papers stop looking like three separate stories and start looking like three different engineering answers to the identical two constraints: detect (almost) everything, and finish (comfortably) faster than light could cross the gap.
+
+<DataTable client:load caption="The loophole-free triad of 2015 -- three physical systems, one shared verdict"
+  columns={[
+    { key: "team", label: "Team / location", type: "string" },
+    { key: "system", label: "Physical system", type: "string" },
+    { key: "separation", label: "Separation (m)", type: "number", align: "right" },
+    { key: "efficiency", label: "Detection / readout", type: "string" },
+    { key: "rng", label: "Setting-choice speed", type: "string" },
+    { key: "result", label: "Reported result", type: "string" }
+  ]}
+  rows={[
+    { team: "Delft (Hensen et al., Nature)", system: "Entangled electron spins, NV centers in diamond", separation: 1280, efficiency: "97.1% / 96.3% spin readout", rng: "160 ns setting selection, 3.7 µs full readout", result: "S = 2.42 ± 0.20; p = 0.039; 245 trials" },
+    { team: "NIST Boulder (Shalm et al., PRL)", system: "Polarization-entangled photon pairs", separation: 5.4, efficiency: "74.7% / 75.6% system (91±2% detector)", rng: "3 independent quantum/optical sources, XORed", result: "p = 5.9×10⁻⁹ unadjusted; 2.3×10⁻⁷ adjusted" },
+    { team: "Vienna (Giustina et al., PRL)", system: "Polarization-entangled photon pairs", separation: 58, efficiency: "78.6% / 76.2% heralding (TES detectors)", rng: "~26 ns, optical phase-diffusion RNG", result: "11.5σ violation; p = 3.74×10⁻³¹" }
+  ]} />
+
+Three completely different hardware platforms, three completely different distances, three completely different random-number schemes — and every one of them, independently, closed the detection loophole and the locality loophole in the same run and still reported a statistically overwhelming violation of the CHSH bound. That convergence is the actual scientific event. A single loophole-free experiment would have been a landmark; three, using unrelated physical systems, arriving within about six weeks of each other in 2015, made the result essentially impossible to attribute to some quirk of one team's apparatus.
+
+This piece follows that specific, tightly clustered story — the three CHSH tests that closed both loopholes at once within about six weeks of each other in 2015. It is not the only defensible count in circulation: a fourth independent group, <Annotation client:load term="Rosenfeld and colleagues at LMU Munich" note="Rosenfeld et al. published a loophole-free, event-ready Bell test using entangled rubidium atoms 398 m apart, closing the detection and locality loopholes together (S = 2.221 ± 0.033) with a heralded protocol rather than a direct CHSH test on photons or spins. Phys. Rev. Lett. 119, 010402 (2017); arXiv:1611.04604." />, published a loophole-free result of their own in 2017, using entangled atoms and a different, event-ready protocol rather than a straight CHSH test on photons or electron spins — which is likely why <Annotation client:load term="some retrospectives count four groups rather than three" note="'The last major loophole for Bell tests was closed in 2015 through the work of four different research groups.' Scientific American, 'Explorers of Quantum Entanglement Win 2022 Nobel Prize in Physics.'" />. Both counts are defensible; the numbers and dates in this piece track the three simultaneous CHSH papers of 2015 specifically, since that six-week cluster — not the later Munich result — is what the throughline above, and most textbook accounts of the loophole-closing story, are built around.
+
+Look closely at the table, though, and the three "reported results" columns are not directly comparable, and an honest primer says so rather than flattening it. Delft's p = 0.039 sounds almost unremarkable next to the photon experiments' p = 5.9×10⁻⁹ and p = 3.74×10⁻³¹ — numbers so small they border on meaningless to intuition. The gap is not a difference in how "real" the three violations were; it is a direct consequence of trial count and statistical method. Delft's electron-spin experiment ran 245 trials over roughly 220 hours, because each trial required generating fresh entanglement between two solid-state qubits and reading both out — an intrinsically slow process — and its p-value was computed with a deliberately conservative, assumption-light statistical test built for exactly that small-sample regime. The Boulder and Vienna teams, by contrast, could fire off millions of photon pairs per second, giving them the sample size to push their p-values into the almost incomprehensibly small range a large dataset makes possible. Smaller sample, more conservative statistics, still-decisive result: Delft's 0.039 was enough to rule out the relevant class of local models at high confidence for their specific setup, even though it looks unimpressive parked next to two numbers with dozens of zeroes after the decimal point. Context, not just magnitude, is what a p-value means.
+
+<Timeline client:load caption="From a philosophical objection to a falsified hypothesis: 1935–2022"
+  events={[
+    { date: "1935-05-15", label: "EPR paradox published", detail: "Einstein, Podolsky and Rosen argue quantum mechanics must be incomplete, since it denies particles definite properties before measurement. Phys. Rev. 47, 777." },
+    { date: "1964-11-01", label: "Bell's inequality", detail: "John Bell proves any theory obeying both locality and realism obeys a strict bound on measurable correlations -- turning a philosophical dispute into an experimental question. Physics Physique Fizika 1, 195." },
+    { date: "1972-01-01", label: "First experimental test", detail: "Freedman and Clauser run the first Bell test with entangled photons, observing a violation -- but with detection efficiency and separation far short of loophole-free." },
+    { date: "1982-01-01", label: "Aspect's switched-setting experiment", detail: "Alain Aspect's group changes measurement settings while photons are still in flight, addressing a version of the locality loophole; the detection loophole remains open." },
+    { date: "1993-02-01", label: "Eberhard's theoretical shortcut", detail: "Philippe Eberhard proves a non-maximally entangled state lowers the detection-efficiency threshold from ~82.8% toward 2/3 -- the calculation the 2015 photon experiments would later build on. Phys. Rev. A 47, R747." },
+    { date: "1998-01-01", label: "Weihs et al. sharpen the locality closure", detail: "Innsbruck team (Zeilinger group) uses fast quantum random number generators and roughly 400 m separation to further close the locality loophole; detection loophole still open." },
+    { date: "2015-10-21", label: "Delft: electron spins, 1.3 km", detail: "Hensen et al. publish the first simultaneous closure of the detection and locality loopholes, using entangled electron spins in diamond. Nature 526, 682." },
+    { date: "2015-12-16", label: "Boulder & Vienna: photons, twice", detail: "Shalm et al. (NIST) and Giustina et al. (Vienna) independently publish loophole-free photon experiments in the same Physical Review Letters issue -- three different systems, the same verdict, within about six weeks of Delft." },
+    { date: "2017-02-07", label: "Cosmic Bell test", detail: "Handsteiner et al. use real-time starlight roughly 600 years old to choose measurement settings, pushing the freedom-of-choice loophole's furthest possible conspiracy back centuries instead of microseconds. Phys. Rev. Lett. 118, 060401." },
+    { date: "2022-10-04", label: "2022 Nobel Prize in Physics", detail: "Alain Aspect, John Clauser and Anton Zeilinger share the prize “for experiments with entangled photons, establishing the violation of Bell inequalities and pioneering quantum information science.”" }
+  ]} />
+
+## What was still left standing after 2015 — and how it got pushed further
+
+Closing two of the three loopholes at once, in three independent runs, was enough to convince the overwhelming majority of physicists that local realism is dead. It was not, strictly, enough to close the third. The <Annotation client:load term="freedom-of-choice loophole" note="If the 'random' choice of measurement setting is not truly independent of the hidden variables governing the particles -- if both trace back to a shared cause -- Bell's derivation no longer forces the inequality, even with perfect detection and perfect spacelike separation. Wikipedia, 'Bell test'." /> is, by construction, never fully closeable: any random-number source you use to pick a setting was itself produced by some physical process, and a sufficiently determined skeptic can always claim that process was secretly correlated with the particle source all along. What experimenters *can* do is push the causal disconnection further back — make the "conspiracy" required to fake the result absurdly larger in scope, rather than pretend it's impossible.
+
+That's exactly what a follow-up experiment did two years later. Rather than generating random setting choices with a quantum device sitting a few nanoseconds from the particle source, <Annotation client:load term="Handsteiner and colleagues" note="Handsteiner et al. (2017) used real-time measurements of starlight color from stars roughly 600 light-years away to choose Bell-test measurement settings, over about 100,000 entangled photon pairs per run -- a roughly sixteen-orders-of-magnitude improvement in how far back in time any conspiratorial common cause would need to originate, compared to a microsecond-scale quantum random number generator. Phys. Rev. Lett. 118, 060401 (2017); Phys.org coverage of the same result." /> — working with Zeilinger's Vienna group, MIT, and Harvey Mudd College — pointed telescopes at stars roughly 600 light-years away and used the real-time color of arriving starlight to choose each measurement setting, a few microseconds before each trial. Any hidden common cause linking the setting choices to the particle source would now have had to have been in place six centuries ago, at the star, rather than nanoseconds ago, at a lab bench — a constraint the team described as tightening the loophole by sixteen orders of magnitude. It didn't make the freedom-of-choice loophole logically impossible to invoke. It made invoking it require believing in a conspiracy of essentially cosmic scope.
+
+## Where this leaves you
+
+Here is the whole argument compressed into one mental model. Bell's 1964 inequality is a hard mathematical ceiling — S cannot exceed 2 — that follows from just two assumptions: that particles have definite properties before you measure them, and that no influence outpaces light. Quantum mechanics predicts you can beat that ceiling, up to roughly 2.828. Every real experiment that beats it has to survive an adversarial question: could imperfect equipment, rather than actual physics, have produced this number? Three specific equipment gaps could, in principle, fake a violation — missing detections sampled unfairly, a signal sneaking between stations before measurement finishes, or a "random" setting secretly correlated with the particle source — and closing the first two, simultaneously, in a single run, is precisely what took until 2015, arriving three times in one season from three unrelated laboratories. The third gap, freedom of choice, cannot be slammed shut by definition, only pushed further away, which is exactly what starlight-driven cosmic Bell tests did two years later.
+
+None of this happened in a vacuum. The 2022 Nobel Prize in Physics went to <Annotation client:load term="Aspect, Clauser and Zeilinger" note="The 2022 Nobel Prize in Physics was awarded jointly to Alain Aspect, John F. Clauser and Anton Zeilinger “for experiments with entangled photons, establishing the violation of Bell inequalities and pioneering quantum information science.” Nobel Prize press release, 2022." /> — Clauser for the first real Bell test in 1972, Aspect for the 1982 experiment that closed a version of the locality loophole, and Zeilinger for decades of increasingly sophisticated entanglement experiments, including the Vienna group behind both the 2015 photonic test and the 2017 cosmic Bell test. The prize citation is not a story about one decisive experiment; it's a citation for the entire fifty-year campaign of closing gaps one at a time until nothing was left to close but a philosophical position almost nobody outside a small circle of dedicated superdeterminists still holds. The next time you read that some new experiment has "proven quantum weirdness," the useful question isn't whether it violated a Bell inequality. It's which loopholes were open when it did.
+
+There is also a quieter, more practical payoff buried in all this loophole-closing, and it is worth sitting with. A Bell test that has genuinely ruled out local realism is not just a philosophy result — it is a certified, physical resource. <Annotation client:load term="Device-independent quantum key distribution" note="'A Bell test can be used for the most stringent form of quantum key distribution (QKD), one where no assumption is needed about the inner workings of the devices used, called device-independent QKD.' Bell tests can also certify randomness expansion: a violation certifies that an output string is genuinely random, not merely pseudorandom. Wikipedia, 'Bell test.'" /> leans on exactly this guarantee: if two distant parties can produce correlations no local, pre-agreed strategy could have faked, an eavesdropper who even controls the measuring devices themselves cannot have predicted the outcomes in advance, without assuming anything about how those devices work internally. The same violation can certify that a string of random numbers is genuinely unpredictable rather than merely pseudorandom. The detection loophole and the locality loophole were never purely academic worries; closing them for real is the difference between an interesting physics demonstration and a number you would trust with an encryption key. That is the question worth carrying forward: not just *is the universe locally real* — a question 2015 answered about as conclusively as an experiment can — but *what can you build once you know, for certain, that it isn't?*
