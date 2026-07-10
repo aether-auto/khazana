@@ -1,0 +1,331 @@
+---
+title: "Rate, Not Risk: What a Hazard Ratio Actually Measures"
+format: primer
+channels:
+  - data-science
+  - science
+summary: "A hazard ratio of 1.20 does not mean your risk of dying went up 20% — it means your instantaneous event RATE did, and the gap between rate and risk can be enormous, which is why epidemiologists have been publishing corrections about this since 2017 with strikingly little effect on how the numbers get reported."
+publishedAt: 2026-07-09T09:00:00.000Z
+sources:
+  - title: "Cox, D.R. (1972). Regression Models and Life-Tables. Journal of the Royal Statistical Society, Series B, 34(2), 187–220."
+    url: "https://www.stat.cmu.edu/~ryantibs/journalclub/cox_1972.pdf"
+    tier: high
+    origin: researched
+  - title: "Kaplan, E.L. & Meier, P. (1958). Nonparametric Estimation from Incomplete Observations. Journal of the American Statistical Association, 53(282), 457–481."
+    url: "https://web.stanford.edu/~lutian/coursepdf/KMpaper.pdf"
+    tier: high
+    origin: researched
+  - title: "Sutradhar, R. & Austin, P.C. (2018). Relative rates not relative risks: addressing a widespread misinterpretation of hazard ratios. Annals of Epidemiology, 28(1), 54–57."
+    url: "https://pubmed.ncbi.nlm.nih.gov/29239842/"
+    tier: high
+    origin: researched
+  - title: "Sashegyi, A. & Ferry, D. (2017). On the Interpretation of the Hazard Ratio and Communication of Survival Benefit. The Oncologist, 22(4), 484–486."
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC5388384/"
+    tier: high
+    origin: researched
+  - title: "Dumas, E. & Stensrud, M.J. (2025). How hazard ratios can mislead and why it matters in practice. European Journal of Epidemiology."
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC12263472/"
+    tier: high
+    origin: researched
+  - title: "George, A., Stead, T.S. & Ganti, L. (2020). What's the Risk: Differentiating Risk Ratios, Odds Ratios, and Hazard Ratios? Cureus, 12(8), e10047."
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC7515812/"
+    tier: high
+    origin: researched
+  - title: "Pan, A., Sun, Q., Bernstein, A.M., et al. (2012). Red Meat Consumption and Mortality: Results from Two Prospective Cohort Studies. Archives of Internal Medicine, 172(7), 555–563."
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC3712342/"
+    tier: high
+    origin: researched
+  - title: "dynomight. Life with hazard ratios."
+    url: "https://dynomight.net/hazard-ratios/"
+    tier: med
+    origin: curated
+  - title: "NPR, The Salt. Death By Bacon? Study Finds Eating Meat Is Risky. (2012-03-12)"
+    url: "https://www.npr.org/sections/thesalt/2012/03/12/148457233/death-by-bacon-study-finds-eating-meat-is-risky"
+    tier: med
+    origin: researched
+  - title: "Hazard ratio — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Hazard_ratio"
+    tier: med
+    origin: researched
+  - title: "Proportional hazards model — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Proportional_hazards_model"
+    tier: med
+    origin: researched
+  - title: "Kaplan–Meier estimator — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Kaplan%E2%80%93Meier_estimator"
+    tier: med
+    origin: researched
+  - title: "Statistics By Jim. Hazard Ratio: Interpretation & Definition."
+    url: "https://statisticsbyjim.com/probability/hazard-ratio/"
+    tier: med
+    origin: researched
+  - title: "Statistics How To. Hazard Ratio: Definition, Examples & Log of the Hazard."
+    url: "https://www.statisticshowto.com/hazard-ratio/"
+    tier: med
+    origin: researched
+draft: false
+---
+
+import { RunnableCode, Chart, Annotation, Math, Callout, Detail, Definition, Pullquote, StatBand, Stepper, Quiz, DataTable, ParameterPlay, Sidenote } from "../../components/mdx";
+
+Somewhere this week you probably read a sentence shaped like this: a large study found that some habit — a food, a drug, a bad night's sleep — changes your risk of dying by some percent. The number is usually small and dramatic-sounding: 13%, 20%, 30%. It sits there looking exactly like a probability. *Doing this makes you 20% more likely to die.* You file it away, maybe you change a habit, maybe you don't.
+
+Almost every one of those numbers is not what it appears to be. It is not a change in your probability of dying at all. It is a **hazard ratio** — the output of a specific statistical machine called the Cox proportional-hazards model — and a hazard ratio measures something narrower and stranger than risk: the relative *rate* at which an event is currently happening, at this instant, among people who have made it this far without it happening yet. Rate and risk sound like synonyms. They are not, and the gap between them is not a rounding error — under realistic conditions it can be the difference between "one in five" and "one in twenty." This primer builds the machinery from its two founding papers, shows you exactly where the two numbers pull apart, and then re-reads a real, widely covered health headline through it.
+
+The mechanism has nothing to do with medicine specifically — it is a fact about how *time-to-event* data behaves, whether the event is a patient dying, a machine part failing, or a light bulb burning out, and that generality is precisely why the same model shows up across oncology trials, actuarial tables, and reliability engineering under one name. Once you have built it from the ground up, no headline reporting a "risk" from a survival study will read the same way again.
+
+<StatBand client:visible caption="A number this primer will make precise, twice."
+  stats={[
+    { value: 2017, label: "FIRST MAJOR CORRECTION", sub: "epidemiology journals start saying so, in print", group: false, href: "https://pubmed.ncbi.nlm.nih.gov/29239842/" },
+    { value: 13, suffix: "%", decimals: 0, label: "“INCREASED RISK” REPORTED", sub: "NPR, on a 2012 mortality study", href: "https://www.npr.org/sections/thesalt/2012/03/12/148457233/death-by-bacon-study-finds-eating-meat-is-risky" },
+    { value: 1.13, decimals: 2, label: "THE ACTUAL HAZARD RATIO", sub: "same study, same number, different meaning", group: false, href: "https://pmc.ncbi.nlm.nih.gov/articles/PMC3712342/" }
+  ]} />
+
+## The misconception, and the sandbox that breaks it
+
+The natural way to read "hazard ratio of 1.20" is: *this group is 20% more likely to experience the event, full stop, for as long as the study ran.* It feels safe because a hazard ratio is famously reported as *constant* — one number, not a curve — so surely a constant 20% bump in likelihood is exactly what it says on the tin.
+
+Here is the part that breaks that model. A hazard ratio can be **exactly, permanently constant** — fixed by construction, never wavering for a single day of follow-up — while the actual difference in the *probability* that someone in each group has died by a given time **changes continuously**, and keeps shrinking the longer you watch. Below, two imaginary populations experience events (call it "failure," in the dry language of survival analysis) at constant rates: 0.010 events per unit time in the control group, 0.015 in the treatment group. Their hazard ratio is 0.015 / 0.010 = 1.5, forever, by definition — the ratio of two constants is a constant. Predict what happens to the ratio of their *cumulative* probabilities of failure as time passes, then run it.
+
+<RunnableCode client:visible caption="Constant hazard ratio = 1.5, by construction. Watch what happens to the RATIO OF CUMULATIVE RISK as follow-up time grows."
+  code={`// Two constant hazard rates. Their RATIO (the hazard ratio) never changes:
+const lambdaControl = 0.010;
+const lambdaTreatment = 0.015;
+const hazardRatio = lambdaTreatment / lambdaControl; // exactly 1.5, at every instant
+
+// Cumulative probability of failure by time t, under a constant hazard,
+// is the standard exponential formula: F(t) = 1 - exp(-lambda * t).
+function cumulativeRisk(lambda, t) {
+  return 1 - Math.exp(-lambda * t);
+}
+
+console.log("hazard ratio (constant, by definition): " + hazardRatio.toFixed(3));
+console.log("");
+
+for (const t of [1, 50, 100, 300]) {
+  const Fc = cumulativeRisk(lambdaControl, t);
+  const Ft = cumulativeRisk(lambdaTreatment, t);
+  const riskRatio = Ft / Fc;
+  console.log("t=" + String(t).padStart(3) +
+              ":  cumulative risk control=" + Fc.toFixed(4) +
+              "  treatment=" + Ft.toFixed(4) +
+              "   RISK ratio=" + riskRatio.toFixed(3));
+}
+return "the hazard ratio never moved; the risk ratio did";`} />
+
+At the shortest follow-up the risk ratio sits almost exactly on 1.497 — indistinguishable from the hazard ratio of 1.5. By the longest follow-up it has fallen to 1.041. Nothing about the underlying hazard ratio changed even slightly; both rates stayed exactly what they were defined to be. What changed is that, given enough time, *nearly everyone in both groups eventually fails* — cumulative risk in both arms creeps toward 1 — and a ratio of two numbers both converging on 1 has nowhere to go but toward 1 itself. A rate can stay elevated forever. A risk cannot outrun its own ceiling.
+
+<Callout kind="key-insight" title="The one sentence that fixes the misconception">
+A hazard ratio compares how fast an event is *currently* happening between two groups, among people who haven't had it yet. A risk ratio compares how many people in each group have *already* had it, by some fixed point in time. Those are different questions, and — as <Annotation client:load term="Sashegyi & Ferry (2017)" note="“A reduction in the hazard (rate) of death means that survival is prolonged, but not that the risk of death has been averted.” Sashegyi, A. & Ferry, D. (2017), The Oncologist 22(4), 484–486." /> put it in exactly these terms — a reduction in the hazard means survival is prolonged, not that the risk of the event has been averted. This is not one journal's idiosyncratic framing: <Annotation client:load term="Wikipedia's independent formulation" note="“Hazard ratios differ from relative risks… in that RRs and ORs are cumulative over an entire study, using a defined endpoint, while HRs represent instantaneous risk over the study time period.” Wikipedia, “Hazard ratio.”" /> states the identical rate-vs-cumulative-risk distinction in its own words, and <Annotation client:load term="Statistics By Jim" note="“RRs and ORs assess risk at one point in time, such as the end of a study… hazard ratios… represent the instantaneous risk at any given point during the study — not just at the end.” Statistics By Jim, “Hazard Ratio: Interpretation & Definition.”" /> — a reference used well outside epidemiology journals — draws the same line a third, independent way.
+</Callout>
+
+## Foundation: what a hazard actually is, and how you'd ever measure it
+
+Rewind to the vocabulary. Give a group of people (or light bulbs, or bridges — the mathematics is identical) a "clock" that starts at some defined moment and ends when an event of interest occurs: death, failure, relapse, whatever you're studying. The <Definition client:visible term="survival function" def="S(t), the probability that the event has NOT yet occurred by time t. S(0)=1 for everyone; it decreases (or stays flat) as t grows, and never rises." /> S(t) is simply the fraction of the group still going at time t. It starts at 1 (nobody has failed yet) and can only fall or hold steady as time passes.
+
+The trouble is that real studies never observe every subject's exact failure time. Someone moves away mid-study. The funding runs out before everyone has had their event. A patient is still alive when the trial ends. This is <Definition client:visible term="censoring" def="when a subject's exact event time is unknown because they left the study, or the study ended, before the event occurred — you know only that it happened AFTER the last time they were observed." />, and it is the single hardest fact of survival data: you cannot just count "fraction who failed" the way you would in a simple poll, because for the censored subjects you genuinely do not know the answer yet.
+
+The fix is the founding result of modern survival analysis. In 1958, Edward Kaplan and Paul Meier published the <Annotation client:load term="product-limit estimator" note="Ŝ(t) = ∏_{tᵢ≤t}(1 − dᵢ/nᵢ), where dᵢ is the number of events at time tᵢ and nᵢ is the number still at risk just before tᵢ. Kaplan, E.L. & Meier, P. (1958), Journal of the American Statistical Association 53(282), 457–481 — a paper cited more than 34,000 times." />, a way to estimate S(t) correctly even with censored data, by chaining together the conditional survival probabilities at each moment an event actually happens:
+
+<Math client:visible tex="\hat{S}(t) = \prod_{t_i \le t} \left(1 - \frac{d_i}{n_i}\right)"
+  label="(1)"
+  caption="The Kaplan–Meier estimator: multiply, across every observed event time up to t, the fraction of the still-at-risk group that survived that moment."
+  steps={[
+    { tex: "n_i", note: "the number of subjects still under observation (not yet failed, not yet censored) the instant before time tᵢ" },
+    { tex: "d_i / n_i", note: "the fraction of that at-risk group who failed exactly at tᵢ — a tiny, LOCAL failure probability" },
+    { tex: "\\textstyle\\prod_{t_i \\le t}", note: "chain every one of those local survival probabilities together, so censored subjects contribute everything they safely can (their time at risk) and nothing they can't (a guess about what happened after they left)" }
+  ]} />
+
+An abstraction like equation (1) earns its keep once you run it on actual numbers by hand. Take a toy cohort of 8 hypothetical subjects: one event at t=2; two more (a tie) at t=4; one subject censored at t=5; one event at t=7; one censored at t=9; and, at t=10, one final event with the last subject censored right alongside it. Only the four *event* times change the survival estimate — censoring shrinks the risk pool for the next step without itself counting as a failure.
+
+<DataTable client:load caption="A hand-worked Kaplan–Meier calculation, 8 hypothetical subjects (illustrative — the formula is equation (1))"
+  columns={[
+    { key: "t", label: "event time tᵢ", type: "string" },
+    { key: "n", label: "at risk, nᵢ", type: "string", align: "right" },
+    { key: "d", label: "events, dᵢ", type: "string", align: "right" },
+    { key: "factor", label: "1 − dᵢ/nᵢ", type: "string", align: "right" },
+    { key: "s", label: "Ŝ(t)", type: "string", align: "right" }
+  ]}
+  rows={[
+    { t: 2, n: 8, d: 1, factor: "0.875", s: 0.875 },
+    { t: 4, n: 7, d: 2, factor: "0.714", s: 0.625 },
+    { t: 7, n: 4, d: 1, factor: "0.75", s: 0.469 },
+    { t: 10, n: 2, d: 1, factor: "0.5", s: 0.234 }
+  ]} />
+
+Read it one row at a time. At t=2 all 8 are still at risk and 1 fails: 1 − 1/8 = 0.875, so Ŝ(2) = 0.875. Between t=2 and t=4 nobody left, so 7 are at risk at t=4, where 2 fail together: 1 − 2/7 ≈ 0.714, chained onto the previous step gives Ŝ(4) = 0.875 × 0.714 ≈ 0.625. One subject is then censored at t=5 — removed from the risk pool, but Ŝ does not move, because censoring is not evidence of failure. By t=7 only 4 remain at risk; one fails, Ŝ(7) = 0.625 × 0.75 ≈ 0.469. After a second censoring at t=9, just 2 remain at t=10; one fails and Ŝ(10) = 0.469 × 0.5 ≈ 0.234. Every censored subject shaped the denominator at every step after they were last seen alive, and never once pretended to know what happened to them afterward — that is the entire, quietly elegant point of the <Annotation client:load term="product-limit construction" note="Wikipedia's “Kaplan–Meier estimator” entry gives the identical formula and censoring definition used here, corroborating Kaplan & Meier's original 1958 paper." />.
+
+Kaplan–Meier gives you the survival curve. It does not, by itself, give you a hazard *rate* or a way to compare two groups with a single number — for that you need the object the curve is built from. The <Annotation client:load term="hazard function" note="h(t), the instantaneous event rate at time t among those who have survived to t: informally, h(t) ≈ P(event in the next instant | survived to t) / (length of that instant). Wikipedia, “Hazard ratio”; formalized in Cox (1972)." /> h(t) is the rate implied by how steeply S(t) is dropping at each instant, conditional on having made it to t at all — the "current speed" of the survival curve, as opposed to its "current altitude." Two groups can have wildly different current speeds while sitting at the same altitude, or vice versa, and that distinction is the entire subject of this primer.
+
+<Stepper client:visible mode="reveal" caption="From a survival curve to one comparable number"
+  steps={[
+    { title: "Kaplan–Meier gives you a curve, not a number", body: "<p>Each group in a study gets its own estimated S(t), correctly built from censored data. But a whole curve is hard to report and hard to compare — you want ONE number summarizing “group A vs. group B.”</p>" },
+    { title: "The hazard is the curve's local steepness", body: "<p>At every instant t, the hazard h(t) is the instantaneous failure rate among survivors-so-far. It can rise, fall, or wiggle across the follow-up — h(t) is itself a curve, in general.</p>" },
+    { title: "Cox's move: assume the two groups' hazards stay PROPORTIONAL", body: "<p>Cox (1972) proposed assuming h(t) for one group is always some constant multiple of h(t) for the other, at every t — the <strong>proportional-hazards assumption</strong>. If it holds, the messy, unknown SHAPE of h(t) cancels out of the comparison entirely.</p>" },
+    { title: "What's left is the hazard ratio: one constant number", body: "<p>Under that assumption, comparing the two groups collapses to a single ratio, HR, that is the same at every instant — estimable WITHOUT ever specifying what the baseline hazard curve looks like. That is the payoff Cox's paper is famous for.</p>" }
+  ]} />
+
+Proportionality is doing all the work in that third step, and it is an *assumption*, not a law of nature — it can fail, and checking it is a routine part of using the model responsibly rather than a formality. <Annotation client:load term="Dumas & Stensrud (2025)" note="“The proportional hazards assumption is implausible in populations that include individuals with different susceptibilities to death” — Dumas, E. & Stensrud, M.J. (2025), European Journal of Epidemiology." /> point out that the assumption grows shakiest in exactly the populations where it is most tempting to use it: a mixed group of frailer and hardier subjects will tend to have its hazards converge over time as the frailer members are progressively removed from the risk pool by earlier events, even if the treatment's true effect never changes. Everything that follows in this primer assumes proportionality holds closely enough to trust the single-number summary — worth stating plainly, since the entire rest of the argument is what happens even in the best case, when that assumption is granted.
+
+<Pullquote cite="Sashegyi & Ferry (2017), The Oncologist 22(4), 484–486" href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5388384/" kind="quote">
+A reduction in the hazard (rate) of death means that survival is prolonged, but not that the risk of death has been averted.
+</Pullquote>
+
+That sentence is the whole primer in miniature. Prolonging survival — pushing the event later — and averting it altogether are different achievements, and a hazard ratio, on its own, tells you about the first. Whether it also tells you much about the second depends on exactly how much time has passed and how common the event already is, which is what the Cox model, examined properly, will let us pin down.
+
+## Concept 2: the Cox model, and the trick that lets it skip the hard part
+
+Cox's actual proposal, in his 1972 *Journal of the Royal Statistical Society* paper, was to write every subject's hazard as a shared, unknown baseline curve multiplied by a subject-specific constant:
+
+<Math client:visible tex="h(t \mid X_i) = h_0(t)\, e^{\beta X_i}"
+  label="(2)"
+  caption="The Cox proportional-hazards model. h₀(t) is an arbitrary, entirely unspecified baseline hazard shared by everyone; e^{β Xᵢ} is subject i's fixed multiplier on it."
+  steps={[
+    { tex: "h_0(t)", note: "the baseline hazard — whatever shape it has (rising, falling, spiking), Cox's method never needs to know or estimate it explicitly" },
+    { tex: "e^{\\beta X_i}", note: "subject i's covariate (Xᵢ = 1 for treatment, 0 for control, in the simplest case) scales the WHOLE baseline curve up or down by one fixed factor, for all t" },
+    { tex: "\\dfrac{h(t\\mid X_1)}{h(t\\mid X_0)} = e^{\\beta(X_1-X_0)} = e^{\\beta}", note: "take the ratio of two subjects' hazards and h₀(t) cancels completely — what survives is a single constant, the hazard ratio, e^β" }
+  ]} />
+
+That cancellation in the third line is the entire trick, and it is why hazard ratios are so ubiquitous in medicine and biology: you get to compare two groups' event rates **without ever having to model the shape of the underlying risk over time**, which is usually the part nobody actually knows (Wikipedia's "Proportional hazards model" entry gives the identical derivation, corroborating Cox's own formula independently). Cox went one step further, showing that β could be estimated using only the *order* in which events occurred — who failed first, second, third — and completely ignoring h₀(t)'s shape, via what he called a conditional likelihood. Below is that idea in its smallest possible form: four subjects, two in a control group and two in a "treatment" group, no censoring, and a brute-force search for the β that makes the observed order of events most probable.
+
+<RunnableCode client:visible caption="Cox's partial likelihood on a 4-subject toy example. It never needs to know h₀(t) — only who failed before whom."
+  code={`// Four subjects. x = 0 (control) or 1 ("treatment"); t = the time they failed.
+const subjects = [
+  { x: 0, t: 3 },
+  { x: 1, t: 4 },
+  { x: 0, t: 6 },
+  { x: 1, t: 9 },
+];
+
+// Cox's partial log-likelihood: at each event time, the failing subject's
+// exp(beta*x) as a share of everyone STILL AT RISK at that instant.
+function partialLogLik(beta, data) {
+  const sorted = [...data].sort((a, b) => a.t - b.t);
+  let ll = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    const riskSet = sorted.slice(i); // everyone with t >= this event's time
+    const denom = riskSet.reduce((s, r) => s + Math.exp(beta * r.x), 0);
+    ll += beta * sorted[i].x - Math.log(denom);
+  }
+  return ll;
+}
+
+// Brute-force search for the beta that maximizes the partial likelihood.
+let best = -Infinity, betaHat = 0;
+for (let b = -300; b <= 300; b++) {
+  const beta = b / 100;
+  const ll = partialLogLik(beta, subjects);
+  if (ll > best) { best = ll; betaHat = beta; }
+}
+
+console.log("beta-hat (best fit): " + betaHat.toFixed(2));
+console.log("implied hazard ratio, exp(beta-hat): " + Math.exp(betaHat).toFixed(3));
+console.log("(never used h0(t) or any assumption about its shape — only event ORDER)");
+return "the baseline hazard never had to be named";`} />
+
+Run it and the search lands near β̂ ≈ −0.94, an estimated hazard ratio of about 0.39 — group 1's failures happened, in this toy dataset, disproportionately late relative to how many of them were still at risk, which the model reads as a lower hazard for that group. Notice what the calculation never touched: no assumption about whether the baseline risk was rising or falling over time, no fitted curve for h₀(t) at all. That is Cox's actual 1972 contribution, and it is why the hazard ratio became the default number reported from clinical trials and cohort studies for the next half-century — it is estimable cheaply, robustly, without committing to a shape for the thing you understand least. It is also, notice, a claim purely about the **order and timing of events relative to who was still at risk** — nothing in its construction ever asked "what fraction of each group has failed by now?" That question is a risk ratio, and it is a different computation entirely, which is exactly where the next section goes.
+
+<Quiz client:visible caption="check your model of what the Cox model actually estimates"
+  questions={[
+    { prompt: "In the Cox model h(t|X) = h₀(t)·e^(βX), what happens to h₀(t) when you take the ratio of two subjects' hazards?", choices: ["it doubles", "it cancels out completely", "it must be estimated first"], answer: 1, explain: "The baseline hazard is shared by every subject, so it appears in both numerator and denominator of the ratio and cancels — the ratio is exp(β) regardless of h₀(t)'s shape." },
+    { prompt: "Cox's partial likelihood estimates β using mainly:", choices: ["the exact calendar dates of each event", "the ORDER in which events occurred among those still at risk", "the total sample size only"], answer: 1, explain: "At each event time, the likelihood compares the failing subject's covariate to everyone else still in the risk set — it is fundamentally about relative order, not absolute time." },
+    { prompt: "A hazard ratio of 1.5 that stays constant for the whole study necessarily means the treatment group's CUMULATIVE risk of the event is 50% higher at every follow-up time.", choices: ["true", "false"], answer: 1, explain: "False — as the earlier sandbox showed, a constant hazard ratio of 1.5 can correspond to a cumulative-risk ratio that starts near 1.5 and drifts toward 1.0 as follow-up lengthens." }
+  ]} />
+
+## Concept 3: the exact gap between hazard ratio and risk ratio
+
+Here is the relationship, made precise rather than gestured at. Write S_C(t) and S_E(t) for the control and "experimental" (or exposed) groups' survival functions. The complement of survival, 1 − S(t), is the cumulative *risk* by time t — the fraction who have already had the event. Sashegyi and Ferry's 2017 paper in *The Oncologist* derives the exact relative-risk-*reduction* implied by any hazard ratio, at any follow-up time t:
+
+<Math client:visible tex="\text{RRR}(t) = \frac{S_E(t) - S_C(t)}{1 - S_C(t)}"
+  label="(3)"
+  caption="The exact relative reduction in cumulative risk at time t, given the two groups' survival functions — NOT simply 1 minus the hazard ratio."
+  steps={[
+    { tex: "1 - S_C(t)", note: "the control group's cumulative risk by time t — the denominator, i.e. the baseline you're measuring a reduction AGAINST" },
+    { tex: "S_E(t) - S_C(t)", note: "how much MORE of the experimental group is still event-free at t, compared to control — the absolute survival gain" },
+    { tex: "\\Rightarrow \\text{RRR}(t)", note: "the ratio of those two — and, critically, note the t: this quantity is a FUNCTION OF TIME, unlike the hazard ratio itself" }
+  ]} />
+
+Notice immediately what equation (3) does *not* contain: the hazard ratio does not appear in it directly. It only enters through S_E(t) and S_C(t) themselves — and how those survival curves relate to a given HR depends on the whole shape of the baseline hazard, not on HR alone. Sutradhar and Austin's 2018 correction in *Annals of Epidemiology* makes the same point from a different angle, tabulating how a single fixed HR value corresponds to a wide *range* of possible risk-ratio magnitudes depending on the baseline risk — their central instruction to authors is that "the magnitude of the HR alone cannot be used to explain the magnitude of the relative risk." Two independent papers, two different derivations, one conclusion.
+
+To make it concrete, take the simplest possible baseline shape — a constant hazard, so S(t) = e^(−λt) — and Sashegyi and Ferry's own worked numbers: a control group with 6-month median survival (λ_C = ln 2 / 6 per month) and a hazard ratio of exactly 0.60 (λ_E = 0.60 × λ_C). Below is that pair of survival curves.
+
+<Chart client:visible mark="line" x="t" y="survival" series="arm" height={320}
+  caption="Illustrative exponential-hazard model — HR = 0.60 fixed by construction, control median survival = 6 months (Sashegyi & Ferry's worked example, PMC5388384). The two curves converge toward 0 together even though their instantaneous rates never stop differing by exactly 40%."
+  data={[
+    { t: 0, survival: 1.0, arm: "control" }, { t: 3, survival: 0.7071, arm: "control" }, { t: 6, survival: 0.5, arm: "control" }, { t: 9, survival: 0.3536, arm: "control" }, { t: 12, survival: 0.25, arm: "control" }, { t: 15, survival: 0.1768, arm: "control" }, { t: 18, survival: 0.125, arm: "control" }, { t: 21, survival: 0.0884, arm: "control" }, { t: 24, survival: 0.0625, arm: "control" }, { t: 27, survival: 0.0442, arm: "control" }, { t: 30, survival: 0.0313, arm: "control" }, { t: 33, survival: 0.0221, arm: "control" }, { t: 36, survival: 0.0156, arm: "control" },
+    { t: 0, survival: 1.0, arm: "experimental (HR=0.60)" }, { t: 3, survival: 0.8123, arm: "experimental (HR=0.60)" }, { t: 6, survival: 0.6598, arm: "experimental (HR=0.60)" }, { t: 9, survival: 0.5359, arm: "experimental (HR=0.60)" }, { t: 12, survival: 0.4353, arm: "experimental (HR=0.60)" }, { t: 15, survival: 0.3536, arm: "experimental (HR=0.60)" }, { t: 18, survival: 0.2872, arm: "experimental (HR=0.60)" }, { t: 21, survival: 0.2333, arm: "experimental (HR=0.60)" }, { t: 24, survival: 0.1895, arm: "experimental (HR=0.60)" }, { t: 27, survival: 0.1539, arm: "experimental (HR=0.60)" }, { t: 30, survival: 0.125, arm: "experimental (HR=0.60)" }, { t: 33, survival: 0.1015, arm: "experimental (HR=0.60)" }, { t: 36, survival: 0.0825, arm: "experimental (HR=0.60)" }
+  ]} />
+
+Feed those same numbers into equation (3) at 12 months: S_C(12) = 0.25, S_E(12) = 0.4353, so RRR(12) = (0.4353 − 0.25)/(1 − 0.25) ≈ **25%** — not the 40% that "1 − HR = 1 − 0.60" would naively suggest. At 24 months the gap widens further: S_C(24) = 0.0625, S_E(24) = 0.1895, RRR(24) = (0.1895 − 0.0625)/(1 − 0.0625) ≈ **14%**. The hazard ratio never moved from 0.60 for a single day of that timeline. The *risk* reduction it implies dropped by nearly half between the one-year mark and the two-year mark, purely because more of the control group had, by then, already had the event anyway — there was less risk left to reduce. Drag the sliders below (control median survival, and the HR itself) and watch the same arithmetic play out at any horizon.
+
+<ParameterPlay client:visible
+  params={[
+    { key: "hr", label: "hazard ratio (fixed, constant by construction)", min: 0.2, max: 1, default: 0.6, step: 0.05 },
+    { key: "medOS", label: "control median survival (months)", min: 1, max: 24, default: 6, step: 1 }
+  ]}
+  expr="(exp(-(ln(2)/medOS)*hr*x) - exp(-(ln(2)/medOS)*x)) / (1 - exp(-(ln(2)/medOS)*x))"
+  xRange={[1, 36]}
+  xLabel="follow-up time t (months)"
+  yLabel="relative risk reduction, RRR(t)"
+  readouts={[
+    { label: "RRR at t = 12 months", expr: "(exp(-(ln(2)/medOS)*hr*12) - exp(-(ln(2)/medOS)*12)) / (1 - exp(-(ln(2)/medOS)*12))" },
+    { label: "RRR at t = 24 months", expr: "(exp(-(ln(2)/medOS)*hr*24) - exp(-(ln(2)/medOS)*24)) / (1 - exp(-(ln(2)/medOS)*24))" }
+  ]}
+  caption="The exact RRR(t) from equation (3), under a constant-hazard baseline. The hazard ratio (a horizontal line, if you plotted it) never appears in this curve directly — only through how it shapes the two survival functions. Longer follow-up and a sicker baseline population both push RRR further below ‘1 − HR.’" />
+
+Push the control median survival down (a sicker baseline population, failing faster) and watch the RRR fall further below the naive "1 − HR" estimate at any fixed horizon — the sicker everyone already is, the less headroom is left for a rate difference to translate into a risk difference. This is not a quirk of the exponential toy model; Sutradhar and Austin's more general table shows the identical qualitative pattern using real Cox-model output rather than a stylized baseline, and <Annotation client:load term="Statistics How To" note="Comparing a clinical trial where “both the hazard ratios and relative risk ratios were reported as 3”: the RR figure describes risk over the entire study period while the HR describes it “at any particular point in time” — “these two estimates may considerably differ for the same data.” Statistics How To, “Hazard Ratio: Definition, Examples & Log of the Hazard.”" /> — an independent statistics reference with no connection to the epidemiology-journal literature above — walks through its own worked comparison to the identical conclusion: HR and RR can diverge in magnitude even when computed from the same data. The rule that emerges is blunt and worth holding onto: **the rarer the event and the shorter the follow-up, the closer a hazard ratio sits to the corresponding risk ratio; the more common the event becomes and the longer you watch, the further the two pull apart** — always in the same direction, with the risk ratio creeping back toward 1 relative to the hazard ratio.
+
+It is worth seeing *why* short follow-up and rare events are the forgiving case, rather than just observing that they are. Expand the exponential cumulative-risk formula for small λt — the regime where the event almost never happens during the window you're watching:
+
+<Math client:visible tex="F(t) = 1 - e^{-\lambda t} \approx \lambda t \quad \text{when } \lambda t \ll 1"
+  label="(4)"
+  caption="The rare-event approximation. When the cumulative hazard λt is small, cumulative risk is almost exactly proportional to it — and the proportionality constant is the same λ that defines the hazard."
+  steps={[
+    { tex: "e^{-\\lambda t} \\approx 1 - \\lambda t + \\tfrac{(\\lambda t)^2}{2} - \\cdots", note: "the Taylor expansion of the exponential — for small λt, every term past the linear one is negligible" },
+    { tex: "F(t) = 1 - e^{-\\lambda t} \\approx \\lambda t", note: "so cumulative risk collapses to just λt, dropping the curvature entirely" },
+    { tex: "\\dfrac{F_E(t)}{F_C(t)} \\approx \\dfrac{\\lambda_E t}{\\lambda_C t} = \\dfrac{\\lambda_E}{\\lambda_C} = \\text{HR}", note: "the t's cancel, and what's left IS the hazard ratio — this is the one regime where risk ratio and hazard ratio genuinely coincide" }
+  ]} />
+
+That is the honest justification behind "rare disease, short follow-up ⇒ HR ≈ RR," and it is exactly what the very first sandbox on this page already showed you empirically: at t = 1, with λ_C t = 0.01 and λ_E t = 0.015 — both far below 1 — the measured risk ratio came out to 1.497, a hair's breadth from the hazard ratio's 1.5. Equation (4) is why. It is also why the approximation is guaranteed to fail as t grows or as the baseline event rate rises: λt stops being small, the discarded curvature terms stop being negligible, and the neat cancellation in the third line no longer approximately holds.
+
+<Detail summary="Go deeper: why does this even matter if HR is honestly reported as HR?">
+It matters because almost nobody reports it that way. Dumas and Stensrud's 2025 paper in the *European Journal of Epidemiology* — eight years after Sutradhar and Austin's original correction — opens from the observation that clinicians and journals still routinely write sentences like "the treatment reduces the risk of death by 50%" directly from a hazard ratio of 0.50, which the paper calls "potentially misleading," restating almost verbatim the same warning: "except at the first time point, the hazard ratio cannot be interpreted as the ratio of the risk of event in the treatment and control group." Two peer-reviewed corrections, seven-to-eight years apart, aimed at the identical habit, are themselves evidence that the habit has not gone away — and the correction has clearly not fully escaped the journals it was published in, either: <Annotation client:load term="general statistics references" note="Both Statistics By Jim's “Hazard Ratio: Interpretation & Definition” and Statistics How To's “Hazard Ratio: Definition, Examples & Log of the Hazard” — reference pages aimed at practitioners well outside epidemiology, maintained independently of any journal — still devote their entire page to correcting this exact confusion, evidence the same habit needs correcting in the wider practitioner literature too, not just in oncology trials." />, outside epidemiology entirely, still have to devote whole reference pages to correcting the identical confusion for a general audience of practitioners — a second, independent line of evidence that the underlying habit is broad and durable, not a quirk of one subfield's reporting norms.
+</Detail>
+
+## Re-reading a real headline
+
+Now put this machinery to work on an actual, widely covered study. In 2012, Pan and colleagues published a pooled analysis in *Archives of Internal Medicine* following 37,698 men (1986–2008) and 83,644 women (1980–2008) — 121,342 people, roughly 2.96 million person-years, 23,926 deaths — using, in the paper's own words, time-dependent **Cox proportional-hazards models**.<Sidenote n={1} href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3712342/" source="Pan et al. 2012">Pan, A., Sun, Q., Bernstein, A.M., et al. (2012). Red Meat Consumption and Mortality: Results from Two Prospective Cohort Studies. Archives of Internal Medicine 172(7), 555–563. The paper separately estimated that 9.3% of deaths among the men and 7.6% among the women could have been prevented had everyone in the cohort eaten less than half a serving of red meat a day — a population-attributable-fraction calculation, a different quantity again from the individual risk ratio this primer is building toward, but a useful reminder that a hazard ratio is rarely the last number a paper reports.</Sidenote> Their headline numbers, per one additional serving a day: a hazard ratio of 1.13 for unprocessed red meat and 1.20 for processed red meat, on total mortality.
+
+<DataTable client:load caption="Pan et al. (2012), hazard ratios for total mortality per 1 serving/day increase"
+  columns={[
+    { key: "cause", label: "Cause of death", type: "string" },
+    { key: "unprocessed", label: "HR — unprocessed red meat", type: "number" },
+    { key: "processed", label: "HR — processed meat", type: "number" }
+  ]}
+  rows={[
+    { cause: "Total mortality", unprocessed: 1.13, processed: 1.20 },
+    { cause: "Cardiovascular mortality", unprocessed: 1.18, processed: 1.21 },
+    { cause: "Cancer mortality", unprocessed: 1.10, processed: 1.16 }
+  ]} />
+
+NPR's contemporaneous coverage translated those numbers directly into risk language:
+
+<Pullquote cite="NPR, The Salt, 2012-03-12" href="https://www.npr.org/sections/thesalt/2012/03/12/148457233/death-by-bacon-study-finds-eating-meat-is-risky" kind="telegram">
+People who consumed about one serving of red meat per day had a 13 percent increased risk of death... Processed meats raised the risk to about a 20 percent increased risk of death from diseases including cancer and heart disease.
+</Pullquote>
+
+That is exactly the substitution Sutradhar and Austin's paper is titled against: a hazard ratio of 1.13 read aloud as "13 percent increased risk," a hazard ratio of 1.20 read aloud as "20 percent increased risk." By this point you can name precisely what got skipped. The Cox model behind those numbers cancelled out the baseline hazard entirely, the same way equation (2) does — it never needed, and never estimated, how common death actually was in this cohort over the study's multi-decade follow-up. But equation (3) says that number is exactly the one you need in order to convert a rate ratio into a risk ratio, and here it is not small: the cohort recorded 23,926 deaths among 121,342 participants, a baseline cumulative mortality of roughly **19.7%** across the study period — nowhere close to the rare-event regime (single-digit percent or lower) in which a hazard ratio and a risk ratio are numerically close.
+
+<Callout kind="warning" title="What we can and can't say from this alone">
+We cannot recompute the Pan et al. study's *exact* implied risk ratio without their full survival curves — the paper reports hazard ratios and death counts, not the S_E(t)/S_C(t) pair equation (3) needs. What the mathematics guarantees, honestly, is the *direction*: with baseline cumulative mortality near 20% rather than 1–2%, the rare-event approximation that lets HR ≈ RR has already broken down, and the true relative increase in the probability of death from an extra daily serving of red meat is smaller in magnitude than the "13%" and "20%" NPR reported — precisely the gap this primer's Concept 3 quantified in the toy model above. That is not a criticism of Pan et al.'s statistics, which correctly reported hazard ratios throughout; it is a criticism of the translation step that happened afterward, in the press.
+</Callout>
+
+The broader pattern here is not unique to hazard ratios. George, Stead, and Ganti's 2020 review in *Cureus* documents comparable ratio-measure conflation elsewhere in the applied literature — odds ratios misread as risk ratios in a meaningful share of studies across several clinical fields — which is independent evidence that "treat any reported ratio as if it were the everyday, intuitive kind of risk" is a general reflex, not a hazard-ratio-specific accident. Hazard ratios are simply the case where the gap is both largest and most consequential, because they are the default number reported from the single most common design in clinical and cohort epidemiology.
+
+## Where this leaves you
+
+Carry one habit out of this primer: the next time a headline hands you a percentage change in "risk" from a survival study, ask two questions before believing the number as stated. First, is this actually a hazard ratio — did the underlying study use a Cox model, or something that reports cumulative outcomes directly? Second, if it is a hazard ratio, how common is the event already, and over how long a follow-up — because the rarer and shorter, the closer the number is to what it sounds like, and the more common and longer, the further it drifts, always in the same predictable direction, back toward 1.
+
+None of this makes hazard ratios wrong, or the Cox model a mistake — quite the opposite: Cox's insight that you can compare two groups' event rates without ever pinning down the shape of the baseline hazard is precisely why this one number became the workhorse of modern survival analysis, from oncology trials to actuarial tables. The error was never in computing the hazard ratio. It was in mistaking a precise answer to one question — *how much faster is this happening?* — for an answer to a different, more urgent one — *how much more likely is this to happen to me?* Those two questions have the same units and the same intuitive shape, and almost never the same number.
+
+If you want to go one step further than this primer does, the essay that prompted it — dynomight's <Annotation client:load term="“Life with hazard ratios”" note="dynomight, “Life with hazard ratios.” A worked walkthrough of converting a hazard ratio into an expected change in life expectancy via Keyfitz entropy, a distinct and more advanced move than the rate-vs-risk mechanism this primer builds." /> — takes the distinction built here as its starting premise and asks a sharper follow-on question: given that a hazard ratio is not a risk, what number *would* actually tell you how many years of life a given HR is worth? That is a different, harder calculation than anything above, and a natural place to go next once "rate, not risk" has stopped feeling slippery.
