@@ -34,6 +34,41 @@ test("firstSeen is optional", () => {
   expect(r.success).toBe(true);
 });
 
+test("firstSeen accepts a date-only string (what the researcher/writer skills actually emit) and normalizes it to a full ISO datetime", () => {
+  const r = CitationLedgerEntrySchema.safeParse({
+    url: "https://e.com/1",
+    title: "Curated seed",
+    tier: "med",
+    origin: "curated",
+    firstSeen: "2026-07-09",
+  });
+  expect(r.success).toBe(true);
+  if (r.success) expect(r.data.firstSeen).toBe("2026-07-09T00:00:00.000Z");
+});
+
+test("firstSeen still accepts a full ISO datetime, unchanged", () => {
+  const r = CitationLedgerEntrySchema.safeParse({
+    url: "https://e.com/1",
+    title: "Curated seed",
+    tier: "med",
+    origin: "curated",
+    firstSeen: "2026-07-01T00:00:00.000Z",
+  });
+  expect(r.success).toBe(true);
+  if (r.success) expect(r.data.firstSeen).toBe("2026-07-01T00:00:00.000Z");
+});
+
+test("firstSeen still rejects a genuinely malformed date", () => {
+  const r = CitationLedgerEntrySchema.safeParse({
+    url: "https://e.com/1",
+    title: "Curated seed",
+    tier: "med",
+    origin: "curated",
+    firstSeen: "not-a-date",
+  });
+  expect(r.success).toBe(false);
+});
+
 test("a non-url, empty title, or bad tier is rejected", () => {
   expect(CitationLedgerEntrySchema.safeParse({ url: "not-a-url", title: "x", tier: "high", origin: "curated" }).success).toBe(false);
   expect(CitationLedgerEntrySchema.safeParse({ url: "https://e.com/1", title: "", tier: "high", origin: "curated" }).success).toBe(false);

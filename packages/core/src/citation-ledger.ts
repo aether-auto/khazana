@@ -23,12 +23,24 @@ export type SourceOrigin = z.infer<typeof SourceOriginSchema>;
  *   Low = blog/forum (allowed only if corroborated).
  * - `origin`: `curated` (from the FeedItem set) or `researched` (discovered + appraised).
  */
+/**
+ * `firstSeen` accepts either a date-only string (`YYYY-MM-DD` — what the
+ * `writers/researcher` skill and writer-emitted ledgers actually produce) or a
+ * full ISO datetime. Date-only input is normalized to midnight-UTC ISO so every
+ * parsed entry ends up in one consistently-comparable/sortable string form,
+ * regardless of which shape it arrived in. Kept as a real date/datetime
+ * validation (not "any string") — a malformed value is still rejected.
+ */
+const FirstSeenSchema = z
+  .union([z.string().date(), z.string().datetime()])
+  .transform((v) => (v.length === 10 ? `${v}T00:00:00.000Z` : v));
+
 export const CitationLedgerEntrySchema = z.object({
   url: z.string().url(),
   title: z.string().min(1),
   tier: SourceTierSchema,
   origin: SourceOriginSchema,
-  firstSeen: z.string().datetime().optional(),
+  firstSeen: FirstSeenSchema.optional(),
 });
 export type CitationLedgerEntry = z.infer<typeof CitationLedgerEntrySchema>;
 

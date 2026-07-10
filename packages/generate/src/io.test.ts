@@ -140,6 +140,27 @@ test("readLedger unions the shared ledger with per-slug ledger files", () => {
   ]);
 });
 
+test("readLedger retains a date-only firstSeen entry (previously dropped by the stricter schema) and warns instead of silently dropping a genuinely-malformed entry", () => {
+  const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  mkdirSync(join(dir, "generation", "research"), { recursive: true });
+  writeFileSync(
+    join(dir, "generation", "research", "ledger.json"),
+    JSON.stringify([
+      { url: "https://e.com/date-only", title: "Date-only firstSeen", tier: "high", origin: "researched", firstSeen: "2026-07-09" },
+      { url: "not-a-url", title: "bad", tier: "high", origin: "curated" },
+    ]),
+  );
+  const ledger = readLedger(dir);
+  expect(ledger).toHaveLength(1);
+  expect(ledger[0]!.url).toBe("https://e.com/date-only");
+  expect(ledger[0]!.firstSeen).toBe("2026-07-09T00:00:00.000Z");
+  expect(warnSpy).toHaveBeenCalledTimes(1);
+  const message = String(warnSpy.mock.calls[0]![0]);
+  expect(message).toMatch(/not-a-url/);
+  expect(message).toMatch(/url/);
+  warnSpy.mockRestore();
+});
+
 test("readLedger returns per-slug entries even when the shared ledger is absent", () => {
   mkdirSync(join(dir, "generation", "research"), { recursive: true });
   writeFileSync(

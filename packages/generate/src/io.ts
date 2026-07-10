@@ -40,7 +40,14 @@ export function readCurated(dataDir: string): FeedItem[] {
   return [];
 }
 
-/** Parse one ledger JSON file, dropping invalid entries (tolerant parse). */
+/**
+ * Parse one ledger JSON file. Tolerant parse: an invalid entry is dropped
+ * rather than failing the whole file, but the drop is LOUD (one concise
+ * `console.warn` naming the entry and the offending field(s)) — this schema
+ * has drifted from what the writers actually emit before (see
+ * `citation-ledger.ts`'s `firstSeen` normalization) and a silent drop there
+ * zeroed grounding for every draft in a run without any visible signal.
+ */
 function readLedgerFile(path: string): CitationLedger {
   if (!existsSync(path)) return [];
   let parsed: unknown;
@@ -53,7 +60,19 @@ function readLedgerFile(path: string): CitationLedger {
   const out: CitationLedger = [];
   for (const candidate of raw) {
     const r = CitationLedgerEntrySchema.safeParse(candidate);
-    if (r.success) out.push(r.data);
+    if (r.success) {
+      out.push(r.data);
+      continue;
+    }
+    const label =
+      candidate && typeof candidate === "object" && "url" in candidate
+        ? String((candidate as { url?: unknown }).url)
+        : JSON.stringify(candidate);
+    const fields = r.error.issues.map((issue) => issue.path.join(".") || "(root)").join(", ");
+    console.warn(
+      `[generate] DROPPED invalid citation-ledger entry in ${path} (url: ${label}): ` +
+        `bad field(s) [${fields}] — ${r.error.issues.map((issue) => issue.message).join("; ")}`,
+    );
   }
   return out;
 }
