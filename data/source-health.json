@@ -1,0 +1,5699 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": "hn-frontpage",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "hn-best",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "hn-ask",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "hn-show",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "netflix-techblog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "stripe-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "cloudflare-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "uber-eng",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "meta-engineering",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "spotify-engineering",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "discord-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "github-engineering",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-rel-home-assistant",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-rel-esphome",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-rel-tasmota",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-rel-micropython",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-rel-circuitpython",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-rel-marlin",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-rel-octoprint",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-rel-prusa-buddy",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-rel-kicad",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-trending-weekly-all",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-rel-llama-cpp",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-rel-vllm",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-rel-transformers",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-rel-duckdb",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-rel-polars",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gh-changelog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "dropbox-tech",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "aws-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "aws-ml-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "aws-bigdata-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "databricks-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "slack-engineering",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "google-research-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "google-ai-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "google-developers-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "martinfowler-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "pragmatic-engineer",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "danluu-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "brendangregg-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "towardsdatascience",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "lwn-headlines",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "shopify-engineering",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "airbnb-tech",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "lyft-engineering",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "linkedin-engineering",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "anthropic-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "arxiv-cs-ai",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cs-lg",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cs-cl",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-quant-ph",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-stat-ml",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cs-dc",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cs-cv",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cs-ne",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cs-ro",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-econ-gn",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-physics-hist",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-econ-fin",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "quanta-magazine",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "huggingface-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "simonwillison-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "import-ai",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "openai-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "bair-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "thegradient",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "distill-pub",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "ars-technica",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "techcrunch",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "mit-tech-review",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "ieee-spectrum-tech",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "ieee-spectrum-ai",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "bbc-science",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "nasa-breaking-news",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "sciencedaily-ai",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "sciencedaily-all",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "eff-deeplinks",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "hackaday",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "adafruit-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "freecodecamp",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "marginal-revolution",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "klement-on-investing",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "econlib-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "bank-underground",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "overcoming-bias",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "astral-codex-ten",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "waitbutwhy",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "ben-evans-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "dhh-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "newsletter-pragmatic-engineer",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "acoup-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "bbc-world-news",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "bbc-politics",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "geopolitical-futures",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "cipher-brief",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "r-dataisbeautiful",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-geopolitics",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "r-3dprinting",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-machinelearning",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-raspberry-pi",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-diyelectronics",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-embedded",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-iot",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-programming",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-history",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-worldnews",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-dsstats-sports",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-geography",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-localllm",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-quantumcomputing",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-geospatial",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-finance",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-datascience",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-hardware",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "r-homeautomation",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-worldbuilding",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-quantitative-finance",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "ruder-io-newsletter",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "slatestarcodex",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "jack-clark-import-ai-substack",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "noahpinion",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "construction-physics",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "the-overshoot",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "net-interest",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "doomberg",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "slow-boring",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "works-in-progress",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "maximum-progress",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "ai-normal-tech",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "last-week-in-ai",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "state-of-ai",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "ai-guide-melanie-mitchell",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "silver-bulletin",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "hardcore-software",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "shtetl-optimized",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "terrytao-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "karpathy-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "lilian-weng-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "colah-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "julia-evans-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "eli-bendersky-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "ryg-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "morning-paper",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "joel-on-software",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "scattered-thoughts",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "ink-and-switch",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "andrew-chen-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "farnam-street",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "pluralistic-doctorow",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "lesswrong-feed",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "alignment-forum",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "npr-news",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "npr-science",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "npr-politics",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "npr-national",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "propublica",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "nautilus-magazine",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "aeon-magazine",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "nature-journal",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "smithsonian-magazine",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "rest-of-world",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "the-conversation-us",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "axios-news",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "city-journal",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "jacobin-magazine",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "the-nation",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "phenomenal-world",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "krebs-on-security",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "better-programming-medium",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "tds-medium",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "ieee-spectrum-robotics",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "acm-queue",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "oreilly-radar",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "analytics-vidhya",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "r-bloggers",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "fangraphs-baseball",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "matt-lakeman-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "wired",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "the-verge",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "scott-young-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gwern-blog",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "paul-graham-essays",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "ribbonfarm",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "history-today",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "ancient-history-encyclopedia",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "laphams-quarterly",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "not-even-past",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "age-of-revolutions",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "origins-history",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "the-junto",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "stratfor-worldview",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "foreign-affairs-free",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "belfer-center",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "war-on-the-rocks",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "diplomat-magazine",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "carnegie-endowment",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "ground-news",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "inside-gov-tech",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "vox-policy",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "wonkette",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "geography-realm",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "esri-blog",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "national-geographic-news",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "atlas-obscura",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "geocurrents",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "science-magazine-news",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "phys-org",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "new-scientist",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "pnas-science",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "cell-magazine",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "nih-news",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "qubit-guy-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "quantum-computing-report",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "quantaverse-blog",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "ibm-quantum-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "alpha-architect-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "calculated-risk",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "vanguard-research",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "nber-digest",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "imf-blog",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "datacamp-community",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "kdnuggets",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "mode-analytics-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "dbt-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "feast-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "data-strategy-reforge",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 500,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "lenny-newsletter",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "every-bundle",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "future-of-work-mckinsey",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "sequoia-scout-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "sports-reference-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "statsbomb-blog",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "athletic-analytics",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "mit-sloan-sports",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "nba-analytics-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "all3dp",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "3dprintingindustry",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "prusa-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "3dprintingmedia",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "instructables-3d-printing",
+      "status": "disabled",
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "disabledAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "enabled": false,
+      "failureCount": 1
+    },
+    {
+      "id": "hackaday-io",
+      "status": "disabled",
+      "lastError": {
+        "kind": "permanent",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "disabledAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "enabled": false,
+      "failureCount": 1
+    },
+    {
+      "id": "iot-analytics-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "iot-for-all",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "sparkfun-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "make-magazine",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "digikey-tech-forum",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "embedded-com",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "electronic-design",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arm-community-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "espressif-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "interrupt-memfault",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "paperswithcode-latest",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "together-ai-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "mistral-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "cohere-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "stability-ai-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "modal-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "replicate-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "diy-chatgpt-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "eugeneyan-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "hamel-husain-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "chip-huyen-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-3blue1brown",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-veritasium",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-kurzgesagt",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-numberphile",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-computerphile",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-two-minute-papers",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-yannic-kilcher",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-lex-fridman",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-real-engineering",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-wendover",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-polymatter",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-mark-rober",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-makers-muse",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-cnc-kitchen",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-ben-eater",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-eevblog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-patrick-boyle",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-ben-felix",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-fall-of-civilizations",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-geography-now",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-practical-engineering",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-economics-explained",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-lex-fridman",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-dwarkesh",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "podcast-acquired",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-mlst",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-80k-hours",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-odd-lots",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-huberman-lab",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-latent-space",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "podcast-bankless",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "podcast-darknet-diaries",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-pbs-space-time",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-sabine-hossenfelder",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-domain-of-science",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-qiskit",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-minutephysics",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-smartereveryday",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-steve-mould",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-anton-petrov",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-branch-education",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-mit-ocw",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-statquest",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-andrej-karpathy",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-sentdex",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-welch-labs",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-fireship",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-theprimeagen",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-theo-t3",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-networkchuck",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-low-level-learning",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-andreas-spiess",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-electroboom",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-greatscott",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-phils-lab",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-digikey",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-thomas-sanladerer",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-teaching-tech",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-slant3d",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-diy-perks",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-kings-and-generals",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-historia-civilis",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-tasting-history",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-voices-of-the-past",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-premodernist",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-reallifelore",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-caspian-report",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-atlas-pro",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-money-macro",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-new-money",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-tifo-football",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-thinking-basketball",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-foolish-baseball",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-revolutions",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-history-of-rome",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-planet-money",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-indicator-planet-money",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-thinking-basketball",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "quantum-insider-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "quantum-zeitgeist-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "r-quantum2",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "history-extra-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "jstor-daily-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "world-history-encyclopedia",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "r-askhist",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-history2",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-mapporn",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "geography-realm2",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "r-geography2",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "world-history-encyclopedia-geo",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "foreign-policy-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "chatham-house-blog",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "csis-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "rand-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-geopolitics2",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "lawfare-blog",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "niskanen-center-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "democracy-journal-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "abnormal-returns-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "philosophical-economics-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "st-louis-fed-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "r-investing2",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "american-soccer-analysis-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "football-outsiders-blog",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "between-the-posts-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "r-sports-analytics",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-functionalprint",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "hackster-io-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arduino-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "raspberry-pi-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "cnx-software-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "linuxgizmos-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "huggingface-blog-feed",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "pytorch-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "langchain-blog",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "fast-ai-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "youtube-drachinifel",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-mark-felton",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-operations-room",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-military-history-visualized",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-real-time-history",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-montemayor",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-hardcore-history",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-rest-is-history",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-war-on-the-rocks",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-strategy-bridge",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "small-wars-journal-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "responsible-statecraft-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "breaking-defense-blog",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "modern-war-institute-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "wavell-room-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "19fortyfive-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "ecfr-blog",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "rusi-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "brookings-research-blog",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "public-domain-review-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-oversimplified",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-simple-history",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-invicta",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-lindybeige",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-metatron",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-history-of-the-earth",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-crashcourse",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-geo-history",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-zeihan",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-visualpolitik",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-jake-broe",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-dw-documentary",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-al-jazeera",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-vox",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-breaking-points",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-tldr-news-global",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-tldr-news-eu",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-johnny-harris",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-ted-ed",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-cgp-grey",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-ollie-bye",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-not-just-bikes",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-map-men",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-rare-earth",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-half-as-interesting",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-plain-bagel",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-how-money-works",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-andrei-jikh",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-graham-stephan",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-swedish-investor",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-cnbc-make-it",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-like-stories-of-old",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-sprouts",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-ordinary-things",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-rational-animations",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-talks-at-google",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-freethink",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-school-of-life",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-nilered",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-dr-becky",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-scott-manley",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-curious-droid",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-world-science-festival",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-primer",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-fermilab",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-kathy-loves-physics",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-looking-glass-universe",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-tibees",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-hugging-face",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-weights-and-biases",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-ml-street-talk",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-tom-scott",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-mkbhd",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-zach-star",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-coding-train",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-sebastian-lague",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-ken-jee",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-statsbomb",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-code-bullet",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-3d-printing-nerd",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-proper-printing",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-dronebot-workshop",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-paul-mcwhorter",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-afrotechmods",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-hacksmith",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-jake-tran",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-map-archive",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "historynet",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "the-conversation-global",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "the-conversation-history",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "public-books",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "regulatory-review",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "chinapower-csis",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "econbrowser",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "liberty-street-economics",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "interfluidity",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "conversable-economist",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "project-syndicate",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "psyche-magazine",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "palladium-magazine",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "persuasion-community",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "unherd",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "openstreetmap-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "realclearscience",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "quantum-frontiers",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "voxelmatters",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "john-d-cook",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "hillel-wayne-computer-things",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "matklad-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "crooked-timber",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "servethehome",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "regehr-embedded-academia",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "random-nerd-tutorials",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "hackaday-home-automation",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "history-workshop",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "mapscaping",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "the-transmitter",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "newlines-magazine",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "longreads",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "why-is-this-interesting",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "one-useful-thing",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "dynomight",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "data-exchange",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "strange-loop-canon",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "in-due-course-joseph-heath",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "chartbook-adam-tooze",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "arxiv-cs-ar",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-eess-sy",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-qbio-nc",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-physics-geoph",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cs-et",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "ethereum-foundation-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "sigarch-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "backblaze-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "the-american-mind",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "digitimes-asia",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "sarahconstantin-rough-diamonds",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "probaseballinsider",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "geography-realm-gislounge",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "low-tech-magazine",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "the-elysian",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "r-physics",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-globalaffairs",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-slatestarcodex",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-urbanplanning",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-askscience",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-diy",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-quantumphysics",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-nba",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-soccer",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-fantasybaseball",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-europe",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-homeimprovement",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-resinprinting",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-worldhistory",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-ancientcivilizations",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-homeassistant",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "r-esp32",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 429,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "azimuth-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "gowers-weblog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "janestreet-tech-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "figma-eng-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "vercel-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "supabase-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "tailscale-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "oxide-computer-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "quanta-physics",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "quanta-math",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "quanta-biology",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "physicsworld-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "embedded-artistry",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "cosmos-magazine",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "nber-working-papers",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "war-is-boring",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "youtube-vsauce",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-isaac-arthur",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-physics-girl",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-art-of-the-problem",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-seeker",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-minuteearth",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-national-geographic",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-vlogbrothers",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-philosophy-tube",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-lemmino",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-coldfusion",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-geowizard",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-coin-bureau",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-epic-history",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-captain-disillusion",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-jeff-geerling",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-global-weirding",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-wisecrack",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-freecodecamp",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-strange-parts",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-applied-science",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-history-buffs",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-toldinstone",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-the-byzantine-legacy",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-cambrian-period",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-geo-politics-simplified",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-economists",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-bloomberg-originals",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-ft",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-diy-solar-power",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-thisoldtony",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-stuff-made-here",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-adam-savage",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-buildable-design",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-uncle-jessy",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-educ8s",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-atomic-shrimp",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-total-football-analysis",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-harvard-economics",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-stanford-econ",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-economic-policy-institute",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-george-box",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-cleo-abram",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-asapscience",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-nerdwriter1",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-big-think",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-journeyman-pictures",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-vice-news",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-pbs-idea-channel",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-pbs-eons",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-pbs-newshour",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-institute-for-new-economic-thinking",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-ycombinator",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-scott-galloway",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-frontline-pbs",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-hank-green-science",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-scishow-space",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-history-hit",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-extra-history",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-overly-sarcastic",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-china-uncensored",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-tldr-news-us",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-strange-maps",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-geography-hub",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-backyard-scientist",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-engineering-explained",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-cnn-business",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-mrwhosetheboss",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-quanta-magazine",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-nber-videos",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-3d-printing-101",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "youtube-sports-analytics-institute",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-econtalk",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-freakonomics",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-bbc-in-our-time",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-bbc-more-or-less",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-bbc-infinite-monkey-cage",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-bbc-documentary",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-search-engine",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-how-i-built-this",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-tides-of-history",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-npr-fresh-air",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-npr-ted-radio-hour",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-npr-short-wave",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-npr-embedded",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-npr-code-switch",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-ezra-klein-show",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-hard-fork",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-radiolab",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-philosophize-this",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-conan-obrien",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-big-picture-ringer",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-hanselminutes",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-rationally-speaking",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "podcast-bbc-analysis",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-duncan-trussell",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "podcast-oddlots-bloomberg",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "podcast-99pi",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "news-the-intercept",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "news-pew-research",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "news-rand-commentary",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "news-quanta-magazine",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "news-undark",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "news-science-news",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "news-nih-medlineplus",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "news-stimson-center",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "news-cfr-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "news-ipcc-newsroom",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "news-who-newsroom",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "news-imf-blog",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "news-world-bank-blog",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "news-five-thirtyeight",
+      "status": "dormant",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "news-bellingcat",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "news-hakai-magazine",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "news-eos-agu",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "news-mit-news",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "news-noaa",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "news-mcclatchy-dc",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "news-the-markup",
+      "status": "failing",
+      "consecutiveFailures": 1,
+      "lastError": {
+        "kind": "permanent",
+        "code": 404,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "arxiv-cs-ir",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cs-hc",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cs-cy",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cs-gt",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cs-ma",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cs-ds",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cs-pl",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cs-ni",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-econ-em",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-econ-th",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-qfin-pm",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-qfin-ec",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-qfin-st",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-stat-ap",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-stat-co",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-math-st",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-math-pr",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-astro-ga",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-astro-ep",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cond-mat-mes",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cond-mat-suprcon",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-physics-ao",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-physics-space",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-cs-it",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-nlin-cd",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "arxiv-qbio-qm",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "hackaday-3d-printer-hacks",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "robohub",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "opensource-ecology",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "code": 403,
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "partsnotincluded",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "hardwarebee",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "adafruit-blog-2",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "pimoroni-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "bambulab-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "tindie-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "diy-photography",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "bald-engineer",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "big-mess-o-wires",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "voltlog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "eevblog-text",
+      "status": "failing",
+      "consecutiveFailures": 0,
+      "lastError": {
+        "kind": "transient",
+        "at": "2026-07-10T09:40:00.568Z"
+      },
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z",
+      "failureCount": 1
+    },
+    {
+      "id": "notes-and-volts",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "toms-hardware-all",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "ieee-spectrum-diy",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "electronics-lab",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "predictable-designs",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "jeff-geerling-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "magpi-magazine",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "recantha-pi-pod",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    },
+    {
+      "id": "bantam-tools-blog",
+      "status": "active",
+      "consecutiveFailures": 0,
+      "lastOkAt": "2026-07-10T09:40:00.568Z",
+      "lastFetchedAt": "2026-07-10T09:40:00.568Z"
+    }
+  ]
+}
