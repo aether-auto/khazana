@@ -85,6 +85,21 @@ export async function runIngest(
      * enriched. Same guarantees as `onProgress`.
      */
     onExtractProgress?: (p: ExtractProgress) => void;
+    /**
+     * Optional hook fired ONCE, synchronously, with the deduped items array
+     * right before the enrich/extract phase starts — i.e. every source has
+     * already been fetched successfully. `enrichContent` mutates this exact
+     * array in place (it never reassigns), so a caller that stashes this
+     * reference can still see (and persist) the fully-collected, pre-
+     * enrichment items even if the process is later killed by an uncaught
+     * exception thrown asynchronously from *inside* the enrich phase (e.g. a
+     * Node/undici parser assert off a socket event — unreachable by any
+     * try/catch here). This is what makes the `real-ingest.mts`
+     * uncaughtException/unhandledRejection backstop able to salvage a
+     * partial-but-fresh feed instead of losing the whole run. Never affects
+     * ingest output; a throwing callback is swallowed.
+     */
+    onPreEnrich?: (items: FeedItem[]) => void;
   },
 ): Promise<IngestResult> {
   const fetchFn = opts.fetchFn ?? defaultFetch;
@@ -229,6 +244,17 @@ export async function runIngest(
     seen.add(it.id);
     return true;
   });
+
+  // Fire the pre-enrich salvage hook now — items are fully collected/deduped
+  // and about to be handed to the enrich phase, which is where the async
+  // uncaught-from-a-socket-event failure class lives (see the option doc).
+  if (opts.onPreEnrich) {
+    try {
+      opts.onPreEnrich(items);
+    } catch {
+      // A misbehaving hook must never break the pipeline.
+    }
+  }
 
   // Best-effort full-text/transcript enrichment of body. Resilient: never throws.
   // Share the same caches + a per-host limiter across the enrich phase.

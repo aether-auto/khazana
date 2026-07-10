@@ -11,7 +11,12 @@ const registry: Registry = {
   sources: [
     { id: "good", type: "rss", url: "https://a.com/feed", channels: ["tech"], enabled: true, trustScore: 0.6, addedBy: "seed", failureCount: 0 },
     { id: "flaky", type: "rss", url: "https://b.com/feed", channels: ["ai"], enabled: true, trustScore: 0.6, addedBy: "seed", failureCount: 0 },
-    { id: "off", type: "rss", url: "https://c.com/feed", channels: ["finance"], enabled: false, trustScore: 0.6, addedBy: "seed", failureCount: 0 },
+    // Deliberately excluded: enabled:false with an explicit, non-"disabled"
+    // status (a human turned off a previously-live source) is never swept
+    // into a re-probe (@khazana/core's `isReprobeEligible` — a status-ABSENT
+    // disabled source is a different, self-healing case; see ingest.test.ts's
+    // re-probe suite below and source-verify.test.ts).
+    { id: "off", type: "rss", url: "https://c.com/feed", channels: ["finance"], enabled: false, status: "active", trustScore: 0.6, addedBy: "seed", failureCount: 0 },
   ],
 };
 
@@ -47,7 +52,8 @@ test("onProgress fires once per source with accurate running tallies", async () 
       { id: "a", type: "rss", url: "https://a.com/feed", channels: ["tech"], enabled: true, trustScore: 0.6, addedBy: "seed", failureCount: 0 },
       { id: "b", type: "rss", url: "https://b.com/feed", channels: ["ai"], enabled: true, trustScore: 0.6, addedBy: "seed", failureCount: 0 },
       { id: "c", type: "rss", url: "https://c.com/feed", channels: ["finance"], enabled: true, trustScore: 0.6, addedBy: "seed", failureCount: 0 },
-      { id: "d", type: "rss", url: "https://d.com/feed", channels: ["science"], enabled: false, trustScore: 0.6, addedBy: "seed", failureCount: 0 },
+      // status:"active" (not absent) → deliberately excluded, not swept into a re-probe.
+      { id: "d", type: "rss", url: "https://d.com/feed", channels: ["science"], enabled: false, status: "active", trustScore: 0.6, addedBy: "seed", failureCount: 0 },
     ],
   };
   // b fails; a and c each yield one item.
@@ -89,6 +95,56 @@ test("runIngest works with onProgress omitted (no throw)", async () => {
   });
   await expect(
     runIngest(registry, { now: "2026-06-23T00:00:00.000Z", fetchFn, extract: { enabled: false } }),
+  ).resolves.toBeDefined();
+});
+
+// ── onPreEnrich salvage hook — the uncaughtException backstop in
+// scripts/real-ingest.mts depends on this firing with the fully-collected,
+// deduped items BEFORE the enrich phase (where the undici-crash class lives)
+// so a caller can stash a live reference and persist it if the process is
+// later killed asynchronously mid-enrichment. ──────────────────────────────
+
+test("onPreEnrich fires once with the deduped items before enrichment runs", async () => {
+  const fetchFn: FetchFn = async (url) => ({
+    ok: true, status: 200, text: async () => RSS("Hi", `${url}#1`), json: async () => ({}),
+  });
+  const calls: number[][] = [];
+  const { items } = await runIngest(registry, {
+    now: "2026-06-23T00:00:00.000Z",
+    fetchFn,
+    extract: { enabled: false },
+    onPreEnrich: (pre) => calls.push([pre.length]),
+  });
+  expect(calls).toHaveLength(1);
+  // Same count as the final result — fired after dedup, with everything collected.
+  expect(calls[0]).toEqual([items.length]);
+});
+
+test("onPreEnrich hands back the SAME array reference enrichContent mutates (so a stashed reference stays live)", async () => {
+  const fetchFn: FetchFn = async (url) => ({
+    ok: true, status: 200, text: async () => RSS("Hi", `${url}#1`), json: async () => ({}),
+  });
+  let stashed: unknown;
+  const { items } = await runIngest(registry, {
+    now: "2026-06-23T00:00:00.000Z",
+    fetchFn,
+    extract: { enabled: false },
+    onPreEnrich: (pre) => { stashed = pre; },
+  });
+  expect(stashed).toBe(items);
+});
+
+test("a throwing onPreEnrich hook never breaks the run", async () => {
+  const fetchFn: FetchFn = async (url) => ({
+    ok: true, status: 200, text: async () => RSS("Hi", `${url}#1`), json: async () => ({}),
+  });
+  await expect(
+    runIngest(registry, {
+      now: "2026-06-23T00:00:00.000Z",
+      fetchFn,
+      extract: { enabled: false },
+      onPreEnrich: () => { throw new Error("boom"); },
+    }),
   ).resolves.toBeDefined();
 });
 
@@ -155,11 +211,11 @@ test("a disabled source still inside its re-probe window is skipped (no every-ru
   expect(calls).toBe(0);
 });
 
-test("a manually disabled source (no status:'disabled') is never swept into a re-probe", async () => {
+test("a source disabled with an explicit non-'disabled' status (e.g. a human flipped enabled:false on a previously-active source) is never swept into a re-probe", async () => {
   const reg: Registry = {
     version: 1,
     sources: [
-      { id: "manual-off", type: "rss", url: "https://d.com/feed", channels: ["tech"], enabled: false, trustScore: 0.6, addedBy: "seed", failureCount: 0 },
+      { id: "manual-off", type: "rss", url: "https://d.com/feed", channels: ["tech"], enabled: false, status: "active", trustScore: 0.6, addedBy: "seed", failureCount: 0 },
     ],
   };
   let calls = 0;
@@ -170,4 +226,22 @@ test("a manually disabled source (no status:'disabled') is never swept into a re
   const { results } = await runIngest(reg, { now: NOW, fetchFn, extract: { enabled: false } });
   expect(results.find((r) => r.id === "manual-off")).toBeUndefined();
   expect(calls).toBe(0);
+});
+
+test("a legacy disabled source with NO status field at all IS swept into a bounded re-probe (self-heals like the ~208 youtube sources killed before `status` existed)", async () => {
+  const reg: Registry = {
+    version: 1,
+    sources: [
+      { id: "legacy-off", type: "rss", url: "https://e.com/feed", channels: ["tech"], enabled: false, trustScore: 0.6, addedBy: "seed", failureCount: 0 },
+    ],
+  };
+  let calls = 0;
+  const fetchFn: FetchFn = async (url) => {
+    calls++;
+    return { ok: true, status: 200, text: async () => RSS("Hi", `${url}#1`), json: async () => ({}) };
+  };
+  const { results, fetchResults } = await runIngest(reg, { now: NOW, fetchFn, extract: { enabled: false } });
+  expect(results.find((r) => r.id === "legacy-off")).toBeDefined();
+  expect(fetchResults.find((r) => r.sourceId === "legacy-off")?.ok).toBe(true);
+  expect(calls).toBe(1);
 });

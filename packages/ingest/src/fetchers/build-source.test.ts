@@ -9,7 +9,9 @@ import {
   type FetchFn,
   type FetchResult,
 } from "./build-source.js";
-import type { SourceEntry } from "@khazana/core";
+import type { FeedItem, SourceEntry } from "@khazana/core";
+import * as youtubeMod from "../youtube.js";
+import * as discoveryMod from "../youtube-discovery.js";
 
 const ok = (body: { text?: string; json?: unknown }): FetchResult => ({
   ok: true, status: 200,
@@ -178,4 +180,76 @@ test("reddit is untouched: still routes to the dedicated reddit flow, not the ge
   // The reddit flow sets its own browser UA and does NOT send the generic feed Accept.
   expect(sentHeaders?.["User-Agent"]).toContain("Mozilla/5.0");
   expect(sentHeaders?.["Accept"]).toBeUndefined();
+});
+
+const ytEntry: SourceEntry = {
+  ...rssEntry,
+  id: "youtube-veritasium",
+  type: "youtube",
+  url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCHnyfMqiRRG1u-2MsSQLbXA",
+  channels: ["science"],
+};
+
+test("youtube dispatches to fetchYouTubeChannelVideos when ALLOW_DIRECT_YOUTUBE=1 and yt-dlp is available", async () => {
+  process.env["ALLOW_DIRECT_YOUTUBE"] = "1";
+  const isAvailSpy = vi.spyOn(youtubeMod, "isYtDlpAvailable").mockReturnValue(true);
+  const fakeItems: FeedItem[] = [
+    {
+      id: "fake1", source: ytEntry.id, sourceType: "youtube",
+      url: "https://www.youtube.com/watch?v=abc123DEF45", title: "A discovered video",
+      publishedAt: "2026-06-23T00:00:00.000Z", fetchedAt: "2026-06-23T00:00:00.000Z",
+      topics: ["science"], entities: [], summary: "", media: [], kind: "video",
+    },
+  ];
+  const discoverySpy = vi
+    .spyOn(discoveryMod, "fetchYouTubeChannelVideos")
+    .mockResolvedValue(fakeItems);
+  // A fetchFn that would blow up if the RSS fallback were used instead.
+  const fetchFn: FetchFn = async () => {
+    throw new Error("should not hit the RSS fallback when the yt-dlp path is gated on");
+  };
+  const items = await buildSource(ytEntry, fetchFn).fetch({ now: "2026-06-23T00:00:00.000Z" });
+  expect(discoverySpy).toHaveBeenCalledWith(
+    ytEntry,
+    expect.objectContaining({ now: "2026-06-23T00:00:00.000Z" }),
+  );
+  expect(items).toEqual(fakeItems);
+  discoverySpy.mockRestore();
+  isAvailSpy.mockRestore();
+  delete process.env["ALLOW_DIRECT_YOUTUBE"];
+});
+
+test("youtube falls through to the RSS videos.xml path when yt-dlp is unavailable", async () => {
+  process.env["ALLOW_DIRECT_YOUTUBE"] = "1";
+  const isAvailSpy = vi.spyOn(youtubeMod, "isYtDlpAvailable").mockReturnValue(false);
+  const discoverySpy = vi.spyOn(discoveryMod, "fetchYouTubeChannelVideos");
+  const YT_RSS = `<?xml version="1.0"?><rss version="2.0"><channel>
+    <item><title>Legacy RSS video</title><link>https://youtube.com/watch?v=legacy123</link></item>
+  </channel></rss>`;
+  let sentUrl: string | undefined;
+  const fetchFn: FetchFn = async (url) => {
+    sentUrl = url;
+    return ok({ text: YT_RSS });
+  };
+  const items = await buildSource(ytEntry, fetchFn).fetch({ now: "2026-06-23T00:00:00.000Z" });
+  expect(sentUrl).toBe(ytEntry.url); // fell through to the generic videos.xml fetch
+  expect(discoverySpy).not.toHaveBeenCalled();
+  expect(items).toHaveLength(1);
+  expect(items[0]!.kind).toBe("video");
+  discoverySpy.mockRestore();
+  isAvailSpy.mockRestore();
+  delete process.env["ALLOW_DIRECT_YOUTUBE"];
+});
+
+test("youtube falls through to RSS by default (ALLOW_DIRECT_YOUTUBE unset)", async () => {
+  delete process.env["ALLOW_DIRECT_YOUTUBE"];
+  const discoverySpy = vi.spyOn(discoveryMod, "fetchYouTubeChannelVideos");
+  const YT_RSS = `<?xml version="1.0"?><rss version="2.0"><channel>
+    <item><title>Legacy RSS video</title><link>https://youtube.com/watch?v=legacy123</link></item>
+  </channel></rss>`;
+  const fetchFn: FetchFn = async () => ok({ text: YT_RSS });
+  const items = await buildSource(ytEntry, fetchFn).fetch({ now: "2026-06-23T00:00:00.000Z" });
+  expect(discoverySpy).not.toHaveBeenCalled();
+  expect(items).toHaveLength(1);
+  discoverySpy.mockRestore();
 });

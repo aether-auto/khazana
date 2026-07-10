@@ -195,15 +195,11 @@ test("every committed Read's frontmatter still parses against BlogFrontmatterSch
     const { data } = matter(raw);
     const result = BlogFrontmatterSchema.safeParse(data);
     expect(result.success, `${file}: ${result.success ? "" : JSON.stringify(result.error.issues)}`).toBe(true);
-    if (result.success) {
-      // None of the pre-existing Reads carry tier/origin yet — confirms this
-      // really is exercising the back-compat (undefined-optional-fields) path,
-      // not silently upgrading old fixtures.
-      for (const s of result.data.sources) {
-        expect(s.tier).toBeUndefined();
-        expect(s.origin).toBeUndefined();
-      }
-    }
+    // Back-compat guarantee = every committed Read still PARSES (asserted above).
+    // We intentionally do NOT assert that sources lack tier/origin: those optional
+    // fields are now legitimately present on newly-authored Reads (the corroboration
+    // rail emits them — see the forward-compat test below), so an absence check here
+    // would be invalid the moment a Read carrying them lands.
   }
 });
 

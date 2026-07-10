@@ -5,12 +5,25 @@
 > wire story. This spec defines the component, its choreography, its interaction model, and
 > its data contract. It renders pixels; spec 1 (the Spine) defines the data it reads.*
 
-**Status:** Proposed — spec 2 of 5 (Atlas: Spine → **Globe** → Bias Lab → Ledger → Extras)
+**Status:** Proposed — spec 2 of 8 (Atlas: Spine → **Globe** → Bias Lab → Ledger → Extras →
+Conflict Theaters → Government Structure → Two Faces)
 **Date:** 2026-07-07
 **Owner:** Arnav (founder) + Claude (cofounder)
 **Cost target:** $0 recurring — same binding constraint as khazana v1 and the Spine. No paid
 APIs, no paid hosting, no websockets, no always-on machine beyond the existing free
 Cloudflare Worker.
+
+> **Amended 2026-07-07 after founder interview.** Per the binding decision record
+> (`2026-07-07-atlas-founder-decisions.md`, D1–D12), which wins wherever it contradicts this
+> spec's original text: the Atlas family grew from five specs to eight (D5, D6, D11) and this
+> is now spec 2 of 8. The event card's reportings-count question — this spec's own former
+> "single most product-defining open question" (§12) — is **CLOSED by D7**: a spectrum-diverse
+> top-N (~7) leading with a corroborated-core line (§6). A globe-wide **conflict lens** mode
+> and an escalated-card swap trigger are added per **D6** (new §8.5). Default globe framing is
+> now India-forward at the vision level per **D9** (§12); exact rotation values stay
+> implementation-time. Atlas's top-level IA and the Globe's role in the face-switch transition
+> are now owned by spec 8, Two Faces, per **D11** (§0, §9.4). `data/world/` now lives in the
+> private `khazana-world-data` repo, checked out at build time, per **D2** (§2, §9.1).
 
 **Reads first:** `docs/superpowers/specs/2026-07-07-world-data-spine-design.md` (spec 1 — the
 `WorldEvent`/`Reporting`/`Outlet` schemas and `data/world/` layout this spec consumes
@@ -30,10 +43,11 @@ they see consensus. That divergence view is itself deepened by spec 3 (the Bias 
 Globe's job is to *surface* it, not compute it.
 
 **Not in scope here:** the Bias Lab's divergence-index formula (spec 3), the Government
-Ledger's country drill-down (spec 4), and Atlas's top-level navigation/IA (spec 5 or an
-implementation-time call — spec 1 §1.1 only says "a top-level switch inside `apps/site`,"
-it doesn't say what the switch looks like). This spec assumes the Globe is reachable at a
-route (§9.4) and focuses entirely on the component itself.
+Ledger's country drill-down (spec 4), the Conflict Theaters' escalated-card and theater-page
+definitions (spec 6 — §8.5 below only commits to this spec's swap trigger and handoff), and
+Atlas's top-level navigation/IA — now owned by spec 8, Two Faces (D11), which also
+choreographs the Globe's role in the face-switch transition. This spec assumes the Globe is
+reachable at a route (§9.4) and focuses entirely on the component itself.
 
 **Naming note, flagged not resolved:** khazana v1's design spec (§6.1) already lists a
 *backlog Read format* called "Atlas" ("map-driven geography story"). That is unrelated to
@@ -59,6 +73,12 @@ underneath. They should share:
 
 They should **not** share a renderer library, and that is a deliberate, reasoned choice —
 see §3.2.
+
+One more shared-DNA note, added post-interview: the Globe is Atlas's atmosphere-defining
+signature component — the first pixel that says "this is a different world than
+Feed/Reads/Workshop" — and per D11 it will be choreographed *together with* spec 8's
+face-switch transition, not designed in isolation. That choreography is spec 8's to design;
+this note only flags the relationship.
 
 ---
 
@@ -95,7 +115,7 @@ see §3.2.
 ## 2. Architecture at a glance
 
 ```
-┌─ data/world/ (committed, spec 1 §4.3) ───────────────────────────────────┐
+┌─ data/world/ (private khazana-world-data repo, checked out at build — D2) ─┐
 │  events/<YYYY-MM-DD>.json   events/latest.json   events/manifest.json*  │
 │  outlets/outlets.json                                                    │
 └───────────────────────────────────────────────────────────────────────────┘
@@ -111,7 +131,9 @@ see §3.2.
 layout (spec 1 didn't need it; the Globe's time scrubber does) — see §9.3.
 
 Same ethos as spec 1: **the page works from committed data with zero client-side network
-calls**; polling is a pure enhancement that makes an already-complete page fresher.
+calls**; polling is a pure enhancement that makes an already-complete page fresher. "Committed"
+now means committed to the private `khazana-world-data` repo (D2), checked out into
+`data/world/` during the public repo's build — the Astro page's own read is unchanged.
 
 ---
 
@@ -323,20 +345,39 @@ honestly, instead of implying a precision the ingest doesn't have).
 
 ## 6. The event card & the Bias Lab handoff
 
-### 6.1 What it shows
+### 6.1 What it shows — resolved (D7)
 
 A compact card, not a full page: the event's `headline`, `category`/`severity` badges, its
-`geo.country` (flag/label), a relative timestamp, then **every `reportings[]` entry as its
-own row** — outlet name + a small lean/reliability chip pulled from `Outlet.bias` (spec 1
-§3.4) via `reportings[].outletId`, the outlet's own `headline`, its `tone`/`stance`/`frame`,
-and a link out to `url`. This is the Globe's whole reason for existing: the reader sees "7
-outlets, 3 frames, 2 stances" at a glance, before clicking through to any single one.
+`geo.country` (flag/label), a relative timestamp, then two things D7 settles (closing this
+spec's own former "single most product-defining open question"):
 
-### 6.2 How many reportings to actually show
+1. **A corroborated-core line, leading the card** — the claims that X of Y outlets *across
+   the spectrum* mutually confirm, rendered as measured agreement ("corroborated by 9 of 12
+   outlets"), never asserted as truth, plus fact-check badges wherever a ClaimReview match
+   exists. This computation is **Bias-Lab-owned** (spec 3's divergence/corroboration engine,
+   per spec 1 §3.5's note that this class of derived signal is not stored on `WorldEvent`
+   itself); this card only **renders** its output, it does not compute it.
+2. **A spectrum-diverse top-N of `reportings[]`** (~7 rows) below the core line — each row an
+   outlet name + a small lean/reliability chip pulled from `Outlet.bias` (spec 1 §3.4) via
+   `reportings[].outletId`, the outlet's own `headline`, its `tone`/`stance`/`frame`, and a
+   link out to `url`. The N are selected to **maximize stance/frame/lean spread**, not by
+   recency or trust score alone, so the card always shows the *shape* of the coverage rather
+   than N near-duplicates of the same take.
 
-Left as a founder open question (§11) rather than guessed here — the honest tension is
-between "show everything, that's the whole point" and "some events will have 30+
-`reportings[]` entries and a card that long stops being a glance."
+This is the Globe's whole reason for existing: the reader sees "corroborated by 9 of 12
+outlets" and the 7 most different takes on it, at a glance, before clicking through to any
+single one.
+
+### 6.2 Selection & the unabridged list — resolved (D7)
+
+Previously left as a founder open question — the honest tension between "show everything,
+that's the whole point" and "some events have 30+ `reportings[]` entries and a card that long
+stops being a glance." D7 resolves it in favor of a deliberately partial card: spectrum-
+diverse top-N (~7), not exhaustive, compensated by the corroborated-core line so the reader
+still gets the "what's agreed" signal even from a partial sample. The **full unabridged
+`reportings[]` list stays on the Bias Lab story page** (spec 3 §8.4), one hop away via the
+"see the full divergence" affordance (§6.3). Founder-confirmed: no synthesized
+"truth-o-meter" — khazana surfaces measured agreement, it never asserts truth.
 
 ### 6.3 Handoff contract to the Bias Lab (spec 3)
 
@@ -347,6 +388,10 @@ index is Bias-Lab-owned, not stored on `WorldEvent`) without re-deriving which o
 covered this story. The exact transport (URL query param, a route param on a per-event Bias
 Lab path, or an in-page panel swap) is spec 3's call to make against its own IA — this spec
 only commits to *what* crosses the boundary, not *how* it's routed.
+
+Conflict-category events swap this standard card for the escalated card instead (D6.3, §8.5)
+— that card's handoff carries an additional `theaterId` and is defined where the swap itself
+is defined, not here.
 
 ---
 
@@ -372,9 +417,12 @@ only commits to *what* crosses the boundary, not *how* it's routed.
 A `focus="india"` mode (URL param or a toggle in the telemetry rail) changes three things,
 all achievable within cobe's existing API rather than requiring a different renderer:
 
-1. **Default camera framing** — on load, `phi`/`theta` are set to center India rather than
-   the default world framing (§11 asks what that default *world* framing even is), so the
-   globe opens already oriented toward the region the founder most wants a lens on.
+1. **Camera framing** — even the default `focus="world"` framing is now India-forward per
+   **D9** (§12): initial `phi`/`theta` bias toward the India/Indian-ocean hemisphere rather
+   than a neutral or Atlantic-centered view, on every load, not only in explicit India-focus
+   mode. Explicit `focus="india"` narrows further via the zoom bump in (2) below rather than
+   being the only place India gets any priority. Exact `phi`/`theta`/tilt and passive rotation
+   speed remain implementation-time tuning (§12).
 2. **A modest zoom via cobe's `scale`** — cobe supports scaling the rendered sphere up
    within its canvas; India-focus bumps this scale (e.g. ~1.0 → ~1.15) so India's markers
    read as slightly larger/denser without a hard cut to a different projection. This is a
@@ -390,6 +438,35 @@ all achievable within cobe's existing API rather than requiring a different rend
    telemetry rail, consistent with §5.3's "dim, don't remove" filtering discipline — the
    world's other events are still visibly present, just deemphasized.
 
+### 8.5 Conflict lens mode — new surface (D6)
+
+A globe-wide **conflict lens** toggle — a mode, not a route change — changes what the globe
+foregrounds, per D6's "war has a different mode":
+
+- **Conflict-category events become the primary visual layer.** Severity drives marker size
+  and intensity directly, the same visual language §4's steady-state markers already use for
+  recency-decay, repurposed here for conflict severity instead.
+- **Non-conflict events recede to low opacity, never removed** — the same "dim, never remove"
+  discipline §5.3's filtering already establishes, applied globally while the lens is active
+  instead of per-filter-chip.
+- **Active conflict theaters render as persistent, labeled regions** on the globe (not
+  individual markers) that link into their theater pages. The theater boundary/region data,
+  labeling, and the theater page itself are spec 6's (Conflict Theaters) to define; this spec
+  only commits to the Globe rendering active theaters as a distinct, always-present layer
+  while the lens is on.
+- **Conflict-category events swap the standard event card (§6) for an ESCALATED card** —
+  belligerents, casualty figures with source disagreement shown explicitly, claim-vs-claim
+  across opposing sides' outlets. The escalated card's full definition, layout, and data
+  contract are spec 6's; this spec commits to exactly two things:
+  - the **swap trigger** — `event.category === "conflict"`, or membership in an active
+    theater even when the event itself isn't tagged `"conflict"`;
+  - the **handoff** — `WorldEvent.id` plus `theaterId` when the event belongs to an active
+    theater, the same two-value shape as §6.3's handoff extended by one field.
+
+Conflict lens is orthogonal to India-focus (§8) — both can be active together (e.g.
+India-focus + conflict lens surfaces conflict theaters touching India's neighborhood at a
+glance, without leaving India-focus).
+
 ---
 
 ## 9. Data flow
@@ -399,8 +476,11 @@ all achievable within cobe's existing API rather than requiring a different rend
 The Atlas/Globe Astro page reads `data/world/events/<today>.json` (or the requested `date`
 if the route supports deep-linking a past day) directly off disk at build time, exactly like
 every other khazana page reads committed feed JSON — no fetch, no Worker call, during the
-build itself. This becomes `GlobeProps.events` (§3.3) and renders `GlobeFallback` server-side
-as the initial HTML.
+Astro page's own build step. One addition per D2: before this step runs, the public repo's
+build now checks out the private `khazana-world-data` repo (via a repo-scoped fine-grained
+token held as an Actions secret) into `data/world/`, so from the page's point of view the
+read is unchanged — still a plain on-disk read, no fetch, no Worker call. This becomes
+`GlobeProps.events` (§3.3) and renders `GlobeFallback` server-side as the initial HTML.
 
 ### 9.2 Client time (poll, "today" only)
 
@@ -426,10 +506,10 @@ the directory from the client.
 ### 9.4 Route
 
 `apps/site/src/pages/atlas/globe.astro` (or `apps/site/src/pages/atlas/index.astro` if the
-Globe is Atlas's landing surface — an IA call better made once Atlas's top-level nav switch
-is designed, out of scope here). Either way, the page composes: fetch today's shard + the
-outlet registry at build time → `<Globe events=… outlets=… date=… focus=…/>` mounted
-`client:visible`, with `GlobeFallback` as its literal SSR output.
+Globe is Atlas's landing surface — an IA call owned by spec 8, Two Faces, per D11; not
+designed here). Either way, the page composes: fetch today's shard + the outlet registry at
+build time → `<Globe events=… outlets=… date=… focus=…/>` mounted `client:visible`, with
+`GlobeFallback` as its literal SSR output.
 
 ---
 
@@ -469,26 +549,29 @@ outlet registry at build time → `<Globe events=… outlets=… date=… focus=
    burst thresholds) once actual GDELT volume is observed.
 5. **India-focus mode** (§8) + the Bias Lab handoff wiring (§6.3), once spec 3 exists to
    receive it.
+6. **Conflict lens mode** (§8.5), once spec 6 (Conflict Theaters) exists to receive the
+   escalated-card handoff and render theater regions.
 
 ---
 
 ## 12. Founder open questions
 
-- **Default globe framing/projection.** What should the globe show on first load before any
-  filter or focus mode is applied — a specific default rotation/hemisphere (e.g. Atlantic-
-  centered, matching most reference globes) or something India-biased by default even
-  outside explicit India-focus mode, given the founder's stated personal interest there?
-  Also: exact starting `phi`/`theta`/tilt and passive rotation speed haven't been picked.
+**Closed by the 2026-07-07 founder interview** (`2026-07-07-atlas-founder-decisions.md`):
+
+- ~~Default globe framing/projection~~ — **CLOSED by D9.** India-forward at the vision level:
+  the globe's initial framing is biased toward India/the Indian-ocean hemisphere even outside
+  explicit `focus="india"` mode. Exact starting `phi`/`theta`/tilt and passive rotation speed
+  remain implementation-time tuning, not a vision-level question.
+- ~~How many `reportings[]` to show per event card~~ — **CLOSED by D7.** Spectrum-diverse
+  top-N (~7) leading with a corroborated-core line; see §6.
+
+**Still genuinely open** (implementation-time, not vision-level):
+
 - **Ping density / rate-limiting for visual calm.** §4 proposes a 6-concurrent cap with
   staggering, but doesn't resolve what happens on a genuine breaking-news burst (dozens of
   near-simultaneous GDELT rows in one region) — individual pings would strobe; the
   alternative is aggregating into a single pulsing "hot region" halo per geographic cluster.
   Worth deciding once real GDELT burst volume is observed, not guessed here.
-- **How many `reportings[]` to show per event card** (§6.2) — all of them (true to "every
-  outlet's version," but some events will have 30+), a capped top-N (by what ranking —
-  outlet trust score? recency? stance diversity, so the card always shows the spread rather
-  than N copies of the same take?), or all-with-scroll inside the card. This is probably the
-  single most product-defining open question in this spec.
 - **Poll interval** (§9.2) — a few minutes was proposed as a reasonable band against the
   ~20-minute fast lane, but the exact number is a tuning knob better set once Worker
   request-volume/KV-read cost (still free-tier, but worth checking) is observed in practice.

@@ -1,10 +1,13 @@
 import { expect, test } from "vitest";
-import type { SourceEntry } from "./registry.js";
+import type { Registry, SourceEntry } from "./registry.js";
+import type { SourceHealthFile } from "./registry.js";
 import {
   DISABLE_THRESHOLD,
   REPROBE_AFTER_MS,
   applyFetchResult,
+  extractSourceHealth,
   isReprobeEligible,
+  mergeSourceHealth,
   reconcileRegistry,
   type FetchOutcome,
 } from "./source-verify.js";
@@ -204,9 +207,14 @@ test("a live (enabled) source is never reprobe-eligible", () => {
   expect(isReprobeEligible(live, NOW)).toBe(false);
 });
 
-test("a manually/scout disabled source (enabled:false, no disabled status) is never reprobe-eligible", () => {
-  const manuallyOff = src({ enabled: false, status: undefined });
+test("a source disabled with an explicit non-'disabled' status (e.g. a human flipped enabled:false on a previously-active source) is never reprobe-eligible", () => {
+  const manuallyOff = src({ enabled: false, status: "active" });
   expect(isReprobeEligible(manuallyOff, NOW)).toBe(false);
+});
+
+test("a legacy entry disabled with NO status field at all (status undefined) is immediately reprobe-eligible — status absent is indistinguishable from our own pre-`status`-field auto-disable path (the ~208 youtube sources), so it defaults to self-healing rather than being stuck forever", () => {
+  const legacyNoStatus = src({ enabled: false, status: undefined, disabledAt: undefined });
+  expect(isReprobeEligible(legacyNoStatus, NOW)).toBe(true);
 });
 
 test("a just-disabled source is NOT reprobe-eligible before the window elapses", () => {
@@ -292,6 +300,31 @@ test("a bounded re-probe never hammers more than once per window: immediately af
   expect(isReprobeEligible(after, NOW)).toBe(false); // window just restarted
 });
 
+// ── applyFetchResult must route legacy absent-status disabled entries through
+// the SAME "disabled entry" branch as isReprobeEligible treats them, or a
+// successful reprobe would leave `enabled:false` (the live-branch success case
+// never touches `enabled`) while flipping `status` away from "disabled" —
+// orphaning the source forever (isReprobeEligible would then see a defined,
+// non-"disabled" status and never offer it again). ─────────────────────────
+
+test("re-probe SUCCESS on a legacy absent-status disabled entry fully re-enables it (does not orphan it with enabled:false + status:active)", () => {
+  const legacyDisabled = src({ enabled: false, status: undefined, disabledAt: undefined, failureCount: 0 });
+  const after = applyFetchResult(legacyDisabled, ok({ itemCount: 5 }), { now: NOW });
+  expect(after.enabled).toBe(true);
+  expect(after.status).toBe("active");
+  expect(after.consecutiveFailures).toBe(0);
+});
+
+test("re-probe FAILURE on a legacy absent-status disabled entry stays disabled (status stamped) and restarts the window, rather than free-striking from 0", () => {
+  const legacyDisabled = src({ enabled: false, status: undefined, disabledAt: undefined, failureCount: 0 });
+  const after = applyFetchResult(legacyDisabled, permanent(), { now: NOW });
+  expect(after.enabled).toBe(false);
+  expect(after.status).toBe("disabled");
+  expect(after.disabledAt).toBe(NOW);
+  // Still findable by isReprobeEligible next window — not orphaned.
+  expect(isReprobeEligible(after, new Date(Date.parse(NOW) + REPROBE_AFTER_MS).toISOString())).toBe(true);
+});
+
 // ── Schema backward-compatibility ─────────────────────────────────────────
 
 test("legacy entry with no disabledAt parses (backward-compatible schema)", () => {
@@ -300,4 +333,99 @@ test("legacy entry with no disabledAt parses (backward-compatible schema)", () =
   // applyFetchResult must not throw / must treat it exactly like an entry
   // whose disabledAt was explicitly stamped, once reduced.
   expect(() => applyFetchResult(legacy, ok(), { now: NOW })).not.toThrow();
+});
+
+// ── extractSourceHealth / mergeSourceHealth: committed cross-clone persistence ──
+// (see SourceHealthFile in registry.ts for the "why" — data/sources.json is
+// gitignored and never survives a fresh CI checkout, so this small committed
+// subset is how status/consecutiveFailures/disabledAt persist across runs.)
+
+test("extractSourceHealth omits a pristine source with no recorded health signal", () => {
+  const registry: Registry = { version: 1, sources: [src({ id: "fresh" })] };
+  const health = extractSourceHealth(registry);
+  expect(health.sources).toEqual([]);
+});
+
+test("extractSourceHealth includes only the health subset for a source with a signal, not url/type/channels", () => {
+  const registry: Registry = {
+    version: 1,
+    sources: [
+      src({
+        id: "gone",
+        enabled: false,
+        status: "disabled",
+        consecutiveFailures: DISABLE_THRESHOLD,
+        disabledAt: NOW,
+        lastError: { kind: "permanent", code: 404, at: NOW },
+      }),
+    ],
+  };
+  const health = extractSourceHealth(registry);
+  expect(health.sources).toHaveLength(1);
+  const h = health.sources[0]!;
+  expect(h).toEqual({
+    id: "gone",
+    enabled: false,
+    status: "disabled",
+    consecutiveFailures: DISABLE_THRESHOLD,
+    disabledAt: NOW,
+    lastError: { kind: "permanent", code: 404, at: NOW },
+  });
+  // url/type/channels/trustScore must NOT leak into the committed health file.
+  expect((h as Record<string, unknown>)["url"]).toBeUndefined();
+  expect((h as Record<string, unknown>)["type"]).toBeUndefined();
+});
+
+test("extractSourceHealth includes a source whose only signal is a nonzero failureCount", () => {
+  const registry: Registry = { version: 1, sources: [src({ id: "flaky", failureCount: 2 })] };
+  const health = extractSourceHealth(registry);
+  expect(health.sources).toEqual([{ id: "flaky", failureCount: 2 }]);
+});
+
+test("mergeSourceHealth is a no-op when the health file is empty", () => {
+  const registry: Registry = { version: 1, sources: [src({ id: "a" })] };
+  const merged = mergeSourceHealth(registry, { version: 1, sources: [] });
+  expect(merged).toEqual(registry);
+});
+
+test("mergeSourceHealth layers matching health onto the base registry by id, leaving unmatched entries untouched", () => {
+  const registry: Registry = {
+    version: 1,
+    sources: [src({ id: "gone", enabled: true, status: undefined }), src({ id: "fine", enabled: true })],
+  };
+  const health: SourceHealthFile = {
+    version: 1,
+    sources: [{ id: "gone", enabled: false, status: "disabled", consecutiveFailures: 3, disabledAt: NOW }],
+  };
+  const merged = mergeSourceHealth(registry, health);
+  const gone = merged.sources.find((s) => s.id === "gone")!;
+  const fine = merged.sources.find((s) => s.id === "fine")!;
+  expect(gone.enabled).toBe(false);
+  expect(gone.status).toBe("disabled");
+  expect(gone.consecutiveFailures).toBe(3);
+  expect(gone.disabledAt).toBe(NOW);
+  expect(fine).toEqual(src({ id: "fine", enabled: true })); // untouched
+});
+
+test("mergeSourceHealth does not mutate either input", () => {
+  const registry: Registry = { version: 1, sources: [src({ id: "gone", enabled: true })] };
+  const health: SourceHealthFile = { version: 1, sources: [{ id: "gone", enabled: false, status: "disabled" }] };
+  mergeSourceHealth(registry, health);
+  expect(registry.sources[0]!.enabled).toBe(true);
+  expect(registry.sources[0]!.status).toBeUndefined();
+});
+
+test("extractSourceHealth then mergeSourceHealth onto a fresh copy of the same base round-trips the health state", () => {
+  const before: Registry = {
+    version: 1,
+    sources: [src({ id: "gone", enabled: false, status: "disabled", consecutiveFailures: DISABLE_THRESHOLD, disabledAt: NOW })],
+  };
+  const health = extractSourceHealth(before);
+  // Simulate a fresh clone: base registry has the seed's pristine defaults.
+  const freshSeed: Registry = { version: 1, sources: [src({ id: "gone" })] };
+  const restored = mergeSourceHealth(freshSeed, health);
+  expect(restored.sources[0]!.enabled).toBe(false);
+  expect(restored.sources[0]!.status).toBe("disabled");
+  expect(restored.sources[0]!.consecutiveFailures).toBe(DISABLE_THRESHOLD);
+  expect(restored.sources[0]!.disabledAt).toBe(NOW);
 });

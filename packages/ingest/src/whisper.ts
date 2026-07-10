@@ -217,6 +217,34 @@ export function pickAudioMime(
 // ---------------------------------------------------------------------------
 
 /**
+ * One-time-per-run visibility for the Groq → local-Whisper fallback.
+ *
+ * `GROQ_API_KEY` is empty in CI (no way to provision the secret today), so
+ * tier 1 (Groq's whisper-large-v3-turbo, higher quality) is silently skipped
+ * on every single podcast episode and every run falls straight to tier 2
+ * (local ONNX whisper-base). That was invisible in logs — this makes it a
+ * single, clear line instead. A run transcribes dozens of episodes, so the
+ * log must fire ONCE, not once per episode (`state.logged` guards that); the
+ * state is injectable so it's cleanly testable without module-global reset
+ * hooks (see `transcribePodcastEpisode`'s call site, which uses the module
+ * default).
+ */
+const groqAbsenceLogState = { logged: false };
+
+export function logGroqAbsenceOnce(
+  warn: (message: string) => void = console.warn,
+  state: { logged: boolean } = groqAbsenceLogState,
+): boolean {
+  if (GROQ_API_KEY || state.logged) return false;
+  state.logged = true;
+  warn(
+    "[whisper] GROQ_API_KEY absent — using local Whisper (lower-quality tier) for all podcast transcription this run. " +
+      "Set GROQ_API_KEY for higher-quality, zero-hallucination Groq transcription instead.",
+  );
+  return true;
+}
+
+/**
  * Return true if the `ffmpeg` binary is accessible. Used to short-circuit
  * gracefully when ffmpeg is not installed (CI without ffmpeg, local dev).
  */
@@ -448,6 +476,8 @@ export async function transcribePodcastEpisode(audioUrl: string): Promise<string
       return cleanPodcastTranscript(groqText);
     }
     // Fall through to local Whisper on Groq failure
+  } else {
+    logGroqAbsenceOnce();
   }
 
   // Tier 2: local Whisper (requires ffmpeg)

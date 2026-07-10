@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { parseRegistry } from "./registry.js";
+import { parseRegistry, parseSourceHealthFile } from "./registry.js";
 
 test("parseRegistry applies defaults and validates", () => {
   const reg = parseRegistry({
@@ -91,4 +91,39 @@ test("parseRegistry rejects an unknown status value", () => {
       sources: [{ id: "x", type: "rss", url: "https://e.com", channels: [], status: "bogus" }],
     }),
   ).toThrow();
+});
+
+// ── SourceHealthFile: the small committed cross-clone health persistence file ──
+
+test("parseSourceHealthFile applies defaults to an empty file", () => {
+  const health = parseSourceHealthFile({});
+  expect(health.version).toBe(1);
+  expect(health.sources).toEqual([]);
+});
+
+test("parseSourceHealthFile round-trips a disabled entry's health subset", () => {
+  const health = parseSourceHealthFile({
+    version: 1,
+    sources: [
+      {
+        id: "youtube-3blue1brown",
+        status: "disabled",
+        enabled: false,
+        consecutiveFailures: 3,
+        disabledAt: "2026-06-30T00:00:00.000Z",
+        lastError: { kind: "permanent", code: 404, at: "2026-06-30T00:00:00.000Z" },
+      },
+    ],
+  });
+  const s = health.sources[0]!;
+  expect(s.id).toBe("youtube-3blue1brown");
+  expect(s.status).toBe("disabled");
+  expect(s.enabled).toBe(false);
+  expect(s.consecutiveFailures).toBe(3);
+  expect(s.disabledAt).toBe("2026-06-30T00:00:00.000Z");
+  expect(s.lastError).toEqual({ kind: "permanent", code: 404, at: "2026-06-30T00:00:00.000Z" });
+});
+
+test("parseSourceHealthFile rejects an entry missing an id", () => {
+  expect(() => parseSourceHealthFile({ version: 1, sources: [{ status: "disabled" }] })).toThrow();
 });

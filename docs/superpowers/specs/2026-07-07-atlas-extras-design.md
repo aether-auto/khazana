@@ -1,31 +1,79 @@
 # Atlas — Extras (design spec)
 
 > *khazana's second face is a Spine (schemas + ingest), a Globe (live events), a Bias Lab
-> (outlet lean/reliability), and a Government Ledger (200+ indicators). Those three
-> surfaces are the core. This spec is the founder's own invitation taken literally —
-> "then you can add more pages and more analysis how you want... go wild" — a ranked
-> backlog of everything ELSE that turns Atlas from three great pages into a complete
-> world-intelligence surface.*
+> (outlet lean/reliability), and a Government Ledger — now a Country Report + Indicator
+> Browser (spec 4, amended). Those are the core surfaces. This spec was written as the
+> founder's own invitation taken literally — "then you can add more pages and more
+> analysis how you want... go wild" — a ranked backlog of everything ELSE that turns Atlas
+> from a handful of great pages into a complete world-intelligence surface. The 2026-07-07
+> founder interview changed what "this spec" means: it is no longer a menu to pick from —
+> it is a committed backlog with sequencing.*
 
-**Status:** Proposed — spec 5 of 5 (Atlas: Spine → Globe → Bias Lab → Ledger → **Extras**)
+**Status:** Proposed — spec 5 of 8 (Atlas: Spine → Globe → Bias Lab → Ledger → **Extras** →
+Conflict Theaters → Government Structure → Two Faces)
 **Date:** 2026-07-07
 **Owner:** Arnav (founder) + Claude (cofounder)
 **Cost target:** $0 recurring — same binding constraint as every khazana spec. Every
 feature below must be buildable on free data, free compute (GitHub Actions), and the
 existing free Cloudflare Worker. None of them.
 
+**Amended 2026-07-07 after founder interview** — see
+`docs/superpowers/specs/2026-07-07-atlas-founder-decisions.md` (D1–D12) for full authority.
+Changes folded into this version:
+
+- **Renumbered** spec 5 of 8, not 5 of 5 — the Atlas family grew three more specs (D5, D6,
+  D11): Conflict Theaters, Government Structure, Two Faces.
+- **Everything greenlit (D3).** Founder, verbatim: *"PUT EVERYTHING IN, IDC if it is 2000
+  indicators, put in literally everything \[that\] can be found/calculated reliably."* All
+  sixteen backlog entries below are committed. §0 reworked from "menu, nothing committed"
+  to "committed backlog, wave = sequencing." §1 gains a Status column. §6 restructured into
+  closed-by-founder-interview vs. still-open, matching the sibling specs' pattern.
+- **Reconciled against spec 6 (Conflict Theaters).** #4 Conflict & Movements Tracker is
+  recast as partially absorbed; #12 Sanctions Tracker and #5 Treaties layer gain
+  cross-references.
+- **Reconciled against the amended Ledger (spec 4).** #1 Country Trajectory is now shipped
+  as a Report section, not a standalone page; #2 Macro Dashboard is repositioned alongside
+  the new Indicator Browser; #14 Budget Explorer and #15 Leader Profiles are marked
+  committed (still sequenced after India-depth data, but no longer conditional).
+- **Source claims corrected against verified research** (`.superpowers/research/atlas/
+  density-indicators.json`, `.superpowers/research/atlas/india-depth.json`) — RSF, ParlGov,
+  MyNeta/ADR, PRS Legislative Research, OWID, and the UNFCCC NDC registry all get updated
+  access/license/tier notes where the research dossiers found something this spec's
+  original text got wrong or under-specified. Cited inline as "verified 2026-07-08
+  research."
+- **New §1a** (density follow-through, D3/D12): the verified research tranche of further
+  world sources (OWID's full catalog, WHO GHO, ILOSTAT, FAOSTAT, Eurostat, EM-DAT, and
+  others) that feed the Indicator Browser directly via the Spine's standing source
+  mechanism, without needing their own backlog entries.
+
 ---
 
 ## 0. What this spec is, and how to use it
 
-This is **not** a fourth feature spec sitting alongside the Globe/Bias Lab/Ledger — it's
-a **menu**, deliberately wider than what any one build cycle should attempt. Sixteen
-candidate features are described, each scored, each mapped onto the Spine's five schemas
-(`WorldEvent`, `Indicator`, `Contract`, `Outlet`, `CountryProfile`) and its two license
-tiers (`redistribute-raw-ok`, `derived-only`), and each ranked into one of three build
-waves. **Nothing here is committed.** §5 hands the founder a short list of open questions
-— which 2–3 to actually schedule after the core three pages ship — because "go wild" is
-an instruction to generate options, not to greenlight all of them.
+This was **written** as a menu — deliberately wider than what any one build cycle should
+attempt, with §6 handing the founder a short list of open questions ("which 2–3 to
+actually schedule after the core pages ship") because "go wild" originally read as an
+instruction to generate options, not to greenlight all of them.
+
+**The 2026-07-07 founder interview closed that question.** D3, verbatim: *"PUT EVERYTHING
+IN, IDC if it is 2000 indicators, put in literally everything \[that\] can be found/
+calculated reliably."* The founder's answer to "which 2–3" was all sixteen. The irony is
+worth stating plainly, because pretending this document was always a committed backlog
+would misrepresent how it got here: it argued with itself about scarcity, and scarcity
+turned out not to be the constraint. What survives from the original menu framing is not
+the menu itself — it's the **scoring** (Impact/Effort), the **schema mapping**, and the
+**wave assignment** (v1/v2/v3), which now function as **sequencing guidance for a
+committed backlog** rather than a selection mechanism for an optional one. "Wave v1" no
+longer means "cheap enough to maybe do"; it means "build this first because it's free."
+"Wave v3" no longer means "maybe, if there's appetite"; it means "build this once its
+prerequisites land."
+
+Sixteen features are described below, each scored, each mapped onto the Spine's five
+schemas (`WorldEvent`, `Indicator`, `Contract`, `Outlet`, `CountryProfile`) and its two
+license tiers (`redistribute-raw-ok`, `derived-only`), and each assigned a build wave that
+now reads as build order. §1's table carries a Status column confirming all sixteen are
+greenlit; §6 is restructured into *closed by the founder interview* vs. *still genuinely
+open*, matching the pattern the sibling specs use for the same D-record.
 
 Two hard rules carried over from spec 1, binding on every entry below:
 
@@ -52,32 +100,79 @@ Two hard rules carried over from spec 1, binding on every entry below:
   already be live, and specifically *which part* of that spec's data it reads.
 - **Wave** — v1 (rides specs 2–4's already-ingested data, ships as a new UI view for
   near-zero incremental ingest cost), v2 (needs one new source or one new piece of
-  cross-cutting derivation logic, but reuses an existing schema), or v3 (stretch — blocked
-  on the Spine's own India-depth phase 2, needs a new schema, or carries enough
-  editorial-sensitivity weight to warrant its own review before building).
+  cross-cutting derivation logic, but reuses an existing schema), or v3 (blocked
+  on the Spine's own India-depth phase, needs a new schema, or carries enough
+  editorial-sensitivity weight to warrant its own review before building). Post-D3, wave
+  is **sequencing, not a build/skip gate** — v3 entries are exactly as committed as v1
+  entries, they simply have real prerequisites in front of them.
+- **Status** (new, §1) — every entry is Greenlit (D3). Where D3's density mandate changed
+  *how* an entry ships rather than *whether* — an entry absorbed into a sibling spec, or
+  narrowed in scope by one — the Status column says so.
 
 ---
 
 ## 1. At a glance — the full backlog, ranked
 
-| # | Feature | Schema(s) | New source? | Impact / Effort | Wave | Depends on |
-|---|---|---|---|---|---|---|
-| 1 | Country Trajectory | `CountryProfile` | No | High / Low | v1 | Ledger (spec 4) |
-| 2 | Macro Dashboard | `Indicator` | No | High / Low | v1 | Ledger (spec 4) |
-| 3 | Same-Story Diff | `WorldEvent`/`Reporting` | No | Medium / Low | v1 | Globe (2) + Bias Lab (3) |
-| 4 | Conflict & Movements Tracker | `WorldEvent` | No | High / Low | v1 | Globe (spec 2) |
-| 5 | Treaties & Geopolitics Layer | `WorldEvent` | No (reuses GDELT) | Medium / Low | v1 | Globe (spec 2) |
-| 6 | World Sources Explorer | `WorldSourceEntry` | No | Medium / Low | v1 | Spine (spec 1) only |
-| 7 | Contracts Explorer / "Money Map" | `Contract` | No | High / Medium | v2 | Ledger (spec 4) |
-| 8 | Press-Freedom & Censorship Layer | `Indicator` + `Outlet` | Yes (RSF) | High / Medium | v2 | Globe (2) + Bias Lab (3) |
-| 9 | Blindspot Feed | `WorldEvent` + `Outlet` | No | High / Medium | v2 | Globe (2) + Bias Lab (3) |
-| 10 | Election & Opposition Tracker (global slice) | `Indicator` | Yes (ParlGov) | Medium / Medium | v2 | Ledger (spec 4) |
-| 11 | Climate Commitments vs Reality | `Indicator` | Yes (OWID + NDC) | High / Medium | v2 | Ledger (spec 4) |
-| 12 | Sanctions Tracker | `WorldEvent` + `Indicator` | Yes (OFAC/EU/UN) | Medium / Medium | v2 | Globe (2) + Ledger (4) |
-| 13 | Aid Flows Map (IATI) | `Contract` | Yes (IATI) | Medium / Medium | v2 | Ledger (spec 4) §7 pattern |
-| 14 | Budget Explorer | `Indicator` | No (India-phase-2) | Medium / High | v3 | Ledger (4) + Spine India depth |
-| 15 | Leader / Politician Profiles | `Indicator` + `CountryProfile` | Yes (MyNeta/ADR, PRS) | High / High | v3 | #10's India depth + Ledger (4) |
-| 16 | Who-Funds-Whom (think-tank/lobbying map) | **none fit** | Yes (OpenSecrets/LDA) | Medium / High | v3 | needs new schema first |
+| # | Feature | Schema(s) | New source? | Impact / Effort | Wave | Depends on | Status (D3) |
+|---|---|---|---|---|---|---|---|
+| 1 | Country Trajectory | `CountryProfile` | No | High / Low | v1 | Ledger (spec 4) | Greenlit — **absorbed** into the Country Report as a section (Ledger §4.1 step 4); standalone page is now optional v2 polish |
+| 2 | Macro Dashboard | `Indicator` | No | High / Low | v1 | Ledger (spec 4) | Greenlit — complements the new Indicator Browser (Ledger §4a), doesn't duplicate it |
+| 3 | Same-Story Diff | `WorldEvent`/`Reporting` | No | Medium / Low | v1 | Globe (2) + Bias Lab (3) | Greenlit |
+| 4 | Conflict & Movements Tracker | `WorldEvent` | No | High / Low | v1 | Globe (spec 2) | Greenlit — **narrowed**: theater-grade depth is spec 6's; this stays the global non-theater slice |
+| 5 | Treaties & Geopolitics Layer | `WorldEvent` | No (reuses GDELT) | Medium / Low | v1 | Globe (spec 2) | Greenlit — cross-refs spec 6 for ceasefire-type events in active theaters |
+| 6 | World Sources Explorer | `WorldSourceEntry` | No | Medium / Low | v1 | Spine (spec 1) only | Greenlit |
+| 7 | Contracts Explorer / "Money Map" | `Contract` | No | High / Medium | v2 | Ledger (spec 4) | Greenlit |
+| 8 | Press-Freedom & Censorship Layer | `Indicator` + `Outlet` | Yes (RSF) | High / Medium | v2 | Globe (2) + Bias Lab (3) | Greenlit — RSF posture corrected to citation-only (verified 2026-07-08 research) |
+| 9 | Blindspot Feed | `WorldEvent` + `Outlet` | No | High / Medium | v2 | Globe (2) + Bias Lab (3) | Greenlit |
+| 10 | Election & Opposition Tracker (global slice) | `Indicator` | Yes (ParlGov) | Medium / Medium | v2 | Ledger (spec 4) | Greenlit — ParlGov coverage/license caveat (verified 2026-07-08 research) |
+| 11 | Climate Commitments vs Reality | `Indicator` | Yes (OWID + NDC) | High / Medium | v2 | Ledger (spec 4) | Greenlit — NDC targets hand-curated v1 |
+| 12 | Sanctions Tracker | `WorldEvent` + `Indicator` | Yes (OFAC/EU/UN) | Medium / Medium | v2 | Globe (2) + Ledger (4) | Greenlit — EU sanctions list cross-refs spec 6's state-affiliation triangulation |
+| 13 | Aid Flows Map (IATI) | `Contract` | Yes (IATI) | Medium / Medium | v2 | Ledger (spec 4) §7 pattern | Greenlit — IATI not covered by the research dossiers, license claim unverified pending a dedicated pass |
+| 14 | Budget Explorer | `Indicator` | No (needs India-depth data) | Medium / High | v3 | Ledger (4) + Spine India depth | Greenlit — was v3-conditional, now committed; still sequenced after India-depth data lands |
+| 15 | Leader / Politician Profiles | `Indicator` + `CountryProfile` | Yes (MyNeta/ADR, PRS, SHRUG) | High / High | v3 | #10's India depth + Ledger (4) | Greenlit — framing-review requirement intact (D1); risk posture lowered by private-indefinitely audience |
+| 16 | Who-Funds-Whom (think-tank/lobbying map) | **none fit** | Yes (OpenSecrets/LDA) | Medium / High | v3 | schema-design pass (prerequisite, not a question of whether — D3) | Greenlit |
+
+---
+
+## 1a. Density follow-through — further verified world sources (D3/D12)
+
+D3's density mandate doesn't stop at these sixteen features. Verified 2026-07-08 research
+(`.superpowers/research/atlas/density-indicators.json`, 29 sources checked for access
+format and license) surfaced a further tranche of world-data sources that don't need their
+own backlog entry — they don't power a new *feature*, they simply widen what the Spine
+ingests, and they reach the reader through the Indicator Browser (Ledger §4a) and any
+per-country Report section that already reads `Indicator[]` by field, via the Spine's
+standing "how to add a source" mechanism (`CLAUDE.md`: new `WorldSourceEntry`, new fetcher,
+register, test). No new schema, no new UI. The research's own top-line finding: **Our
+World in Data (OWID) is the single highest-leverage add** — one API surface that itself
+re-hosts or ETL-harmonizes several of the others below, roughly doubling khazana's
+indicator surface (labour, food/ag, education, ICT, poverty, inequality, disaster risk,
+energy, emissions, civic space) for close to zero additional legal exposure.
+
+| Source | Tier | License (verified) | Note |
+|---|---|---|---|
+| Our World in Data (OWID) | `redistribute-raw-ok` | CC BY 4.0 for OWID-produced/harmonized data | Highest-leverage single add; re-hosted third-party series (WID, RSF, V-Dem, …) keep *their own* license — check the per-indicator sidecar, don't assume blanket CC BY |
+| Eurostat | `redistribute-raw-ok` | CC BY 4.0 | REST/SDMX API |
+| OECD SDMX | `redistribute-raw-ok` | CC BY 4.0 | "for any purpose, even for commercial" |
+| FAOSTAT | `redistribute-raw-ok` | CC BY 4.0 | food/agriculture |
+| ILOSTAT | `redistribute-raw-ok` | CC BY 4.0 (since May 2023) | labour |
+| UNESCO UIS | `redistribute-raw-ok` | CC BY-SA 3.0 IGO | education; share-alike, no NC restriction |
+| World Bank Global Findex | `redistribute-raw-ok` | CC BY 4.0 | financial inclusion |
+| World Bank PIP (poverty/inequality) | `redistribute-raw-ok` | CC0 — even cleaner than WDI | replaces PovcalNet |
+| INFORM Risk Index | `redistribute-raw-ok` | CC BY 4.0 | disaster/crisis risk composite |
+| Ember | `redistribute-raw-ok` | CC BY 4.0 | electricity/energy transition |
+| Global Carbon Project | `redistribute-raw-ok` | CC BY 4.0 | emissions, feeds §3.11 alongside OWID CO2 |
+| CIVICUS Monitor | `redistribute-raw-ok` | CC BY-SA 4.0 | civic space rating |
+| WHO Global Health Observatory | `derived-only` | CC BY-NC-SA 3.0 IGO | non-commercial clause — fine today (khazana is non-commercial), re-check before any future monetization, same posture as D1 |
+| UN Comtrade | `derived-only` | Legacy agreement bans redistribution/republication without written UN permission | compute-and-cite only, 500 calls/day free tier, never republish record-level rows |
+| Quality of Government (QoG) | *(discovery map only — do not ingest)* | Explicitly forbids redistribution of its compiled dataset | use to find primary sources, not as a source itself |
+| RSF, Freedom House, BTI, Fragile States Index, Global Peace Index, GHS Index, Climate Action Tracker, EM-DAT | citation-pointer only | Mostly No-Derivs/NC score-products, licenses don't clear for ingestion or blending | store `(country, year, raw score)` + attribution, never blend into a khazana composite — RSF's own case is worked through in full in §3.8 |
+
+WID.world and IRENA's data-specific licenses could not be located despite searching
+(research dossier, verified) — treat both as `unclear` and verify before building a
+fetcher, the same posture spec 1 §8 takes toward any source whose ToS couldn't be pinned
+down. This table is intentionally a floor, not the full 29-source list the dossier
+covers — implementation time is when the rest gets triaged against it.
 
 ---
 
@@ -87,27 +182,42 @@ Every feature in this wave reads data that specs 2–4 are already committed to 
 None needs a new `WorldSourceEntry`; each is a new Astro route + a new chart/derivation
 over data already sitting in `data/world/`.
 
-### 2.1 Country Trajectory
+### 2.1 Country Trajectory — **shipped, absorbed into the Country Report**
+
+**Status: this entry shipped as part of the Ledger's per-country Report, not as a
+standalone page.** The amended Ledger spec (`2026-07-07-atlas-government-ledger-design.md`
+§4.1 step 4, "Cross-field synthesis") embeds exactly the small-multiple sparkline-strip
+component this section originally proposed, under the name "Country trajectory strip," and
+cites this section as its component's original spec. Read the rest of this entry as the
+component's design rationale, not as a description of a page that will exist separately —
+a **dedicated, expanded-trajectory page remains an optional wave-2 polish item** (a deeper
+per-key drill-down than the Report's summary strip affords) but is no longer the default
+delivery vehicle.
 
 One country's path across all ~200 indicators over time, as a data narrative rather than
 a snapshot table: "is Country X's democracy backsliding, and how confident are we?" The
-Government Ledger's per-country page (spec 4) is inherently a snapshot — the latest value
-per `(field, key)`. Country Trajectory instead groups the *same* `Indicator` records by
+Government Ledger's per-country Report is inherently latest-value-forward at the section
+level — the `RangePlot`/`DataTable` machinery in each field section (Ledger §4.2) shows
+the current reading. Country Trajectory instead groups the *same* `Indicator` records by
 `key` across all stored `period`s and renders small-multiple sparkline strips per field
 (governance, corruption, fiscal, conflict, …), each strip annotated with its own
 `uncertainty` band so "the CPI score dropped 4 points" reads differently when the
 underlying source is a `standardError`-carrying WGI series vs. a bare `sampleSize` ACLED
 count. This is the spec-1-predicted payoff of storing every `period`, not just latest —
-the schema already supports this page; nobody has built the view yet.
+the schema already supports this; the Report is where it now surfaces.
 
 - **Data source(s):** none new — reads `Indicator[]` already committed under
-  `data/world/indicators/<ISO3>/<field>.json` by the Ledger's own ingest.
+  `data/world/indicators/<ISO3>/<field>.json` (private `khazana-world-data` repo per D2,
+  checked out at build time — see the Ledger spec §2 for the mechanism) by the Ledger's
+  own ingest.
 - **Spine schema:** `CountryProfile` (build-time aggregation across periods), `Indicator`.
 - **Impact / Effort:** High / Low — this is pure derived-view + charting work over data
-  that already exists the day the Ledger ships.
-- **Depends on:** spec 4 (Government Ledger) must be live and must retain historical
-  periods per key (not just overwrite the latest value on each slow-lane run — worth
-  double-checking the Ledger's aggregation step doesn't discard prior periods).
+  that already exists the day the Ledger ships. This is exactly why D4 absorbed it into
+  the Report rather than leaving it a separate build: near-zero incremental cost either
+  way, and one page is more legible than two.
+- **Depends on:** the Ledger (spec 4) must retain historical periods per key (not just
+  overwrite the latest value on each slow-lane run — the Ledger's §8.2 `normalize-scores`
+  pass confirms this is honored for mode-2 keys specifically).
 
 ### 2.2 Macro Dashboard
 
@@ -117,11 +227,31 @@ trajectories overlaid. Where Country Trajectory (§2.1) is "one country, many fi
 Macro Dashboard is "many countries, one field" — the complementary lens on the exact same
 `Indicator[]` data.
 
+**Relationship to the Indicator Browser (Ledger §4a, new under D3/D4) — avoid building the
+same thing twice.** The Browser is a raw search/filter/facet grid over *everything*
+ingested (curated and uncurated alike), with no opinion about which countries or keys
+belong together — it's a lookup tool. The Macro Dashboard is the opposite shape: a small,
+curated set of countries and one field, hand-picked for a specific comparison, rendered as
+overlaid trajectories rather than a filterable table. Concretely: the Browser answers "what
+data exists for X," the Dashboard answers "how do these three countries compare on Y, over
+time." They share `Indicator[]` and the shared `normalizedScore` axis but not a UI pattern
+or an entry point — a reader lands on the Dashboard from a curated comparison intent (likely
+via the Ledger's `compare` tool, §5 there) and on the Browser from a lookup intent. Worth
+sequencing the Dashboard after the Browser ships, since the Browser's `indicator-index.json`
+(Ledger §4a.3) is a reusable building block for the Dashboard's own country/field picker.
+
 - **Data source(s):** none new beyond what spec 4 already ingests (WDI, WGI, IMF SDMX are
   named in spec 1 §7 phase 1, all `redistribute-raw-ok`). **OWID** is referenced by the
-  founder's own feature brief as a Macro Dashboard source but isn't in spec 1's named
-  fifteen — flag as a small Spine amendment: OWID publishes under CC-BY, so it slots in
-  as `redistribute-raw-ok`, feeding the `macro`/`wellbeing` fields alongside WDI.
+  founder's own feature brief as a Macro Dashboard source and isn't in spec 1's originally
+  named fifteen — a Spine amendment, confirmed by verified 2026-07-08 research
+  (`.superpowers/research/atlas/density-indicators.json`): OWID's own compiled/harmonized
+  data is CC BY 4.0 ("you have permission to use, reproduce, and distribute it, provided
+  that you cite us") and slots in as `redistribute-raw-ok`, feeding the `macro`/`wellbeing`
+  fields alongside WDI. One caveat the research surfaces that the original text didn't:
+  OWID also *re-hosts* third-party series (WID, RSF, V-Dem, …) under those providers' own,
+  often stricter licenses — the CC BY 4.0 grant covers OWID-produced/harmonized data only,
+  not everything an OWID URL happens to serve, so each OWID-sourced key's fetcher must read
+  the per-indicator source-license sidecar rather than assuming CC BY 4.0 blanket-wide.
 - **Spine schema:** `Indicator`.
 - **Impact / Effort:** High / Low.
 - **Depends on:** spec 4 (Government Ledger).
@@ -148,7 +278,24 @@ two should share one computation module, not reimplement coverage-gap detection 
 - **Depends on:** spec 2 (Globe, for event linking) + spec 3 (Bias Lab, for the
   divergence computation and `Outlet.bias`).
 
-### 2.4 Conflict & Movements Tracker
+### 2.4 Conflict & Movements Tracker — **largely absorbed by spec 6 (Conflict Theaters)**
+
+**Reconciled against `2026-07-07-atlas-conflict-theaters-design.md` (spec 6, written after
+this entry, per D6).** Spec 6 gives major active conflicts a dedicated, report-shaped
+theater page — front lines, casualty ranges, displacement, discrete engagements,
+world-impact proxies (spec 6 §5–§7) — plus a globe-wide conflict lens (spec 6 §8) that
+strictly supersedes what this entry originally proposed for those conflicts: theater-grade
+depth, honest uncertainty on casualties, and OSINT layers this entry never scoped. **What
+this entry still owns:** the **global non-theater slice** — protest, unrest, and political
+violence that never rises to "major active conflict" (a data artifact, a single protest
+wave, a diplomatic row that never escalates) and therefore never earns a hand-curated
+theater entry (spec 6 §2.1 explains why theater promotion stays a deliberate human act, not
+an auto-detected threshold). This tracker is the lens a reader uses to scan *everything*
+ACLED/UCDP/GDELT tag as conflict-adjacent, theater or not; spec 6's Globe conflict lens
+(spec 6 §8) is the *escalated* view once an event actually belongs to a registered theater.
+The two compose rather than compete: this tracker's timeline can link out to a theater page
+wherever `membership.ts` (spec 6 §8) resolves an event into one, exactly the same handoff
+spec 2's Globe already makes.
 
 A dedicated timeline + map of unrest, protest, and political violence — ACLED events,
 UCDP armed-conflict episodes, and GDELT-detected protest activity, with an India
@@ -167,8 +314,11 @@ than the Globe's default all-categories view.
   unrest filtering is a `sourceCategoryCode` sub-tag on the existing `conflict` category
   bucket, worth confirming against real GDELT CAMEO output before assuming the existing
   category alone is granular enough.
-- **Impact / Effort:** High / Low.
-- **Depends on:** spec 2 (Globe) for `WorldEvent` ingest + map rendering.
+- **Impact / Effort:** High / Low — narrower than originally scoped now that spec 6 owns
+  theater depth, but still real: most protest/unrest events globally never belong to a
+  registered theater.
+- **Depends on:** spec 2 (Globe) for `WorldEvent` ingest + map rendering; spec 6 (Conflict
+  Theaters) for the theater-membership link-out, once an event resolves to one.
 
 ### 2.5 Treaties & Geopolitics Layer *(new)*
 
@@ -185,6 +335,16 @@ signed / ratified / pending — which the Ledger's `governance` field can absorb
 `Indicator` keys per treaty (e.g., Paris Agreement ratification status per country) rather
 than inventing a new object type for "a treaty."
 
+**Cross-reference to spec 6 (Conflict Theaters).** Ceasefires are the one treaty-shaped
+event this layer would otherwise miss the context for: a ceasefire tied to an active
+conflict is exactly the kind of "sign agreement" CAMEO code this layer's allowlist catches,
+but its *meaning* is theater-scoped (which belligerents, which front). Where a ceasefire
+event's geo/time resolves into an active theater (spec 6 §8's `membership.ts`), this
+layer's rendering should link into that theater's page for the engagement-level context
+rather than showing the ceasefire as an isolated diplomacy event — the same
+event-to-theater handoff spec 2's Globe already makes. Ceasefires outside any registered
+theater (a bilateral border-skirmish truce, say) stay this layer's own event, unlinked.
+
 - **Data source(s):** GDELT (already ingested, `redistribute-raw-ok`), no new source for
   v1; a curated ratification-status table (hand-maintained or scraped from the relevant
   depositary, e.g. UN Treaty Collection) is a v2 refinement, not required to ship the
@@ -193,15 +353,18 @@ than inventing a new object type for "a treaty."
   "governance"`) for ratification-status keys.
 - **Impact / Effort:** Medium / Low for the event-timeline slice; Medium for the
   ratification-status table if pursued.
-- **Depends on:** spec 2 (Globe).
+- **Depends on:** spec 2 (Globe); spec 6 (Conflict Theaters) for the ceasefire link-out.
 
 ### 2.6 World Sources Explorer *(new, predicted by spec 1 §6)*
 
 Spec 1 §6 already anticipated this: "\[spec 5\] likely reads `WorldSourceEntry`/
 `WorldRegistry` for a Sources-explorer-style Atlas equivalent." khazana v1 has a Sources
 page under the Feed (the registry Source Scout curates); Atlas's data sits behind an
-exactly analogous registry (`data/world-sources.json`, §3.7 of spec 1) that currently has
-no UI at all — every one of the ~15 hand-curated world sources, its `licenseTier`,
+exactly analogous registry (`data/world-sources.json`, §3.7 of spec 1 — lives in the
+private `khazana-world-data` repo per D2, checked out at build time like every other
+`data/world/` path this spec references) that currently has no UI at all — every one of
+the ~15 hand-curated world sources (now growing well past that per D3's density mandate,
+§1a), its `licenseTier`,
 `cadenceLane`, `trustScore`, `failureCount`, and `lastFetchedAt`, is invisible to anyone
 but the pipeline. This page makes Atlas's own methodology-transparency promise
 self-referential: the same `Provenance.sourceId` a reader clicks on to ask "who says
@@ -214,7 +377,7 @@ goes stale.
 - **Spine schema:** `WorldSourceEntry` / `WorldRegistry`.
 - **Impact / Effort:** Medium / Low — a registry-to-table render, plus (nice-to-have) a
   shared `<Methodology>` component that Globe/Bias Lab/Ledger can all link a `Provenance`
-  into, per spec 1 §6's own note that spec 5 "likely" needs exactly this. See §4 below.
+  into, per spec 1 §6's own note that spec 5 "likely" needs exactly this. See §5 below.
 - **Depends on:** spec 1 (Spine) only — this can ship *before* the Globe/Bias Lab/Ledger
   UIs are even built, as a operational/methodology page, which makes it a genuine
   quick-win candidate for whoever wants to ship something Atlas-shaped first.
@@ -231,13 +394,24 @@ objective integrity proxies (what share of a buyer's awards went to their top su
 what share of tenders in a sector drew exactly one bidder) — the analytical layer the
 Government Ledger's basic per-country procurement view (spec 4) doesn't attempt. Spec 1
 §7 phase 1 already lands USAspending, TED, and native-OCDS feeds as comparators; India's
-GeM/CPPP is explicitly phase 2 (needs a bespoke scraper + OCDS mapper, per spec 1 §3.6) —
-this feature ships its flow-diagram + concentration-analytics UI against the phase-1
-comparator data first, and gains India depth for free the day GeM/CPPP lands, with no UI
-change required.
+GeM/CPPP was originally scoped as phase 2 (needs a bespoke scraper + OCDS mapper, per spec
+1 §3.6) but D3 pulls it forward into the main build, sequenced after the comparator
+sources land (Ledger §3.2/§6.1) — this feature ships its flow-diagram + concentration-
+analytics UI against the comparator data first regardless, and gains India depth with no
+UI change required once GeM/CPPP lands. Worth flagging plainly: verified 2026-07-08
+research (`.superpowers/research/atlas/india-depth.json`) found GeM/CPPP is the single
+most legally uncertain source in the India corpus — no official bulk API for either, ToS
+unclear, and the `mcp-india-tenders` prior art (real, MIT-licensed, OCDS-normalized) proves
+technical feasibility but its code license does not resolve the underlying tender data's
+legal tier. "Sequenced into the main build" (D3) does not mean "the license question is
+resolved" — the Ledger's own "not yet available" placeholder state (Ledger §3.2, §6.1)
+stays load-bearing here too until that's settled, and a narrow, low-frequency derived
+metric (e.g., state procurement volume by category, per the research's own suggestion) may
+be the more defensible v1 than raw bid-level ingestion.
 
 - **Data source(s):** USAspending, TED, native-OCDS (all `redistribute-raw-ok`, already
-  Spine sources); India GeM/CPPP later, per spec 1's own phasing.
+  Spine sources); India GeM/CPPP later, per the Ledger's own sequencing and legal caveat
+  above.
 - **Spine schema:** `Contract`.
 - **Impact / Effort:** High / Medium — the flow-diagram component and the concentration
   metrics (single-bidder rate, top-supplier-share) are new analytical work, not a reskin.
@@ -253,15 +427,26 @@ This is the feature that makes the Bias Lab's outlet scores legible in context �
 outlet's apparent "neutral" tone reads differently once a reader knows its home country
 ranks near the bottom of the press-freedom index.
 
-- **Data source(s):** **RSF Press Freedom Index** — new `WorldSourceEntry`. It's a
-  ranking/score product (like CPI and Freedom House, both already `derived-only` in spec
-  1's list), not a raw microdata table, so it slots into the same tier by the same logic:
-  khazana stores its own normalized figure, `origin: "computed"`, never RSF's raw
-  ranking table verbatim.
+- **Data source(s):** **RSF Press Freedom Index** — new `WorldSourceEntry`. Original text
+  here assumed RSF slots into the same `derived-only` tier as CPI/Freedom House ("khazana
+  stores its own normalized figure, `origin: 'computed'`"). **Corrected by verified
+  2026-07-08 research** (`.superpowers/research/atlas/density-indicators.json`): RSF's
+  license is **CC BY-ND** (Attribution–No Derivatives), which is *stricter* than plain
+  `derived-only` — RSF's own terms state content "may not be modified, transformed, or
+  adapted without explicit prior consent," which forbids not just raw redistribution but
+  the rescaling/normalizing step `derived-only`'s "computed" origin assumes is always
+  available. The correct posture is **citation-only**: store `(country, year, RSF's own
+  raw score)` verbatim with direct RSF attribution, and do **not** feed it into
+  `normalizedScore` or any khazana-computed composite — a No-Derivs source needs a third
+  posture the Spine's two-tier model doesn't quite name (`derived-only` still implies
+  khazana computes *something*); flag this as a small Spine-level nuance worth a one-line
+  `Provenance` note ("citation-only, no derived figure") rather than a new licenseTier
+  value outright, since RSF may be the only source that needs it.
 - **Spine schema:** `Indicator` (new field, likely reusing `governance` rather than
   inventing a new one — RSF's index is conceptually adjacent to Freedom House, which
-  already lives under `governance`) + `Outlet` (as a per-outlet annotation keyed by
-  `Outlet.country`).
+  already lives under `governance`, though its raw score renders as a citation pointer,
+  not a `normalizedScore`-bearing figure, per the correction above) + `Outlet` (as a
+  per-outlet annotation keyed by `Outlet.country`).
 - **Impact / Effort:** High / Medium — one new fetcher, no new schema, but the
   cross-surface overlay (Globe *and* Bias Lab) is two integration points, not one.
 - **Depends on:** spec 2 (Globe) for the country-shading overlay, spec 3 (Bias Lab) for
@@ -291,26 +476,45 @@ computation module with Same-Story Diff (§2.3) rather than reimplementing it.
 ### 3.10 Election & Opposition Tracker (global slice first)
 
 Results, effective-number-of-parties, opposition strength, and seat-share swings —
-globally via **ParlGov** (an academic dataset of party/election/government composition,
-broad coverage, ships now), with India constituency-level drill-down deferred to the
-Spine's own India-depth phase 2 (**Lok Dhaba**, already named in spec 1 §7 as a phase-2
-source, not blocked on anything new this spec introduces). Shipping the global ParlGov
-slice first means the Ledger's existing `elections` field (already in `INDICATOR_FIELDS`,
-spec 1 §3.2 — no vocab change needed) gets populated broadly before India's harder,
-constituency-grain depth lands.
+originally scoped globally via **ParlGov**, with India constituency-level drill-down via
+**Lok Dhaba** (already named in spec 1 §7, not blocked on anything new this spec
+introduces, and confirmed by verified 2026-07-08 research as a clean
+`redistribute-raw-ok` source — TCPD states its data "can be freely downloaded and used for
+any purpose"). Shipping the global slice first means the Ledger's existing `elections`
+field (already in `INDICATOR_FIELDS`, spec 1 §3.2 — no vocab change needed) gets populated
+broadly before India's harder, constituency-grain depth lands.
 
-- **Data source(s):** **ParlGov** — new `WorldSourceEntry`. Academic dataset, broad
-  redistribution terms typical of this class of dataset; worth a license confirmation at
-  implementation time (same hedge spec 1 §8 applied to its own reference-rater ToS
-  question) before assuming `redistribute-raw-ok`. **Lok Dhaba** for India depth is
-  already a named spec-1 phase-2 source, no new amendment needed there.
+**ParlGov corrected by verified 2026-07-08 research** (`.superpowers/research/atlas/
+gov-structure.json`, cross-referenced here since ParlGov surfaced there too): this entry's
+"broad coverage, ships now" framing overstates it. ParlGov's actual coverage is **~50 EU/
+OECD democracies only** — a useful cabinet-coalition-depth source for rich democracies, not
+the "global slice" name implies — and its **license could not be confirmed**: the research
+pass hit repeated fetch failures on ParlGov's Harvard Dataverse listing and found no
+alternative documentation of its reuse terms. Two consequences: (1) rename the ambition
+here from "global slice" to "OECD/EU comparator slice," and pair it with IPU Parline
+(mentioned in the Government Structure research as a broader-coverage alternative for
+basic election/party facts) for country coverage ParlGov doesn't reach; (2) treat
+`redistribute-raw-ok` as **unconfirmed, not assumed** — this needs an actual successful
+fetch of ParlGov's license page before ingestion, not the "worth a confirmation" hedge the
+original text used, which reads more settled than the research found it to be.
+
+- **Data source(s):** **ParlGov** — new `WorldSourceEntry`, scoped to ~50 EU/OECD
+  democracies per the correction above, not global coverage. License tier genuinely
+  unconfirmed — do not default to `redistribute-raw-ok` without a successful license-page
+  fetch at implementation time. **IPU Parline** — new `WorldSourceEntry` candidate for the
+  country coverage ParlGov's OECD/EU scope misses, surfaced by the Government Structure
+  research as a broader (if shallower) alternative; worth evaluating alongside ParlGov
+  rather than treating ParlGov as the only global-election source. **Lok Dhaba** for India
+  depth is already a named spec-1 source, confirmed clean — per the amended Spine (§3.6),
+  it's sequenced into the main build alongside the Spine's own ingest, not a deferred
+  phase, so no new amendment needed there.
 - **Spine schema:** `Indicator` (`field: "elections"`), `CountryProfile.subnational` for
   India's constituency grain once Lok Dhaba lands.
 - **Impact / Effort:** Medium / Medium for the global slice (one new fetcher, existing
-  field); the India depth piece inherits spec 1's own India-phase-2 effort, not new
+  field); the India depth piece inherits the Spine's own India-depth build effort, not new
   effort this spec adds.
 - **Depends on:** spec 4 (Government Ledger); India depth additionally depends on the
-  Spine's own phase-2 Lok Dhaba ingest landing (spec 1 §7).
+  Spine's own Lok Dhaba ingest landing (spec 1 §7).
 
 ### 3.11 Climate Commitments vs Reality *(new)*
 
@@ -329,7 +533,17 @@ a methodology-transparent surface is built to show without editorializing.
   figure from each is inherently `origin: "computed"` (khazana parses/extracts it) even
   though the underlying document is public — mark this source `derived-only` on that
   basis, mirroring how spec 1 treats any source where khazana's own computation, not a
-  raw passthrough, is what actually reaches the UI.
+  raw passthrough, is what actually reaches the UI. **Confirmed by verified 2026-07-08
+  research** (`.superpowers/research/atlas/density-indicators.json`): the official
+  registry (unfccc.int/NDCREG) has no documented bulk API — browsable/RSS only — and its
+  own reuse license is unstated; the only programmatic route is an unofficial community
+  mirror (`openclimatedata/ndcs` on GitHub), whose code license doesn't extend to the
+  underlying UNFCCC content and whose freshness needs a last-commit check before relying
+  on it. This confirms the original text's caution and settles §6's open question in favor
+  of the original lean: **hand-curate v1's target figures** (a small, high-value set of
+  major-emitter NDC pledges, entered once and updated as the community mirror or official
+  registry changes) rather than building a PDF/prose extraction pipeline against a source
+  with no stable programmatic surface.
 - **Spine schema:** `Indicator`. Likely needs a small vocab decision: reuse `macro` for
   the emissions-trajectory side and add the NDC-target figure as a second `Indicator` key
   under the same field, rather than adding a new `INDICATOR_FIELDS` entry — flag as an
@@ -347,9 +561,19 @@ point-in-time `WorldEvent`s (a sanction imposed/lifted is an event with a `diplo
 active sanctions regimes per country, feeding the `governance` field alongside the Ledger's
 existing corruption/governance metrics).
 
+**Cross-reference to spec 6 (Conflict Theaters).** This entry's own EU consolidated
+sanctions list is not just a Sanctions Tracker input — spec 6 §5/§9 independently names
+**EU sanctions (EUR-Lex)** as one of three triangulation sources (alongside DOJ FARA and
+Wikidata P127) for `OutletStateAffiliation`, the state-media labeling that drives wartime
+editorial physics on theater pages and the escalated event card. The two features should
+share one fetcher for the EU consolidated list rather than each maintaining an independent
+one — this entry owns the country-pair sanctions-event/rollup use, spec 6 owns the
+outlet-affiliation use, both read the same ingested `WorldSourceEntry`.
+
 - **Data source(s):** **OFAC SDN list** (US federal government data, public domain →
   `redistribute-raw-ok`); **EU consolidated sanctions list** (EU open-data reuse terms,
-  likely `redistribute-raw-ok`, worth a quick confirmation); **UN Security Council
+  likely `redistribute-raw-ok`, worth a quick confirmation — shared fetcher with spec 6's
+  state-affiliation triangulation, per the cross-reference above); **UN Security Council
   sanctions list** (UN materials sometimes carry more restrictive reuse terms than EU/US
   federal data — flag as a ToS check before assuming tier a, same posture as spec 1 §8's
   reference-rater ToS question). All three new `WorldSourceEntry`s.
@@ -357,9 +581,10 @@ existing corruption/governance metrics).
   "governance"`, active-sanctions-count per country).
 - **Impact / Effort:** Medium / Medium — three new fetchers (three different list
   formats), but each is a straightforward structured/CSV-shaped government list, not a
-  scrape.
+  scrape; the EU list's fetcher cost is partly shared with spec 6.
 - **Depends on:** spec 2 (Globe, for event display) + spec 4 (Ledger, for the rollup
-  indicator).
+  indicator); spec 6 (Conflict Theaters) for the shared EU-sanctions fetcher, if built
+  jointly.
 
 ### 3.13 Aid Flows Map (IATI) *(new)*
 
@@ -374,7 +599,13 @@ as procurement, just a different domain, and can literally reuse the Money Map's
 
 - **Data source(s):** **IATI Registry** — published under the IATI Standard, generally
   open/CC-BY-equivalent → `redistribute-raw-ok`. New `WorldSourceEntry`, but zero schema
-  work: it's a `WorldContractSource` exactly like USAspending/TED/OCDS.
+  work: it's a `WorldContractSource` exactly like USAspending/TED/OCDS. **Not covered by
+  either research dossier** (`.superpowers/research/atlas/density-indicators.json` and
+  `.superpowers/research/atlas/india-depth.json` skim neither IATI nor aid-flow data
+  specifically) — the license claim above is this spec's original, unverified judgment,
+  not a research-confirmed one; treat it as needing the same dedicated ToS check at
+  implementation time that every other Spine amendment gets (§0 hard rule 1), rather than
+  as more settled than it is.
 - **Spine schema:** `Contract` (no schema change — a genuine "just add a fetcher" win).
 - **Impact / Effort:** Medium / Medium — the fetcher and IATI's XML/JSON activity format
   take real mapping work, but the schema and (if §3.7 ships first) the UI are both reuse.
@@ -383,60 +614,117 @@ as procurement, just a different domain, and can literally reuse the Money Map's
 
 ---
 
-## 4. Wave v3 — stretch (India-depth-blocked, editorially sensitive, or needs new schema work)
+## 4. Wave v3 — committed, sequenced after India-depth data lands (formerly "stretch")
+
+Everything in this wave is greenlit per D3, same as every other wave — "wave v3" is no
+longer a hedge about whether these get built, only a statement that each has a real
+prerequisite in front of it (India-depth data landing, a schema-design pass, or an
+editorial-framing review) that v1/v2 entries don't carry.
 
 ### 4.14 Budget Explorer
 
 Union, state, and ULB (urban local body) budget line-items for India, via **Open Budgets
 India** — where does public money actually go, drillable from headline outlay down to
-line item. This is explicitly gated on the Spine's own India-depth phase 2 (spec 1 §7:
+line item. This was originally gated on the Spine's own India-depth phase 2 (spec 1 §7:
 "NITI SDG Index, RBI DBIE, Lok Dhaba, Open Budgets India... all have workable APIs/bulk
-data — these are NOT the blocker" for the Spine itself, but they *are* sequenced after
-comparators-first in spec 1's own phasing, so this Atlas feature inherits that same
-sequencing rather than introducing new blockers). The UI itself — a waterfall/treemap
-line-item drill-down — is also a genuinely new pattern, distinct from the Ledger's
-cell-based indicator view.
+data — these are NOT the blocker" for the Spine itself, but they *were* sequenced after
+comparators-first in spec 1's own phasing); D3 removes the phase framing but keeps the
+sequencing — this Atlas feature is committed, waiting on the same India-depth data landing,
+not waiting on a founder decision about whether to build it. The UI itself — a
+waterfall/treemap line-item drill-down — is also a genuinely new pattern, distinct from
+the Ledger's cell-based indicator view.
 
-- **Data source(s):** Open Budgets India (already a named spec-1 India-depth source,
-  license tier per spec 1's own judgment, not reassessed here).
+- **Data source(s):** Open Budgets India — **confirmed by verified 2026-07-08 research**
+  (`.superpowers/research/atlas/india-depth.json`) as CC BY 4.0, `redistribute-raw-ok`,
+  with a real documented API and CSV/Excel/PDF downloads; the CBGA/CivicDataLab
+  machine-readable Union Budget pipeline specifically parses official Budget Day PDFs into
+  clean data within ~24 hours, making it the recommended route over scraping
+  indiabudget.gov.in directly. This strengthens, rather than reassesses, spec 1's original
+  judgment.
 - **Spine schema:** `Indicator` (`field: "fiscal"`).
 - **Impact / Effort:** Medium / High — no new source-acquisition risk, but a genuinely
   new drill-down UI pattern (treemap/waterfall) not shared with anything else in this
   backlog.
-- **Depends on:** spec 4 (Government Ledger) + the Spine's own India-depth phase 2
-  landing (spec 1 §7) — this is a downstream consumer, not a blocker on that phase.
+- **Depends on:** spec 4 (Government Ledger) + the Spine's own India-depth data landing
+  (spec 1 §7) — this is a downstream consumer, not a blocker on that build.
 
 ### 4.15 Leader / Politician Profiles
 
-Per-representative dossiers — criminal-case counts and asset declarations from
-**MyNeta/ADR** (Association for Democratic Reforms, compiling public Election Commission
-candidate affidavits), cross-referenced with **PRS Legislative Research**'s
-attendance/bill-participation data, framed as data, responsibly. This is simultaneously
-the highest-impact and highest-risk feature in the whole backlog: it's the closest thing
-Atlas has to "here is a dossier on a named individual," and it must ship with the same
-methodology-transparency discipline as everything else — every figure sourced, dated, and
-never editorialized into a verdict — or it becomes a liability rather than an asset. It
-should not ship without an explicit editorial-framing review pass (methodology note
-visible on every profile: "these are public affidavit filings, not khazana's own
-assessment"), separate from normal code review.
+**Status: greenlit (D3) — build at all is closed; the framing-review requirement is not.**
+D1 lowers the *risk posture* here (private-indefinitely audience, no public exposure until
+a deliberate future toggle) but does not lower the *discipline* — D1 is explicit that the
+balanced-framing contract stays fully binding "despite the private audience," and this is
+the single feature in the whole backlog where that matters most.
 
-- **Data source(s):** **MyNeta/ADR** — ADR compiles public affidavits filed with India's
-  Election Commission; the underlying facts are public record, but ADR's own compiled
-  tables may carry their own reuse terms — treat cautiously (attribute to ADR, avoid
-  bulk-redistributing their compiled dataset verbatim without checking their ToS, same
-  posture as spec 1 §8's reference-rater-ToS hedge). **PRS Legislative Research** —
-  similar India-public-interest-data caution. Both new `WorldSourceEntry`s, both
-  provisionally `derived-only` pending a ToS read.
+Per-representative dossiers — criminal-case counts and asset declarations, cross-referenced
+with legislative attendance/bill-participation data, framed as data, responsibly. This is
+simultaneously the highest-impact and highest-risk feature in the whole backlog: it's the
+closest thing Atlas has to "here is a dossier on a named individual," and it must ship with
+the same methodology-transparency discipline as everything else — every figure sourced,
+dated, and never editorialized into a verdict — or it becomes a liability rather than an
+asset. It should not ship without an explicit editorial-framing review pass (methodology
+note visible on every profile: "these are public affidavit filings, not khazana's own
+assessment"), separate from normal code review — this requirement is unchanged by D1.
+
+**Source picture corrected by verified 2026-07-08 research**
+(`.superpowers/research/atlas/india-depth.json`). The original text treated MyNeta/ADR and
+PRS Legislative Research as a matched pair, "both provisionally `derived-only` pending a
+ToS read." The research found the two are not alike at all:
+
+- **MyNeta/ADR** — no public bulk CSV/API (ADR reportedly offers one to media houses only,
+  not publicly available); the public site is per-candidate HTML requiring enumeration
+  (real scraping difficulty, no listing endpoint); its license is **disclaimer-only** ("in
+  the public domain... ADR not responsible for misuse" — not an explicit reuse grant), with
+  anecdotal signs the maintainers prefer the data stay on-platform. Genuinely `unclear`
+  tier, and the harder of the two sources to build against.
+- **PRS Legislative Research** — confirmed **CC BY 4.0** in the site footer, "the cleanest
+  confirmed license in the entire legislative/political-data corner" of the dossier. This
+  is a real upgrade from the original's shared "provisionally derived-only" framing — PRS
+  should be treated as `redistribute-raw-ok`, not lumped with MyNeta's caution. It still
+  needs a scraper (no bulk export exists), but the legal question is settled where MyNeta's
+  isn't.
+- **SHRUG** (Development Data Lab) — not named in the original text, but the research
+  flags it as the actually-better historical source for exactly this feature's core claim:
+  a village/town-level panel covering, among much else, politician asset/liability/
+  criminal-charge data across all of India, 1990–2013 (elections to 2018). The research's
+  explicit recommendation: "prefer SHRUG for historical coverage and use MyNeta only as a
+  light supplement for the latest election cycle." **The catch:** SHRUG is CC BY-NC-SA
+  4.0 — Non-Commercial — which the research flags as "the single biggest legal flag in the
+  whole India research sweep," in direct tension with D1's public-ready-by-construction
+  requirement if khazana is ever monetized. This needs an explicit founder/legal call
+  before treating SHRUG as usable, same posture spec 1 took toward its own ambiguous-ToS
+  sources — it should not be auto-ingested as `redistribute-raw-ok`, and if the founder
+  declines it, the feature falls back to MyNeta-only for both historical and current
+  coverage, with the scraping-difficulty cost that implies.
+
+- **Data source(s):** **PRS Legislative Research** (`redistribute-raw-ok`, confirmed CC BY
+  4.0, needs a scraper). **MyNeta/ADR** (`unclear` tier, disclaimer-only license, real
+  scraping difficulty, use for the latest election cycle only per the research's own
+  recommendation). **SHRUG** (candidate primary source for historical politician
+  asset/criminal-charge data, 1990s–2018 — `unclear`/NC-gated pending an explicit founder
+  call, not auto-ingestable). Three `WorldSourceEntry`s where the original named two, with
+  three different tiers rather than one shared hedge.
 - **Spine schema:** `Indicator` (per-representative facts don't cleanly fit any existing
   key shape — likely needs a `subnational`-scoped `Indicator` keyed by constituency,
   reusing `CountryProfile.subnational`) + depends on the Election Tracker's (§3.10) India
   constituency mapping to resolve "which representative for which seat."
-- **Impact / Effort:** High / High — two new India-specific fetchers, real editorial
-  weight, and a dependency on the Election Tracker's constituency resolution already
-  existing.
-- **Depends on:** §3.10's India constituency depth + spec 4 (`CountryProfile.subnational`).
+- **Impact / Effort:** High / High — three India-specific fetchers now (not two), real
+  editorial weight, a dependency on the Election Tracker's constituency resolution already
+  existing, and one open licensing question (SHRUG) that needs a founder call before this
+  feature's historical depth can be built as scoped.
+- **Depends on:** §3.10's India constituency depth + spec 4 (`CountryProfile.subnational`)
+  + a founder/legal call on SHRUG's NC clause before that source specifically is ingested.
 
-### 4.16 Who-Funds-Whom (think-tank / lobbying map) *(new — needs a schema pass first)*
+### 4.16 Who-Funds-Whom (think-tank / lobbying map) *(new — the schema pass is a
+prerequisite task, not an open question, per D3)*
+
+**Status: greenlit (D3).** The founder-decisions record settles what §6 originally posed
+as a question ("worth a schema-design pass, or drop from the backlog entirely?"): D3's
+open-question ledger records this explicitly — "Who-Funds-Whom: schema pass worth it? →
+D3 (yes — schema pass is a prerequisite task)." The US-only data ceiling described below is
+unchanged and still real; it no longer gates *whether* this gets built, only *when* — after
+the schema-design pass that's now a scheduled prerequisite, not a founder call still
+pending.
 
 Who funds which think tanks, who lobbies for what, rendered as a relationship graph
 rather than a table — the one feature in this backlog that genuinely doesn't fit any of
@@ -446,25 +734,29 @@ cancelled`) in ways that don't map onto "Foundation X gave $2M to Think Tank Y, 
 testified in favor of Bill Z." This needs either a genuinely new schema (something like a
 `FundingRelationship` — funder, recipient, amount, purpose, disclosure source) or a
 deliberate decision to bend `Contract` semantics rather than add a sixth schema — either
-way, that's a real design conversation, not a checkbox on this backlog. Free data is also
-US-only in any buildable v1: **OpenSecrets** bulk data and **Senate LDA (Lobbying
-Disclosure Act)** filings are both public-record/public-domain US sources, but there is no
-equivalent clean global dataset for think-tank funding — this feature would ship US-only
-or not at all in v1, which the founder should weigh against Atlas's global framing before
-committing effort here.
+way, that's a real design conversation, now a committed prerequisite task rather than a
+checkbox on this backlog. Free data is also US-only in any buildable v1: **OpenSecrets**
+bulk data and **Senate LDA (Lobbying Disclosure Act)** filings are both public-record/
+public-domain US sources, but there is no equivalent clean global dataset for think-tank
+funding — this feature ships US-only in v1; that ceiling is now a known, accepted scope
+limit rather than a reason to reconsider building it at all.
 
 - **Data source(s):** **OpenSecrets** bulk data (historically reusable with attribution,
   worth a current-ToS check) + **Senate LDA disclosures** (US government public record →
-  `redistribute-raw-ok`). Global think-tank funding: no clean free source identified —
-  this would need investigative-journalism-sourced data (patchy, license-uncertain) or
-  stay US-only.
+  `redistribute-raw-ok`). Neither is covered by the density or India-depth research
+  dossiers — this spec's original judgment stands unverified pending a dedicated pass, same
+  caveat as IATI (§3.13). Global think-tank funding: no clean free source identified — this
+  would need investigative-journalism-sourced data (patchy, license-uncertain) or stay
+  US-only.
 - **Spine schema:** **none of the existing five cleanly fit** — flagged explicitly per
-  this spec's §0 hard rule 2. Needs its own schema-design pass before a build starts.
-- **Impact / Effort:** Medium / High — the "medium" impact reflects the US-only v1
+  this spec's §0 hard rule 2. Needs its own schema-design pass before a build starts — a
+  scheduled prerequisite task (D3), not an open question of whether to do it.
+- **Impact / Effort:** Medium / High — the "medium" impact reflects the accepted US-only v1
   ceiling; the "high" effort reflects both the missing schema and the harder-to-source
   global data.
-- **Depends on:** a new schema decision (out of scope for this backlog spec) + likely
-  reuses the Money Map's (§3.7) flow-diagram component once that schema exists.
+- **Depends on:** the schema-design pass (prerequisite, scheduled per D3, not out of scope
+  — see §6) + likely reuses the Money Map's (§3.7) flow-diagram component once that schema
+  exists.
 
 ---
 
@@ -479,8 +771,8 @@ naming explicitly so nobody rebuilds them per-feature:
   across Globe/Bias Lab/Ledger"); it's also what the World Sources Explorer (§2.6) links
   into from the other direction (source → every datum it produced).
 - **A Sankey/flow-diagram component**, built once for the Contracts Explorer (§3.7),
-  reused as-is by the Aid Flows Map (§3.13) and — if it ever ships — Who-Funds-Whom
-  (§4.16). All three are the same buyer→recipient flow shape.
+  reused as-is by the Aid Flows Map (§3.13) and, once its schema-design prerequisite lands
+  (§4.16), Who-Funds-Whom. All three are the same buyer→recipient flow shape.
 - **A coverage-gap / same-story computation module**, built once, consumed by both
   Same-Story Diff (§2.3) and the Blindspot Feed (§3.9) — they read the identical
   `reportings[]` + `Outlet.bias.lean` inputs, just render the output differently
@@ -494,36 +786,49 @@ naming explicitly so nobody rebuilds them per-feature:
 
 ## 6. Founder open questions
 
-- **Which 2–3 extras ride along with the core three pages, not after?** Six features
-  (§2.1–§2.6) are genuinely free the day specs 2–4 ship — no new fetcher, no new schema,
-  pure new views. Shipping all six alongside the core pages costs little beyond UI time;
-  shipping none of them leaves real value sitting in already-committed data unused. This
-  spec's own lean, offered lightly: **Country Trajectory (§2.1) and World Sources
-  Explorer (§2.6)** are the cheapest, highest-leverage pair — the first because it's the
-  Ledger's own "why store every period" payoff finally paid out, the second because it's
-  the one feature spec 1 itself already predicted this spec would need, and it can ship
-  even before the Globe/Bias Lab/Ledger UIs exist. But the founder's actual reading
-  habits (what gets dwelled on in the existing khazana v1 taste model) are a better signal
-  than this spec's guess — worth checking against that before committing.
-- **Blindspot Feed vs. Same-Story Diff — build both, or start with one?** They share a
-  computation module (§5) but represent different reader intents (Same-Story Diff is
-  "show me the divergence on a story I'm already reading"; Blindspot Feed is "surface a
-  story I wouldn't have found because my side under-covered it"). Both are blocked on
-  *both* other specs existing simultaneously (§3.9's note) — worth deciding whether that
-  joint dependency makes them a natural v2-kickoff pair or whether one alone is enough
-  signal to start.
+**Closed by the founder-decisions record** (`2026-07-07-atlas-founder-decisions.md`):
+
+- **Which 2–3 extras ride along with the core pages, not after?** Closed by D3: all
+  sixteen are greenlit, not a 2–3 pick. The original question's underlying concern —
+  sequencing — survives as the wave assignments (§1, §1a) and each entry's own
+  "Depends on" line; six features (§2.1–§2.6) remain the ones with near-zero incremental
+  cost the day specs 2–4 ship, so they're still first in line, just no longer the *only*
+  ones scheduled.
+- **Blindspot Feed vs. Same-Story Diff — build both, or start with one?** Closed by D3:
+  both. They share a computation module (§5) and represent genuinely different reader
+  intents (Same-Story Diff is "show me the divergence on a story I'm already reading";
+  Blindspot Feed is "surface a story I wouldn't have found because my side under-covered
+  it") — worth keeping in sequence rather than parallel, since both are blocked on *both*
+  other specs existing simultaneously (§3.9's note), which makes them a natural
+  v2-kickoff pair once the Globe and Bias Lab are both live.
 - **Leader/Politician Profiles (§4.15) — build at all, or hold pending a framing review?**
-  This is the one feature in the backlog whose risk profile (per-person data, criminal
-  and financial records, India-specific political sensitivity) genuinely differs in kind
-  from the rest, not just degree. Worth an explicit founder call on whether it belongs in
-  Atlas's v1 conception at all, separate from its technical feasibility.
+  Closed by D3: build it. D1 additionally lowers this feature's risk profile specifically
+  (private-indefinitely audience, no public exposure absent a deliberate future toggle) —
+  but D1 is explicit that the framing-review requirement stays fully binding regardless.
+  What was an open "build at all?" question is now a closed "build it, with the review
+  gate intact" instruction (§4.15).
 - **Who-Funds-Whom (§4.16) — worth a schema-design pass, or drop from the backlog
-  entirely given the US-only data ceiling?** Global geopolitics/money-and-influence
-  mapping is thematically strong for Atlas, but this is the one entry that can't ship
-  against the existing Spine as-is; worth deciding whether it's worth a dedicated
-  schema-design mini-spec before more effort goes into researching it further.
+  entirely given the US-only data ceiling?** Closed by D3, recorded in its own
+  open-question ledger entry: "yes — schema pass is a prerequisite task." The US-only
+  ceiling is an accepted scope limit, not a reason to reconsider.
+
+**Still genuinely open** (implementation-time, not vision-level):
+
+- **The Who-Funds-Whom schema-design pass itself.** D3 settles *whether* (yes), not *how*
+  — the actual `FundingRelationship`-vs-bend-`Contract` decision (§4.16) is real design
+  work still to be done, scheduled as a prerequisite rather than resolved here.
 - **NDC parsing (§3.11) — hand-curate v1's target figures, or build the PDF/prose
-  extraction pipeline immediately?** The commitment-vs-reality narrative is compelling
-  with even a small, hand-entered set of major-emitter NDC targets; automating extraction
-  from the full UNFCCC registry is real effort that could be deferred without blocking the
-  feature's first ship.
+  extraction pipeline immediately?** Recommended, not mandated: **hand-curate v1**, per
+  the original lean and now reinforced by verified 2026-07-08 research (§3.11) — the
+  official UNFCCC registry has no documented bulk API, so a small, high-value hand-entered
+  set of major-emitter targets is the honest first ship; automating extraction from the
+  full registry (or leaning further on the unofficial `openclimatedata/ndcs` mirror) stays
+  a later refinement, not a blocker.
+- **SHRUG's Non-Commercial clause (§4.15).** Not closed by D3 — D3 greenlit Leader
+  Profiles as a feature, but didn't adjudicate this specific source's license tension with
+  D1's public-ready-by-construction requirement. Needs an explicit founder/legal call
+  before SHRUG is ingested; MyNeta-only is the fallback if the founder declines it.
+- **ParlGov's actual license (§3.10).** Not closed — the research pass couldn't confirm
+  it (repeated fetch failures on ParlGov's Harvard Dataverse listing). Needs a fresh
+  attempt at implementation time before any ParlGov data is ingested as
+  `redistribute-raw-ok`.

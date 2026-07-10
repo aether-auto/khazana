@@ -2,7 +2,7 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, test } from "vitest";
-import { loadRegistry, saveRegistry, writeFeed } from "./registry-io.js";
+import { loadRegistry, loadSourceHealth, saveRegistry, saveSourceHealth, writeFeed } from "./registry-io.js";
 
 let dir: string;
 const seed = {
@@ -27,6 +27,47 @@ test("saveRegistry then loadRegistry prefers sources.json", () => {
   reg.sources[0]!.failureCount = 3;
   saveRegistry(dir, reg);
   expect(loadRegistry(dir).sources[0]!.failureCount).toBe(3);
+});
+
+// ── data/source-health.json: committed cross-clone health persistence ────────
+
+test("loadSourceHealth returns an empty file when data/source-health.json is absent", () => {
+  const health = loadSourceHealth(dir);
+  expect(health.sources).toEqual([]);
+});
+
+test("saveSourceHealth then loadSourceHealth round-trips", () => {
+  saveSourceHealth(dir, { version: 1, sources: [{ id: "gone", status: "disabled", enabled: false, consecutiveFailures: 3 }] });
+  const health = loadSourceHealth(dir);
+  expect(health.sources).toEqual([{ id: "gone", status: "disabled", enabled: false, consecutiveFailures: 3 }]);
+});
+
+test("loadRegistry falls back to the seed when sources.json is absent, with no health file: unchanged (backward-compatible)", () => {
+  const reg = loadRegistry(dir);
+  expect(reg.sources[0]!.id).toBe("hn");
+  expect(reg.sources[0]!.status).toBeUndefined();
+});
+
+test("loadRegistry layers committed source-health.json onto the seed when sources.json is absent (the fresh-clone / CI path)", () => {
+  saveSourceHealth(dir, {
+    version: 1,
+    sources: [{ id: "hn", status: "disabled", enabled: false, consecutiveFailures: 3, disabledAt: "2026-06-01T00:00:00.000Z" }],
+  });
+  const reg = loadRegistry(dir);
+  expect(reg.sources[0]!.enabled).toBe(false);
+  expect(reg.sources[0]!.status).toBe("disabled");
+  expect(reg.sources[0]!.consecutiveFailures).toBe(3);
+});
+
+test("loadRegistry does NOT layer source-health.json when a local sources.json already exists (that full snapshot is already self-consistent and should win)", () => {
+  // Local sources.json says the source is healthy (loadRegistry fully defaults
+  // it from the seed first, matching the "saveRegistry then loadRegistry" test above).
+  saveRegistry(dir, loadRegistry(dir));
+  // ...even though a (stale) committed health file says it was disabled.
+  saveSourceHealth(dir, { version: 1, sources: [{ id: "hn", status: "disabled", enabled: false }] });
+  const reg = loadRegistry(dir);
+  expect(reg.sources[0]!.enabled).toBe(true);
+  expect(reg.sources[0]!.status).toBeUndefined();
 });
 
 test("writeFeed writes the items array and returns the path", () => {

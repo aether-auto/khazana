@@ -65,3 +65,45 @@ export type Registry = z.infer<typeof RegistrySchema>;
 export function parseRegistry(json: unknown): Registry {
   return RegistrySchema.parse(json);
 }
+
+/**
+ * Committed, cross-clone persistence for source health.
+ *
+ * `data/sources.json` (the live registry `loadRegistry` writes via
+ * `saveRegistry`) is gitignored — it never survives a fresh `actions/checkout`,
+ * so every CI run of the pipeline starts from the committed seed with health
+ * reset to nothing. That leaves the auto-disable / bounded-re-probe machinery
+ * in `source-verify.ts` structurally inert in production even when it's wired
+ * up: there is nowhere for `consecutiveFailures`/`status`/`disabledAt` to live
+ * between runs.
+ *
+ * `SourceHealthFile` is the fix: a small, COMMITTED file holding just the
+ * health subset (never url/type/channels/trustScore/etc, which stay owned by
+ * the seed) for the subset of sources that have any recorded health signal —
+ * a pristine, never-fetched-badly source needn't appear at all, keeping the
+ * file lean and its diffs meaningful. `mergeSourceHealth` (`source-verify.ts`)
+ * layers it onto the freshly-loaded seed at `loadRegistry` time.
+ */
+export const SourceHealthEntrySchema = z.object({
+  id: z.string(),
+  status: SourceStatusSchema.optional(),
+  consecutiveFailures: z.number().int().nonnegative().optional(),
+  lastOkAt: z.string().datetime().optional(),
+  lastError: SourceLastErrorSchema.optional(),
+  resolvedUrl: z.string().url().optional(),
+  disabledAt: z.string().datetime().optional(),
+  lastFetchedAt: z.string().datetime().optional(),
+  enabled: z.boolean().optional(),
+  failureCount: z.number().int().nonnegative().optional(),
+});
+export type SourceHealthEntry = z.infer<typeof SourceHealthEntrySchema>;
+
+export const SourceHealthFileSchema = z.object({
+  version: z.number().int().default(1),
+  sources: z.array(SourceHealthEntrySchema).default([]),
+});
+export type SourceHealthFile = z.infer<typeof SourceHealthFileSchema>;
+
+export function parseSourceHealthFile(json: unknown): SourceHealthFile {
+  return SourceHealthFileSchema.parse(json);
+}

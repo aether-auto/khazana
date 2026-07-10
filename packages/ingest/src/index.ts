@@ -4,6 +4,7 @@ export * from "./ingest.js";
 export * from "./extract.js";
 export * from "./arxiv-fulltext.js";
 export * from "./youtube.js";
+export * from "./youtube-discovery.js";
 export * from "./podcast.js";
 export * from "./enrich-content.js";
 export * from "./fetch-result.js";

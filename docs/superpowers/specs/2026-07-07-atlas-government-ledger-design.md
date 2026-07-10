@@ -1,34 +1,78 @@
 # Atlas — Government Ledger (design spec)
 
-> *A deep, balanced, per-country ledger of governance/macro/fiscal/corruption/conflict
-> data — 200+ indicators, India carried to state/district depth — where every cell is a
-> number **plus** the method that produced it **plus** how noisy it is. The founder's own
-> framing is the design constraint: "show the DATA calculated from all possible published
-> methods; show the bias in each." Corruption, nepotism, and opposition quality are
-> rendered as data with heavy uncertainty framing — never as a verdict.*
+> *A deep, balanced, per-country **report** — charts, flows, distributions, a structure
+> diagram, and numbers, not a table page — spanning governance/macro/fiscal/corruption/
+> conflict data at the depth of 200+ indicators (a curated spine; the full ingested
+> breadth lives in the companion Indicator Browser), India carried to state/district
+> depth, where every cell is a number **plus** the method that produced it **plus** how
+> noisy it is. The founder's own framing is the design constraint: "show the DATA
+> calculated from all possible published methods; show the bias in each." Corruption,
+> nepotism, and opposition quality are rendered as data with heavy uncertainty framing —
+> never as a verdict.*
 
-**Status:** Proposed — spec 4 of 5 (Atlas: Spine → Globe → Bias Lab → **Ledger** → Extras)
+**Status:** Proposed — spec 4 of 8 (Atlas: Spine → Globe → Bias Lab → **Ledger** → Extras →
+Conflict Theaters → Government Structure → Two Faces)
 **Date:** 2026-07-07
 **Owner:** Arnav (founder) + Claude (cofounder)
 **Cost target:** $0 recurring — same binding constraint as all of khazana. No paid APIs, no
 paid hosting, no always-on machine beyond the existing free Cloudflare Worker.
 
+**Amended 2026-07-07 after founder interview** — see
+`docs/superpowers/specs/2026-07-07-atlas-founder-decisions.md` (D1–D12) for full authority.
+Changes folded into this version:
+
+- **Renumbered** spec 4 of 8, not 4 of 5 — the Atlas family grew three more specs (D5, D6,
+  D11); the header's own "spec 3 of 5"/"spec 4 of 5" mismatch is also fixed (§0).
+- **Core re-conception (D4):** the per-country page is now a data-driven **report** —
+  charts, flows, distributions, a structure diagram — not a table page. §0 and §4 reworked
+  around this; the §4.2 chart/table machinery survives but is no longer the visual
+  centerpiece.
+- **New Indicator Browser** (D3/D4) — a companion search/filter/facet surface over
+  everything ingested, since the density mandate means ingest is no longer bounded by the
+  curated 52-key catalog. New §4a.
+- **Country coverage closed** (D9): ingest every covered country from day one; curation
+  effort goes to India plus a starter comparator set. §12 updated.
+- **GeM/CPPP pulled forward** (D3): no longer "phase 2" — sequenced into the main build
+  after comparator `Contract` sources land. §3.2, §6.1, §12 updated.
+- **Private world-data repo** (D2): `data/world/` lives in `khazana-world-data` (private),
+  checked out at build time by the public site's build. §2, §9 updated.
+- **Subnational parent convention settled** (§6.2): option (a), code-namespacing, is now
+  the confirmed default, not an open fork awaiting sign-off.
+
 **Depends on:** `docs/superpowers/specs/2026-07-07-world-data-spine-design.md` (spec 1 —
 `Indicator`, `CountryProfile`, `Contract`, `Provenance`, the `normalizedScore` 0–100 common
 axis, the license-tier `superRefine`). Every schema reference below is to that spec; this
-document defines *what the Ledger builds on top of it*, not a second schema layer.
+document defines *what the Ledger builds on top of it*, not a second schema layer. Also
+depends on `docs/superpowers/specs/2026-07-07-atlas-government-structure-design.md`
+(spec 7) for the Report's Structure section (§4.1 step 2): this spec embeds spec 7's
+`GovernmentStructure` view per country; spec 7 owns that component's data and rendering in
+full, this spec owns only the placement.
 
 ---
 
 ## 0. What the Ledger is, and the promise it makes
 
-The Government Ledger is Atlas's third face (spec 3 of 5, after the Globe and the Bias
-Lab): a per-country page that answers "what does the published data actually say about
-how this country is governed, run, and doing" — across macroeconomics, democracy,
-corruption, wellbeing, procurement, fiscal health, elections/opposition, and
-conflict/unrest — **at the depth of 200+ individually-sourced, individually-uncertain
-data points**, with India carried down to state and district grain because that is the
-country the founder actually lives in and cares to go deep on.
+The Government Ledger is Atlas's fourth face (spec 4 of 8, after the Spine, the Globe, and
+the Bias Lab): a per-country **report** — not a table page — that answers "what does the
+published data actually say about how this country is governed, run, and doing" across
+macroeconomics, democracy, corruption, wellbeing, procurement, fiscal health,
+elections/opposition, and conflict/unrest, at the depth of 200+ individually-sourced,
+individually-uncertain data points, with India carried down to state and district grain
+because that is the country the founder actually lives in and cares to go deep on.
+
+**Report, not ledger — the core re-conception (D4).** Founder, verbatim: *"not just a
+ledger, it needs to be a report with charts, views, interactive flows, etc, and
+numbers."* "The Ledger" names the whole system in this spec (catalog, per-country pages,
+comparison tool, Indicator Browser); the per-country page itself is a **Country Report**:
+charts, interactive flows, distribution views, and a government-structure diagram (spec 7)
+lead each section, with the exhaustive sortable table (§4.2) as the detail layer a reader
+drops into, not the page's visual centerpiece. §4 is reworked around this report shape.
+
+The density mandate (D3) also means this spec's curated catalog is no longer where all of
+khazana's world data lives — it is the **curated spine**, a floor and not a ceiling.
+Everything ingest can reliably find (hundreds to thousands of keys) still needs a home a
+reader can search; that surface is the new **Indicator Browser** (§4a), a companion to the
+Report rather than a replacement for it.
 
 The promise, stated plainly, because it is the thing that could go wrong if unstated:
 
@@ -39,14 +83,20 @@ The promise, stated plainly, because it is the thing that could go wrong if unst
 > Barometer's household-survey bribery rate — the Ledger shows **all of them side by
 > side**, not a khazana-blended "corruption score." Disagreement between methods is
 > itself the most honest thing the page can say, and it is never resolved into a single
-> number by khazana's own judgment.
+> number by khazana's own judgment. This holds exactly as much for the Report as it did
+> for the table page it replaces — see §4's opening line and §7, which the report
+> re-conception inherits in full.
 
 This is not a style choice bolted on after the fact — it is why the Spine's `Provenance`
 and `Uncertainty` are mandatory on every `Indicator` (spec 1 §3.1) and why
 `normalizedScore` exists as a shared plotting axis without replacing `value`+`unit` as
-the source of truth (spec 1 §3.2). The Ledger is the spec that actually has to *render*
-that discipline for a reader, at 200+ indicators, without producing an unreadable brick
-of a page or, worse, an accidental accusation.
+the source of truth (spec 1 §3.2). And it is why D4 additionally makes the Report's copy
+**zero-AI, fully deterministic, templated micro-copy** ("GDP growth: 6.2% · 74th percentile
+among 43 tracked · WDI · no stated uncertainty") — rebuilt on every data refresh, so it is
+never stale and never hallucinated, with no LLM anywhere in the world-data path. The
+Ledger is the spec that actually has to *render* that discipline for a reader, at 200+
+indicators, as a report rather than an unreadable brick of a page or an accidental
+accusation.
 
 ---
 
@@ -80,20 +130,31 @@ section below:
    general enough that any country could gain this later — v1 populates it only where a
    named source ships it, which today means only India (Lok Dhaba, Open Budgets India,
    NITI SDG India Index, RBI DBIE, MyNeta/ADR, PRS Legislative Research).
+7. **All Report copy is templated micro-copy — zero AI prose, fully deterministic**
+   (D4). The Report is rebuilt by Actions on every data refresh; there is no LLM anywhere
+   in the world-data path. This is stronger than "no verdicts" (decision 5) — it also
+   rules out AI-generated narrative framing, summaries, or transitions between sections,
+   not just AI-generated judgments.
 
 ---
 
 ## 2. Information architecture — page map
 
 Atlas is a top-level switch inside `apps/site` (spec 1 §1, decision 1); the Ledger owns
-everything under `/atlas/ledger/*`. Routes, mirroring the existing Astro page
-conventions already in `apps/site/src/pages/` (`reads/[slug].astro`, `item/[id].astro`):
+everything under `/atlas/ledger/*`. Per D2, the `data/world/` tree everything below reads
+lives in the private `khazana-world-data` repo — the public site's build checks it out at
+build time (via the token described in the founder-decisions record, D2) and bundles it as
+ordinary static assets into the (gated) site, exactly as if it were committed locally;
+every `getStaticPaths()`/fetch call below reads it the same way regardless of which repo
+it physically lives in. Routes, mirroring the existing Astro page conventions already in
+`apps/site/src/pages/` (`reads/[slug].astro`, `item/[id].astro`):
 
 ```
 apps/site/src/pages/atlas/ledger/
   index.astro                    # landing: world overview + country picker
-  [country].astro                # per-country Ledger (§4) — country = lowercase ISO3, e.g. "ind"
+  [country].astro                # per-country Report (§4) — country = lowercase ISO3, e.g. "ind"
   compare.astro                  # country-comparison tool (§5) — client-hydrated, no combinatorial build
+  browse.astro                   # Indicator Browser (§4a) — client-hydrated search/filter/facet, D3/D4
   india/
     index.astro                  # India's own landing: state chooser + national India page
     [state].astro                 # state drill-down (§6)
@@ -103,16 +164,19 @@ apps/site/src/pages/atlas/ledger/
 **`/atlas/ledger` (landing).** Server-rendered at build time (no client JS needed for the
 core content, matching the Observatory's SSR-first pattern in `apps/site/src/pages/
 graph.astro`): a world `<Map>` choropleth of one flagship indicator (default: WGI Control
-of Corruption, switchable via a small client island dropdown to any of the ~52 catalog
-keys), a searchable country list, and a "how to read this page" `<Callout kind="note">`
-stating the balanced-data contract from §0 up front, once, so every downstream page can
-assume the reader has seen it (each per-country page repeats a one-line reminder, not the
-full explainer, to avoid nagging).
+of Corruption, switchable via a small client island dropdown to any of the ~52 curated-
+spine keys), a searchable country list, a link out to the Indicator Browser (§4a) for
+readers who want the full ingested breadth rather than the curated spine, and a "how to
+read this page" `<Callout kind="note">` stating the balanced-data contract from §0 up
+front, once, so every downstream page can assume the reader has seen it (each per-country
+page repeats a one-line reminder, not the full explainer, to avoid nagging).
 
-**`/atlas/ledger/[country]` (per-country Ledger, §4).** One static page per country with
+**`/atlas/ledger/[country]` (per-country Report, §4).** One static page per country with
 committed data — statically generated via `getStaticPaths()` reading
 `data/world/countries/*.json` (spec 1 §4.3), same pattern as `reads/[slug].astro` reading
-the `blog` content collection. This is the spec's core deliverable.
+the `blog` content collection. Per D9, this generates for **every** country the sources
+cover, not a curated subset — India (and later hand-picked comparator countries) get an
+additional depth/polish pass (§12). This is the spec's core deliverable.
 
 **`/atlas/ledger/compare` (comparison, §5).** Deliberately **not** a combinatorial static
 route (`/compare/[a]/[b].astro` would need O(n²) build-time pages for a growing country
@@ -120,9 +184,15 @@ set — wasteful and it still can't handle a reader wanting to add a third count
 mid-session). Instead: one static shell page that ships a small client-hydrated
 (`client:visible`, matching the Sources explorer's post-sweep hydration discipline —
 `docs/superpowers/specs/2026-07-06-surface-sweep-design.md` P1.3) country-picker island.
-The island fetches the already-committed `data/world/countries/<ISO3>.json` files as
-static assets (same "data lives in the repo, shipped as public JSON" approach the Sources
-explorer already uses for its dataset) — no server, no API route, still $0.
+The island fetches the `data/world/countries/<ISO3>.json` files — checked out from the
+private `khazana-world-data` repo at build time (D2) and bundled as ordinary static assets
+into the gated site, the same "shipped as JSON the client can fetch" approach the Sources
+explorer already uses for its own dataset — no server, no API route, still $0.
+
+**`/atlas/ledger/browse` (Indicator Browser, §4a).** New surface (D3/D4). A client-hydrated
+search/filter/facet tool over everything ingested, not just the curated spine — see §4a
+for its architecture, which follows the same static-asset-fetch pattern as `compare`
+above.
 
 **`/atlas/ledger/india/*` (state/district drill-down, §6).** `[state].astro` is statically
 generated from `CountryProfile("IND").subnational` filtered to `level: "state"`.
@@ -134,7 +204,12 @@ empty rows).
 
 ---
 
-## 3. The indicator catalog — hitting 200+ honestly
+## 3. The indicator catalog — the curated spine, hitting 200+ honestly
+
+Per D3/D4, this catalog is now explicitly the **curated spine** — the Report's editorial
+layer, chosen for legibility and the multi-method mandate — and not the boundary of what
+khazana ingests; see §3.1's closing note and §4a for where the rest of the ingested
+breadth lives.
 
 ### 3.1 What "200+" means, precisely
 
@@ -163,6 +238,13 @@ and `data/world/indicators/<ISO3>/<field>.json` stores "all periods" per spec 1 
   sections), with an expand-to-history affordance per row. Legibility and "200+ real
   records exist" are not in tension once the UI separates "how much data exists" from
   "how much is shown at once."
+- **This catalog is the curated spine, not the ceiling (D3).** Ingest itself is
+  open-ended — full WDI/V-Dem/OWID catalogs and whatever else research turns up, easily
+  reaching hundreds to thousands of keys once every country and source is counted. The
+  arithmetic above is therefore a conservative floor: it is what the curated Report (§4)
+  guarantees a reader will see, not a cap on what khazana ingests. Everything beyond the
+  spine still gets a home — the Indicator Browser (§4a) — with the same provenance and
+  uncertainty guarantees as every number in this catalog.
 
 ### 3.2 Catalog, field by field
 
@@ -230,11 +312,11 @@ generic citation. Flagged as an implementation-time content requirement, not a s
 
 | Key | Source(s) | Tier | Origin | Uncertainty | Note |
 |---|---|---|---|---|---|
-| Award concentration (HHI over supplier value share) | USAspending/TED/OCDS (comparators); GeM/CPPP (India, phase 2) | raw-ok source, khazana-computed metric | computed | sampleSize (n = contracts in window) | objective concentration proxy |
+| Award concentration (HHI over supplier value share) | USAspending/TED/OCDS (comparators); GeM/CPPP (India — sequenced into the main build, D3) | raw-ok source, khazana-computed metric | computed | sampleSize (n = contracts in window) | objective concentration proxy |
 | Single-bidder rate (%) | same | computed | computed | sampleSize | |
 | Average time-to-award (days) | same | computed | computed | sampleSize | |
 | Value share, top-5 suppliers (%) | same | computed | computed | sampleSize | |
-| Competitive vs. limited/direct award-method mix (%) | same, from `Contract.method` free text, bucketed | computed | computed | sampleSize | India rows empty until the GeM/CPPP scraper (Spine §7 phase 2) ships — see §12 |
+| Competitive vs. limited/direct award-method mix (%) | same, from `Contract.method` free text, bucketed | computed | computed | sampleSize | India rows render an explicit "not yet available" state until the GeM/CPPP scraper ships — no longer a separate phase (D3), see §6.1, §12 |
 
 #### `fiscal` — Fiscal / Budgets (5 keys)
 
@@ -278,23 +360,62 @@ comfortably clears 200+ stored records per country once time-series depth is cou
 
 ---
 
-## 4. Per-country Ledger view (`/atlas/ledger/[country]`)
+## 4. Per-country Report view (`/atlas/ledger/[country]`)
 
-### 4.1 Page anatomy, top to bottom
+This page is the Report D4 asks for: charts, flows, distributions, and a structure diagram
+lead each section, with the exhaustive table as detail rather than centerpiece
+(§4.1–§4.2). The report shape changes presentation, not the promise — it **inherits §7's
+corruption/nepotism/opposition-quality contract in full**: every objective-count,
+never-a-verdict, maximal-uncertainty-disclosure rule in §7 binds exactly as hard on a
+chart-led section as it did on a table-led one.
+
+### 4.1 Page anatomy, top to bottom (report-shaped, D4)
 
 1. **Header** — country name + flag, region, `CountryProfile.updatedAt` freshness label
    (mirrors the Observatory's "recomputed on every build" affordance in `graph.astro`), a
    one-line reminder of the balanced-data contract (`<Callout kind="note">`, not the full
-   landing-page explainer — see §2), and a compact summary strip: "52 indicators tracked ·
-   N distinct sources · M with independent cross-checks."
-2. **Eight field sections**, one per `IndicatorField`, in the fixed order
+   landing-page explainer — see §2), and a compact summary strip of templated micro-copy
+   (D4 — no AI prose anywhere on this page): "52 curated indicators tracked (of N total
+   ingested — browse them all →) · M distinct sources · K with independent cross-checks."
+2. **Structure** (new, D5) — the country's government-structure power-flow diagram, the
+   first thing a reader sees after the header: system type, branches, chambers, federal
+   levels, appointment/accountability flows, term lengths. This section **embeds spec 7's
+   `GovernmentStructure` view** for the country; spec 7 owns that component's data and
+   rendering in full — this spec owns only the placement (leading the Report, before any
+   field section) and the one-paragraph contract that spec 7's component receives the
+   country ISO3 and renders itself, degrading to "structure data not yet available for
+   this country" where spec 7 hasn't onboarded it yet (D5's country-expansion mechanism —
+   a country gets a Report page once its indicator data exists, but its Structure section
+   may lag until spec 7 onboards it explicitly).
+3. **Eight field sections**, one per `IndicatorField`, in the fixed order
    `macro → governance → corruption → wellbeing → procurement → fiscal → elections →
    conflict` (stable ordering matters for a reader building a mental map across many
-   country visits). Each section is a `<Detail summary="…">`-style progressive-disclosure
-   block (native `<details>`, zero JS, matching the existing Detail.astro pattern) so the
-   page loads collapsed and legible rather than a 50-row wall, but every section is
+   country visits). Each section keeps its §4.2 internal machinery (`StatBand`,
+   `RangePlot`, `DataTable`, multi-method callout, per-key history, `Distribution`) —
+   nothing below is deleted — but each section now **leads with its charts/flows/views**;
+   the `DataTable` is the expandable detail layer a reader drops into for the exhaustive
+   grid, not the section's first or most prominent element (§4.2 gives the exact reorder).
+   Each section is still a `<Detail summary="…">`-style progressive-disclosure block
+   (native `<details>`, zero JS, matching the existing Detail.astro pattern) so the page
+   loads collapsed and legible rather than a 50-row wall, but every section is
    server-rendered in full underneath — no client fetch needed to expand it.
-3. **Footer — Provenance rail.** A grouped-by-tier summary of every source that fed this
+4. **Cross-field synthesis** (new, D4) — the views that only make sense once multiple
+   fields sit on the page together, given real estate as first-class report content
+   rather than left implicit across eight independent sections:
+   - **Country trajectory strip** — small-multiple sparkline strips, one per catalog key,
+     each annotated with its own uncertainty band, showing recent trend at a glance. This
+     is Extras §2.1's "Country Trajectory" component, absorbed into the Report as a
+     section rather than shipping as its own separate page (cross-reference:
+     `2026-07-07-atlas-extras-design.md` §2.1 for the component's original spec; this
+     spec is now its primary placement, not a duplicate build).
+   - **Percentile-in-context Distributions** — §4.2's per-field `<Distribution>` views,
+     already specified there; called out here as synthesis content because they are what
+     let a reader compare this country's spread-position across fields in one scan down
+     the page, not because anything about their rendering changes.
+   - **Procurement flow (Sankey)**, where `Contract` data exists for the country — buyer →
+     sector → supplier, per §10's existing `Sankey` mapping; renders once volume justifies
+     it (§10), omitted with no placeholder where it doesn't.
+5. **Footer — Provenance rail.** A grouped-by-tier summary of every source that fed this
    page: N raw-ok sources, M derived-only sources, per-source retrieval date. This is a
    direct structural cousin of the just-shipped `SourceLedger.astro` pattern for Reads
    (`apps/site/src/components/reads/SourceLedger.astro`, commit `acdc4e4`) —
@@ -308,8 +429,10 @@ comfortably clears 200+ stored records per country once time-series depth is cou
 
 ### 4.2 Inside a field section
 
-Each of the 8 sections repeats this same internal structure (consistency across fields is
-itself part of legibility at this density):
+Each of the 8 sections repeats this same internal structure — reordered under D4 so the
+charts/flows lead and the exhaustive table is the detail layer a reader opts into, not the
+section's centerpiece (consistency across fields is itself part of legibility at this
+density):
 
 - **Field summary `<StatBand>`** — one stat tile per catalog key in that field, showing
   the latest `value`+`unit` as the headline figure and `normalizedScore` as the sub-label
@@ -328,7 +451,8 @@ itself part of legibility at this density):
   as fact, not hidden as if it were precise. This is the single visual that makes
   "show the bias in each" literal: uncertainty width IS the bias/noise signal, on the one
   common axis the Spine built for exactly this.
-- **`<DataTable>` — the exhaustive, sortable detail.** Columns: Indicator · Value (native
+- **`<DataTable>` — the exhaustive, sortable detail layer (D4: opt-in, not the section's
+  lead — see §4.1's reorder note).** Columns: Indicator · Value (native
   unit) · Normalized (0–100) · Uncertainty (rendered per-kind, same logic as the adapter
   above but as text: "± 4.2 (SE)", "31–47 (90% CI)", "6 raters, 22–58 spread", "n = 214",
   "no stated uncertainty") · Method (a link icon to `provenance.methodUrl`) · License
@@ -365,6 +489,69 @@ itself part of legibility at this density):
   (see §7.3's color-system note).
 - No cross-country rank badge ("#14 most corrupt") — only percentile-in-distribution
   framing (§8), which is symmetric and doesn't imply an ordinal "worst to best" ladder.
+- No AI-generated narrative, summary, or transition text anywhere on the page (D4,
+  §1 decision 7) — every word is templated micro-copy assembled deterministically from
+  the underlying values, so the page is never stale and never hallucinated.
+
+---
+
+## 4a. Indicator Browser (`/atlas/ledger/browse`) — new surface, D3/D4
+
+### 4a.1 Why this exists
+
+D3's density mandate ("put in literally everything... 2000 indicators, IDC") means ingest
+is deliberately unbounded — full WDI, full V-Dem, full OWID catalogs, and whatever else
+research turns up, easily reaching thousands of keys once every country and period is
+counted. The curated 52-key catalog (§3) stays exactly as specified — it is the Report's
+editorial layer, chosen for legibility and the multi-method mandate — and deliberately
+does **not** try to absorb that density. Everything beyond the spine still needs a home a
+reader can actually find; the Browser is that home.
+
+### 4a.2 What it is
+
+A client-hydrated search/filter/facet surface over **everything ingested**, curated and
+uncurated alike. Facets: field (`IndicatorField`), source, country, license tier,
+uncertainty kind, period coverage. Every cell — whether it's one of the curated 52 or one
+of the thousands beyond it — still renders `value`+`unit`, `normalizedScore`, uncertainty,
+and provenance one hover away (§1 decision 1 binds here exactly as it does everywhere else
+in the Ledger; the Browser does not get a lower provenance bar just because it's denser).
+
+### 4a.3 Architecture — a bounded client payload over an unbounded dataset
+
+The naive approach (ship every ingested key to the client) doesn't scale once ingest
+reaches thousands of keys × countries × periods. Instead:
+
+- The committed per-country/per-field shards (`data/world/indicators/<ISO3>/<field>.json`,
+  spec 1 §4.3) remain the data — the Browser adds no new storage shape.
+- A new **build-time-generated compact search index** — one small JSON manifest per
+  build, `key, label, source, field, countries covered, latest period` per entry, no
+  per-period history, no per-datum uncertainty — keeps the client's initial payload
+  bounded regardless of how many keys ingest finds. Propose
+  `packages/world-ingest/src/aggregate/indicator-index.ts`, run in the same aggregation
+  pass as `country-profile.ts` (spec 1 §3.3), emitting to
+  `data/world/indicator-index.json`.
+- The Browser island loads that index first (cheap), lets the reader search/filter/facet
+  against it client-side, and **lazy-fetches only the shards a query actually touches** —
+  the same static-asset fetch pattern §5's `compare` tool already uses for
+  `data/world/countries/<ISO3>.json`, applied here to
+  `data/world/indicators/<ISO3>/<field>.json` shards instead. No server, no API route,
+  still $0.
+- Per D2, both the index and the shards are checked out from the private
+  `khazana-world-data` repo at build time and bundled as static assets into the gated
+  site — the same mechanism as §2 and §5, not a new one.
+
+### 4a.4 Relationship to the curated Report
+
+The Browser is a companion, not a replacement: the per-country Report (§4) stays the
+opinionated, legible, ~50–100-key* entry point every reader lands on first; the Browser is
+where a reader who wants the full ingested breadth goes next, one link away from both the
+landing page (§2) and each Report's summary strip (§4.1). Nothing in §4's report-shape
+requirements (D4) applies to the Browser — the Browser is a raw search/filter grid by
+design, not a second report.
+
+*The catalog is currently 52 keys (§3); D4's own language allows the curated spine to grow
+toward "~50–100" as the Report earns more sections. The Browser exists precisely so that
+growth in the spine stays an editorial choice, not a data-availability constraint.
 
 ---
 
@@ -396,8 +583,9 @@ picks 2–4 countries; the island fetches each country's committed
   in a linked methodology page. This is the sharpest point in the whole spec where an
   unwary reader could over-read a chart as an accusation, so the guard-rail is inline,
   not deferred.
-- **A `<DataTable>`** of the full 52-key catalog, side by side per chosen country, sortable
-  by any column, for the reader who wants the raw grid.
+- **A `<DataTable>`** of the full 52-key curated-spine catalog, side by side per chosen
+  country, sortable by any column, for the reader who wants the raw grid — for breadth
+  beyond the spine, the reader goes to the Indicator Browser (§4a) instead.
 
 ---
 
@@ -413,35 +601,40 @@ picks 2–4 countries; the island fetches each country's committed
 | RBI DBIE | state | `macro`/`fiscal` (monetary + state fiscal series) |
 | MyNeta / ADR | candidate/constituency (rolled up to district) | `corruption` (candidate criminal-case rate), `elections` (candidate asset/education context) |
 | PRS Legislative Research | state + national assembly | `elections` (legislative productivity/attendance) |
-| GeM / CPPP (phase 2, Spine §7) | state (once the scraper ships) | `procurement` |
+| GeM / CPPP (sequenced into the main build, D3) | state (once the scraper ships) | `procurement` |
 
 Per spec 1 §7, **NITI SDG India Index, RBI DBIE, Lok Dhaba, and Open Budgets India are NOT
 the blocker** — they have workable APIs/bulk downloads and can populate `subnational[]`
 in the same build wave as the Spine itself. **GeM/CPPP procurement is the genuine
 blocker** (no official API, needs a bespoke scraper — study `mcp-india-tenders` first);
-India's Procurement field rows stay empty with an explicit "not yet available — tracked
-as a phase-2 build" state, rather than silently omitted, until that scraper ships.
+per D3 it is no longer deferred to a separate phase — it is sequenced into the main build,
+after comparator `Contract` sources (USAspending/TED/OCDS) land. Until it ships, India's
+Procurement field rows stay empty with an explicit "not yet available" state, rather than
+silently omitted.
 
-### 6.2 A schema gap worth flagging before this is built
+### 6.2 A schema gap, and the settled convention that closes it
 
 `SubnationalRef` (spec 1 §3.2) is `{ level: "state"|"district", code, name }` — it has
 **no explicit parent-state reference on a district row**. That is fine for a state page
 (filter `subnational` to `level: "state"`), but a district page needs to know which state
 it belongs to, and nothing in the Spine's schema encodes that hierarchy. Two ways to
-close this, neither requiring touching the Spine's core `Indicator`/`CountryProfile`
-shapes:
+close this were on the table, neither requiring touching the Spine's core
+`Indicator`/`CountryProfile` shapes:
 
 - **(a) Convention over schema** — district `code` values are namespaced with their
   parent state's ISO 3166-2:IN code, e.g. `IN-UP::lucknow`, and the Ledger's build-time
   aggregation splits on `::` to group districts under states. Zero schema change, but a
   string convention that has to be honored by every India source fetcher consistently.
+  **This is the settled default (§12).**
 - **(b) A small, additive Spine amendment** — add an optional `parentCode?: string` to
   `SubnationalRefSchema`. Cleaner, but is a change to a spec already marked "settled" —
-  flagged here rather than made unilaterally; see §12.
+  kept available as a future amendment rather than made unilaterally now; see §12.
 
-This spec's default (pending founder sign-off, §12) is **(a)**, since it ships without
-reopening spec 1, and the convention is simple enough to document once in
-`packages/world-ingest`'s India source fetchers.
+(a) ships without reopening spec 1 and is simple enough to document once in
+`packages/world-ingest`'s India source fetchers — it is the confirmed default, not an open
+fork awaiting founder sign-off. (b) stays available if the string-convention risk (every
+India fetcher must honor it consistently) turns out to matter in practice, but it is not a
+blocker for this spec's implementation.
 
 ### 6.3 State page anatomy
 
@@ -602,24 +795,31 @@ Reuses spec 1's architecture wholesale — the Ledger adds no new infrastructure
 new *reader* of what the Spine already produces:
 
 - **Ingest & normalize-scores compute**: GitHub Actions, slow lane (weekly poll — spec 1
-  §4.2), $0, public-repo unlimited minutes. The `normalize-scores` pass (§8.2) is a new
+  §4.2), $0. Per D2, this compute runs in the **public** repo (unlimited Actions minutes)
+  and pushes its outputs to the private `khazana-world-data` repo via a repo-scoped token
+  — compute stays public, data goes private. The `normalize-scores` pass (§8.2) is a new
   step inside `world-pipeline.yml`, between the slow-lane fetch step and the
   `country-profile` aggregation step — no new workflow file needed.
-- **Storage**: committed static JSON under `data/world/countries/<ISO3>.json` (the
-  `CountryProfile` aggregate) and `data/world/indicators/<ISO3>/<field>.json` (the raw
-  per-field `Indicator[]` shards) — spec 1 §4.3, unchanged.
-- **Build-time read**: `apps/site/src/pages/atlas/ledger/[country].astro`'s
-  `getStaticPaths()` reads `data/world/countries/*.json` directly (mirrors
-  `reads/[slug].astro`'s `getCollection("blog")` pattern, just over a plain JSON directory
-  instead of an Astro content collection — propose a small `apps/site/src/lib/atlas/
-  world-data.ts` loader analogous to the existing `lib/feed.js`'s `loadCurated()` /
-  `lib/taste.js`'s `loadTaste()`, e.g. `loadCountryProfile(iso3)` /
-  `listCountryProfiles()`).
-- **Client-hydrated pieces**: only the comparison tool's country picker (§5) and the
-  landing page's indicator-choropleth dropdown (§2) need `client:visible` islands; every
-  per-country Ledger page (§4) is otherwise fully server-rendered, matching the
-  Observatory's "most of this page is server-rendered; a handful of islands layer motion
-  on top" discipline (`graph.astro`'s own header comment).
+- **Storage**: static JSON under `data/world/countries/<ISO3>.json` (the `CountryProfile`
+  aggregate), `data/world/indicators/<ISO3>/<field>.json` (the raw per-field
+  `Indicator[]` shards — spec 1 §4.3), and the new `data/world/indicator-index.json`
+  (§4a) — all live in the **private** `khazana-world-data` repo per D2, not the public
+  site repo.
+- **Build-time read**: the public site's build checks out `khazana-world-data` (D2) before
+  the Astro build step, so `apps/site/src/pages/atlas/ledger/[country].astro`'s
+  `getStaticPaths()` reads `data/world/countries/*.json` exactly as if it were committed
+  locally (mirrors `reads/[slug].astro`'s `getCollection("blog")` pattern, just over a
+  plain JSON directory instead of an Astro content collection — propose a small
+  `apps/site/src/lib/atlas/world-data.ts` loader analogous to the existing
+  `lib/feed.js`'s `loadCurated()` / `lib/taste.js`'s `loadTaste()`, e.g.
+  `loadCountryProfile(iso3)` / `listCountryProfiles()`).
+- **Client-hydrated pieces**: the comparison tool's country picker (§5), the Indicator
+  Browser (§4a), and the landing page's indicator-choropleth dropdown (§2) need
+  `client:visible` islands; every per-country Report page (§4) is otherwise fully
+  server-rendered, matching the Observatory's "most of this page is server-rendered; a
+  handful of islands layer motion on top" discipline (`graph.astro`'s own header comment).
+  These islands fetch the checked-out-at-build-time private-repo JSON as ordinary bundled
+  static assets (§2, §4a, §5) — the client never talks to the private repo directly.
 - **No new Worker route needed.** Unlike the Globe (spec 2, near-live event data) and the
   Bias Lab (spec 3, daily-recomputed outlet profiles), the Ledger's underlying data is
   weekly-cadence at the fastest — a full static rebuild on the existing `world-pipeline.yml`
@@ -630,10 +830,15 @@ new *reader* of what the Spine already produces:
 
 ## 10. Reuse of Reads chart primitives
 
-Every visual on the Ledger reuses an existing `apps/site/src/components/mdx/` component
+Every visual on the Report reuses an existing `apps/site/src/components/mdx/` component
 — this spec introduces **zero new chart primitives**, only new pure adapter functions
 (`indicator-to-range.ts`, §4.2) that reshape `Indicator[]` into the props those
-components already accept.
+components already accept. The cross-field synthesis section's trajectory strip (§4.1
+step 4) reuses Extras §2.1's own small-multiples primitive rather than a new one built
+here. The two genuinely new pieces this amended spec adds — the Indicator Browser (§4a)
+and its `indicator-index.ts` search-index generator — are a new UI surface and a new
+aggregation pass, not chart primitives, and are called out as such rather than folded
+into this "zero new charts" claim.
 
 | Ledger need | Component | Why this one |
 |---|---|---|
@@ -656,14 +861,18 @@ components already accept.
 ## 11. Testing approach (brief — mirrors spec 1 §5's philosophy)
 
 - **`indicator-to-range.ts`** (§4.2): pure unit tests, one per `Uncertainty` kind,
-  asserting the exact `RangeDatum` produced — this is the one genuinely new piece of
-  logic this spec introduces, and it is a pure function over already-validated
+  asserting the exact `RangeDatum` produced — a pure function over already-validated
   `Indicator` fixtures, testable with zero network/build dependency.
 - **`normalize-scores.ts`** (§8.2): fixture-based aggregation test — a fixed multi-country
   set of raw `value`s for one mode-2 key+period, asserting the exact percentile output
   per country, including ties (documented tie-breaking rule: standard percentile-rank
   with average rank for ties, stated explicitly since silent tie behavior would be a
   hidden inconsistency exactly where this spec is trying hardest to be transparent).
+- **`indicator-index.ts`** (§4a.3): fixture-based aggregation test asserting the compact
+  search index has exactly one entry per ingested key with the right `{key, label,
+  source, field, countries, latest period}` shape and no per-period/per-uncertainty
+  bloat — the index's whole job is staying small, so its test asserts absence as much as
+  presence.
 - **`getStaticPaths()` route tests** for `[country].astro`, `[state].astro`,
   `[state]/[district].astro`: assert the right set of pages is generated from a fixture
   `data/world/` tree (in particular, that a district page is *not* emitted for a
@@ -672,38 +881,48 @@ components already accept.
   components): one pass over a real `[country].astro` build with representative fixture
   data covering all five `Uncertainty` kinds, confirming the `RangePlot` degrades
   correctly for `none`/`sampleSize` (point, not a fabricated range) and that the
-  Provenance rail's no-JS fallback renders without the client island.
+  Provenance rail's no-JS fallback renders without the client island; confirm the
+  Structure section (§4.1 step 2) degrades to "structure data not yet available" for a
+  fixture country spec 7 hasn't onboarded; confirm the Indicator Browser (§4a) island
+  lazy-fetches only the shards a given filter combination actually touches, not the full
+  ingested set.
 
 ---
 
 ## 12. Founder open questions
 
-- **Which fields/countries seed v1?** This spec's catalog and India depth are fully
-  specified, but the *comparator country set* for launch is not — a small, deliberately
-  chosen set (e.g., a few large democracies + a few large non-democracies, to make the
-  multi-method corruption/governance comparisons actually interesting) would ship faster
-  than "every WDI-covered country at once." Needs a founder pick.
-- **India-procurement (GeM/CPPP) scraper timing.** Spec 1 §8 already flags this as an
-  open Spine-level question; restated here in Ledger terms: does the Ledger ship with
-  India's `procurement` field visibly empty ("not yet available — tracked as a phase-2
-  build," per §6.1) for however long the scraper build takes, or does the founder want
-  that build pulled forward given it's likely the single most personally interesting
-  dataset in this whole spec?
-- **`SubnationalRef` district-parent convention (§6.2).** Ship with the code-namespacing
-  convention (`IN-UP::lucknow`), or take this back to spec 1 as a small additive
-  `parentCode?` schema amendment? The convention ships faster; the schema field is
-  cleaner and removes a "hope every fetcher honors the string convention" risk.
+**Closed by the founder-decisions record** (`2026-07-07-atlas-founder-decisions.md`):
+
+- **Which fields/countries seed v1?** Closed by D9: ingest every country the sources
+  cover, from day one; curation/polish effort goes to India-first plus a starter
+  comparator set, not to limiting ingestion. (This spec's catalog, §3, and India depth,
+  §6, were already fully specified — only the comparator-breadth question was open.)
+- **India-procurement (GeM/CPPP) scraper timing.** Closed by D3: pulled forward into the
+  main build, sequenced after comparator `Contract` sources (USAspending/TED/OCDS) land —
+  no longer deferred to a separate phase (§3.2, §6.1 updated accordingly).
+- **`SubnationalRef` district-parent convention (§6.2).** Closed: option (a),
+  code-namespacing (`IN-UP::lucknow`), is the confirmed default. Option (b) — an additive
+  `parentCode?` field on `SubnationalRefSchema` — remains available as a future spec-1
+  amendment if the string-convention risk turns out to matter in practice, but it no
+  longer blocks implementation.
+
+**Still open** (implementation-time, not vision-level):
+
 - **How to visually communicate "balanced, not accusatory" beyond §7.3's rules.** §7.3
   specifies concrete constraints (no moralizing color, no ranking ladders, uncertainty
   drawn wide, descriptive language) — is there a **standing, page-level design element**
   the founder wants beyond a `Callout` (a persistent header ribbon, a permanent footer
-  note, something closer to a masthead-level statement of editorial policy) given how
-  central this framing is to the whole spec?
+  note, something closer to a masthead-level statement of editorial policy)? Partially
+  answered since this spec was first drafted: `2026-07-07-khazana-two-faces-design.md`
+  (spec 8, D11) now owns Atlas's standing atmosphere/identity work at the top-level-IA
+  altitude — this question should be resolved jointly with spec 8 rather than in
+  isolation here.
 - **India-states TopoJSON asset (§6.3).** `Map.tsx` is bundled against `world-atlas`'s
   country-level topology only. An India-states choropleth needs a new bundled asset
-  (ISO 3166-2:IN-keyed state boundaries) — is there an existing $0, offline-bundleable
-  TopoJSON source the founder already has in mind, or does this need its own small
-  research pass before implementation?
+  (ISO 3166-2:IN-keyed state boundaries). Research is underway as part of spec 7's
+  (Government Structure) own asset needs — spec 7 will likely land this TopoJSON as a
+  byproduct of its own state-level structure work, at which point this spec should
+  consume it rather than sourcing it independently.
 - **NITI SDG India Index un-bundling.** It ships as composite SDG-goal sub-scores that
   don't map 1:1 onto this spec's 8 `IndicatorField`s — should each SDG sub-score become
   its own catalog key (more indicators, finer field-mapping, more maintenance), or should

@@ -142,15 +142,22 @@ jobs:
       - name: Prune expired history
         run: pnpm exec tsx scripts/prune-history.mts --apply
 
-      # ---- 5. commit back pruned MDX + the rolling feed archive ([skip ci]) ----
+      # ---- 5. commit back pruned MDX + the rolling feed archive + source health ([skip ci]) ----
       # Read removals AND the refreshed data/feed/archive.json land here (the Reads
       # routine commits new Reads itself); this keeps the committed blog dir bounded
       # to the retention window and the Feed's ~2-week archive current, once/day.
+      # data/source-health.json (written by real-ingest.mts's reconcile step, above)
+      # is the small committed subset of source status/consecutiveFailures/disabledAt
+      # — data/sources.json itself is gitignored and never survives a fresh checkout,
+      # so THIS is what makes auto-disable/re-probe state (source-verify.ts) persist
+      # across runs instead of resetting every time. feed-refresh.yml (every 3h) also
+      # writes this file locally but has no commit step (contents:read) — only this
+      # once-daily job actually commits it.
       - name: Commit generated Reads
         run: |
           git config user.name "khazana-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add apps/site/src/content/blog data/feed/archive.json
+          git add apps/site/src/content/blog data/feed/archive.json data/source-health.json
           if git diff --cached --quiet; then
             echo "No Read changes to commit."
           else
