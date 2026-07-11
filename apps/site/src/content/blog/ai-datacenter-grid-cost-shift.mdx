@@ -1,0 +1,323 @@
+---
+title: "The Gigawatt Bill: How FERC Decided Who Pays for the AI Power Boom"
+format: teardown
+channels:
+  - tech
+  - finance
+  - science
+summary: "FERC's June 2026 show-cause orders force six grid operators to rewrite, market by market, who pays when an AI data center's gigawatt-scale interconnection request hits the queue — and the arithmetic says ordinary ratepayers are still absorbing most of it, even as SpaceX bets the answer is to leave the grid entirely."
+publishedAt: 2026-07-11T09:00:00.000Z
+sources:
+  - title: "FERC Launches Aggressive Targeted Action to Speed Large Load Integration"
+    url: "https://www.ferc.gov/news-events/news/ferc-launches-aggressive-targeted-action-speed-large-load-integration"
+    tier: high
+    origin: researched
+  - title: "Energy demand from AI — Energy and AI (IEA)"
+    url: "https://www.iea.org/reports/energy-and-ai/energy-demand-from-ai"
+    tier: high
+    origin: researched
+  - title: "2025 PJM Long-Term Load Forecast Report"
+    url: "https://www.pjm.com/-/media/DotCom/library/reports-notices/load-forecast/2025-load-report.pdf"
+    tier: high
+    origin: researched
+  - title: "Orbital Data Centers: Spacecraft Constraints and Economic Viability (Turyshev, arXiv:2604.27197)"
+    url: "https://arxiv.org/abs/2604.27197"
+    tier: high
+    origin: researched
+  - title: "6 takeaways from FERC's data center interconnection decision"
+    url: "https://www.utilitydive.com/news/ferc-doe-data-center-interconnection/823360/"
+    tier: med
+    origin: researched
+  - title: "FERC Data Center Policy Spurs Faster Grid Connection"
+    url: "https://spectrum.ieee.org/ferc-data-center-policy"
+    tier: med
+    origin: researched
+  - title: "AI's Volatile Power Use Quietly Tests Grid Limits"
+    url: "https://spectrum.ieee.org/data-centers-grid-instability"
+    tier: med
+    origin: curated
+  - title: "The Space-based Data Center Hype Machine Is Already in Orbit"
+    url: "https://spectrum.ieee.org/orbital-data-center-hype"
+    tier: med
+    origin: curated
+  - title: "It may be almost impossible to make data centers pay their 'fair share' of electricity costs"
+    url: "https://theconversation.com/it-may-be-almost-impossible-to-make-data-centers-pay-their-fair-share-of-electricity-costs-283946"
+    tier: med
+    origin: curated
+  - title: "FERC Order Bolsters Maryland Case Against Billions in Data Center Grid Costs"
+    url: "https://insideclimatenews.org/news/30062026/ferc-order-data-center-grid-costs/"
+    tier: med
+    origin: researched
+  - title: "Maryland lawmakers back data center transmission cost complaint at FERC"
+    url: "https://www.utilitydive.com/news/maryland-ratepayer-advocate-ferc-data-center-complaint-transmission/823244/"
+    tier: med
+    origin: researched
+  - title: "Texas, facing 438 GW queue, approves initial large-load interconnection process"
+    url: "https://www.utilitydive.com/news/texas-facing-438-gw-queue-approves-initial-large-load-interconnection-pro/823367/"
+    tier: med
+    origin: researched
+  - title: "ERCOT's large load queue has nearly quadrupled in a single year"
+    url: "https://www.latitudemedia.com/news/ercots-large-load-queue-has-nearly-quadrupled-in-a-single-year/"
+    tier: med
+    origin: researched
+  - title: "Solving PJM's data center problem"
+    url: "https://www.utilitydive.com/news/solving-pjms-data-center-problem/805600/"
+    tier: med
+    origin: researched
+  - title: "DOE directs FERC to accelerate interconnection of data centers"
+    url: "https://www.whitecase.com/insight-alert/doe-directs-ferc-accelerate-interconnection-data-centers"
+    tier: med
+    origin: researched
+  - title: "PJM's Updated 20-Year Forecast Continues To See Significant Long-Term Load Growth"
+    url: "https://insidelines.pjm.com/pjms-updated-20-year-forecast-continues-to-see-significant-long-term-load-growth/"
+    tier: med
+    origin: researched
+  - title: "Spacecraft thermal control (Wikipedia)"
+    url: "https://en.wikipedia.org/wiki/Spacecraft_thermal_control"
+    tier: med
+    origin: researched
+  - title: "Spacecraft Thermal Control in Extreme Environments: Surviving Lunar Night and Martian Dust"
+    url: "https://www.electronics-cooling.com/2026/01/spacecraft-thermal-control-in-extreme-environments-surviving-lunar-night-and-martian-dust/"
+    tier: med
+    origin: researched
+  - title: "FERC didn't settle who pays for the AI grid. It made every market litigate it."
+    url: "https://electroneconomics.substack.com/p/ferc-didnt-settle-who-pays-for-the"
+    tier: low
+    origin: researched
+  - title: "ERCOT Yearly Peak Demand Records"
+    url: "https://www.ercot.com/static-assets/data/news/content/a-peak-demand/all-time-records.htm"
+    tier: high
+    origin: researched
+  - title: "PJM reports peak load growth of 30GW through 2030 from data center sector"
+    url: "https://www.datacenterdynamics.com/en/news/pjm-reports-peak-load-growth-of-30gw-through-2030-from-data-center-sector/"
+    tier: med
+    origin: researched
+  - title: "FERC Takes Further Action on Co-Located Load, Behind-the-Meter Generation, and Large Load Integration"
+    url: "https://natlawreview.com/article/ferc-takes-further-action-co-located-load-behind-meter-generation-and-large-load"
+    tier: med
+    origin: researched
+draft: false
+---
+
+import { Chart, Annotation, StatBand, Pullquote, Sidenote, Diagram, Stepper, Math, Callout, Detail, DataTable, Sankey, ParameterPlay, RunnableCode } from "../../components/mdx";
+
+In Ashburn, Virginia — the town Dominion Energy's own planners call <Annotation client:load term="Data Center Alley" note="IEEE Spectrum: Northern Virginia, centered on Ashburn and Manassas, carries the world’s densest concentration of hyperscale data centers, served by Dominion Energy." href="https://spectrum.ieee.org/data-centers-grid-instability" /> — a single AI training cluster can swing its power draw by tens of megawatts in the time it takes a GPU job to checkpoint. That is not a metaphor. Dense, synchronized compute workloads can change a facility's demand on the grid within <Annotation client:load term="milliseconds" note="IEEE Spectrum, citing NREL grid-integration research and Dominion Energy’s own resource planning: high-density AI workloads can alter demand at millisecond timescales, a pattern the grid’s protection and frequency-response equipment was not built around." href="https://spectrum.ieee.org/data-centers-grid-instability" />, something no factory, smelter, or office tower ever did. Somewhere between that GPU rack and your electricity bill, a chain of interconnection studies, tariff dockets, and now a federal order decides who actually pays for the copper, transformers, and power plants that chain requires. This piece follows that chain, link by link, with the actual numbers regulators are litigating over.
+
+The short version: on June 18, 2026, the Federal Energy Regulatory Commission told the operators of six regional power grids — <Annotation client:load term="PJM, MISO, SPP, CAISO, ISO-NE, and NYISO" note="FERC’s show-cause orders went to PJM Interconnection, the Midcontinent ISO, the Southwest Power Pool, the California ISO, ISO New England, and the New York ISO — the six FERC-jurisdictional RTOs/ISOs. ERCOT (Texas) is not FERC-jurisdictional and runs a parallel, state-driven process, below." href="https://www.ferc.gov/news-events/news/ferc-launches-aggressive-targeted-action-speed-large-load-integration" /> — that they had 60 days to either defend their existing rules for connecting data centers to the grid or rewrite them. It is the most consequential rewrite of U.S. interconnection policy in a decade, and it does not answer the question everyone actually wants answered: does the AI company pay for its own gigawatt, or does everyone on the grid split the bill? FERC punted that question to six separate proceedings, on purpose. Tracing why takes us through interconnection queues that have grown 7x in eighteen months, a Maryland utility complaint over $1.6 billion, and — because someone always proposes this — the actual physics of why launching your GPU cluster into orbit does not make the electricity bill disappear so much as replace it with a thermodynamics bill.
+
+<StatBand client:visible caption="The scale of the mismatch, in the numbers regulators are now fighting over"
+  stats={[
+    { value: 438, suffix: " GW", label: "TEXAS LARGE-LOAD QUEUE", sub: "up from 63 GW at the end of 2024", href: "https://www.utilitydive.com/news/texas-facing-438-gw-queue-approves-initial-large-load-interconnection-pro/823367/" },
+    { value: 32, suffix: " GW", label: "PJM PEAK GROWTH, 2024–30", sub: "94% of it from data centers", href: "https://insidelines.pjm.com/pjms-updated-20-year-forecast-continues-to-see-significant-long-term-load-growth/" },
+    { value: 70, prefix: "$", suffix: "/MO", label: "PROJECTED HOUSEHOLD BILL RISE", sub: "PJM region, by 2028 — NRDC estimate", href: "https://www.utilitydive.com/news/solving-pjms-data-center-problem/805600/" },
+    { value: 3, prefix: "~", suffix: "%", label: "SHARE OF WORLD ELECTRICITY", sub: "data centers will draw by 2030, IEA", href: "https://www.iea.org/reports/energy-and-ai/energy-demand-from-ai" }
+  ]} />
+
+## The demand curve nobody priced for
+
+Start with the global number, because the U.S. fight is a local symptom of a worldwide shift. The International Energy Agency puts global data-center electricity consumption at about 415 terawatt-hours in 2024 — roughly 1.5% of all the electricity used on Earth that year. By 2030, the IEA projects that more than doubling to around 945 terawatt-hours, just under 3% of global consumption, growing at about 15% a year — more than four times faster than electricity demand from every other sector combined <Annotation client:load term="four times faster than electricity demand from every other sector combined" note="IEA, ‘Energy demand from AI’ (Energy and AI report): data-center electricity consumption ≈415 TWh in 2024 (~1.5% of global electricity), projected to ≈945 TWh by 2030 (~3%), growing ~15%/year — over 4x the growth rate of electricity demand from all other sectors combined." href="https://www.iea.org/reports/energy-and-ai/energy-demand-from-ai" />. Inside that global total, the growth is not evenly spread: the IEA attributes nearly 80% of the worldwide increase to just two countries.
+
+<Chart client:visible mark="bar" x="region" y="twh" height={280}
+  caption="Absolute growth in data-center electricity consumption, 2024–2030 (terawatt-hours added). US and China alone account for ~80% of the global increase. Source: IEA, Energy and AI."
+  data={[
+    { region: "United States", twh: 240 },
+    { region: "China", twh: 175 },
+    { region: "Europe", twh: 45 }
+  ]} />
+
+The U.S. increase alone amounts to about 240 additional terawatt-hours, a 130% rise over 2024 levels <Annotation client:load term="130% rise over 2024 levels" note="IEA, Energy and AI report, 2024-2030 window: U.S. data-center electricity consumption grows by roughly 240 TWh (about +130%). China grows by roughly 175 TWh (about +170%). Europe grows by more than 45 TWh (about +70%)." href="https://www.iea.org/reports/energy-and-ai/energy-demand-from-ai" />. That absolute increase is larger than China's addition and more than five times Europe's, even though China's percentage growth is faster still. That is the scale of demand FERC's six RTOs are now being asked to price, connect, and bill for — and it is why the interconnection-queue numbers in the next section look less like an anomaly and more like the leading edge of a genuinely global curve.
+
+## Why this is an engineering problem before it is a political one
+
+It is tempting to read "who pays for the AI boom's electricity" as a talking point — tech companies vs. angry ratepayers, pick a side. It is not. It is a cost-allocation engineering problem with a genuinely hard structure, and the difficulty is the whole story. As Theodore Kury, director of energy studies at the University of Florida's Public Utility Research Center, lays out, setting an electric rate is a three-step process: identify which costs exist, allocate those costs among customer classes, and design a price structure that recovers them <Annotation client:load term="from the right customers" note="Theodore Kury, The Conversation: rate design runs (1) identify costs, (2) allocate costs to customer classes, (3) design recovery prices — each step embeds a judgment call about causation that a sophisticated, flexible customer can exploit." href="https://theconversation.com/it-may-be-almost-impossible-to-make-data-centers-pay-their-fair-share-of-electricity-costs-283946" />. Every one of those three steps has a loophole a large, flexible customer can find, and data centers — unlike a steel mill — are unusually good at finding them.
+
+The clearest example is <Annotation client:load term="coincident peak demand pricing" note="Many utilities allocate fixed transmission/capacity costs based on a customer’s demand at the moment the WHOLE system peaks, not the customer’s own peak. A load that curtails during that one system-wide window pays for a much smaller share of fixed infrastructure than its year-round draw would suggest is fair." href="https://theconversation.com/it-may-be-almost-impossible-to-make-data-centers-pay-their-fair-share-of-electricity-costs-283946" />, the mechanism by which many utilities split fixed grid costs across large customers. Bill a customer for its share of fixed infrastructure based on how much it was drawing at the single hour the whole system peaked, and a customer that can shut down for that one hour walks away with a tiny allocated share — no matter how much power it draws the other 8,759 hours of the year. Texas cryptocurrency miners already ran this play at scale, curtailing precisely during system peaks to minimize their bills <Annotation client:load term="while drawing enormous baseline power" note="Kury cites Texas crypto-mining operations as the precedent for using load flexibility to dodge coincident-peak cost allocation — the same flexibility AI data centers now have, at far larger scale." href="https://theconversation.com/it-may-be-almost-impossible-to-make-data-centers-pay-their-fair-share-of-electricity-costs-283946" />. A data center with a battery buffer or the ability to shed a training job for an hour can do the same thing, and at gigawatt scale the dollars involved are not rounding errors.
+
+There's a second, quieter loophole: not every state even has someone in the room fighting the utility's allocation math. A ratepayer advocate's office — a public agency whose entire job is contesting a utility's cost claims before the regulator — exists in every U.S. state except three: Georgia, Idaho, and Louisiana <Annotation client:load term="have no consumer advocate office at all" note="Kury, The Conversation: ‘consumer advocate offices’ — the public agencies that formally contest utility cost claims — exist in every state except Georgia, Idaho, and Louisiana." href="https://theconversation.com/it-may-be-almost-impossible-to-make-data-centers-pay-their-fair-share-of-electricity-costs-283946" />. Where a data center lands is not just a tax and land-cost decision. It is, whether the developer says so or not, a decision about how contested its electricity bill will be.
+
+## The mechanism: an electron's paper trail
+
+Before the policy fight, there's a process, and the process is where the argument actually happens. A data center doesn't just plug in — it enters a queue, gets studied, and only then finds out what it owes.
+
+<Diagram client:visible caption="How one interconnection request turns into two possible bills — the fork FERC’s June order targets directly"
+  nodes={[
+    { id: "request", label: "Data center files\ninterconnection request", x: 0, y: 1, kind: "input" },
+    { id: "queue", label: "RTO queue\n(serial → cluster study)", x: 1, y: 1, kind: "process" },
+    { id: "study", label: "System-impact /\ncost-causation study", x: 2, y: 1, kind: "process" },
+    { id: "upgrades", label: "Network upgrades\nidentified & costed", x: 3, y: 1, kind: "decision" },
+    { id: "direct", label: "Direct assignment:\ncauser pays", x: 4, y: 0, kind: "output" },
+    { id: "socialized", label: "Rolled-in / socialized:\nall ratepayers pay", x: 4, y: 2, kind: "output" },
+    { id: "energize", label: "Interconnection\nagreement & energization", x: 5, y: 1, kind: "output" }
+  ]}
+  edges={[
+    { from: "request", to: "queue", label: "enters queue", kind: "data" },
+    { from: "queue", to: "study", label: "studied with cluster", kind: "control" },
+    { from: "study", to: "upgrades", label: "quantifies cost", kind: "data" },
+    { from: "upgrades", to: "direct", label: "DOE-proposed: 100%", kind: "data" },
+    { from: "upgrades", to: "socialized", label: "status quo: rolled into rates", kind: "data" },
+    { from: "direct", to: "energize", kind: "control" },
+    { from: "socialized", to: "energize", kind: "control" }
+  ]} />
+
+Read the fork in the middle as the entire fight. Once a study prices the transformers, substations, and transmission lines a new load requires, that cost has to land somewhere. Assign it directly to the interconnecting load — the Department of Energy's own preferred rule, discussed below — and the developer pays for what it caused. Roll it into the transmission formula rate instead, spreading it across the RTO's whole customer base the way most upgrades have historically been priced, and every ratepayer in the footprint helps pay for a data center they may never benefit from. FERC's June 18 order is aimed almost entirely at forcing each of the six RTOs to say, explicitly, which side of that fork its tariff lands on — because right now, in most of the country, the answer is genuinely unclear.
+
+<Callout kind="key-insight" title="The queue is not a formality — it is the cost study">
+An interconnection queue looks bureaucratic, but the study inside it is the only place anyone quantifies what a new gigawatt load actually costs the grid. Everything downstream — who pays, how fast the data center can be built, whether a state's ratepayers notice — is decided by what that study finds and who is on the hook for the number it produces.
+</Callout>
+
+## The queue exploded before the rules did
+
+The paper trail above has existed for decades. What changed is the volume moving through it. ERCOT, the Texas grid operator, tracked 63 GW of large-load interconnection requests at the end of 2024. By November 2025 that had grown to 226 GW — a nearly fourfold jump in under a year, with 77% of it from data centers targeting 2030 grid connection <Annotation client:load term="77% of it from data centers" note="Latitude Media, citing an ERCOT board filing: the queue nearly quadrupled from 63 GW (end 2024) to 226 GW (November 2025), with data centers the dominant driver." href="https://www.latitudemedia.com/news/ercots-large-load-queue-has-nearly-quadrupled-in-a-single-year/" />. By June 2026 the same queue had reached 438 GW, with data centers now roughly 90% of the total <Annotation client:load term="90% of the total" note="Utility Dive, June 2026: ERCOT’s large-load queue reached 438 GW, nearly 90% data centers — a further near-doubling from the 226 GW reported seven months earlier." href="https://www.utilitydive.com/news/texas-facing-438-gw-queue-approves-initial-large-load-interconnection-pro/823367/" />.
+
+<Chart client:visible mark="line" x="date" y="gw" height={300}
+  caption="ERCOT’s large-load interconnection queue, gigawatts requested. Texas’s own all-time peak demand is 85.5 GW — the queue is already 5x that."
+  data={[
+    { date: "2024-12", gw: 63 },
+    { date: "2025-11", gw: 226 },
+    { date: "2026-06", gw: 438 }
+  ]} />
+
+That last comparison is worth sitting with: Texas's actual all-time peak electricity demand — 85,508 megawatts, set on August 10, 2023 <Annotation client:load term="85.5 GW" note="ERCOT's own peak-demand records: the ERCOT-wide all-time peak was 85,508 MW, set August 10, 2023." href="https://www.ercot.com/static-assets/data/news/content/a-peak-demand/all-time-records.htm" /> — is a small fraction of what's now asking to connect. The queue is more than five times that figure, and every serious grid planner knows most of a queue never gets built. The problem isn't that all 438 GW will materialize; it's that ERCOT has no reliable way to tell in advance which 10% is real, so it has to plan, and price, against a number that keeps roughly doubling every six to twelve months. Utility Dive's own reporting on the vote describes the prior project-by-project review ERCOT is replacing as having become "lengthy and repetitive" as large loads rushed to interconnect <Annotation client:load term="lengthy and repetitive" note="Utility Dive, June 2026, on ERCOT officials' rationale for the Batch Zero process: the prior project-by-project evaluation had become 'lengthy and repetitive' as large loads rushed to interconnect." href="https://www.utilitydive.com/news/texas-facing-438-gw-queue-approves-initial-large-load-interconnection-pro/823367/" /> — the same volume problem visible in the chart above.
+
+Texas is worth pausing on for a second reason: ERCOT is not one of FERC's six targets, because Texas's grid is intentionally kept outside interstate commerce and therefore outside FERC's jurisdiction. Its reform runs on a parallel, state-level track instead. On June 18, 2026 — the same day FERC issued its show-cause orders — the Public Utility Commission of Texas approved a first phase of large-load interconnection rules, nicknamed "Batch Zero," setting a 75 MW minimum project size and requiring applicants to clear "maturity criteria" before entering formal study <Annotation client:load term="a 75 MW minimum project size" note="Utility Dive: on June 18, 2026, PUCT approved ERCOT’s initial ‘Batch Zero’ large-load interconnection process — 75 MW minimum project size, maturity-criteria screening, with Batch Zero applicants to be notified in August 2026 and a final transmission plan expected fall 2027." href="https://www.utilitydive.com/news/texas-facing-438-gw-queue-approves-initial-large-load-interconnection-pro/823367/" />. Microsoft's own 2-gigawatt Pecos, Texas facility is one of the projects sized to matter under that threshold <Annotation client:load term="Microsoft’s own 2-gigawatt Pecos, Texas facility" note="Utility Dive: Microsoft has announced a 2 GW data center campus at Pecos, Texas — among the scale of projects the Batch Zero process is built to evaluate." href="https://www.utilitydive.com/news/texas-facing-438-gw-queue-approves-initial-large-load-interconnection-pro/823367/" />; ERCOT plans to notify Batch Zero applicants in August 2026, with a final transmission plan expected by fall 2027. ERCOT CEO Pablo Vegas frames it as a genuine break from precedent: "Texas is experiencing an energy transformation unlike anything we have seen before," he said of the new process, calling it "a fundamental shift in how ERCOT manages…growth of large load" <Annotation client:load term="a fundamental shift in how ERCOT manages" note="Pablo Vegas, ERCOT President and CEO, quoted in Utility Dive on the Batch Zero process approved June 18, 2026." href="https://www.utilitydive.com/news/texas-facing-438-gw-queue-approves-initial-large-load-interconnection-pro/823367/" />. So on the single day FERC told six RTOs to fix their tariffs, Texas — deliberately outside FERC's reach — was running the identical experiment on its own, a live natural comparison of a federally-supervised process against a purely state-supervised one.
+
+PJM, the mid-Atlantic grid operator covering 13 states and 67 million people, tells the same story from the demand-forecast side rather than the queue side. PJM’s own Inside Lines channel reports 32 GW of peak-load growth between 2024 and 2030 from its 2025 Long-Term Load Forecast — and attributes 94% of that growth to data centers, roughly 30 GW <Annotation client:load term="94% of that growth to data centers" note="PJM’s 2025 Long-Term Load Forecast, summarized via PJM’s own Inside Lines channel: 32 GW of projected peak-load growth 2024–2030, with data centers responsible for all but about 2 GW of it. Independently corroborated by Data Center Dynamics’ separate report of the same forecast (32 GW total, 30 GW from data centers)." href="https://insidelines.pjm.com/pjms-updated-20-year-forecast-continues-to-see-significant-long-term-load-growth/" /> — the same 32 GW / 30 GW figures reported independently by Data Center Dynamics’ own read of PJM’s forecast <Annotation client:load term="Data Center Dynamics" note="Data Center Dynamics, reporting on PJM’s latest long-term load forecast: ‘PJM Interconnection...has reported a peak load growth of 32GW from 2024 to 2030,’ with 30GW from data centers — matching the Inside Lines figures via an independent outlet." href="https://www.datacenterdynamics.com/en/news/pjm-reports-peak-load-growth-of-30gw-through-2030-from-data-center-sector/" />. For context, PJM’s own 2021 forecast assumed roughly 0.3% annual load growth — the "normal" rate the entire tariff structure below was built around <Sidenote>PJM's Inside Lines channel frames the shift explicitly: the current forecasted growth rate is more than ten times the 10-year average PJM was projecting as recently as 2021 — the system was not built, priced, or planned for this slope.</Sidenote>. FERC did not act on June 18 because data centers exist; it acted because the queues stopped looking like anything the existing tariffs were written for.
+
+## FERC's June 18 rewrite: five reforms, six proceedings, zero national standard
+
+FERC's order is a set of tailored <Annotation client:load term="Section 206 show-cause orders" note="Federal Power Act Section 206 lets FERC find that an existing tariff is unjust or unreasonable and order it changed. A ‘show-cause’ order asks the tariff-holder (each RTO/TO) to either defend the status quo or file a replacement." href="https://www.ferc.gov/news-events/news/ferc-launches-aggressive-targeted-action-speed-large-load-integration" /> — one to each of PJM, MISO, SPP, CAISO, ISO-NE, and NYISO — rather than a single rulemaking. The commission identified five areas every RTO's tariff must address: efficient interconnection study processes (including alternative transmission technologies like advanced conductors and dynamic line ratings); preventing cost-shifting and improving transparency into how network-upgrade costs are assigned; rules for co-location and behind-the-meter generation; new transmission-service options for large loads that can flex their demand; and a process for studying generation that serves large loads sited electrically close to, or co-located with, a plant <Annotation client:load term="five reform areas" note="FERC’s June 18, 2026 order named five reform categories across the six show-cause orders: study-process efficiency and alternative transmission technologies; cost-shift prevention and transparency; co-location/behind-the-meter rules; flexible-load transmission service; and studies for electrically-proximate or co-located generation." href="https://www.ferc.gov/news-events/news/ferc-launches-aggressive-targeted-action-speed-large-load-integration" />.
+
+<Stepper client:visible mode="reveal" caption="FERC’s June 18 timeline — and why it doesn’t end with one answer"
+  steps={[
+    { title: "June 18, 2026 — show-cause orders issued", body: "<p>FERC opens a Section 206 proceeding against each of the six RTOs individually, rather than issuing one nationwide rule.</p>" },
+    { title: "Five reform areas named", body: "<p>Study-process efficiency, cost-shift prevention/transparency, co-location & behind-the-meter rules, flexible-load transmission service, and generation studies for co-located load.</p>" },
+    { title: "~30 days — informational report due", body: "<p>Each RTO must file how it intends to ensure enough generation exists for current and new large loads.</p>" },
+    { title: "60 days — tariff response due", body: "<p>Each RTO and its transmission owners must either justify their current tariff as still just and reasonable, or file specific reforms addressing FERC's five areas.</p>" },
+    { title: "Six separate outcomes", body: "<p>Because each RTO answers on its own record, PJM's cost-allocation rule and CAISO's may end up nothing alike — the fight moves from Washington into six regional dockets.</p>" }
+  ]} />
+
+The first reform area is worth unpacking, because it's the one engineers rather than lawyers will implement. FERC directed grid operators to evaluate a specific set of "alternative transmission technologies" — power-flow control devices, synchronous condensers, advanced conductors, and dynamic line ratings — before defaulting to the traditional answer of building new lines and transformers <Annotation client:load term="power-flow control devices, synchronous condensers, advanced conductors, and dynamic line ratings" note="IEEE Spectrum’s fifth takeaway from FERC’s June 18 orders: grid operators must evaluate alternative transmission technologies — power-flow control devices, synchronous condensers, advanced conductors, dynamic line ratings — when studying new interconnection requests, before defaulting to new-build transmission." href="https://spectrum.ieee.org/ferc-data-center-policy" />. Each of those does roughly the same job: squeeze more real capacity out of wires and equipment that already exist, rather than waiting years for new steel in the ground. Dynamic line rating, for instance, lets a transmission line carry more current on a cool, windy day than the conservative worst-case rating it's normally operated under — capacity that's been sitting unused for decades because no one had a regulatory reason to measure it. If a data center's interconnection study can be satisfied by software and sensors instead of a multi-year transmission build, the network-upgrade cost this whole piece keeps coming back to shrinks — which is exactly why FERC put it first on the list rather than last.
+
+FERC's own commissioners framed this as deliberate, not timid. Commissioner David LaCerte, addressing why the commission chose show-cause orders over a single rulemaking, said the agency's reach was not in question even if its approach was regional: "The commission has very broad jurisdiction over transmission that we will not hesitate to utilize as necessary" <Annotation client:load term="will not hesitate to utilize" note="FERC Commissioner David LaCerte, quoted in Utility Dive’s coverage of the June 18 orders." href="https://www.utilitydive.com/news/ferc-doe-data-center-interconnection/823360/" />. Commissioner Judy Chang, meanwhile, tied the flexible-load reform area to a broader efficiency argument — while voicing the tension herself in the same breath: flexible-load services "have the potential to facilitate more efficient use and build out of the transmission system," she said, "but they also contemplate running the system 'tighter' than we have done in the past, potentially with more loads on the system served by co-located or behind-the-meter generation, and potentially more use of batteries, load control systems, and backup resources to manage demand during system peaks or other stressed conditions" <Annotation client:load term="running the system tighter than we have done in the past" note="FERC Commissioner Judy Chang, quoted in Utility Dive, on why flexible-load service is one of the five named reform areas — she paired the efficiency case with her own caveat that it means operating the grid tighter and leaning more on batteries, co-located generation, and load control to manage stressed conditions." href="https://www.utilitydive.com/news/ferc-doe-data-center-interconnection/823360/" /> — the same flexibility that, as Kury's coincident-peak example shows, can also be used to dodge cost allocation. Whether flexibility is efficiency or evasion turns out to depend entirely on which tariff clause is measuring it.
+
+<Pullquote cite="Mona Dajani, Cooley LLP partner, via Utility Dive" href="https://www.utilitydive.com/news/ferc-doe-data-center-interconnection/823360/" kind="quote">
+The era of one national standard for data center interconnection is over before it began.
+</Pullquote>
+
+Dajani's line is the sharpest single read of what FERC actually did. The commission had an Advance Notice of Proposed Rulemaking on the table — the vehicle for a single nationwide standard — and chose instead to force six separate proceedings, each shaped by its own region's politics, generation mix, and existing litigation. IEEE Spectrum's coverage quotes two independent analysts landing on the same read from different angles: Jeff Dennis of Coefficient Policy Experts calls it "threading the needle" between speed and consumer protection, while Harvard's Ari Peskoe warns the result "will be less transparent than FERC would like" precisely because six dockets are harder to watch than one rule <Annotation client:load term="less transparent than FERC would like" note="Ari Peskoe, Harvard Law School, quoted in IEEE Spectrum’s coverage of FERC’s June 2026 data-center orders." href="https://spectrum.ieee.org/ferc-data-center-policy" />.
+
+<Detail summary="Go deeper: the DOE letter that forced FERC's hand" defaultOpen={false}>
+FERC didn't act in a vacuum. On October 23, 2025, the Department of Energy sent FERC a letter directing action on large-load interconnection by April 30, 2026, proposing a specific rule: large loads could file joint, co-located interconnection requests directly with FERC; facilities would be responsible for 100 percent of the network-upgrade costs their own interconnection studies identify; utilities offering flexible-load customers a 60-day expedited study window; and a 20 MW minimum threshold for both new and hybrid large-load facilities <Annotation client:load term="100 percent of the network-upgrade costs" note="White & Case insight alert: DOE’s October 23, 2025 letter proposed large loads bear 100% of network-upgrade costs identified through interconnection studies, among other reforms, with a FERC deadline of April 30, 2026." href="https://www.whitecase.com/insight-alert/doe-directs-ferc-accelerate-interconnection-data-centers" />. FERC's June 18 show-cause orders are, in effect, the commission's answer to that letter — except its answer was "each RTO decides," not "100% direct assignment, nationwide." The DOE's preferred number is still on the table in all six proceedings; it just isn't law anywhere yet.
+</Detail>
+
+A separate, narrower PJM-specific order tied to its December 2025 co-location framework shows how granular this gets in practice: behind-the-meter generation above a 50 MW materiality threshold lost the right to net its own self-supply against transmission charges, with arrangements in place before December 18, 2025 grandfathered under the old rule and anything after facing full gross charges <Annotation client:load term="lost the right to net" note="PJM's FERC-directed co-location order changed treatment of behind-the-meter self-supply above a 50 MW materiality threshold: BTMG contracts in place before December 18, 2025 are grandfathered for the term of that contract; new arrangements face full gross transmission charges. Reported by the Electroneconomics newsletter and independently corroborated, including the specific 50 MW threshold and December 18, 2025 grandfathering cutoff, by National Law Review's legal-alert coverage of FERC's PJM co-location orders." href="https://natlawreview.com/article/ferc-takes-further-action-co-located-load-behind-meter-generation-and-large-load" /> — a direct response to developers trying to sidestep the interconnection queue altogether by building their own power plant next to the data center. One of Utility Dive's six takeaways captures the intended effect of this whole apparatus: new interconnection rules should give utilities "a clear framework for determining the need for large-load-related infrastructure, who pays for it, and how long the large-load customer must remain financially responsible for the investment" <Annotation client:load term="how long the large-load customer must remain financially responsible" note="Utility Dive’s fifth takeaway from FERC’s June 18 orders — framing cost clarity and multi-year financial responsibility as the practical goal of the reforms." href="https://www.utilitydive.com/news/ferc-doe-data-center-interconnection/823360/" /> — a sentence that only needed writing because, for years, the answer to "who pays and for how long" was genuinely unclear.
+
+## Who actually eats the marginal electron
+
+This is where the policy stops being abstract. PJM's most recent capacity auction — the mechanism that pays power plants to be available on the system's worst days — cleared with an extra $9.4 billion attributable to data-center demand growth for the 2025–26 delivery year, with another $1.4 billion in additional costs already locked in for 2026–27, according to analysis by NRDC's Tom Rutigliano and Claire Lang-Ree <Annotation client:load term="$9.4 billion attributable to data-center demand growth" note="Rutigliano & Lang-Ree (NRDC), via Utility Dive: the 2025–26 PJM capacity auction added $9.4B in extra costs attributed to data-center demand forecasts, with $1.4B more locked in for 2026–27 — NRDC’s own modeling, not a PJM-published attribution, and NRDC is a consumer/environmental advocacy nonprofit with a clear position in this fight." href="https://www.utilitydive.com/news/solving-pjms-data-center-problem/805600/" />. Their running estimate: $100 billion in cumulative extra capacity costs across the PJM footprint through 2033, translating to roughly $70 in added monthly bills per household by 2028 <Annotation client:load term="$70 in added monthly bills" note="NRDC’s estimate, via Utility Dive: about $70/month in added household electricity costs across the PJM region by 2028, driven by data-center-attributed capacity costs." href="https://www.utilitydive.com/news/solving-pjms-data-center-problem/805600/" />. NRDC's own headline number for who bears that cost: "the public will pay over 80% of increased capacity costs caused by data center demand forecasts" <Annotation client:load term="over 80% of increased capacity costs" note="NRDC’s estimate, via Utility Dive — should be read as advocacy-group modeling, not an audited utility figure, though it is directionally consistent with the socialized cost-allocation mechanism described elsewhere in this piece." href="https://www.utilitydive.com/news/solving-pjms-data-center-problem/805600/" />.
+
+<Sankey client:visible unit="$B"
+  caption="Where NRDC’s estimated $9.4B in 2025–26 data-center-attributed capacity cost lands, at their reported ≈80/20 split"
+  nodes={[
+    { id: "total", label: "Extra 2025–26 PJM capacity cost tied to data centers" },
+    { id: "public", label: "Rolled into all PJM ratepayers' bills" },
+    { id: "dc", label: "Borne directly by data-center developers" }
+  ]}
+  links={[
+    { source: "total", target: "public", value: 7.5 },
+    { source: "total", target: "dc", value: 1.9 }
+  ]} />
+
+Maryland gives this arithmetic a face. On May 7, 2026, the state's Office of People's Counsel — its ratepayer advocate — filed a FERC complaint arguing that Maryland electric customers will pay $1.6 billion over the next decade for regional transmission projects that mainly serve out-of-state data centers, chiefly in Virginia, because of how PJM currently spreads transmission-expansion costs across its entire multi-state footprint rather than assigning them to the states and zones actually driving the growth <Annotation client:load term="$1.6 billion over the next decade" note="Maryland Office of People’s Counsel FERC complaint, filed May 7, 2026, per Utility Dive: Maryland ratepayers project $1.6B over ten years in transmission-project costs largely tied to out-of-state (chiefly Virginia) data-center growth, driven by PJM’s regional cost-allocation formula." href="https://www.utilitydive.com/news/maryland-ratepayer-advocate-ferc-data-center-complaint-transmission/823244/" />. Eighty Maryland state lawmakers signed a letter to FERC on June 16–17 backing the complaint, citing PJM's own long-range forecast of some 80,000 MW of data-center growth across the region over the next twenty years as the reason the dollar figure will only climb <Annotation client:load term="eighty Maryland state lawmakers" note="Utility Dive: 80 Maryland lawmakers submitted a June 16–17, 2026 letter to FERC supporting the OPC complaint, citing PJM’s own 20-year, ~80,000 MW data-center growth projection." href="https://www.utilitydive.com/news/maryland-ratepayer-advocate-ferc-data-center-complaint-transmission/823244/" />.
+
+FERC's June 18 order landed less than six weeks after Maryland's complaint, and Inside Climate News reports the state's People's Counsel, David Lapp, read it as validation without full relief: the order "shares the same intent as OPC's complaint — to protect ordinary customers from costs imposed by data centers," even though it does not, by itself, resolve the specific regional transmission projects Maryland's complaint is about <Annotation client:load term="shares the same intent as OPC’s complaint" note="David Lapp, Maryland People’s Counsel, quoted in Inside Climate News on FERC’s June 18 order, which he read as directionally supportive but not a direct resolution of Maryland’s specific transmission-cost complaint." href="https://insideclimatenews.org/news/30062026/ferc-order-data-center-grid-costs/" />. That gap — a federal order that instructs PJM to fix cost-shifting in principle, filed alongside a live complaint about a specific $1.6 billion instance of it — is exactly why an independent energy newsletter summarized the whole June 18 action as bluntly as it did:
+
+<Pullquote cite="Electroneconomics newsletter" href="https://electroneconomics.substack.com/p/ferc-didnt-settle-who-pays-for-the" kind="quote">
+FERC didn't settle who pays for the AI grid. It made every market litigate it.
+</Pullquote>
+
+FERC's own conduct backs that framing up: the DOE had proposed a clean, quantified rule — 100% direct assignment of network-upgrade costs to the interconnecting load. FERC's June 18 orders don't adopt it, reject it, or replace it with a number of their own. They ask each RTO to propose something and defend it, on its own record, within 60 days. The dial the entire fight turns on is simple to state even if the political fight over where to set it is not:
+
+<ParameterPlay client:visible
+  caption="The lever FERC just handed to six grid operators — illustrative model, not PJM’s literal tariff formula (each RTO must still propose its own within 60 days). Anchored to NRDC’s ≈$70/month 2028 estimate at today’s largely-socialized allocation, and DOE’s proposed 100%-direct-assignment floor at the other extreme."
+  params={[
+    { key: "bill", label: "At-risk monthly bill exposure", min: 20, max: 120, default: 70, step: 5, unit: "$" }
+  ]}
+  expr="bill * (1 - x / 100)"
+  xVar="x"
+  xRange={[0, 100]}
+  xLabel="% of network-upgrade cost assigned directly to the causer"
+  yLabel="ratepayer-borne $ / month"
+  readouts={[
+    { label: "Today — largely socialized (~0% direct assignment)", expr: "bill", unit: "$/mo" },
+    { label: "DOE's proposed floor — 100% causer-pays", expr: "0", unit: "$/mo" }
+  ]} />
+
+Slide the direct-assignment share toward 100% and the ratepayer-borne exposure in this simplified model collapses toward zero, exactly as DOE argued it would. Slide it toward 0% and you get the socialized status quo NRDC estimates at roughly $70 a month by 2028. Every one of FERC's six pending dockets is, underneath the legal language, an argument about where on that line the actual tariff should sit — and the honest answer, as of this writing, is that no RTO has committed to a number yet.
+
+## The orbital escape hatch, stress-tested
+
+Every energy-cost argument this large eventually produces someone proposing to route around it entirely, and this one produced Elon Musk. At the World Economic Forum in Davos in January 2026, he told the audience: "The lowest-cost place to put AI will be in space, and that will be true within two years, maybe three at the latest" <Annotation client:load term="two years, maybe three at the latest" note="Elon Musk, World Economic Forum, Davos, January 2026, quoted in IEEE Spectrum." href="https://spectrum.ieee.org/orbital-data-center-hype" />. That same month SpaceX filed with the FCC for a constellation of up to a million satellites; a startup called Starcloud separately filed for an 88,000-satellite constellation of its own <Annotation client:load term="a million satellites" note="IEEE Spectrum: SpaceX’s January 2026 FCC filing sought authorization for up to 1 million satellites; Starcloud separately filed for an 88,000-satellite constellation, both explicitly framed around orbital AI compute." href="https://spectrum.ieee.org/orbital-data-center-hype" />. The pitch: unlimited solar power, no interconnection queue, no FERC docket, no ratepayer to argue with.
+
+<Pullquote cite="Elon Musk, World Economic Forum, Davos, January 2026" href="https://spectrum.ieee.org/orbital-data-center-hype" kind="quote">
+The lowest-cost place to put AI will be in space, and that will be true within two years, maybe three at the latest.
+</Pullquote>
+
+Solar power in orbit is real and abundant — there's no atmosphere to attenuate it and no night, in the right orbit. But a GPU doesn't just need power in; it needs heat out, and that is where the pitch runs into physics that doesn't care about launch schedules. On Earth, waste heat leaves mostly by convection — air and water carrying it away. In vacuum there is no air and no water. The only way to shed heat is radiation, governed by the Stefan-Boltzmann law: the power a surface can radiate scales with its area and with the fourth power of its temperature <Annotation client:load term="Stefan-Boltzmann law" note="Spacecraft thermal control (Wikipedia); Electronics Cooling: in vacuum, radiative heat transfer is the only rejection mechanism, and radiated power follows Q = εσA(T⁴ − T_space⁴) — the Stefan-Boltzmann constant σ = 5.67×10⁻⁸ W/(m²·K⁴)." href="https://en.wikipedia.org/wiki/Spacecraft_thermal_control" />.
+
+<Math client:visible tex="Q = \varepsilon\,\sigma\,A\left(T^{4} - T_{\text{space}}^{4}\right)" label="(1)"
+  steps={[
+    { tex: "\sigma = 5.67\times10^{-8}\ \text{W}/(\text{m}^{2}\text{K}^{4})", note: "the Stefan-Boltzmann constant — fixed by physics, not a design choice a spacecraft engineer can improve away" },
+    { tex: "A = \dfrac{Q}{\varepsilon\,\sigma\,(T^{4}-T_{\text{space}}^{4})}", note: "solved for area — the number that actually constrains a satellite's mass and cost" },
+    { tex: "A_{\text{H100}} \approx 1.4\ \text{m}^2 \text{ at } T\approx333\text{K (60°C)}", note: "for one 700 W Nvidia H100 GPU — the exact chip Starcloud sent to orbit" },
+    { tex: "A_{\text{100 MW dc}} \approx 2\times10^{5}\ \text{m}^2", note: "≈2,500 radiator panels of 80 m² each — the same ratio, scaled to one hyperscale-sized facility" }
+  ]}
+  caption="Why a satellite’s cooling budget, not its solar panels, is the binding constraint on an orbital data center." />
+
+Starcloud has already run the real-world version of equation (1) at the smallest possible scale: one Nvidia H100 GPU, sent to orbit, drawing its full 700-watt thermal design power. IEEE Spectrum reports its radiator was too weak to let the chip run at full power <Annotation client:load term="too weak to let the chip run at full power" note="IEEE Spectrum: Starcloud’s single orbital H100 GPU test could not sustain full 700 W operation because its onboard radiator was undersized for the heat load — the smallest possible real-world test of equation (1) above." href="https://spectrum.ieee.org/orbital-data-center-hype" /> — a single chip, and the cooling was already the bottleneck, not the compute. The same source's own numbers scale in a straight line once you push them through the equation above: a single H100 needs about 1.4 m² of radiator at 60°C; a 40-kilowatt server rack needs about 80 m²; a 100-megawatt facility — modest by hyperscaler standards — needs roughly 2,500 radiators of 80 m² each, on the order of 200,000 m² of radiating surface <Annotation client:load term="200,000 m² of radiating surface" note="IEEE Spectrum’s figures for a 100 MW facility: ~2,500 radiators at 80 m² each. The three anchor figures (700 W→1.4 m², 40 kW→80 m², 100 MW→~200,000 m²) are internally consistent with a single radiator temperature and emissivity, confirmed by direct calculation below." href="https://spectrum.ieee.org/orbital-data-center-hype" />. Run the numbers yourself — this reproduces Spectrum's reported figures from the equation above with a single, realistic radiator emissivity:
+
+<RunnableCode client:visible caption="The same physics at three scales — edit wattsToShed and check it against the cited numbers"
+  code={`const sigma = 5.67e-8;   // Stefan-Boltzmann constant, W/(m^2 K^4)
+const T = 333;           // radiator temperature, K (60 C) -- IEEE Spectrum's stated design point
+const Tspace = 3;        // deep-space background temperature, K -- negligible next to T^4
+const eps = 0.72;        // effective radiator emissivity -- realistic for a coated panel (0.7-0.9 typical)
+
+function radiatorArea(wattsToShed) {
+  const netFluxPerM2 = eps * sigma * (Math.pow(T, 4) - Math.pow(Tspace, 4));
+  return wattsToShed / netFluxPerM2;
+}
+
+console.log("One H100 GPU (700 W):        " + radiatorArea(700).toFixed(2) + " m^2   (Spectrum: ~1.4 m^2)");
+console.log("A 40 kW server rack:         " + radiatorArea(40000).toFixed(1) + " m^2   (Spectrum: ~80 m^2)");
+console.log("A 100 MW data center:        " + Math.round(radiatorArea(1e8)).toLocaleString() + " m^2 (Spectrum: ~200,000 m^2)");
+return "same equation, three scales -- radiator area tracks watts linearly, and it is enormous";`} />
+
+That's the thermal half of the argument. The economic half comes from a peer-reviewed-track analysis published this spring: physicist Slava Turyshev's "Orbital Data Centers: Spacecraft Constraints and Economic Viability" runs the mass and cost budget all the way through <Annotation client:load term="mass and cost budget all the way through" note="Slava G. Turyshev, ‘Orbital Data Centers: Spacecraft Constraints and Economic Viability,’ arXiv:2604.27197 — a quantitative spacecraft-engineering assessment of orbital-compute economics, independent of and more rigorous than the vendor claims it evaluates." href="https://arxiv.org/abs/2604.27197" />. His finding: a 1-megawatt orbital compute system needs roughly 2,500 m² of radiator and about 5,640 m² of photovoltaic array — mass that, at his estimated ~40 kg per kilowatt for the combined system, has to be launched and built for somewhere between $250 and $1,000 per kilogram to compete with the $10,000–$40,000-per-kilowatt cost of a terrestrial data center <Annotation client:load term="between $250 and $1,000 per kilogram" note="Turyshev, arXiv:2604.27197: at ~40 kg/kW system mass, matching a terrestrial $10-40k/kW infrastructure benchmark requires combined launch-plus-spacecraft-build costs of $250-1,000/kg, before communications and operations costs are even added." href="https://arxiv.org/abs/2604.27197" />. Actual public Falcon 9 dedicated launch pricing runs far above that window — Turyshev puts the allowable spacecraft cost at 3.4 to 13.5 times below the current Falcon 9 benchmark, before the cost of building the spacecraft itself is even added in <Annotation client:load term="3.4 to 13.5 times below" note="Turyshev, arXiv:2604.27197: the allowable combined cost per kilogram for general-purpose orbital compute is 3.4-13.5x below the public Falcon 9 dedicated-launch price benchmark alone — meaning launch cost alone already overshoots the economically viable window, before spacecraft build cost is included." href="https://arxiv.org/abs/2604.27197" />.
+
+<Callout kind="caution" title="The physics doesn’t forbid it — it just moves the bill">
+None of this means orbital compute is impossible; Turyshev's own analysis leaves room for space-native preprocessing and communications-integrated edge computing, where the workload genuinely benefits from being in orbit already. What it rules out, on current numbers, is the pitch Musk made at Davos: general-purpose AI training moved to space as an escape from terrestrial power costs. The grid's interconnection queue is replaced by a radiator budget and a launch-cost gap, not eliminated.
+</Callout>
+
+## What breaks, and who's betting on which failure
+
+Every mechanism in this piece has a specific, named way it can go wrong — and in most cases, someone with money on the line is already betting on exactly that failure.
+
+<DataTable client:load caption="Failure modes in the current AI-grid cost-allocation fight"
+  columns={[
+    { key: "mode", label: "Failure mode", type: "string" },
+    { key: "mechanism", label: "Why it happens", type: "string" },
+    { key: "stakes", label: "Who is exposed", type: "string" }
+  ]}
+  rows={[
+    { mode: "Six different answers, not one", mechanism: "FERC declined a national rule; each RTO now sets its own cost-allocation formula on its own litigation record.", stakes: "Developers can no longer plan around one national number — siting decisions now hinge on which RTO's docket lands where." },
+    { mode: "Load-flexibility gaming outruns tariff design", mechanism: "Coincident-peak billing rewards curtailing during one system-peak hour, regardless of year-round draw — the same play Texas crypto miners already ran.", stakes: "Ratepayers, if a state's tariff hasn't closed the loophole before a data center starts exploiting it." },
+    { mode: "Queue forecasts are not commitments", mechanism: "ERCOT's 438 GW queue is widely understood to include speculative, duplicate, and never-built projects, but grid planners must still plan and price against it.", stakes: "Everyone — overbuilding wastes capital; underbuilding causes shortages either way the forecast errs." },
+    { mode: "Behind-the-meter co-location dodges the queue, not the grid", mechanism: "A data center pairing with its own gas or nuclear plant can sidestep interconnection studies — until it needs backup power from the grid anyway.", stakes: "Whichever RTO's tariff hasn't yet closed the post-Dec-2025-style netting loophole PJM already moved on." },
+    { mode: "Orbital compute oversells its own economics", mechanism: "Radiator mass scales linearly with power dissipated (Stefan-Boltzmann); Falcon 9 pricing runs 3.4-13.5x above the cost orbital compute can absorb and stay competitive.", stakes: "Investors in general-purpose orbital-AI ventures — the niche cases (space-native preprocessing) may still work; the broad pitch, on current numbers, does not." }
+  ]} />
+
+## The takeaway
+
+Whatever any single RTO's docket decides over the next 60 days, the structural fact underneath this whole fight will still be true: the marginal electron an AI data center draws has to be paid for by someone, and right now the someone is mostly diffuse, distant, and unable to litigate as effectively as a hyperscaler's regulatory team can. That's not a conspiracy — it's what "rolled into the transmission formula rate" has always meant, for data centers and for every other large load before them. What's new is the scale, the speed, and the fact that a federal regulator has now put the actual allocation formula up for a fight in six separate rooms at once, instead of leaving it as an assumption baked quietly into a tariff no one reads.
+
+If you're evaluating a data-center siting decision, a utility rate case, or an "AI is going to space" pitch deck, the questions this teardown suggests are concrete: does the tariff assign network-upgrade cost by cause, or does it roll in? Is there a ratepayer advocate in the room contesting the allocation, or is this one of the three states where there isn't? And if someone tells you the power problem goes away in orbit, ask them for the radiator's square meters before you ask about the rocket.

@@ -1,0 +1,318 @@
+---
+title: "The Forgotten Wire That Turned a Transistor Into a Neuron"
+format: teardown
+channels:
+  - tech
+  - science
+  - ai-projects
+summary: "In 2024 a student in Mario Lanza's lab at the National University of Singapore forgot to wire a transistor's fourth terminal, and the leftover floating bulk turned an ordinary CMOS transistor into a device that spikes and self-relaxes like a neuron — a 2025 Nature paper turned that accident into a two-transistor memory cell, versus at least 18 transistors per neuron and 6 per synapse in today's neuromorphic chips."
+publishedAt: 2026-07-11T09:00:00.000Z
+sources:
+  - title: "NSRAM: The Artificial Neuron on a Silicon Chip (Mario Lanza & Sebastián Pazos, IEEE Spectrum)"
+    url: "https://spectrum.ieee.org/artificial-neurons-on-silicon-chips"
+    tier: high
+    origin: curated
+  - title: "Synaptic and neural behaviours in a standard silicon transistor (Pazos, Zhu, Villena et al., Nature 640, 69–76, 2025)"
+    url: "https://www.nature.com/articles/s41586-025-08742-4"
+    tier: high
+    origin: researched
+  - title: "Synaptic and neural behaviours in a standard silicon transistor — PubMed record"
+    url: "https://pubmed.ncbi.nlm.nih.gov/40140586/"
+    tier: high
+    origin: researched
+  - title: "Advancing semiconductor devices for artificial intelligence (National University of Singapore, official press release)"
+    url: "https://news.nus.edu.sg/advancing-semiconductor-devices-for-artificial-intelligence/"
+    tier: med
+    origin: researched
+  - title: "Redefining the transistor: The ideal building block for artificial intelligence (EurekAlert!)"
+    url: "https://www.eurekalert.org/news-releases/1078569"
+    tier: med
+    origin: researched
+  - title: "Super-Efficient Transistor Breakthrough Could Shake Up AI Computing World (ScienceBlog.com)"
+    url: "https://scienceblog.com/super-efficient-transistor-breakthrough-could-shake-up-ai-computing-world/"
+    tier: med
+    origin: researched
+  - title: "Floating body effect (Wikipedia)"
+    url: "https://en.wikipedia.org/wiki/Floating_body_effect"
+    tier: med
+    origin: researched
+draft: false
+---
+
+import { RunnableCode, Chart, Annotation, StatBand, Pullquote, Sidenote, Diagram, CodeWalkthrough, Stepper, StateMachine, Math, Quiz, Callout, Detail, Definition, DataTable } from "../../components/mdx";
+
+In 2024, in a lab at the National University of Singapore, a student was measuring a memory circuit built from a transistor and a memristor. He wired it up wrong. As Professor Mario Lanza and his postdoc Sebastián Pazos later told it themselves, the student <Annotation client:load term="forgot to connect the bulk terminal" note="Lanza & Pazos, IEEE Spectrum: “One day, my student was measuring a memory circuit made from a transistor and a memristor. He forgot to connect the bulk terminal of the transistor.”" href="https://spectrum.ieee.org/artificial-neurons-on-silicon-chips" /> of the transistor — the fourth pin, the one nobody thinks about, normally screwed straight to ground. Instead of a clean, boring current curve, the readout did something a transistor is not supposed to do: current shot up in a sudden nonlinear jump, then <Annotation client:load term="self-relaxed" note="Lanza & Pazos, IEEE Spectrum: “a sudden increase in current with high nonlinearity that self-relaxed when the voltage was ramped down.”" href="https://spectrum.ieee.org/artificial-neurons-on-silicon-chips" /> back down on its own when the voltage was ramped back. Spike, then recovery, with no instruction telling it to do either.
+
+That is what a biological neuron does. It is not what a MOSFET is built to do.
+
+This teardown is about what that floating wire actually did, in the transistor physics, and about the paper the mistake eventually became: <Annotation client:load term="Synaptic and neural behaviours in a standard silicon transistor" note="Pazos, S., Zhu, K., Villena, M.A. et al. Synaptic and neural behaviours in a standard silicon transistor. Nature 640, 69–76 (2025)." href="https://www.nature.com/articles/s41586-025-08742-4" />, published in *Nature* in March 2025 by a team led by Lanza at NUS. The paper names the resulting device NSRAM — neuro-synaptic random-access memory — and its headline claim is blunt: a circuit built from this trick needs just two transistors, versus at least 18 per neuron and 6 per synapse in the neuromorphic chips already shipping. We are going to go all the way down into *why* an unconnected wire produces neuron-like behavior, because the honest answer involves a well-known failure mode that chip designers have spent decades trying to make go away.
+
+The stakes are not abstract. Neuromorphic chips already on the market are not toys — Lanza and Pazos point out that <Annotation client:load term="state-of-the-art brain-inspired microchips have achieved power reductions up to a thousandfold" note="Lanza & Pazos, IEEE Spectrum: “state-of-the-art brain-inspired microchips have achieved power reductions up to a thousandfold compared with those of GPUs or CPUs on the same task.”" href="https://spectrum.ieee.org/artificial-neurons-on-silicon-chips" /> compared with GPUs or CPUs doing the same inference task, which is exactly why Intel and IBM keep shipping new generations of them. The bottleneck was never whether the idea works. It was the transistor bill: how many components you have to spend to fake one neuron's charge dynamics, multiplied by however many neurons your network needs. That bill is the whole reason a wiring mistake in a Singapore lab is a story about the entire field, not just one clever paper.
+
+<StatBand client:visible caption="The headline numbers, all traced to the Nature paper and its official coverage"
+  stats={[
+    { value: 18, suffix: "", label: "TRANSISTORS PER NEURON, CONVENTIONAL", sub: "vs. NSRAM's 2-transistor cell (Intel Loihi / IBM NorthPole-class circuits)", href: "https://www.nature.com/articles/s41586-025-08742-4" },
+    { value: 6, suffix: "", label: "TRANSISTORS PER SYNAPSE, CONVENTIONAL", sub: "vs. NSRAM's 2-transistor cell", href: "https://www.nature.com/articles/s41586-025-08742-4" },
+    { value: 100, suffix: "%", label: "YIELD", sub: "reported in the Nature abstract", href: "https://www.nature.com/articles/s41586-025-08742-4" },
+    { value: 10, prefix: ">", suffix: "M", label: "ENDURANCE CYCLES", sub: "180 nm devices, no failures", href: "https://spectrum.ieee.org/artificial-neurons-on-silicon-chips" },
+    { value: 180, suffix: " NM", label: "PROCESS NODE", sub: "ordinary, mature CMOS — not exotic", group: false, href: "https://www.nature.com/articles/s41586-025-08742-4" }
+  ]} />
+
+## Why neuromorphic chips are expensive per neuron
+
+Skip the accident for a moment and look at the problem it accidentally solved. A conventional digital chip runs a neural network as arithmetic: matrix multiplies, on clocked logic, shuttling numbers to and from memory. That works, but it is a mismatch — biological neurons do not multiply matrices, they integrate incoming charge over time and fire when it crosses a threshold, and copying that behavior on ordinary CMOS logic burns enormous energy moving data back and forth between compute and memory.
+
+The alternative, neuromorphic computing, tries to build the neuron's own analog behavior directly into hardware — literally give one chunk of silicon the electrical personality of a neuron, another chunk the personality of a synapse, and wire millions of them together. The catch is that reproducing "integrate, spike, decay" out of ordinary logic gates is not cheap. The Nature paper is explicit about the going rate: production-grade neuromorphic architectures like Intel's <Annotation client:load term="Loihi" note="Pazos et al. (2025) name Intel's Loihi and IBM's NorthPole as the comparison baseline: CMOS neuromorphic circuits implementing bio-inspired neuron- and synapse-mimicking behavior with “at least 18 [transistors] per neuron and six per synapse.”" href="https://www.nature.com/articles/s41586-025-08742-4" /> and IBM's NorthPole build one artificial neuron out of **at least 18 transistors**, and one artificial synapse out of **at least 6** — dozens of components standing in for a cell membrane's charge dynamics, repeated across millions of neurons and billions of synapses per chip. Simplify that unit cell and you can afford a denser, larger, more efficient network on the same silicon budget. That is the prize NSRAM is chasing, and the reason a two-transistor cell that does the same job is not a curiosity — it is a different cost structure for the entire field.
+
+<Callout kind="key-insight" title="The uncomfortable version of the thesis">
+For years, neuromorphic engineers have spent transistors — dozens of them, arranged into careful analog circuits — trying to *simulate* the way charge accumulates and discharges in a biological membrane. A floating fourth terminal on an ordinary transistor does exactly that dynamic, unassisted, as a side effect physicists have spent decades trying to *suppress*.
+</Callout>
+
+## From a wiring mistake to a controlled result
+
+It is worth walking through how the accident actually turned into research, because it explains why the paper looks the way it does — deliberate, quantified, reproducible — even though it began with nobody trying to build anything. Lanza and Pazos describe the path themselves, and it maps onto a recognizable arc: notice something strange, try to break it on purpose, then try to control it.
+
+<Stepper client:visible mode="reveal" caption="How a wiring accident became a controlled, repeatable result"
+  steps={[
+    { title: "The accident: a ramped voltage, an unconnected bulk", body: "<p>A student measuring a transistor-plus-memristor memory circuit leaves the bulk terminal unconnected and ramps the drain voltage. The current spikes, then relaxes on its own as the voltage comes back down — a hysteresis loop nobody designed in.</p>" },
+    { title: "A week of confusion", body: "<p>Lanza's own account: a fruitless week trying to explain the behavior with the memristor already in the circuit muddying the picture.</p>" },
+    { title: "Strip the circuit down", body: "<p>Lanza asks Sebastián Pazos, then his postdoctoral fellow, to reproduce the effect in a bare transistor with no memristor at all — isolating whether the transistor alone is responsible.</p>" },
+    { title: "Swap ramps for pulses", body: "<p>Instead of the slow ramped voltage that first revealed it, the team applies short voltage pulses — the same way a neuron actually receives input — and finds the spike-and-relax behavior holds.</p>" },
+    { title: "Add the second transistor", body: "<p>To make the effect reproducible chip to chip, a control MOSFET is wired in to fix the bulk's effective resistance, taming the die-to-die variability a single floating-body device shows on its own.</p>" },
+    { title: "Publish, patent, name it", body: "<p>The controlled, quantified result becomes the 2025 Nature paper, and the two-transistor cell gets its name: NSRAM.</p>" }
+  ]} />
+
+## The part of a transistor nobody thinks about
+
+A standard MOSFET has four terminals, not three. Source, drain, and gate get all the attention in an introductory course — turn the gate voltage up, current flows from source to drain, that is a switch. The fourth terminal is the **bulk**, sometimes called the body: the block of silicon the whole channel sits inside. In ordinary digital design the bulk is wired straight to a fixed voltage (ground, for an n-channel device) and then almost never discussed again. Its entire job is to stay put and behave like an inert slab underneath the action.
+
+Here is the intuition for what "staying put" is protecting against, before the real physics: think of the bulk as a leaky bucket sitting under a slightly leaky faucet. As long as the bucket has a drain — the wire to ground — whatever trickles in drains straight back out and the water level (the bulk's electrical potential) never moves. Disconnect the drain, and now the bucket fills. It is a bucket with a floor that occasionally overflows on its own and then slowly empties again. Run that toy model and you already have a leaky-integrate-and-fire neuron, the textbook cartoon of what a real biological neuron does — accumulate, threshold, spike, leak back down, repeat.
+
+<RunnableCode client:visible caption="A toy leaky-integrate-and-fire neuron — the cartoon model biology gets simplified to, before we go find it inside a transistor"
+  code={`// A minimal LIF neuron: charge accumulates each tick, leaks a fraction
+// away each tick, and "fires" (resets) once it crosses a threshold.
+function simulateLIF(inputCurrent, leak, threshold, ticks) {
+  let charge = 0;
+  const spikes = [];
+  for (let t = 0; t < ticks; t++) {
+    charge += inputCurrent;      // integrate incoming charge
+    charge *= (1 - leak);        // leak a fraction away each tick
+    if (charge >= threshold) {
+      spikes.push(t);            // record the firing tick
+      charge = 0;                // reset after the spike (refractory)
+    }
+  }
+  return spikes;
+}
+
+const spikeTicks = simulateLIF(0.08, 0.05, 1.0, 200);
+console.log("fired at ticks:", spikeTicks.join(", "));
+console.log("spike count:", spikeTicks.length, "over 200 ticks");
+return "steady input -> a steady spike rate, exactly like a rate-coded neuron";`} />
+
+Run it and a constant trickle of "current" produces a steady train of discrete spikes — the charge climbs, crosses the line, resets, climbs again. That is the behavior the entire neuromorphic-hardware field is trying to build in silicon. Now go look at what an unconnected bulk terminal does to a real transistor, because it turns out to build almost exactly this circuit for free.
+
+## What actually happens when the bulk floats
+
+Push enough voltage across a transistor's drain and source — in NSRAM's case, <Annotation client:load term="2.5–3.5 V" note="Pazos et al. (2025), as reported via the paper’s full text: at drain-to-source voltages of roughly 2.5–3.5 V in the floating-bulk configuration, impact ionization generates excess carriers near the drain and the depletion region deepens (punch-through)." href="https://www.nature.com/articles/s41586-025-08742-4" /> across an ordinary 180-nanometer transistor — and the electric field near the drain gets strong enough to knock electrons loose from the silicon lattice itself. This is <Definition client:visible term="impact ionization" def="a high-field process in which an accelerating charge carrier collides with the semiconductor lattice hard enough to knock a bound electron free, generating a fresh electron–hole pair." />, and it is not exotic — it is the same physics that eventually destroys transistors under enough voltage stress, which is exactly why chip designers keep drain voltages well below the threshold that triggers it.
+
+Each collision creates an electron and a hole. The electron joins the current already flowing to the drain — unremarkable. The hole is the interesting one. In a normal, grounded-bulk transistor, that hole is swept straight into the bulk contact and out to ground, gone, no side effect. **With the bulk terminal floating, the hole has nowhere to go.** It sits in the body of the transistor. So does the next one, and the next, as impact ionization keeps firing. The body — this "inert slab" that digital design assumes never moves — starts to accumulate positive charge and its potential starts to climb.
+
+<Diagram client:visible caption="The fork in the road: a grounded bulk drains the hole current harmlessly; a floating bulk (the 2024 accident) lets it accumulate until it switches on a transistor nobody wired in"
+  nodes={[
+    { id: "vds", label: "V_DS ramped to ~2.5–3.5 V", x: 0, y: 1, kind: "input" },
+    { id: "ii", label: "Impact ionization at the drain", x: 1, y: 1, kind: "process" },
+    { id: "pairs", label: "Electron–hole pairs generated", x: 2, y: 1, kind: "process" },
+    { id: "bulk", label: "Bulk terminal: grounded or floating?", x: 3, y: 1, kind: "decision" },
+    { id: "grounded", label: "Grounded: holes drain to ground", x: 4.2, y: 0, kind: "store" },
+    { id: "ordinary", label: "Ordinary transistor — no kink", x: 5.4, y: 0, kind: "output" },
+    { id: "floating", label: "Floating (the 2024 accident): holes trapped", x: 4.2, y: 2, kind: "store" },
+    { id: "forward", label: "Source–bulk junction forward-biases", x: 5.4, y: 2, kind: "process" },
+    { id: "bjt", label: "Hidden parasitic BJT turns ON", x: 6.6, y: 2, kind: "process" },
+    { id: "spike", label: "Abrupt current spike — the “kink”", x: 7.8, y: 2, kind: "output" }
+  ]}
+  edges={[
+    { from: "vds", to: "ii", kind: "data" },
+    { from: "ii", to: "pairs", kind: "data" },
+    { from: "pairs", to: "bulk", kind: "data" },
+    { from: "bulk", to: "grounded", label: "tied to ground (standard design)", kind: "control" },
+    { from: "grounded", to: "ordinary", kind: "data" },
+    { from: "bulk", to: "floating", label: "left floating (the accident)", kind: "control" },
+    { from: "floating", to: "forward", kind: "data" },
+    { from: "forward", to: "bjt", kind: "data" },
+    { from: "bjt", to: "spike", kind: "data" }
+  ]} />
+
+That rising body potential is the whole story, and it is where the "hidden transistor" idea comes in. Lanza and Pazos put it plainly in their own account: <Annotation client:load term="two different kinds of transistors occupying the same physical space" note="Lanza & Pazos, IEEE Spectrum: “imagine a MOSFET as two different kinds of transistors occupying the same physical space — the intentionally constructed MOSFET and a hidden, bipolar junction transistor.”" href="https://spectrum.ieee.org/artificial-neurons-on-silicon-chips" />. Every n-channel MOSFET already contains, by simple accident of geometry, the three ingredients of an NPN bipolar junction transistor: the source is doped like an emitter, the body is doped oppositely like a base, and the drain is doped like a collector. In normal operation that latent <Definition client:visible term="parasitic bipolar transistor" def="a bipolar junction transistor that exists unintentionally inside a MOSFET's own doped regions — source as emitter, body as base, drain as collector — and stays off as long as the body-emitter junction is never forward-biased." /> is inert, because the grounded body never lets the source–body junction forward-bias. Once the floating body's potential climbs high enough — the classic silicon rule of thumb for a forward-biased silicon p–n junction, roughly $V_{BE}\approx0.7\text{ V}$ — that junction turns on, and so does the parasitic transistor riding inside the one you thought you built. Current jumps abruptly, because now two devices are conducting where you designed one.
+
+<Pullquote cite="Mario Lanza & Sebastián Pazos, IEEE Spectrum, 2026" href="https://spectrum.ieee.org/artificial-neurons-on-silicon-chips" kind="document">
+When the bulk terminal of the transistor is floating — unconnected as it was in my student's experiment — the holes produced by impact ionization cannot be driven to the ground.
+</Pullquote>
+
+Put the "bucket that overflows" intuition from earlier into the plainest possible equation and the whole mechanism becomes one integrate-then-threshold statement — not the paper's own transistor-level equations, which involve the full impact-ionization and carrier-lifetime physics, but the same shape of relationship any leaky integrator obeys:
+
+<Math client:visible tex="Q(t+\Delta t) = Q(t) + I_{ion}(V_{DS})\,\Delta t - \frac{Q(t)}{\tau_{leak}}\,\Delta t"
+  label="(1)" caption="Trapped bulk charge Q rises with impact-ionization current and falls with a leak time constant τ_leak — the same shape as the toy LIF model above, now attached to a real physical quantity."
+  steps={[
+    { tex: "\\text{grounded bulk: } \\tau_{leak} \\to 0", note: "an instant drain to ground — Q never builds, no kink, ordinary transistor" },
+    { tex: "\\text{floating bulk: } \\tau_{leak} \\text{ large}", note: "the 2024 accident — Q accumulates until it crosses the forward-bias line" },
+    { tex: "Q \\ge Q_{threshold} \\Rightarrow V_{BE} \\approx 0.7\\text{ V} \\Rightarrow \\text{parasitic BJT ON}", note: "the spike condition — the same crossing event as the toy code's `charge >= threshold`" }
+  ]} />
+
+A grounded bulk is the τ→0 limit of that same equation: charge can't build because it drains instantly, so the device just behaves like the transistor it was designed to be. Floating the bulk is nothing more exotic than pushing τ from ~0 to "large enough that impact ionization outruns the leak" — which is precisely the dial the second, control transistor turns, discussed below.
+
+Then comes the second half of the biological analogy, the part that makes this a *neuron* and not just a broken transistor: the spike relaxes on its own. Turn the applied voltage down, or simply wait, and the trapped holes recombine with electrons or slowly leak out of the body through whatever imperfect paths exist. Body potential falls back below the forward-bias line, the parasitic bipolar transistor switches off, and current collapses back to baseline — <Annotation client:load term="self-relaxed" note="Pazos et al. (2025): the relaxation dynamics are governed by carrier lifetimes and device capacitances; relaxation times run roughly 50 µs to tens of milliseconds, tunable via the second transistor’s gate voltage." href="https://www.nature.com/articles/s41586-025-08742-4" /> with no external reset pulse required, the same way a biological neuron's membrane potential settles back down after an action potential without anyone telling it to. Walk the whole cycle as a state machine and it maps cleanly onto the textbook leaky-integrate-and-fire picture from the toy code above — except now every state is a real, measured electrical condition instead of a simulated variable.
+
+<StateMachine client:visible caption="One floating-body transistor's spike cycle, mapped onto the classic neuron states"
+  start="rest"
+  states={[
+    { id: "rest", label: "REST", x: 0, y: 0 },
+    { id: "accum", label: "ACCUMULATING\n(holes pile up)", x: 1, y: -1.2 },
+    { id: "spike", label: "SPIKE\n(parasitic BJT ON)", x: 2, y: 0 },
+    { id: "relax", label: "RELAXING\n(holes recombine/leak)", x: 1, y: 1.2 }
+  ]}
+  transitions={[
+    { from: "rest", to: "accum", on: "V_DS rises; impact ionization begins" },
+    { from: "accum", to: "spike", on: "body potential crosses ~0.7 V" },
+    { from: "spike", to: "relax", on: "V_DS falls / drive pulse ends" },
+    { from: "relax", to: "rest", on: "trapped holes fully dissipate" }
+  ]}
+  sequence={["rest>accum", "accum>spike", "spike>relax", "relax>rest"]} />
+
+<Quiz client:visible caption="Check the mechanism before we go further"
+  questions={[
+    { prompt: "What specifically does a floating bulk terminal prevent from happening, that a grounded bulk normally does?", choices: ["It prevents the gate from switching the channel on", "It prevents the holes generated by impact ionization from draining to ground", "It prevents electrons from reaching the drain", "It prevents the source and drain from being doped correctly"], answer: 1, explain: "A grounded bulk sweeps impact-ionization holes straight to ground with no side effect. Floating removes that drain path, so holes accumulate in the body instead." },
+    { prompt: "The abrupt current spike happens because…", choices: ["The gate oxide breaks down", "The source–body junction forward-biases and turns on a parasitic bipolar transistor hidden in the same silicon", "The drain voltage is switched off", "A second, separate transistor is added to the circuit"], answer: 1, explain: "Every MOSFET already contains a latent NPN structure (source=emitter, body=base, drain=collector). Rising body potential from trapped holes forward-biases the source–body junction and switches that parasitic transistor on." }
+  ]} />
+
+## Why the paper needed two transistors, not one
+
+Here is the honest complication, and it is where the story stops being purely an accident and starts being an engineering problem: a single floating-body transistor is a *messy* neuron. The exact voltage at which the body potential crosses the forward-bias line depends on the **spreading resistance** of the substrate underneath it, and that resistance varies from die to die and even from spot to spot on the same wafer. Two nominally identical 180-nanometer transistors, cut from different dice, can show meaningfully different kink thresholds — which is useless if you want to wire a million of them together and expect them all to fire at comparable voltages.
+
+The paper's fix is the second transistor, and it is what actually earns the name NSRAM rather than just "a floating-body trick." A control MOSFET is wired in series to the same bulk node, and its own gate voltage sets an effective resistance for that shared bulk — anywhere from roughly <Annotation client:load term="10 kΩ to 1 MΩ" note="Per the Nature paper's full text: the control transistor's gate voltage (V_G2) tunes the effective bulk spreading resistance across a range of roughly 10 kΩ to 1 MΩ, which is what lets the cell's operating point be fixed rather than left to die-to-die variation." href="https://www.nature.com/articles/s41586-025-08742-4" />. Instead of leaving that resistance to the accident of which die you happened to fabricate, the second transistor dials it to a known, repeatable value — which is exactly what turns an interesting one-off lab observation into a device you could put a hundred million of on a wafer and expect to behave the same way. That, concretely, is why the paper reports 100% yield with near-zero device-to-device variability: the variability was never eliminated, it was masked by a second knob.
+
+<Diagram client:visible caption="The NS-RAM cell: two transistors, one shared floating-bulk node, two selectable output modes"
+  nodes={[
+    { id: "vg2", label: "Control gate voltage (V_G2)", x: 0, y: 1, kind: "input" },
+    { id: "m2", label: "Control MOSFET\n(sets bulk resistance R_B)", x: 1.4, y: 1, kind: "process" },
+    { id: "bulknode", label: "Shared floating-bulk node", x: 2.8, y: 1, kind: "store" },
+    { id: "m1", label: "Main MOSFET\n(the floating-body device)", x: 4.2, y: 1, kind: "process" },
+    { id: "neuronout", label: "Neuron mode:\nfast voltage pulses → spike", x: 5.6, y: 0, kind: "output" },
+    { id: "synapseout", label: "Synapse mode:\nslow bias → charge trapping", x: 5.6, y: 2, kind: "output" }
+  ]}
+  edges={[
+    { from: "vg2", to: "m2", kind: "control" },
+    { from: "m2", to: "bulknode", label: "fixes R_B ≈ 10 kΩ–1 MΩ, masks die-to-die variance", kind: "data" },
+    { from: "bulknode", to: "m1", kind: "data" },
+    { from: "m1", to: "neuronout", label: "3.5–4.5 V spikes", kind: "data" },
+    { from: "m1", to: "synapseout", label: "hot-carrier bias", kind: "data" }
+  ]} />
+
+## The other mode: how the same transistor becomes a synapse
+
+Everything so far has been the *neuron* mode — a fast voltage pulse, a spike, a relaxation, repeat. NSRAM's second trick is that the identical two-transistor cell, biased differently, becomes a *synapse* instead: a component whose conductance holds a value and can be nudged up or down, the way a biological synapse strengthens or weakens with use.
+
+The mechanism here is not the parasitic bipolar transistor — it is a second, quieter side effect of the same floating-body condition: <Definition client:visible term="charge trapping" def="hot carriers (energetic electrons or holes) injected into the gate oxide layer, where some become physically trapped — a persistent, non-volatile change to the transistor's effective threshold voltage." />. Instead of ramping the drain voltage into a fast spike, the control transistor is set to a bias regime where energetic carriers get shot into the gate oxide rather than swept away: <Annotation client:load term="hot-hole injection during potentiation" note="Pazos et al. (2025), per the paper's full text and TCAD simulation results: potentiation (strengthening) relies on hot-hole injection into the gate oxide; depression (weakening) relies on hot-electron injection during a negative-drain reset — the same charge-trapping physics used in commercial floating-gate memory." href="https://www.nature.com/articles/s41586-025-08742-4" /> raises the effective conductance (this is the same trapped-charge trick a commercial flash memory cell uses to hold a bit for years), and hot-electron injection during a negative-bias reset lowers it again. Nudge it enough times in one direction and the transistor's resistance state — the ratio between its high-resistance and low-resistance extremes runs <Annotation client:load term="×12 to ×35" note="Per the Nature paper's full text: the achievable high-resistance-state / low-resistance-state ratio (the synaptic weight range) runs roughly ×12–×35 depending on the operating regime used." href="https://www.nature.com/articles/s41586-025-08742-4" /> — sits at a new, stable level that the device holds without power, for over <Annotation client:load term="10,000 seconds" note="Pazos et al. (2025): long-term retention verified “over 10^4 s (approximately 2.8 h) without any kind of refresh.”" href="https://www.nature.com/articles/s41586-025-08742-4" /> without any refresh. That is a synaptic weight, sitting in silicon that never asked to hold one.
+
+It is worth pausing on why that detail earns the "RAM" half of the device's name. A spike is a transient event — useful for signaling, useless for storage, because the whole point of a neuron firing is that it does *not* stay fired. A synapse has to do the opposite: hold a value with the power off, the way any memory cell must. Charge trapped in a gate oxide is exactly the physical mechanism inside a commercial flash-memory bit, which is why the retention numbers above (thousands of seconds without refresh) look like memory-cell specifications rather than neuron specifications. The same floating bulk that misbehaves like a neuron under a fast voltage pulse behaves like non-volatile memory under a slow one — two entirely different circuit primitives, same physical transistor, same floating fourth terminal, just a different bias recipe dialed in by the control MOSFET's gate voltage.
+
+<CodeWalkthrough lang="js" caption="A simplified numeric model of one cycle — bulk-charge integration into a spike, tuned to the paper's own reported ranges"
+  steps={[
+    { lines: [1, 6], note: "State: the trapped hole charge in the floating bulk (as a normalized 0–1 fraction of the forward-bias threshold), plus the two knobs the real device exposes — V_spike (drive voltage) and the control transistor's effective resistance R_B." },
+    { lines: [8, 15], note: "Each timestep, impact ionization adds charge proportional to how far V_spike sits above the ~2.5 V ionization onset — a rough stand-in for the paper's reported 2.5–3.5 V regime. Higher R_B (via the control transistor) slows how fast charge can also leak away." },
+    { lines: [17, 24], note: "Once accumulated charge crosses the ~0.7 V forward-bias threshold, the parasitic BJT is 'on': current spikes, matching the paper's reported firing-time range of roughly 10 µs to 2 ms depending on V_spike." },
+    { lines: [26, 33], note: "After the spike, charge decays exponentially — recombination and leakage — over the paper's reported 50 µs-to-tens-of-ms relaxation window, and the cycle is ready to fire again." },
+    { lines: [35, 40], note: "Sweep V_spike from 3.5 to 4.5 V and firing time drops — a higher drive voltage means faster impact ionization, means the charge crosses threshold sooner. This is the tunable 'excitability' knob a real neuromorphic circuit would use." }
+  ]}
+  code={`// A qualitative model, tuned to Pazos et al. (2025)'s reported ranges —
+// not the paper's own transistor-level equations, but faithful to its
+// reported firing-time (10us-2ms) and relaxation (50us-tens of ms) scales.
+function nsramNeuronCycle(vSpikeVolts, rBulkOhms, steps = 2000, dt = 1e-6) {
+  let boCharge = 0;              // 0..1, fraction of forward-bias threshold
+  const THRESHOLD = 1.0;
+  const ionizationOnset = 2.5;   // volts, onset of impact ionization
+
+  const trace = [];
+  let firedAt = null;
+
+  for (let i = 0; i < steps; i++) {
+    const t = i * dt;
+    const drive = Math.max(0, vSpikeVolts - ionizationOnset);
+    const chargeRate = drive * 4e4;              // impact-ionization charging
+    const leakRate = 1 / (rBulkOhms * 2e-10);     // higher R_B => slower leak
+
+    if (firedAt === null) {
+      boCharge += chargeRate * dt;
+      boCharge -= boCharge * leakRate * dt * 0.05; // small leak pre-fire
+      if (boCharge >= THRESHOLD) firedAt = t;
+    } else {
+      // post-spike relaxation: exponential decay back toward rest
+      boCharge *= Math.exp(-dt / (rBulkOhms * 4e-9));
+    }
+    trace.push(boCharge);
+  }
+  return { firedAtMicros: firedAt ? +(firedAt * 1e6).toFixed(1) : null, trace };
+}
+
+for (const v of [3.5, 4.0, 4.5]) {
+  const r = nsramNeuronCycle(v, 5e4);
+  console.log("V_spike=" + v + "V -> fires at ~" + r.firedAtMicros + " us");
+}
+return "higher drive voltage -> faster charge accumulation -> earlier spike";`} />
+
+<Sidenote>Suppressing exactly this family of effect is old news for chip designers, which is what makes the reversal interesting. Floating-body charge accumulation in silicon-on-insulator MOSFETs is textbook material under the name the <Annotation client:load term="“kink effect”" note="Wikipedia, “Floating body effect”: in analog devices the floating body effect is known as the kink effect — a discontinuity in a transistor's output characteristics caused by impact-ionization holes forward-biasing the source–body junction and turning on the same parasitic bipolar structure." href="https://en.wikipedia.org/wiki/Floating_body_effect" />, and it has historically been treated as a *problem*: extra leakage current, higher power draw, and in floating-body DRAM cells, outright loss of stored data. Chipmakers spend real engineering effort adding body contacts specifically to ground this charge away and make it disappear. It has been deliberately exploited before, though — Z-RAM and T-RAM memory both build on the very same trapped-charge behavior, which is reportedly nicknamed, only half-jokingly, the “Cinderella effect.”</Sidenote>
+
+## What breaks, and what NSRAM has not yet shown
+
+A teardown owes you the edges of the claim, not just its best case. Two things are worth separating cleanly: what the paper has actually demonstrated, and what remains an open engineering question because no source — the paper included — has addressed it yet.
+
+<DataTable client:load caption="NSRAM's reported device numbers — every row traced to the Nature paper (via its open PMC mirror) or independently matched by the discoverers' own account"
+  columns={[
+    { key: "metric", label: "Metric", type: "string" },
+    { key: "value", label: "Reported value", type: "string" },
+    { key: "note", label: "Regime / condition", type: "string" }
+  ]}
+  rows={[
+    { metric: "Yield", value: "100%", note: "reported in the Nature abstract; sample size not stated there" },
+    { metric: "Endurance, neuron mode", value: ">10,000,000 cycles", note: "180 nm devices, fast ramp; matches Lanza & Pazos's own “not even one of them failed” account" },
+    { metric: "Endurance, neuron mode", value: ">70,000 cycles", note: "500 nm devices, 5,500 V/s sweep rate" },
+    { metric: "Endurance, short-term synapse", value: ">200,000 cycles (~7M pulses)", note: "potentiation/depression pulse trains" },
+    { metric: "Endurance, long-term synapse", value: ">100,000 cycles", note: "500 µs pulse regime" },
+    { metric: "Firing (spike) time", value: "10 µs – 2 ms", note: "tunable via V_spike, 3.5–4.5 V" },
+    { metric: "Firing energy", value: "415 pJ/µm", note: "at 12.6 µs firing time, 1 µm device width" },
+    { metric: "Relaxation time", value: "50 µs – tens of ms", note: "tunable via the control transistor's gate voltage" },
+    { metric: "Synaptic weight range", value: "×12 – ×35", note: "HRS/LRS ratio, regime-dependent" },
+    { metric: "Long-term retention", value: ">10,000 s (~2.8 h)", note: "no refresh applied" },
+    { metric: "Process node tested", value: "180 nm and 500 nm", note: "standard bulk-silicon commercial CMOS" }
+  ]} />
+
+Read that table against the chart below, because the two together are the whole business case. The comparison is not "NSRAM vs. nothing" — it is NSRAM's 2-transistor cell against the transistor budget the paper itself cites for existing production neuromorphic silicon.
+
+<Chart client:visible mark="bar" x="component" y="transistors" height={300}
+  series="technology"
+  caption="Transistors needed per artificial neuron or synapse — conventional CMOS neuromorphic circuits (as cited by Pazos et al., 2025, referencing Intel Loihi / IBM NorthPole-class designs) vs. the NSRAM two-transistor cell, which performs either role"
+  data={[
+    { component: "Neuron", technology: "Conventional CMOS neuromorphic", transistors: 18 },
+    { component: "Synapse", technology: "Conventional CMOS neuromorphic", transistors: 6 },
+    { component: "Neuron or synapse", technology: "NSRAM (2025)", transistors: 2 }
+  ]} />
+
+Now the caveats, held to what is actually documented rather than assumed. First, both tested process nodes — 180 nanometers and 500 nanometers — are mature, unglamorous CMOS by 2026 standards, nowhere near the sub-10-nanometer nodes that modern AI accelerators are fabricated on; the paper reports the effect at these two nodes specifically, and neither the paper nor any source in this piece's research addresses whether the same kink-effect thresholds and endurance numbers hold at leading-edge geometries, where doping profiles and short-channel effects differ substantially. That is an open engineering question this piece cannot answer for you, not a documented finding — flagged honestly rather than assumed either way.
+
+Second, notice what the endurance table is actually measuring: reliability of the *effect firing*, not necessarily of an entire wafer-scale array wired the way a real neuromorphic chip would need. The paper's 100% yield figure sits in the abstract with no stated sample size. A related but separate reliability demonstration, in the paper's Methods, does give a sample: <Annotation client:load term="30 dice" note="Pazos et al. (2025), Methods: 30 dice extracted from a multi-project wafer were used to demonstrate low wafer-position-to-position variability in the control-transistor scheme (Supplementary Figs. 5, 7) — a separate result from the abstract's 100% yield figure, not the same measurement." href="https://www.nature.com/articles/s41586-025-08742-4" /> extracted from a multi-project wafer, showing the control-transistor scheme holds low variability regardless of where on the wafer a die comes from. That is a serious, real reliability result for individual cells — it is not yet a demonstrated million-cell array with all the crosstalk and matching problems that scale introduces. Lanza himself frames what is left as a design problem rather than a physics problem: <Annotation client:load term="“more a matter of microelectronic design”" note="Mario Lanza, quoted by ScienceBlog.com: “Once the operating mechanism is discovered, it's now more a matter of microelectronic design.”" href="https://scienceblog.com/super-efficient-transistor-breakthrough-could-shake-up-ai-computing-world/" />, which is an honest way of saying the physics is nailed down and the remaining work is exactly the unglamorous part: routing, matching thresholds across a real array, and proving the numbers in the table above hold at scale, not just across 30 test dice.
+
+Third, there is an obvious worry worth naming even though the data answers it: if you deliberately run a transistor in a regime traditionally associated with device failure, shouldn't it wear out fast? Impact ionization is, after all, a documented contributor to <Annotation client:load term="hot-carrier degradation" note="The floating body effect's family of failure modes — including the parasitic bipolar “kink effect” this piece describes — has historically been linked to increased leakage current and reduced reliability in floating-body devices (Wikipedia, “Floating body effect”); deliberately driving impact ionization on every cycle is exactly the stress regime reliability engineers normally try to avoid." href="https://en.wikipedia.org/wiki/Floating_body_effect" />, the slow accumulation of damage in a transistor's gate oxide and channel from repeated high-field stress — the reason chipmakers keep operating voltages conservative in the first place. That is precisely why the endurance numbers in the table above matter as much as the headline transistor-count reduction: over ten million fire-and-relax cycles at the 180-nanometer node with zero device failures is the data that says this particular stress regime, at these particular voltages, does not wear the device out on any timescale tested so far. It is not proof the effect never degrades — no endurance test can prove a negative past its own tested cycle count — but it is a real, measured answer to a real, obvious objection, not a claim taken on faith.
+
+<Detail summary="Go deeper: why the paper does not tell the accident story the way the discoverers do" defaultOpen={false}>
+It is worth being precise about where each piece of this narrative actually comes from, because the two ledger sources tell subtly different stories on purpose. The peer-reviewed *Nature* paper presents NSRAM as an intentional engineering result: it frames punch-through impact ionization as a known, previously-parasitic phenomenon that the authors deliberately chose to characterize and exploit, and it does not narrate a lab accident anywhere in its technical text. The "student forgot to connect the bulk terminal" story comes entirely from Lanza and Pazos's own first-person account, written for IEEE Spectrum, describing how the *research program* actually began before it became a rigorous, controlled study. Both are true and both are the authors' own words — a peer-reviewed paper is not the place for an anecdote about a wiring mistake, and a first-person magazine essay is exactly the place for it. The honest read is that the accident is real (it is the discoverers' own account of their own lab), and the "intentional exploitation of a known effect" framing in the paper describes what happened *after* the accident, once they understood what they were looking at.
+</Detail>
+
+## What it would take to ship this
+
+Line up what is documented and the path from "reproducible lab result" to "shipping neuromorphic memory technology" gets concrete rather than hand-wavy. NSRAM does not require inventing new materials, new lithography, or a new fab process — that is arguably the strongest part of the claim, and it is the one repeated independently across every write-up of this result, not just the paper: the effect runs on <Annotation client:load term="standard commercial CMOS technology" note="Corroborated independently across the National University of Singapore's own press release, EurekAlert!, and ScienceBlog.com, in addition to the paper itself — all describe NSRAM as compatible with existing, unmodified semiconductor fabrication lines, requiring no exotic materials." href="https://news.nus.edu.sg/advancing-semiconductor-devices-for-artificial-intelligence/" />, the same transistors every foundry on Earth already knows how to build reliably. That is a genuinely different starting position than most neuromorphic-hardware proposals, which typically ask for a novel memristive material, a new deposition step, or a device geometry no fab has qualified yet. Lanza and Pazos say they have already <Annotation client:load term="filed for a patent" note="Lanza & Pazos, IEEE Spectrum: “we started the process of filing for a patent and writing up our findings for the journal Nature.”" href="https://spectrum.ieee.org/artificial-neurons-on-silicon-chips" /> and are pursuing exactly that path — turning a documented electrical effect into a licensable circuit primitive that any existing 180-nanometer-class line could, in principle, fabricate today.
+
+What remains is the unglamorous scale-up: wiring the two-transistor cell into arrays large enough to be a real neuromorphic chip, confirming the paper's yield and low-variability numbers hold across a full wafer and multiple wafer lots rather than a 30-die sample, and finding out — nobody has published this yet — whether the same physics survives a shrink to the nodes modern accelerators actually ship on. None of that is exotic materials science. All of it is the difference between a great paper and a part number.
+
+Concretely, that gap runs through three ordinary chip-design problems, each grounded in what the table above already shows and does not show. The device numbers — firing time, relaxation time, retention, endurance — are all reported at the level of one cell; a real array needs peripheral sense circuitry that can read a spike or a stored conductance state on a shared bit line without every other cell on that line interfering, the same array-addressing problem every memory technology has had to solve since core memory. The 100%-yield figure is real, though the paper does not state its sample size; qualifying a memory technology for production typically means demonstrating that yield across thousands of dice and multiple wafer lots, catching the rare failure modes a small sample simply cannot surface — and the paper's own 30-die sample, which demonstrates the separate result that the control-transistor scheme holds low variability across wafer position, is itself a reminder of how far a lab-scale sample sits from a production qualification run. And the 10-million-cycle endurance number was measured under the paper's own test conditions — a specific voltage schedule, a specific temperature — so a production part still needs the unglamorous work of characterizing endurance and timing across the full commercial temperature and voltage range a real product has to guarantee. None of these three problems is a research question anymore, in the sense that nobody has to discover new physics to solve them. They are exactly the kind of problem a foundry design-qualification team solves for a living — which is a genuinely different, and shorter, distance to travel than "invent a new material and get a fab to qualify it," the position most competing neuromorphic-memory proposals start from.
+
+The bigger lesson sits one level up from the specific device. For years, the neuromorphic-hardware field treated "make a transistor behave like a neuron" as a circuit-design problem to be solved with more transistors, more careful analog tuning, more silicon area per neuron. NSRAM exists because one lab accident revealed that a huge chunk of that circuit-design problem was already solved — for free, as an unwanted side effect every fab has spent decades of engineering effort trying to switch off. The next good idea in this space might not be a cleverer circuit. It might be finding the next parasitic effect everyone has been suppressing, and asking, for once, what it is actually good for.
