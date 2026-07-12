@@ -1,0 +1,325 @@
+---
+title: "Why 'Just Release the Wasp' Takes a Decade: Inside the Biocontrol Gauntlet"
+format: primer
+channels:
+  - science
+  - ideas
+summary: "Releasing one insect to control another sounds simple — find something that eats the pest, ship it over, let it go. It isn't simple, and the spotted lanternfly's decade-long hunt for a natural enemy shows exactly why."
+publishedAt: 2026-07-12T09:00:00.000Z
+sources:
+  - title: "Broadley, H.J. et al. (2023). Assessing the host range of Anastatus orientalis, an egg parasitoid of spotted lanternfly (Lycorma delicatula) using Eastern U.S. non-target species. Frontiers in Insect Science."
+    url: "https://www.frontiersin.org/journals/insect-science/articles/10.3389/finsc.2023.1154697/full"
+    tier: high
+    origin: researched
+  - title: "Broadley, H.J. et al. (2023). Assessing the host range of Anastatus orientalis... (PMC full text)"
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC10926408/"
+    tier: high
+    origin: researched
+  - title: "Wang, X. et al. (2026). Developmental morphology and reproductive potential of Dryinus sinicus, a promising biological control agent for spotted lanternfly. Annals of the Entomological Society of America 119(3):206."
+    url: "https://academic.oup.com/aesa/article/119/3/206/8650541"
+    tier: high
+    origin: researched
+  - title: "Ladin, Z.S. et al. (2023). Human-mediated dispersal drives the spread of the spotted lanternfly (Lycorma delicatula). Scientific Reports 13:1108."
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC9852583/"
+    tier: high
+    origin: researched
+  - title: "Uyi, O., Keller, J.A., Swackhamer, E., Hoover, K. (2021). Performance and host association of spotted lanternfly among common woody ornamentals. Scientific Reports 11:16019."
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC8338946/"
+    tier: high
+    origin: researched
+  - title: "Spotted Lanternfly — Animal and Plant Health Inspection Service (USDA APHIS)"
+    url: "https://www.aphis.usda.gov/plant-pests-diseases/slf"
+    tier: high
+    origin: researched
+  - title: "Spotted Lanternfly — National Invasive Species Information Center (USDA)"
+    url: "https://www.invasivespeciesinfo.gov/terrestrial/invertebrates/spotted-lanternfly"
+    tier: high
+    origin: researched
+  - title: "Spotted Lanternfly — Pennsylvania Department of Agriculture"
+    url: "https://www.pa.gov/agencies/pda/plants-land-water/spotted-lanternfly"
+    tier: high
+    origin: researched
+  - title: "PA Expands Spotted Lanternfly Quarantine to Four NE and NW Counties — Pennsylvania Department of Agriculture (April 4, 2025)"
+    url: "https://www.pa.gov/agencies/pda/newsroom/pa-expands-spotted-lanternfly-quarantine-to-four-ne-and-nw-count"
+    tier: high
+    origin: researched
+  - title: "Harper, J.K., Stone, W., Kelsey, T.W., Kime, L.F. (2019). Potential Economic Impact of the Spotted Lanternfly on Agriculture and Forestry in Pennsylvania. Penn State University / Center for Rural Pennsylvania."
+    url: "https://aese.psu.edu/research/centers/cecd/publications/economic-analyses-including-covid-19-analysis/economic-impact/spotted-lanternfly-2019.pdf"
+    tier: high
+    origin: researched
+  - title: "Spotted Lanternfly Frequently Asked Questions — Penn State Extension"
+    url: "https://extension.psu.edu/spotted-lanternfly-frequently-asked-questions"
+    tier: med
+    origin: researched
+  - title: "Spotted Lanternfly, Lycorma delicatula — Applied Biological Control Research, UC Riverside"
+    url: "https://biocontrol.ucr.edu/spotted-lanternfly-lycorma-delicatula-hemiptera-fulgoridae"
+    tier: med
+    origin: researched
+  - title: "Spotted Lanternfly Biocontrol — Biocontrol Lab, University of Rhode Island"
+    url: "https://web.uri.edu/biocontrol/spotted-lanternfly-biocontrol/"
+    tier: med
+    origin: researched
+  - title: "Researchers Zero In On Potential Natural Enemy of Spotted Lanternfly — Entomology Today (Entomological Society of America), July 2, 2026"
+    url: "https://entomologytoday.org/2026/07/02/dryinus-sinicus-potential-natural-enemy-spotted-lanternfly/"
+    tier: med
+    origin: researched
+  - title: "The lanternflies are here. Is it okay to stomp them? — Vox"
+    url: "https://www.vox.com/podcasts/494162/ethics-killing-invasive-lanternflies-conservation-moral-dilemma"
+    tier: low
+    origin: curated
+draft: false
+---
+
+import { RunnableCode, Chart, Annotation, StatBand, Pullquote, Timeline, Stepper, DataTable, ParameterPlay, Callout, Definition, Sidenote, Quiz, Detail, LayerStack } from "../../components/mdx";
+
+Somewhere in a USDA quarantine lab, a researcher is watching a wasp the size of a sesame seed decide whether to lay its eggs inside a native silk moth's egg instead of the pest it was imported to kill. That single behavioral choice, repeated across dozens of non-target species over dozens of trials, is the entire reason a solution everyone can already picture — import the pest's natural enemy, let it loose, watch the population crash — routinely takes the better part of a decade to reach a release order, if it clears the gate at all.
+
+The underlying question is not about any one insect. It is about a category of intervention called <Definition client:visible term="classical biological control" def="deliberately importing a natural enemy from a pest's native range and establishing it, permanently and self-sustainingly, in the invaded range — as opposed to spraying a pesticide, which must be reapplied, or a one-off release of sterile or infected individuals, which fades out on its own." />: **why is it so hard to fight an invasive species with another species, when nature does exactly that everywhere, all the time, for free?** The spotted lanternfly, an inch-long planthopper that has been marching across the eastern United States since 2014, is simply the clearest live case to build the answer around — because its own candidate biocontrol agent already failed the test once, in public, for a documented and very specific reason.
+
+This same insect happens to be the center of a completely different, far less technical [public argument](https://www.vox.com/podcasts/494162/ethics-killing-invasive-lanternflies-conservation-moral-dilemma): whether it's even ethical to kill one by stepping on it. That argument is fast, emotional, and personal — one bug, one boot, one instant. The argument this primer is actually about is the opposite in every dimension: slow, technical, and institutional, running for years inside a federal quarantine lab, and organized around a different ethical worry entirely — not "is killing this one insect wrong," but "what else might I accidentally kill, forever, if I get this next step wrong." Both debates are about the same animal. They are not the same debate.
+
+<StatBand client:visible caption="The scale of the problem the biocontrol program is trying to solve."
+  stats={[
+    { value: 2014, label: "FIRST U.S. DETECTION", sub: "Berks County, Pennsylvania", group: false, href: "https://www.pa.gov/agencies/pda/plants-land-water/spotted-lanternfly" },
+    { value: 19, label: "STATES + D.C. INFESTED", sub: "as of August 2025", group: false, href: "https://www.aphis.usda.gov/plant-pests-diseases/slf" },
+    { value: 57, label: "PA COUNTIES UNDER QUARANTINE", sub: "as of June 2026", group: false, href: "https://extension.psu.edu/spotted-lanternfly-frequently-asked-questions" },
+    { value: 324.9, prefix: "$", suffix: "M", label: "PROJECTED ANNUAL PA LOSS", sub: "if unchecked statewide — 2019 Penn State estimate", href: "https://aese.psu.edu/research/centers/cecd/publications/economic-analyses-including-covid-19-analysis/economic-impact/spotted-lanternfly-2019.pdf" }
+  ]} />
+
+Read those four numbers as a single trajectory, not four separate facts: one county in 2014, nineteen states and the District of Columbia within eleven years, fifty-seven counties in a single state that hasn't even fully spread within its own borders yet, and a nine-figure annual price tag attached to the version of the future where none of that slows down. Every intervention available right now — quarantines, mechanical removal, chemical treatment — is a response measured in counties and seasons. A durable natural enemy would be the first response measured on the insect's own scale: everywhere its range reaches, continuously, without anyone driving a truck out to check. That gap between "control that scales to the problem" and "control that doesn't" is the entire reason biological control is worth the years it costs to do carefully — and exactly why the shortcuts are so tempting, and so risky.
+
+## The misconception: "if it eats the pest, release it"
+
+Here is the mental model almost everyone brings to biological control, and it is almost entirely wrong: somewhere in the pest's home range there exists a natural enemy — a wasp, a fungus, a beetle — that already keeps the population in check there. Find it, confirm it eats the pest in a cage, ship it here, let it go. Nature already solved this problem once; just relocate the solution.
+
+The flaw in that model is not that natural enemies don't exist — they do, and one is central to this whole story. The flaw is what "confirm it eats the pest in a cage" is quietly assuming: that testing a candidate against a handful of local species, seeing it ignore most of them and go straight for the target, is good enough evidence of safety. It isn't, and the reason is closer to statistics than to entomology.
+
+Imagine a candidate agent that will attack some *fraction* of the beneficial or endangered non-target insects it's exposed to — not because it's careless, but because insect chemistry and behavior are messy and few real predators or parasitoids are perfectly monogamous. Run the numbers on how many species you'd need to test before you could be confident you'd caught that risk, rather than gotten lucky with an unrepresentative sample:
+
+<RunnableCode client:visible caption="Predict first: if a candidate agent truly attacks 10% of non-target species it meets, how many species must you test to have good odds of catching that in your trial? Then run it."
+  code={`// A toy model of host-range testing statistics.
+// Suppose a candidate biocontrol agent has some TRUE underlying
+// probability of attacking a given non-target species when exposed to it.
+// If you only test a handful of species, you can easily see ZERO
+// non-target attacks purely by chance -- and wrongly conclude "it's safe."
+
+function probabilityOfMissingRisk(trueAttackRate, numSpeciesTested) {
+  // Chance that NONE of the tested species get attacked, even though
+  // the agent really does attack this fraction of species it meets.
+  return Math.pow(1 - trueAttackRate, numSpeciesTested);
+}
+
+const trueAttackRate = 0.10; // the agent secretly attacks 10% of species it meets
+const testSizes = [3, 6, 12, 20, 36];
+
+console.log("If the TRUE non-target attack rate is 10%:");
+for (const n of testSizes) {
+  const missProb = probabilityOfMissingRisk(trueAttackRate, n) * 100;
+  console.log("  test " + String(n).padStart(2) + " species -> " +
+    missProb.toFixed(1) + "% chance you see ZERO attacks and wrongly call it safe");
+}
+
+return "small test panels can hide real risk almost entirely";`} />
+
+Test only three or six species — the number a casual "does it eat the pest" cage trial might use — and there is a real chance you conclude the agent is perfectly safe purely because you got lucky with your sample, even if it genuinely poses a risk to one insect family in ten. That is precisely why the actual peer-reviewed spotted lanternfly host-range study did not test six species. It tested <Annotation client:load term="36 non-target insect species" note="Broadley et al. (2023) tested Anastatus orientalis against 36 non-target insect species spanning 6 orders and 18 families in no-choice and choice trials. Frontiers in Insect Science." /> spanning six taxonomic orders and eighteen families — and even that large, methodical panel still found real risk. Once you've broken the "a quick cage test is enough" model, the rest of this primer builds the actual gauntlet a candidate has to survive, using that exact case as the worked example throughout.
+
+<Quiz client:visible caption="check your intuition before continuing"
+  questions={[
+    { prompt: "A candidate wasp attacks 3 out of 3 tested non-target species zero times. What can you conclude?", choices: ["It definitely never attacks non-target species", "It might still pose real risk — small samples can hide it", "It is ready for field release"], answer: 1, explain: "Zero observed attacks in a tiny sample is weak evidence of safety — the toy model above shows a truly-risky agent can still produce zero attacks across a handful of trials by chance alone." },
+    { prompt: "Why test species the pest's parasitoid is NOT obviously related to?", choices: ["To pad the study with extra data", "Because host use in real insects doesn't track taxonomy cleanly", "Because APHIS requires a fixed number regardless of relevance"], answer: 1, explain: "Broadley et al.'s panel found attacks concentrated in specific families across multiple orders (not just close relatives of the pest), which is exactly why taxonomic breadth — not just testing look-alikes — is the point of a large panel." }
+  ]} />
+
+## Concept 1: why the invader wins before any biocontrol enters the picture
+
+Before asking why a natural enemy is hard to *deploy*, it's worth understanding why one is needed at all — why an introduced insect can explode in the first place. The mechanism has a name: the <Definition client:visible term="enemy release hypothesis" def="the idea that a species introduced outside its native range leaves behind the specialist parasites, predators, and pathogens that evolved to attack it there — and so faces far less population pressure in the new range than in the old one." />. Nothing in the invaded range is calibrated to the newcomer yet; the specialist wasps, flies, and fungi that spent millions of years learning its weaknesses simply aren't here. That alone explains a lot of invasive-species population booms, and it is also the entire logic behind classical biological control: if the problem is a missing natural enemy, the fix is to go find one and bring it over deliberately, under far more careful conditions than the "just ship it" version of the idea implies.
+
+But the spotted lanternfly's spread has a second, more specific accelerant, and it is a plant, not an insect. The lanternfly is broadly polyphagous — the National Invasive Species Information Center lists <Annotation client:load term="more than 65 plant species" note="The spotted lanternfly is known to feed on more than 65 plant species in the United States, per the USDA's National Invasive Species Information Center — a genuinely broad host range, which is part of why one plant relationship still stands out as disproportionately important." /> as documented hosts — so on paper, no single plant should be able to bottleneck it. In practice, one host towers over the rest.
+
+<Annotation client:load term="Tree-of-heaven" note="Ailanthus altissima, itself an invasive tree from China, is the spotted lanternfly's preferred host — and, like the lanternfly, arrived from the same region of Asia, so the insect encountered a familiar host plant already established across the invaded range." /> (*Ailanthus altissima*) is an invasive tree, also originally from China, that has become common in exactly the disturbed, human-altered ground — roadsides, rail corridors, vacant lots — where the spotted lanternfly first got a foothold. That is not a coincidence of timing; it is a measurable fitness relationship. A 2021 study reared spotted lanternflies with and without access to tree-of-heaven and tracked what happened to their reproduction:
+
+<Chart client:visible mark="bar" x="treatment" y="eggMasses" height={320}
+  caption="Female spotted lanternflies laid nearly 7× more egg masses with access to tree-of-heaven than without it (mean egg masses per female, ±SE 2.13 and 0.42). Uyi, Keller, Swackhamer & Hoover (2021), Scientific Reports."
+  data={[
+    { treatment: "With tree-of-heaven access", eggMasses: 19.20 },
+    { treatment: "Without tree-of-heaven access", eggMasses: 2.80 }
+  ]} />
+
+Nineteen egg masses per female versus 2.8 is not a marginal edge — it's close to an order of magnitude, and it came bundled with roughly 10% higher survival and faster development into adulthood on tree-of-heaven-fed insects. The tree doesn't just tolerate the insect; it *manufactures* more of it. Where the two species' ranges already overlap — highway medians, forest edges, rail yards — the lanternfly isn't invading empty ecological space. It's invading space that was pre-stocked with its favorite food by an earlier invasion.
+
+<Callout kind="key-insight" title="The beachhead effect">
+Two invasive species from the same region of the world can accelerate each other. Tree-of-heaven didn't need to "help" the lanternfly on purpose — it simply provided the single highest-fitness host plant, densely, in exactly the corridors along which people and vehicles move. The insect supplies the mobility; the tree supplies the fuel.
+</Callout>
+
+Land managers already knew this well enough to act on it before any biocontrol candidate existed: Pennsylvania's own quarantine guidance treats removing tree-of-heaven as a core management tactic, not an afterthought, alongside egg-mass destruction and vehicle inspection. But cutting down an invasive tree one property at a time is exactly the kind of slow, local, labor-intensive fix that a self-sustaining natural enemy is meant to make unnecessary — a wasp doesn't need a landowner's permission to cross a fence line. That's the appeal of biocontrol in one sentence, and it's also exactly why getting the candidate wrong would be so much harder to undo than a bad quarantine order: cut down the wrong trees and you can always stop; release the wrong wasp and it keeps reproducing on its own, indefinitely, everywhere its host range lets it go.
+
+This is also why the timeline below is not a story about one bad year. It's a story about a beachhead that kept getting easier to expand from, county by county, for over a decade.
+
+<Timeline client:load caption="2014 – 2026: from a Berks County wooded lot to a nineteen-state infestation"
+  events={[
+    { date: "2014-01-01", label: "First U.S. detection", detail: "Confirmed in Berks County, Pennsylvania — the first known population of Lycorma delicatula in North America." },
+    { date: "2019-12-01", label: "Penn State economic-impact study", detail: "Estimated statewide losses of up to $554 million a year and nearly 5,000 jobs under a worst-case unchecked-spread scenario." },
+    { date: "2023-01-19", label: "Human-mediated dispersal confirmed", detail: "A Scientific Reports study showed vehicle- and rail-borne movement, not natural flight, explains most of the observed spread pattern." },
+    { date: "2023-04-18", label: "Anastatus orientalis verdict published", detail: "Peer-reviewed host-range testing found the tested haplotype (Haplotype C) attacked native moths and stink bugs too broadly for release; other haplotypes remain under evaluation." },
+    { date: "2025-04-04", label: "PA quarantine expands again", detail: "Four more counties added, continuing a near-annual pattern of quarantine-zone growth since 2014." },
+    { date: "2026-07-02", label: "Dryinus sinicus petition reported", detail: "A second candidate parasitoid clears host-range testing; USDA APHIS review is expected to take several more years." }
+  ]} />
+
+## Concept 2: how it actually spreads — and why that matters for control
+
+If the lanternfly only crawled and flew under its own power, quarantines drawn around infested counties would work reasonably well: contain the population, let natural spread proceed slowly at the edges, buy time. That is not what the evidence shows. A 2023 study built <Annotation client:load term="agent-based models" note="Computational simulations in which many individual insects, each following simple movement and reproduction rules, interact across a landscape — used here to test which combination of rules best reproduces the observed spread pattern." /> of spotted lanternfly spread across the mid-Atlantic and tested how well different assumptions about movement predicted the pattern actually observed on the ground:
+
+<Chart client:visible mark="bar" x="model" y="accuracy" height={320}
+  caption="Adding as few as 3 human-assisted movement events per year lifted the model's accuracy from 33% to 92% true-positive predictions of observed spread. Ladin et al. (2023), Scientific Reports."
+  data={[
+    { model: "Natural dispersal only", accuracy: 33 },
+    { model: "+ human-mediated dispersal (≥3 events/yr)", accuracy: 92 }
+  ]} />
+
+A model built purely on how far a lanternfly can walk or fly correctly predicted only 33% of where the insect actually turned up. Add a vehicle- or train-borne "hitchhiking" event — as few as three successful ones per year, out of everywhere the insect could plausibly ride along — and the same model's accuracy nearly triples, to 92%. The same study found tree-of-heaven's distribution alone explained 59% of where the species-distribution model predicted suitable habitat, and that both the predicted and observed spread pattern closely track the road and rail network — the exact corridors where tree-of-heaven concentrates.
+
+<Detail summary="Go deeper: how the model was actually built">
+The simulation ran individual insects forward across a landscape gridded into 4-square-kilometer cells, over 13 annual time steps, with 1,000 independent iterations per scenario to average out randomness. Researchers varied the pest's intrinsic per-generation growth rate across a range of 0.25 to 1.5, tested both random and non-random movement behavior, and layered in human-mediated dispersal events at rates from 0 to 10 per year. The headline result — that as few as 3 successful hitchhiking events annually pushed prediction accuracy from 33% to 92% — held up even at the low end of that range, which is what makes it a robust finding rather than an artifact of one generous assumption.
+</Detail>
+
+Put the ecology and the dispersal mechanism together and the picture sharpens: an insect that thrives disproportionately on a specific invasive tree, which itself concentrates along the transport corridors that also carry the insect long-distance whenever a vehicle brushes against an egg mass.<Sidenote>The practical upshot: county-line quarantines and don't-move-firewood campaigns aren't symbolic. They're targeting the dominant real mechanism, not a minor one — this is why every quarantine order explicitly restricts moving outdoor equipment, vehicles, and nursery stock, not just live insects.</Sidenote> Neither factor alone explains a nineteen-state spread in twelve years. Together, they do.
+
+This is also why the current quarantine and prevention guidance published by USDA APHIS reads the way it does — not as generic "watch out for bugs" advice, but as a direct response to the two mechanisms above: check vehicles before leaving an infested area, destroy egg masses on contact, and inspect outdoor items (furniture, firewood, camping gear, nursery stock) before moving them anywhere. Every one of those instructions targets the human-mediated dispersal channel specifically, because the modeling shows that's the channel doing 92% of the predictive work, not the insect's own legs and wings. It is exactly why land managers increasingly ask whether removing tree-of-heaven and enforcing quarantines can ever be *enough* on their own — both are real, working interventions, and both are also permanently reactive, chasing an insect that a natural enemy could instead suppress everywhere at once, including the huge majority of the landscape nobody is actively watching or managing on any given day.
+
+## Concept 3: the gauntlet a natural enemy has to survive
+
+This is the part where the "just release the wasp" intuition runs into reality, and where the spotted lanternfly program supplies an unusually clean before-and-after case study — one candidate that failed, and one still working its way through.
+
+Notice, first, where the search even starts. Both candidates discussed in this primer were found in China — not because Chinese entomologists happened to publish convenient papers, but because that's where the spotted lanternfly is native, and the enemy release hypothesis from Concept 1 points directly there: whatever specialist natural enemies keep this insect in check where it evolved are the ones missing here. Researchers don't search randomly across the globe for "something that eats lanternflies" — they search the pest's own home range for the organisms that co-evolved with it, on the logic that a natural enemy that already survives alongside a healthy population of its host, generation after generation without wiping it out, is far more likely to be a stable, self-sustaining control agent than something improvised from a distantly related pest relationship. That targeted search is itself the first filter, well before any lab testing begins — it's why the pipeline below opens with "foreign exploration" rather than "screen every predatory insect available."
+
+<Stepper client:visible mode="reveal" caption="The classical biological-control pipeline, worked through the spotted lanternfly's own two candidates"
+  steps={[
+    { title: "1. Foreign exploration and secure quarantine import", body: "<p>Researchers search the pest's native range — China, in this case — for organisms that attack it there, then import promising candidates into a secure USDA quarantine facility (the Forest Pest Methods Laboratory in Buzzards Bay, Massachusetts, has led this work). Nothing is released into the open at this stage; every trial happens behind containment.</p><p>Two candidates reached this stage for the spotted lanternfly: <em>Anastatus orientalis</em>, an egg parasitoid, and <em>Dryinus sinicus</em>, a nymphal parasitoid.</p>" },
+    { title: "2. No-choice host-specificity testing", body: "<p>Each candidate is confined with a single non-target species at a time — no alternative host available — and researchers record whether it attacks and whether its offspring develop successfully. This is the blunt first filter: does the agent have the physical/biological capacity to use this species at all?</p><p>For <em>Anastatus orientalis</em>, 16 of 36 tested non-target species were parasitized and produced offspring under no-choice conditions. The colony used for this testing was genotyped and confirmed to be a single genetic lineage, Haplotype C — one of several known <em>A. orientalis</em> haplotypes in China, the others of which are being kept as separate isofemale lines for future testing.</p>" },
+    { title: "3. Choice testing", body: "<p>A candidate that attacks a non-target species when it has no alternative may behave very differently when the real pest is available too. Choice tests offer both simultaneously. This step exists precisely because no-choice results alone overstate real-world risk — and precisely because they can still reveal it.</p><p>Only 10 of the 16 species attacked in no-choice trials were still attacked once <em>A. orientalis</em> was offered a choice — a meaningful narrowing, but not a clean pass.</p>" },
+    { title: "4. Taxonomic breadth, not just look-alikes", body: "<p>Testing only the pest's close relatives isn't enough, because host use in these wasps doesn't track taxonomy cleanly. Broadley et al.'s panel spanned six insect orders and eighteen families. The families consistently attacked included Coreidae, Fulgoridae (the lanternfly's own family), Pentatomidae, and — critically — Saturniidae, a family that includes native North American silk moths.</p><p>That single family is the whole verdict in miniature: a wasp effective enough to parasitize 20–80% of spotted lanternfly egg masses in China (and up to 40% of the eggs within a mass) was also willing to parasitize the eggs of moths nobody wants collateral damage to.</p>" },
+    { title: "5. Petition and multi-year federal review", body: "<p>Results go to USDA APHIS as a formal petition. Federal review of a proposed biocontrol release typically involves an environmental assessment, consultation on impacts to protected species, and — for many programs — a public comment period, on top of the agency's own technical evaluation. Entomology reporting on the current spotted lanternfly candidate describes this stage as taking 'the next few years' even after a clean host-range result.</p>" },
+    { title: "6. Verdict: release, reject, or send back for more data", body: "<p><em>Anastatus orientalis</em> Haplotype C — the specific genetic lineage tested — did not clear step 4: its host range was judged too broad, particularly its native-moth risk, and researchers have concluded this haplotype is unlikely to be approved for U.S. release. The paper is explicit that the verdict covers this one lineage; other detected <em>A. orientalis</em> haplotypes have been separated into isofemale lines and are slated for their own future host-range testing, so the species itself isn't necessarily closed off, just the strain evaluated so far. <em>Dryinus sinicus</em>, the nymphal parasitoid, has reportedly cleared host-specificity testing with no non-target risk detected and had a release petition submitted as of mid-2026, with regulatory review still pending.</p>" }
+  ]} />
+
+The table below is the actual data behind step 4 for *Anastatus orientalis* — not a hypothetical, the real published result that ended its candidacy:
+
+<DataTable client:load caption="Anastatus orientalis host-range test results by insect order (Broadley et al. 2023)"
+  columns={[
+    { key: "order", label: "Insect order tested", type: "string" },
+    { key: "result", label: "Attacked in no-choice tests?", type: "string" }
+  ]}
+  rows={[
+    { order: "Hemiptera (incl. Coreidae, Fulgoridae, Pentatomidae)", result: "Yes — families consistently attacked" },
+    { order: "Lepidoptera (incl. Saturniidae, native silk moths)", result: "Yes — families consistently attacked" },
+    { order: "Coleoptera", result: "No — never attacked" },
+    { order: "Blattodea", result: "No — never attacked" },
+    { order: "Mantodea", result: "No — never attacked" },
+    { order: "Phasmatodea", result: "No — never attacked" }
+  ]} />
+
+<Pullquote cite="Broadley et al. (2023), Frontiers in Insect Science" href="https://www.frontiersin.org/journals/insect-science/articles/10.3389/finsc.2023.1154697/full" kind="quote">
+In Chinese field collections, A. orientalis parasitizes at a relatively high rate, ranging from 20 to 80% of egg masses attacked and up to 40% of eggs parasitized within individual egg masses.
+</Pullquote>
+
+Read that figure and the disqualification together, and the crux of the whole primer sits in one contrast: this haplotype was not rejected for being *ineffective* — quite the opposite, that parasitism rate is genuinely strong pest control. It was rejected for being effective in the wrong direction as well as the right one. A weak candidate is an easy no. A strong candidate with a broad host range is the hard case — the one the entire multi-year testing apparatus exists to catch. And even that verdict is scoped: Broadley et al. tested a single genotyped lineage, Haplotype C; the other *A. orientalis* haplotypes found in China have been split into their own isofemale lines specifically so they can be tested separately, so this result closes the door on one strain, not necessarily the species.
+
+Notice, too, why the panel is built the way it is: no-choice tests first, then choice tests, never the reverse. If researchers only ran choice tests, a wasp with a strong innate preference for the pest could look perfectly safe simply because the pest was always the more attractive option on the table — the risk to a non-target species would only show up in the rare real-world moment when no lanternfly eggs happen to be nearby. No-choice testing removes that escape hatch: with nothing else available, does the wasp use the non-target host at all? Sixteen species said yes. Only then does choice testing answer the second, more field-relevant question — given a real choice, does that capacity actually get exercised? Ten of those sixteen still said yes. Running the tests in the opposite order would have quietly hidden exactly the risk the whole program exists to find.
+
+The panel size itself is a deliberate trade-off, not an arbitrary number. Testing every insect species that shares habitat with the spotted lanternfly is not logistically possible — there are thousands of candidates in the eastern United States alone — so researchers prioritize taxonomically and ecologically relevant species: close relatives of the pest (which share host cues), other members of families already known to be attacked by related parasitoids, and species of particular conservation concern, like native silk moths. Thirty-six species across six orders is large enough to catch a broad-spectrum risk pattern — which is exactly what it did — while still being small enough to complete in a few years rather than a few decades.
+
+<Detail summary="Go deeper: even this careful testing has an honest limitation">
+The researchers who ran the Anastatus orientalis trials flagged their own caveat directly in the paper: laboratory host-range tests measure *physiological* host range — what a wasp is biologically capable of parasitizing when confined with a species in a cage — which can overestimate the *ecological* host range it would actually exploit under open-field conditions, where a preferred host is usually available and non-target species may not co-occur in the same microhabitat or season. That's not a flaw in the methodology; it's the reason field host-range studies in the agent's native range are sometimes layered on top of lab testing before a final petition, and it's part of why "the lab says it's risky" is treated as a serious red flag rather than definitively disqualifying on its own — though for Anastatus orientalis, the risk to native silk moths was judged serious enough that it didn't need a field study to settle the verdict.
+</Detail>
+
+Once a candidate does clear that bar, the paperwork itself is not a formality — it's a stack of independent checks, each capable of stopping or delaying a release on its own:
+
+<LayerStack client:visible caption="What a petition to USDA APHIS actually has to survive, beyond the host-range data itself."
+  layers={[
+    { label: "Agency technical evaluation", note: "APHIS's own entomologists and risk assessors review the host-range dataset, methodology, and taxonomic breadth of testing.", detail: "Internal review" },
+    { label: "Environmental assessment", note: "A formal review of the release's likely environmental impact, following the same general framework used for other regulated organism releases.", detail: "NEPA-style review" },
+    { label: "Protected-species consultation", note: "Potential impacts to threatened or endangered species — such as native moths related to the ones flagged in host-range testing — get separate scrutiny.", detail: "Interagency consult" },
+    { label: "Public and stakeholder comment", note: "Many biocontrol-organism reviews include a period where growers, conservation groups, and the public can weigh in before a final decision.", detail: "Open comment" }
+  ]} />
+
+Each of those layers can independently surface a concern the host-range trials didn't catch, and each takes real calendar time to run — which is the concrete, unglamorous reason a program with genuinely clean lab results still gets described, in current reporting on the spotted lanternfly's own candidate, as needing regulatory review "over the next few years" even after the science looks settled.
+
+### Why even a clean pass still takes years to matter
+
+Suppose a candidate *does* clear every host-range hurdle, as *Dryinus sinicus* appears to have. Release still isn't the finish line — suppression is, and suppression compounds slowly. The nymphal parasitoid's own performance data give a sense of the arithmetic: each female wasp lives roughly two months and, in that time, parasitizes on the order of 137 nymphs and lays around 176 eggs. That is a genuinely strong reproductive rate for a parasitoid. But turning "one generation of wasps kills a meaningful fraction of one generation of nymphs" into "the regional lanternfly population is measurably smaller" requires that suppression to compound across several lanternfly generations, in the field, against a population that is also still spreading. Play with the toy model below — it is not a prediction of the real outcome, only an illustration of why per-generation suppression has to be sustained and non-trivial before it shows up as a population-level effect years later:
+
+<ParameterPlay client:visible
+  params={[
+    { key: "p", label: "per-generation parasitism rate", min: 0, max: 0.6, default: 0.3, step: 0.01 },
+    { key: "growth", label: "pest's unchecked per-generation growth multiplier", min: 1, max: 3, default: 2, step: 0.1 }
+  ]}
+  expr="100 * pow(growth * (1 - p), x)"
+  xRange={[0, 12]}
+  xLabel="generations since a biocontrol agent establishes"
+  yLabel="relative population index (start = 100)"
+  readouts={[
+    { label: "population index after 6 generations", expr: "100 * pow(growth * (1 - p), 6)", unit: "" },
+    { label: "parasitism rate needed to merely hold population flat", expr: "1 - 1/growth", unit: "" }
+  ]}
+  caption="A simplified compounding model: with no natural enemy, an unchecked population multiplies every generation; a sustained per-generation parasitism rate has to exceed 1 − 1/growth just to stop the increase, and meaningfully more than that to actually shrink it." />
+
+Drag the parasitism-rate slider down toward zero and the curve rockets upward — that's the world before any natural enemy establishes. Push it up past the "hold population flat" readout and the curve finally bends down, but slowly, because each generation only nibbles at a fraction of the surviving population. This is the honest reason "release the wasp" is a multi-year commitment even after approval: a biocontrol agent has to establish a self-sustaining population of its own, spread to match the pest's own range, and then out-compound the pest's growth rate, generation after generation — not deliver a one-time knockout.
+
+### What makes the second candidate different
+
+*Dryinus sinicus* is a genuinely different kind of organism from *Anastatus orientalis*, and the difference is worth understanding on its own terms, not just as "the one that passed." Where *A. orientalis* is an *egg* parasitoid — it lays inside a lanternfly egg mass before the insect has even hatched — *D. sinicus* is a *nymphal* parasitoid: the female locates a young, already-hatched lanternfly (a first-, second-, or third-instar nymph), stings it, and lays an egg that develops externally while embedded in the living host, eventually killing it. It attacks a completely different life stage through a completely different mechanism, which matters because host-range risk is partly about a wasp's *searching* behavior — what cues it uses to find a target — and those cues differ sharply between "locate a stationary egg mass" and "locate and subdue a mobile juvenile insect."
+
+The reproductive-performance numbers used above come from a study that reared and tracked more than <Annotation client:load term="10,000 nymphs" note="The Dryinus sinicus reproductive-potential study tracked outcomes across more than 10,000 spotted lanternfly nymphs to characterize the wasp's lifetime parasitism rate, egg output, and host-feeding behavior. Wang et al. (2026), Annals of the Entomological Society of America." /> lanternfly nymphs to characterize how the wasp behaves across its roughly two-month adult lifespan — not a handful of cage trials, but a dataset large enough to report the parasitism rate, egg count, and host-feeding rate each as means with real statistical spread (137.2 ± 34.9 nymphs parasitized; 175.8 ± 46.1 eggs laid; 20.8 ± 3.8 nymphs killed outright and consumed for nutrition rather than parasitized). The host-specificity side of the work is separate from that reproductive study — reporting on it describes host-specificity testing that found the wasp "poses no risk to nontarget species," a materially different verdict from the "wide host range... unlikely to be approved" conclusion that ended the Haplotype C candidacy of *A. orientalis*. The University of Rhode Island's biocontrol lab has supported that testing directly, rearing colonies of non-target planthoppers and treehoppers — including the two-striped planthopper and the wide-footed treehopper — specifically so *D. sinicus* could be tested against real, ecologically relevant non-target insects rather than whatever happened to be convenient.
+
+None of that is a guarantee the wasp gets approved, and the researchers behind it are explicit that a single natural enemy — even a well-matched one — will not be a silver bullet on its own:
+
+<Pullquote cite="Entomology Today, reporting on Wang et al. (2026)" href="https://entomologytoday.org/2026/07/02/dryinus-sinicus-potential-natural-enemy-spotted-lanternfly/" kind="quote">
+Long-term control will likely require broad, sustainable management strategies.
+</Pullquote>
+
+That line matters as much as any of the numbers above. Biocontrol, done properly, is not a replacement for quarantines, tree-of-heaven removal, or egg-mass scouting — it's meant to be one more layer added on top of those, the one layer that keeps working on land nobody is actively managing, which is most of the invaded range at any given time. A petition has reportedly been submitted to USDA APHIS for *D. sinicus* as of mid-2026; if the pattern holds from every classical-biocontrol program described above, the review itself — not the science — is the next multi-year phase.
+
+## Why the stakes justify the wait
+
+None of this caution is bureaucratic for its own sake — the potential losses are large and concrete enough that both under-testing and giving up on biocontrol carry real costs. It's worth pausing on why a Pennsylvania-focused study is the right lens for a primer about a nineteen-state problem: Pennsylvania is both the site of the original 2014 detection and, a decade later, still the state with the deepest, most granular economic modeling of the pest's impact — the same beachhead dynamic from Concept 1 that let the insect establish first is also why the best data exists there first. A 2019 Penn State study, built from a survey of 83 agricultural and forestry specialists combined with USDA crop-value data from the 2017 Census of Agriculture, modeled the state's exposure directly, at three different geographic scales — the fourteen-county quarantine zone as it stood in 2019, the twelve adjacent counties most likely to be next, and all 67 of the state's counties if containment failed entirely:
+
+<Chart client:visible mark="bar" x="scenario" y="lossM" height={320}
+  caption="Projected annual economic impact of unmanaged spotted lanternfly spread in Pennsylvania, expected vs. worst-case scenarios (2019 Penn State/Center for Rural Pennsylvania study)."
+  data={[
+    { scenario: "Quarantine zone, expected", lossM: 50.1 },
+    { scenario: "Quarantine zone, worst case", lossM: 92.8 },
+    { scenario: "Statewide, expected", lossM: 324.9 },
+    { scenario: "Statewide, worst case", lossM: 554.0 }
+  ]} />
+
+Under the study's expected-damage scenario, an uncontained spread across all of Pennsylvania was projected to cost the state roughly $324.9 million a year and about 2,810 jobs; the worst-case scenario put that at $554.0 million and nearly 5,000 jobs. The pain is not evenly spread across agriculture — <Annotation client:load term="grapes" note="Grapes accounted for 81% of the quarantine zone's direct economic losses among fruit, nut, and berry crops in the study, despite representing a modest share of total acreage — reflecting the crop's high per-acre value and specialists' rating of vines as the single most susceptible specialty crop to spotted lanternfly feeding damage." /> alone accounted for 81% of the quarantine zone's projected fruit, nut, and berry losses, because vines were rated the single most vulnerable specialty crop and carry outsized value per acre. Hardwood timber — soft maple, oak, black walnut — was the other major loss category: the study put the direct value of statewide timber damage (the standing wood itself, degraded by feeding, before any ripple effect through the wider economy) at $152.6 million a year even under the "expected," not worst-case, scenario.
+
+Zooming into which sectors actually bear that cost is more instructive than the headline totals, because it shows the loss compounding through the wider economy, not just landing on growers directly:
+
+<DataTable client:load caption="Modeled annual economic impact by geography and industry, Pennsylvania (Harper, Stone, Kelsey & Kime, 2019)"
+  columns={[
+    { key: "scenario", label: "Geography / scenario", type: "string" },
+    { key: "totalM", label: "Total economic impact ($M/yr)", type: "number", align: "right" },
+    { key: "jobs", label: "Jobs affected", type: "number", align: "right" },
+    { key: "worstJobs", label: "Worst-case jobs affected", type: "number", align: "right" }
+  ]}
+  rows={[
+    { scenario: "Quarantine zone (agriculture + forestry)", totalM: 50.1, jobs: 484, worstJobs: 927 },
+    { scenario: "Quarantine zone + adjacent counties", totalM: 89.2, jobs: 843, worstJobs: 1665 },
+    { scenario: "Statewide (all 67 counties)", totalM: 324.9, jobs: 2810, worstJobs: 4987 }
+  ]} />
+
+Two industries absorb most of that ripple effect once the direct timber damage above is run through the study's economy-wide modeling (accounting for lost wages, reduced purchasing from suppliers, and the rest of the multiplier chain). Commercial logging is the single largest dollar loss of any industry sector in every scenario — a projected $147.6 million a year statewide even under the expected, non-worst-case, scenario — because SLF feeding weakens the growth and long-term value of soft maple, oak, and black walnut stands over years, not just one season. Greenhouse, nursery, and floriculture production is the largest *employment* loss, projected at 361 jobs statewide under the expected scenario and up to 946 under worst-case, because nursery stock is rated highly susceptible and the sector is labor-intensive relative to its acreage. Vineyards, meanwhile, are a smaller employer but the single most susceptible high-value crop the study measured — every specialist survey respondent who rated grapes called them at least moderately susceptible, and the great majority called them highly susceptible, the strongest consensus of any crop in the study.
+
+That same 2019 Penn State study put a number on managing the problem short of biocontrol, too. Best-management-practice compliance — training, monitoring, tree-of-heaven removal, load inspection — was estimated to cost Pennsylvania's agricultural operations $106.4 million statewide and its timber industry another $219.6 million, largely recurring, not one-time, costs. For the timber industry specifically, 80–86% of that BMP cost is tree-of-heaven removal and herbicide treatment alone (at roughly $503 per 100 trees cleared), because sawmills and forest landowners are assumed to be carrying the host plant on their own land; for agriculture, by contrast, 69–70% of the cost is ongoing monitoring and truck/load inspection — every vehicle and load leaving a quarantined operation checked, over and over, for hitchhiking egg masses, for as long as the quarantine holds. Every one of those inspection hours is a direct, recurring cost of *not* having a natural enemy doing that suppression work in the background, for free, everywhere at once — which is the economic argument for biocontrol in one sentence, and also the reason getting the candidate wrong would be so expensive to live with.
+
+Set against those numbers, the cost of doing host-range testing right — years of quarantine-lab trials against three dozen non-target species — looks less like caution for its own sake and more like an insurance premium against a second, self-inflicted invasion. Releasing a wide-host-range wasp to save vineyards is not obviously a win if it also devastates native silk moth populations that pollinators, birds, and the rest of the food web depend on; that trade would just swap one ecological problem for another, permanently, since a released biocontrol agent — unlike a pesticide or an inspection program — cannot be recalled once it establishes.
+
+## Where this leaves you
+
+Carry one mental model forward: **biological control is not "find a predator, ship it, release it." It is a filter engineered specifically to catch the strong-but-broad candidates, because the weak ones were never going to be released anyway.** A candidate that does nothing to the pest fails on effectiveness and never makes it past early trials. A candidate that works too well against too many things — like *Anastatus orientalis*, genuinely capable of destroying up to 80% of spotted lanternfly egg masses in its native range — fails on specificity, and that failure is the harder, more consequential one to catch, because it only shows up when someone deliberately tests three dozen unrelated species instead of three.
+
+The spotted lanternfly's own program is still mid-story. A second candidate, *Dryinus sinicus*, has reportedly cleared the host-specificity hurdle that sank the first one, with a release petition now in front of USDA APHIS and reviewers expecting the process to run several more years. Whatever the verdict, the same six-step gauntlet — import, no-choice test, choice test, taxonomic breadth, petition, multi-year federal review — will have done its job either way: not by moving fast, but by making sure that when a wasp finally is released into the wild on purpose, it was never going to be the story anyone regrets.
+
+It's also worth holding onto the two mechanisms that made this particular invasion as bad as it got, because they generalize far beyond one planthopper. First, the enemy release hypothesis: an introduced species outruns whatever specialist controls existed back home, and the population math in the toy model above is exactly why that head start compounds so fast — a modest per-generation growth advantage, left completely unchecked, turns into an order-of-magnitude population difference within a handful of years. Second, invasions rarely travel alone: tree-of-heaven didn't cause the lanternfly's spread by itself, and human transport networks didn't either, but the two together — an unrelated earlier invasion providing the fuel, and ordinary commerce providing the mobility — explain far more of the pattern than either factor does separately. Any invasive species assessment that only asks "how far can it walk" or "what does it eat" without asking "what else got here first, and what corridors is it riding," is asking half the question.
+
+The next time "why don't they just release something that eats it" comes up about any invasive species, the sharper question is the one the testing panel is built to answer: *tested against what, and how many other things did it turn out to eat too?* And if the answer is "we don't know yet" — that's not bureaucracy stalling a good idea. That's the process working exactly as designed, on a timeline measured in years because the alternative, done carelessly, is measured in irreversible decades.

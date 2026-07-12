@@ -1,0 +1,362 @@
+---
+title: "Forty-Two Billion in Eight Hours: The Bank Run at the Speed of a Push Notification"
+format: dispatch
+channels:
+  - finance
+  - tech
+summary: "On March 9, 2023, depositors pulled $42 billion from Silicon Valley Bank in about eight hours — not because of a rumor, but because a duration-mismatched balance sheet met a concentrated, mobile-banking depositor base, and the Fed's own postmortem says technology, not fear, reset the clock speed of a bank run."
+publishedAt: 2026-07-12T09:00:00.000Z
+sources:
+  - title: "Federal Reserve — Review of the Federal Reserve's Supervision and Regulation of Silicon Valley Bank (Barr Report)"
+    url: "https://www.federalreserve.gov/publications/files/svb-review-20230428.pdf"
+    tier: high
+    origin: researched
+  - title: "California DFPI — Order Taking Possession of Property and Business of Silicon Valley Bank"
+    url: "https://dfpi.ca.gov/wp-content/uploads/sites/337/2023/03/DFPI-Orders-Silicon-Valley-Bank-03102023.pdf"
+    tier: high
+    origin: researched
+  - title: "California DFPI — Review of DFPI's Oversight and Regulation of Silicon Valley Bank (May 8, 2023)"
+    url: "https://dfpi.ca.gov/wp-content/uploads/sites/337/2023/05/Review-of-DFPIs-Oversight-and-Regulation-of-Silicon-Valley-Bank.pdf"
+    tier: high
+    origin: researched
+  - title: "Federal Reserve OIG — Material Loss Review of Silicon Valley Bank (2023-SR-B-013)"
+    url: "https://oig.federalreserve.gov/reports/board-material-loss-review-silicon-valley-bank-sep2023.pdf"
+    tier: high
+    origin: researched
+  - title: "SVB Financial Group — 2022 Form 10-K (SEC filing)"
+    url: "https://d18rn0p25nwr6d.cloudfront.net/CIK-0000719739/f36fc4d7-9459-41d7-9e3d-2c468971b386.pdf"
+    tier: high
+    origin: researched
+  - title: "SVB Financial Group — Message to Stakeholders Regarding Recent Strategic Actions Taken by SVB (March 8, 2023)"
+    url: "https://s201.q4cdn.com/589201576/files/doc_downloads/2023/03/r/Q1-2023-Investor-Letter.FINAL-030823.pdf"
+    tier: high
+    origin: researched
+  - title: "FDIC — Quarterly Banking Profile, Fourth Quarter 2022 (unrealized securities losses)"
+    url: "https://www.fdic.gov/news/press-releases/2023/pr23013.html"
+    tier: high
+    origin: researched
+  - title: "Joint Statement by the Department of the Treasury, Federal Reserve, and FDIC (March 12, 2023)"
+    url: "https://www.federalreserve.gov/newsevents/pressreleases/monetary20230312b.htm"
+    tier: high
+    origin: researched
+  - title: "FRED — Federal Funds Effective Rate (FEDFUNDS)"
+    url: "https://fred.stlouisfed.org/series/FEDFUNDS"
+    tier: high
+    origin: researched
+  - title: "Cookson, Fox, Gil-Bazo, Imbet & Schiller — Social Media as a Bank Run Catalyst (Journal of Financial Economics, Vol. 176, 2026)"
+    url: "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4422754"
+    tier: high
+    origin: researched
+  - title: "Congressional Research Service — Silicon Valley Bank and Signature Bank Failures (IN12125)"
+    url: "https://www.congress.gov/crs_external_products/IN/PDF/IN12125/IN12125.1.pdf"
+    tier: high
+    origin: researched
+  - title: "Bloomberg — Peter Thiel's Founders Fund Tells Companies to Pull Money From SVB"
+    url: "https://www.bloomberg.com/news/articles/2023-03-09/founders-fund-advises-companies-to-withdraw-money-from-svb"
+    tier: med
+    origin: researched
+  - title: "CNBC — Venture Capitalists Urge Startups to Withdraw Funds From Crisis-Laden Silicon Valley Bank"
+    url: "https://www.cnbc.com/2023/03/10/vcs-urge-startups-to-withdraw-funds-from-silicon-valley-bank.html"
+    tier: med
+    origin: researched
+  - title: "FDIC — Final Rule on Special Assessment Pursuant to Systemic Risk Determination (Nov 16, 2023)"
+    url: "https://www.fdic.gov/news/press-releases/2023/pr23092.html"
+    tier: high
+    origin: researched
+  - title: "FDIC OIG — Material Loss Review of First Republic Bank (EVAL-24-03)"
+    url: "https://www.fdicoig.gov/sites/default/files/reports/2023-11/EVAL-24-03.pdf"
+    tier: high
+    origin: researched
+  - title: "Testimony by Vice Chair for Supervision Barr on Bank Oversight, before the U.S. Senate Committee on Banking, Housing, and Urban Affairs (March 28, 2023)"
+    url: "https://www.federalreserve.gov/newsevents/testimony/barr20230328a.htm"
+    tier: high
+    origin: researched
+  - title: "CFA Institute Market Integrity Insights — The SVB Collapse: FASB Should Eliminate “Hide-’Til-Maturity” Accounting"
+    url: "https://blogs.cfainstitute.org/marketintegrity/2023/03/13/the-svb-collapse-fasb-should-eliminate-hide-til-maturity-accounting/"
+    tier: med
+    origin: researched
+  - title: "FDIC Vice Chairman Travis Hill — Remarks, \"Recent Bank Failures and the Path Ahead\" (Bipartisan Policy Center, April 12, 2023)"
+    url: "https://www.fdic.gov/news/speeches/2023/spapr1223.html"
+    tier: high
+    origin: researched
+  - title: "FDIC — Joint Statement by the Department of the Treasury, Federal Reserve, and FDIC (press release pr23017.html, March 12, 2023)"
+    url: "https://www.fdic.gov/news/press-releases/2023/pr23017.html"
+    tier: high
+    origin: researched
+draft: false
+---
+
+import { Chart, Scrolly, ScrollyStep, DataTable, Annotation, StatBand, Pullquote, Callout, Detail, Definition, Math, Diagram, EventCascade, Sidenote, Timeline } from "../../components/mdx";
+
+{/* HOOK — sharpest fact first, then the headline numbers, above the fold. */}
+
+On the morning of March 9, 2023, Silicon Valley Bank was a going concern with $173 billion in deposits, a 40-year history, and <Annotation client:load term="nearly half of America's venture-backed technology and life-science companies" note="Federal Reserve OIG, Material Loss Review of Silicon Valley Bank (2023-SR-B-013), p.11, citing SVBFG's own October 2022 corporate overview: the bank 'served nearly half of the venture-backed technology and life sciences companies in the United States.'" /> on its client roster. By the close of business that day it had a negative cash balance, and by the next morning it did not exist. Nobody stormed a lobby. Nobody stood in line. The money left through phones, in an amount and at a pace that had never been recorded before — not by wire transfer volume, not by teller-line length, but by the sheer number of taps on a screen. The Federal Reserve's own Vice Chair for Supervision later told the U.S. Senate that SVB "suffered a devastating and unexpected run by its uninsured depositors in a period of <Annotation client:load term="less than 24 hours" note="Testimony by Vice Chair for Supervision Michael S. Barr, U.S. Senate Committee on Banking, Housing, and Urban Affairs (Mar 28, 2023): 'the bank then suffered a devastating and unexpected run by its uninsured depositors in a period of less than 24 hours.'" />." The more precise regulatory record narrows that further still, to the fastest bank run in the history of American banking.
+
+<StatBand client:visible caption="March 9–10, 2023. Sources: California DFPI, Federal Reserve OIG, Federal Reserve Board (Barr Report)."
+  stats={[
+    { value: 42, prefix: "$", suffix: "B", label: "WITHDRAWAL REQUESTS", sub: "March 9, ~8 hours", href: "https://dfpi.ca.gov/wp-content/uploads/sites/337/2023/03/DFPI-Orders-Silicon-Valley-Bank-03102023.pdf" },
+    { value: 8, suffix: " HRS", label: "DURATION OF THE RUN", sub: "DFPI review", href: "https://dfpi.ca.gov/wp-content/uploads/sites/337/2023/05/Review-of-DFPIs-Oversight-and-Regulation-of-Silicon-Valley-Bank.pdf" },
+    { value: 25, suffix: "%", label: "OF TOTAL DEPOSITS", sub: "requested in one day", href: "https://oig.federalreserve.gov/reports/board-material-loss-review-silicon-valley-bank-sep2023.pdf" },
+    { value: 100, prefix: "$", suffix: "B", label: "MORE, QUEUED", sub: "the Fed's own estimate, Mar 10", href: "https://www.federalreserve.gov/publications/files/svb-review-20230428.pdf" }
+  ]} />
+
+Do the arithmetic on that first number and the second, because the pace is the entire story before you even reach the cause. Forty-two billion dollars over eight hours is <Annotation client:load term="roughly $5.25 billion an hour" note="$42B ÷ 8 hours = $5.25B/hour, computed from two primary-sourced figures: DFPI's $42 billion withdrawal-request total (Order Taking Possession, Mar 10 2023) and the DFPI's own 'within the span of approximately eight hours' finding (Review of DFPI's Oversight and Regulation of SVB, May 8 2023, p.45)." /> — call it <Annotation client:load term="about $1.46 million a second" note="$42,000,000,000 ÷ (8 × 3,600 seconds) ≈ $1,458,333/second. Same two primary sources as above." />, sustained, for the better part of a business day. The closest historical comparison, Washington Mutual's 2008 collapse, took <Annotation client:load term="sixteen days" note="Johnathan D. Rose, 'Old-Fashioned Deposit Runs,' Federal Reserve Board working paper (Nov. 18, 2015), as cited in the DFPI's Review of DFPI's Oversight and Regulation of SVB (May 8 2023, footnote 70): $18.7 billion, 10.1% of deposits, over a 16-day period." /> to move a comparable share of its book. This dispatch is about why the clock sped up that much — and it is not, mainly, a story about rumor or panic. It is a story about a balance sheet that was already broken, and a depositor base wired, literally, to notice.
+
+## The mechanism, not the mob
+
+Start with the part almost every headline from that week skipped: SVB did not fail because people panicked over nothing. It failed because it had spent two years converting deposits into a bet on interest rates staying low — and lost that bet with unusual precision. To see why, first look at how fast the bank itself grew, because the growth rate is what forced the bet in the first place.
+
+<Chart client:visible mark="line" x="snapshot" y="deposits" height={300}
+  caption="SVB total deposits at selected snapshots, in billions of dollars. Sources: Federal Reserve OIG Material Loss Review; SVB Financial Group 2022 10-K."
+  data={[
+    { snapshot: "SVB deposits, 2017", deposits: 45 },
+    { snapshot: "SVB deposits, end of 2020", deposits: 103.2 },
+    { snapshot: "SVB deposits, end of 2021", deposits: 191.4 },
+    { snapshot: "SVB deposits, Q1 2022 peak", deposits: 200 },
+    { snapshot: "SVB deposits, year-end 2022", deposits: 173.1 }
+  ]} />
+
+SVB's deposit base did not grow — it detonated. Forty-five billion dollars was the total in 2017; by the end of 2020, that had climbed to $103.2 billion; by the end of 2021, $191.4 billion; and by the first quarter of 2022, deposits had crossed $200 billion — a more-than-fourfold expansion in a little over four years. <Annotation client:load term="Every one of those figures traces to the Federal Reserve's own inspector general" note="Federal Reserve OIG, Material Loss Review of Silicon Valley Bank (2023-SR-B-013), p.9 and p.11: 'In 2017, SVB had total deposits of approximately $45 billion... SVB's total deposits increased from $103.2 billion in 2020 to $191.4 billion in 2021... SVB's deposits exceeded $200 billion as of March 31, 2022.' The OIG separately notes SVB's total assets, on a parallel trajectory, 'doubled twice in a 5-year period, from just over $50 billion at the start of 2018 to over $100 billion in 2020 and then to more than $200 billion in 2021.'" />, which used its own review of SVB's growth to explain why the bank's funding base became so dangerous — almost entirely because a zero-rate world was pumping cash into venture capital, and venture capital was pumping cash straight into SVB's operating accounts. The bank's own fourth-quarter 2021 investor presentation, cited in that same OIG review, boasted that <Annotation client:load term="average client funds increased by $36 billion" note="Federal Reserve OIG, Material Loss Review of Silicon Valley Bank (2023-SR-B-013), p.11: SVBFG's Q4 2021 Financial Highlights presentation 'noted that average client funds increased by $36 billion as venture capital investment activity fueled its clients' liquidity.'" /> in that single year "as venture capital investment activity fueled its clients' liquidity" — the same sentence that, in hindsight, describes the fuel for the fire. A bank cannot leave $200 billion sitting in cash; it has to put deposits to work, and SVB's clients were not, for the most part, borrowing much — tech startups burn cash, they do not usually take out mortgages. So the bank bought bonds with the deposits it could not lend out, at the exact moment when bond yields were at generational lows. By year-end 2022 deposits had fallen back to <Annotation client:load term="$173.1 billion" note="SVB Financial Group 2022 Form 10-K, p.1: 'total deposits of $173.1 billion' as of Dec 31, 2022, down from $189.2 billion at Dec 31, 2021." /> as venture funding dried up and clients burned through cash — but the bond portfolio bought at the top of the market was already underwater, and getting more so every month rates kept climbing. Watch what happened to the price of money itself over the same window.
+
+<Chart
+  client:load
+  mark="line"
+  x="month"
+  y="rate"
+  height={340}
+  caption="Federal funds effective rate, monthly, Jan 2021 – Jun 2023. Source: FRED (FEDFUNDS), Federal Reserve Bank of St. Louis."
+  data={[
+    { month: "2021-01", rate: 0.09 }, { month: "2021-02", rate: 0.08 }, { month: "2021-03", rate: 0.07 }, { month: "2021-04", rate: 0.07 }, { month: "2021-05", rate: 0.06 }, { month: "2021-06", rate: 0.08 }, { month: "2021-07", rate: 0.10 }, { month: "2021-08", rate: 0.09 }, { month: "2021-09", rate: 0.08 }, { month: "2021-10", rate: 0.08 }, { month: "2021-11", rate: 0.08 }, { month: "2021-12", rate: 0.08 },
+    { month: "2022-01", rate: 0.08 }, { month: "2022-02", rate: 0.08 }, { month: "2022-03", rate: 0.20 }, { month: "2022-04", rate: 0.33 }, { month: "2022-05", rate: 0.77 }, { month: "2022-06", rate: 1.21 }, { month: "2022-07", rate: 1.68 }, { month: "2022-08", rate: 2.33 }, { month: "2022-09", rate: 2.56 }, { month: "2022-10", rate: 3.08 }, { month: "2022-11", rate: 3.78 }, { month: "2022-12", rate: 4.10 },
+    { month: "2023-01", rate: 4.33 }, { month: "2023-02", rate: 4.57 }, { month: "2023-03", rate: 4.65 }, { month: "2023-04", rate: 4.83 }, { month: "2023-05", rate: 5.06 }, { month: "2023-06", rate: 5.08 }
+  ]} />
+
+For twenty-four straight months the effective federal funds rate sat at essentially zero, and Silicon Valley's venture-funded clients were flush — SVB's deposits <Annotation client:load term="exceeded $200 billion by March 2022" note="Federal Reserve OIG, Material Loss Review of Silicon Valley Bank (2023-SR-B-013, Sep 2023), p.9: 'SVB's deposits exceeded $200 billion as of March 31, 2022, and its total assets increased to $217 billion,' up from ~$45 billion in deposits / ~$50 billion in assets in 2017." /> from about $45 billion just five years earlier. The bank did what a bank with too much cheap money and not enough loan demand does: it bought bonds. Specifically, it built a <Definition client:visible term="held-to-maturity" def="an accounting classification for securities a bank intends to hold until they mature. HTM securities are booked at amortized cost, not market price — so their losses stay invisible on the balance sheet and income statement unless the bank is forced to sell." /> portfolio of long-dated agency mortgage-backed securities — <Annotation client:load term="$91.3 billion of them at amortized cost by year-end 2022" note="SVB Financial Group 2022 Form 10-K, Note 3 (Investment Securities), consolidated HTM securities table: total amortized cost $91,327 million as of Dec 31, 2022." /> — with a <Annotation client:load term="weighted-average duration of 6.2 years" note="SVB 2022 10-K, cited independently in the Federal Reserve's Barr Report (Apr 28, 2023, p.22): 'As of December 31, 2022, SVBFG's total HTM securities portfolio had a weighted-average duration of 6.2 years, and the majority of SVBFG's HTM portfolio consisted of agency MBS with a maturity of 10 years or more.'" />. Then the Fed, fighting the worst inflation in forty years, moved the funds rate from 0.08% to above 4.6% in twelve months — the line above going almost vertical. Every bond SVB had bought at 2021 yields was now worth dramatically less than face value, and because the bank had classified those bonds as "held to maturity," the loss was real but did not have to be marked on the books — until, that is, the bank actually needed the cash.
+
+<Math client:visible tex="\frac{\Delta P}{P} \;\approx\; -D \times \Delta y"
+  caption="The duration approximation: for a small move in yields, a bond portfolio's percentage price change is roughly minus its duration times the change in yield. A 6.2-year-duration book meeting a multi-point rate shock does not lose a little value — it loses a lot, and fast." />
+
+That is not a made-up formula for the piece — it is the standard first-order bond-pricing identity, and it explains the *shape* of what happened to SVB's book without needing to reproduce its exact number: a portfolio with several years of duration is mechanically far more sensitive to a rate move than a portfolio of short-term bills, which is exactly the trade-off SVB made when it reached for MBS yield in 2021. The real, reported number is worse than a back-of-envelope estimate would even suggest, because it was not one clean parallel shift — it was two years of purchases at falling-then-rising yields, plus SVB's own decision, examined below, to strip out the interest-rate hedges that would have cushioned the blow.
+
+<Chart client:visible mark="bar" x="date" y="loss" height={300}
+  caption="Estimated unrealized losses on SVBFG's held-to-maturity securities portfolio, year-end snapshots. Source: SVB Financial Group 2022 Form 10-K, Note 3."
+  data={[
+    { date: "Dec 2021", loss: -1.34 },
+    { date: "Dec 2022", loss: -15.16 }
+  ]} />
+
+Eleven times worse in twelve months. By SVB's own audited 10-K, the held-to-maturity book had swung from a $1.34 billion paper loss at the end of 2021 to a <Annotation client:load term="$15.16 billion paper loss" note="SVB Financial Group 2022 Form 10-K, Note 3: HTM securities, amortized cost $91,327M, unrealized losses $(15,160)M, fair value $76,169M, as of Dec 31, 2022." /> at the end of 2022 — against total stockholders' equity of <Annotation client:load term="just $16.0 billion" note="SVB Financial Group 2022 Form 10-K, p.1: 'total SVB Financial stockholders' equity of $16.0 billion' as of Dec 31, 2022." />. Do that division and the bank's entire capital cushion was, on paper, almost exactly canceled out by one line item on one side of its balance sheet — <Annotation client:load term="94.75%" note="$15.16B ÷ $16.0B = 94.75%, computed from the two SVB 10-K figures cited above." /> of it, before counting a dollar of loan losses, fraud, or anything resembling the classic bank-failure story. SVB was not brought down by a bad loan book. It was brought down by U.S. government-backed mortgage bonds — the single safest asset class a bank can hold from a credit-risk standpoint — bought at the wrong moment and held too long against deposits that could leave in an instant.
+
+<Callout kind="aside" title="Accountants call it “hide-‘til-maturity”">
+Held-to-maturity accounting is not an SVB invention — it is a standard, legal classification every bank uses. But it has a critic's nickname for a reason. CFA Institute's Sandy Peters argued in the week of the collapse that the treatment let SVB's $15.1 billion hole stay "hidden in plain sight," disclosed only in a footnote rather than reflected on the balance sheet investors and depositors actually read, writing that <Annotation client:load term="“the purpose of financial reporting is to convey the results of the company. It is not to assure the company stays around.”" note="Sandy Peters, CPA, CFA, 'The SVB Collapse: FASB Should Eliminate “Hide-‘Til-Maturity” Accounting,' CFA Institute Market Integrity Insights (Mar 13, 2023)." /> The loss did not appear because SVB hid it maliciously — it appeared because the rules let a real, market-priced loss sit outside the numbers everyone actually looks at, right up until a forced sale made it real.
+</Callout>
+
+<Callout kind="key-insight" title="Insolvent on paper, weeks before the run">
+This is the detail that separates SVB from a classic panic: the Federal Reserve's own staff had already flagged the danger, internally, before a single depositor pulled a dollar. The mob did not create the insolvency. It discovered it.
+</Callout>
+
+## The Fed knew, and moved anyway too slowly
+
+Here is the part of the record that turns this from a story about markets into a story about supervision — and the record starts far earlier than March 2023. A joint examination by the San Francisco Fed and the California DFPI, back in <Annotation client:load term="March 2019" note="Federal Reserve OIG, Material Loss Review of Silicon Valley Bank (2023-SR-B-013), p.11, citing a March 2019 joint FRB San Francisco / CDFPI examination report: private equity and venture capital firms' deposits 'typically experience irregular, larger-volume cash flows' and 'the bank's funding sources were concentrated and potentially volatile on short notice.'" />, had already put the exact mechanism of this piece into writing: SVB's private equity and venture capital deposit base "typically experience[s] irregular, larger-volume cash flows," and the bank's funding was "concentrated and potentially volatile on short notice." That is a four-years-early, word-for-word description of what happened on March 9. Examiners named the risk. Nobody made the bank change its behavior. Then, in February 2023 — three weeks before the run — Federal Reserve System staff briefed the Board of Governors on interest-rate risk across the banking system, and used SVB as a named example.
+
+<EventCascade client:visible caption="How a known vulnerability went unaddressed for three weeks. Source: Federal Reserve OIG, Material Loss Review of Silicon Valley Bank (Sep 2023)."
+  nodes={[
+    { kind: "cause", label: "Feb 2023: Fed staff brief the Board of Governors on bank interest-rate risk",
+      detail: "The presentation names SVB as an example bank facing financial risk — as of Q3 2022, its total unrealized securities losses equaled 110% of capital." },
+    { kind: "effect", label: "Supervisors propose only a partial ratings downgrade",
+      detail: "Staff proposed downgrading SVB's sensitivity-to-market-risk rating, but 'did not appear to factor in SVB's high concentration in uninsured deposits' and did not downgrade the liquidity rating." },
+    { kind: "effect", label: "An MOU (not a binding enforcement action) is planned for Q1 2023",
+      detail: "The Board anticipated issuing a Memorandum of Understanding — a soft supervisory tool — rather than a forceful, immediate order." },
+    { kind: "turning-point", label: "March 8: SVB announces a $1.8B loss and a capital raise — before any Fed action lands",
+      detail: "The bank's own hand is forced by the same interest-rate exposure the Fed had already identified, and it moves first, publicly, and alone." }
+  ]}
+/>
+
+The Fed's own inspector general put a number on how exposed SVB already looked to its regulator months before it failed: <Annotation client:load term="total unrealized losses equal to 110 percent of capital, as of Q3 2022" note="Federal Reserve OIG, Material Loss Review of Silicon Valley Bank (2023-SR-B-013), p.28: a February 2023 System supervisory presentation to the Board of Governors 'illustrat[ed] that (1) as of the third quarter of 2022, total unrealized losses amounted to 110 percent of capital' at SVB." />. That is not a subtle warning sign. It is a bank whose theoretical losses, unrealized only because accounting rules let them stay unrealized, already exceeded its entire equity cushion — flagged to the Federal Reserve Board of Governors by name, five weeks before the bank collapsed. The Fed's own self-review is unusually blunt about what happened next: supervisors did not move with the urgency the number demanded.
+
+<Pullquote cite="Michael S. Barr, Vice Chair for Supervision, Federal Reserve — Review of the Federal Reserve's Supervision and Regulation of Silicon Valley Bank (April 28, 2023)" href="https://www.federalreserve.gov/publications/files/svb-review-20230428.pdf" kind="document">
+Silicon Valley Bank (SVB) failed because of a textbook case of mismanagement by the bank. Its senior leadership failed to manage basic interest rate and liquidity risk. Its board of directors failed to oversee senior leadership and hold them accountable. And Federal Reserve supervisors failed to take forceful enough action, as detailed in the report.
+</Pullquote>
+
+<Detail summary="Go deeper: why SVB's own risk models missed it too">
+The Barr Report documents that SVB's board had breached its own long-term interest-rate-risk limits "on and off since 2017" — not a new problem. In April 2022, rather than reducing the underlying exposure, management changed a modeling assumption about how long deposits would stay at the bank, which had the effect of making the risk limit breach disappear on paper without changing the actual balance sheet. Over the same period, SVBFG also removed interest-rate hedges that would have offset some of the losses from rising rates — a bet that rates would not rise much further, made by a bank whose entire deposit base was concentrated in the sector most sensitive to a rate-driven slowdown in venture funding. The Fed's report is explicit that this was a management choice to protect short-term reported profit, not an oversight. Supervisors, for their part, spotted interest-rate deficiencies in SVB's 2020, 2021, *and* 2022 CAMELS exams — three straight annual exams — yet never converted the finding into a formal supervisory action (an MRA) until November 2022, by which point the bank had four months left to live. When examiners finally moved to downgrade SVB's ratings in August 2022, the Barr Report notes it was "the first downgrade of SVBFG or SVB in the period since 2017" — five years of essentially unbroken "satisfactory" ratings on a bank that was, by then, growing at a pace its supervisory team had never before had to track.
+</Detail>
+
+## The rule that bought SVB three extra years
+
+Slow supervision was not only a matter of individual judgment calls — it was also structural, and traces back to a 2018 act of Congress. The Economic Growth, Regulatory Relief, and Consumer Protection Act (EGRRCPA) raised the asset threshold for a bank to face the Fed's most stringent "enhanced prudential standards" from <Annotation client:load term="$50 billion to $250 billion" note="Congressional Research Service, Silicon Valley Bank and Signature Bank Failures (IN12125, Mar 21 2023): 'Originally, all BHCs with over $50 billion in assets were subject to EPR to address too big to fail concerns. In 2018, P.L. 115-174 raised this asset threshold to $250 billion.'" />, and the Fed's 2019 implementing rule sorted large banks into four tiers of shrinking scrutiny. SVBFG crossed <Annotation client:load term="the $100 billion threshold in average total consolidated assets in June 2021" note="Federal Reserve Barr Report (Apr 28, 2023), p.24: 'In June 2021, SVBFG crossed the $100 billion threshold in average total consolidated assets and therefore met the criteria for a Category IV firm under the 2019 tailoring rule.'" />, making it a "Category IV" firm — the tier with the lightest capital, liquidity, and stress-testing requirements of the four. Worse, transition periods in the rule meant that even Category IV's modest requirements — including the liquidity coverage ratio and the net stable funding ratio, the two standards specifically designed to catch a duration/liquidity mismatch like SVB's — <Annotation client:load term="had not yet been applied to SVBFG at the time of its failure" note="Federal Reserve Barr Report (Apr 28, 2023), p.24: 'at the time of its failure, an important subset of Category IV capital and liquidity requirements, including supervisory stress testing, the stress capital buffer, the liquidity coverage ratio (LCR), and the net stable funding ratio (NSFR), were not yet applied to SVBFG because of applicable transition periods in the rules.'" />. A bank had grown four-fold into a $200-billion institution faster than the regulatory machinery built to classify $200-billion institutions could catch up to it. The Fed's own report calls this out as its fourth and final headline finding: the tailoring framework itself "impeded effective supervision by reducing standards, increasing complexity, and promoting a less assertive supervisory approach."
+
+## The complication: a fast run needs a fast trigger, too
+
+A duration mismatch explains why SVB was vulnerable. It does not, by itself, explain why the run took eight hours instead of eight weeks. For that you need the trigger and the depositor base — and both were unusual.
+
+It helps to remember what an "old-fashioned" bank run actually required, because the friction that used to slow one down was not incidental — it was load-bearing for the whole system of bank supervision. A depositor in 1930, or even 1980, had to physically travel to a branch, stand in a line long enough to be visible to other depositors (which itself spread the panic, but slowly, one visible queue at a time), and receive cash or a check that then had to clear. Even the electronic-era version of that friction — a phone call to a broker, a wire initiated during business hours, a transfer that settles next-day — gave supervisors a window measured in days to intervene, negotiate an emergency sale, or arrange a lender-of-last-resort facility before the bank ran out of cash. Washington Mutual's regulators, watching a <Annotation client:load term="$2.8 billion single-day peak" note="Two independent sources: California DFPI, Review of DFPI's Oversight and Regulation of SVB (May 8, 2023, citing Johnathan D. Rose's Fed working paper), and FDIC Vice Chairman Travis Hill, remarks 'Recent Bank Failures and the Path Ahead' (Bipartisan Policy Center, Apr 12, 2023, fdic.gov): 'At its peak, WaMu lost $2.8 billion in deposits in a single day... yet 15 times smaller than the $42 billion pulled from SVB in one day.' Hill's remarks independently corroborate both the WaMu figure and SVB's $42 billion." /> in 2008, still had enough runway to attempt a sale process before closing the bank. SVB's regulators, watching a bank bleed at $5.25 billion an hour, did not.
+
+<DataTable client:load caption="How SVB's single-day outflow compares with the prior record-holders. Sources: California DFPI Review (May 8, 2023, citing Rose, Federal Reserve Board working paper, 2015; and Remarks by FDIC Vice Chairman Travis Hill, Apr 12, 2023); Federal Reserve Barr Report."
+  columns={[
+    { key: "event", label: "Event", type: "string" },
+    { key: "amount", label: "Amount", type: "string" },
+    { key: "window", label: "Time window", type: "string" },
+    { key: "note", label: "Note", type: "string" }
+  ]}
+  rows={[
+    { event: "Washington Mutual, peak single day (2008)", amount: "$2.8B", window: "1 day", note: "≈15x smaller than SVB's single-day figure" },
+    { event: "Washington Mutual, total run (2008)", amount: "$18.7B (10.1% of deposits)", window: "16 days", note: "Prior record for total outflow" },
+    { event: "Wachovia (2008)", amount: "≈$10B", window: "8 days", note: "Cited by the Fed as a pre-SVB benchmark" },
+    { event: "Silicon Valley Bank, requested (Mar 9, 2023)", amount: "$42B (≈25% of deposits)", window: "≈8 hours", note: "$36B actually executed; $6B left queued when the bank was seized" },
+    { event: "Silicon Valley Bank, pending for next day", amount: "$100B more", window: "expected Mar 10", note: "The Federal Reserve's own figure (Barr Report / Fed OIG); SVB was seized before it could test this" }
+  ]} />
+
+Notice the fine print in that last SVB row, because it is the detail most retellings drop: of the $42 billion requested, only about <Annotation client:load term="$36 billion was actually moved" note="California DFPI, Review of DFPI's Oversight and Regulation of Silicon Valley Bank (May 8, 2023), footnote 69: 'Approximately $36 billion was withdrawn with approximately $6 billion left in queue for processing when the bank was closed.'" /> before regulators stepped in — the rest was still in the payments pipeline. SVB's own regulator noted the bank had a <Annotation client:load term="negative cash balance of approximately $958 million" note="California DFPI, Order Taking Possession of Property and Business (Mar 10, 2023): 'As of the close of business on March 9, the bank had a negative cash balance of approximately $958 million.'" /> by the close of business on March 9 — meaning the bank had already run out of money to fulfill withdrawal requests before the day even ended. The <Annotation client:load term="$100 billion queued for the next morning" note="Michael S. Barr, Review of the Federal Reserve's Supervision and Regulation of Silicon Valley Bank (Apr 28, 2023), p.16: 'Deposit outflows were over $40 billion on March 9, and management expected $100 billion more on March 10.' The Federal Reserve OIG's own Material Loss Review (2023-SR-B-013, p.20) states the same figure independently within the Federal Reserve System: 'the withdrawal requests pending for the following day amounted to $100 billion.' Both figures originate from the Federal Reserve's own account of SVB management's estimate — presented here as the Fed's figure, not as two independently sourced corroborations, since the Board report and its own Inspector General are the same institution." /> is the Federal Reserve's own figure — SVB management's estimate of what was still coming, relayed in both the Board's supervisory report and its Inspector General's review — and it was a request the bank had no realistic path to meeting. The run did not need to finish to finish the bank.
+
+Two forces made this specific book of depositors capable of moving that fast, and the Fed's postmortem names both explicitly.<Sidenote>SVB's clients were disproportionately businesses, not individuals — payroll accounts, operating cash, venture-fund escrow. A startup's CFO moving $40 million is one decision, not forty thousand.</Sidenote>
+
+**Concentration.** SVB's depositor base was not diversified across the economy the way a retail bank's is — it was startups, venture funds, and the people who run both, almost all in one industry, frequently sharing the same board members, the same law firms, and the same group chats. <Annotation client:load term="Over 94 percent of SVB's deposits were uninsured" note="Federal Reserve OIG, Material Loss Review of Silicon Valley Bank (2023-SR-B-013), p.9: 'As of year-end 2022, over 94 percent of SVB's total deposits were uninsured.'" /> at year-end 2022 — <Annotation client:load term="$151.6 billion of uninsured deposits" note="Congressional Research Service, Silicon Valley Bank and Signature Bank Failures (IN12125, Mar 21 2023): 'SVB ($151.6 billion) ... reported large estimated uninsured deposits on their last call reports.'" /> on its last call report, by far the largest single number in this entire piece — because operating accounts routinely run above the FDIC's $250,000 insurance limit. Every one of those depositors had the maximum possible incentive to be first out the door the moment solvency was in doubt, because nothing above $250,000 was guaranteed to come back.
+
+**Technology.** The withdrawal itself required no phone call, no branch visit, no fax. A founder could move a company's entire operating cash from a phone in the time it took to read a Slack message.
+
+<Callout kind="warning" title="This is not the Flash Crash — a different mechanism entirely">
+It is worth being precise about what kind of "speed" this is, because it is easy to conflate this with a different, previously-covered kind of financial-market speed run. The 2010 Flash Crash was an <em>algorithmic</em> liquidity vacuum: a single automated sell program drained the order book of E-Mini futures contracts in minutes, and machines reacting to machines did the damage — a market-microstructure failure resolved by a five-second circuit breaker, with the underlying assets fundamentally unchanged in value before and after. SVB was the opposite kind of event: a slower-motion (hours, not minutes), fully <em>human</em>-decision-driven run, triggered by a real and already-existing insolvency on a duration-mismatched balance sheet, executed one deliberate tap at a time by thousands of individually rational depositors. Nothing glitched. Nothing malfunctioned. The technology did not cause a false signal — it correctly, instantly executed a true one.
+</Callout>
+
+## Watch the network do what the balance sheet made rational
+
+The panic did not arrive randomly. It arrived through a specific, mappable channel, and a peer-reviewed study of the event traced exactly how.
+
+<Scrolly client:visible caption="How the announcement became a run, hour by hour. Sources: SVB shareholder letter (Mar 8 2023); Bloomberg; California DFPI Review; Cookson et al., Journal of Financial Economics (2026).">
+  <ScrollyStep graphic={
+      <Diagram client:visible caption="March 8, evening: the announcement lands on a concentrated network"
+        nodes={[
+          { id: "svb", label: "SVB / SVBFG announcement", x: 0, y: 1, kind: "input" },
+          { id: "press", label: "Financial press + Twitter", x: 1, y: 0, kind: "process" },
+          { id: "vc", label: "VC funds' internal chats", x: 1, y: 2, kind: "process" },
+          { id: "founders", label: "Founders Fund and peers", x: 2, y: 1, kind: "decision" },
+          { id: "portfolio", label: "Hundreds of portfolio companies", x: 3, y: 1, kind: "output" }
+        ]}
+        edges={[
+          { from: "svb", to: "press", label: "$1.8B loss, capital raise", kind: "data" },
+          { from: "svb", to: "vc", label: "same announcement", kind: "data" },
+          { from: "press", to: "founders", label: "amplification", kind: "async" },
+          { from: "vc", to: "founders", label: "shared assessment", kind: "control" },
+          { from: "founders", to: "portfolio", label: "“withdraw” advisory", kind: "control" }
+        ]} />
+    }>
+    **Evening, March 8.** SVB's own announcement of a $1.8 billion loss and a capital raise reaches the market. Within hours, Peter Thiel's Founders Fund tells its portfolio companies there is <Annotation client:load term="“no downside” to pulling their money" note="Bloomberg, 'Peter Thiel's Founders Fund Tells Companies to Pull Money From SVB' (Mar 9, 2023): Founders Fund advised portfolio companies to withdraw funds from SVB, telling them there was no downside to moving deposits elsewhere." /> — and it is not the only one. CNBC independently reported that <Annotation client:load term="“numerous VC funds, including major players like Founders Fund, Union Square Ventures and Coatue Management,” advised their portfolios to move money out" note="CNBC, 'Venture Capitalists Urge Startups to Withdraw Funds From Crisis-Laden Silicon Valley Bank' (Mar 10, 2023): 'Numerous VC funds, including major players like Founders Fund, Union Square Ventures and Coatue Management, have advised companies in their portfolios to move their funds out of SVB.'" />, while a smaller early-stage firm, Pear VC, separately urged its own network to withdraw the same day. This is one node in a network the DFPI's own review says was typical, not exceptional: <Annotation client:load term="“many of SVB's venture capital customers suggest[ed] companies withdraw their deposits from SVB”" note="California DFPI, Review of DFPI's Oversight and Regulation of SVB (May 8, 2023), footnote 74, citing Yahoo Finance and Associated Press reporting on the mechanics of the March 2023 run." /> once the announcement spread. Multiple, independently reported firms giving the same advice on the same evening is exactly what "highly networked and concentrated" looks like in practice — not one bad actor, but an industry that talks to itself acting as a single decision-maker.
+  </ScrollyStep>
+  <ScrollyStep graphic={
+      <Chart client:visible mark="bar" x="metric" y="value" height={300}
+        caption="The measured social-media effect on bank stocks during the SVB run period. Source: Cookson, Fox, Gil-Bazo, Imbet & Schiller (2026)."
+        data={[
+          { metric: "Extra stock-price loss, high-Twitter-exposure banks", value: 4.3 }
+        ]} />
+    }>
+    **March 9, during the run.** This was not just a story people told afterward — it is now a measured, published finding. A team of finance economists collected comprehensive Twitter data around the SVB run and found that banks with high *pre-existing* exposure to Twitter conversation lost <Annotation client:load term="4.3 percentage points more stock market value" note="Cookson, Fox, Gil-Bazo, Imbet & Schiller, 'Social Media as a Bank Run Catalyst,' Journal of Financial Economics, Vol. 176 (2026): during the SVB run period, banks with high pre-existing Twitter exposure lost 4.3 percentage points more stock market value than otherwise-similar banks." /> than otherwise similar banks during the run period — an effect that held up even after controlling for each bank's actual mark-to-market losses and uninsured-deposit share, meaning social-media exposure was doing independent work, not just tracking who was already in trouble.
+  </ScrollyStep>
+  <ScrollyStep graphic={
+      <Diagram client:visible caption="The loop that made $42B/8hr possible"
+        nodes={[
+          { id: "rates", label: "Rates rise fast (2022)", x: 0, y: 0, kind: "input" },
+          { id: "htm", label: "HTM book: $15.16B unrealized loss", x: 1, y: 0, kind: "process" },
+          { id: "afs", label: "Forced AFS sale, $1.8B realized loss", x: 2, y: 0, kind: "process" },
+          { id: "signal", label: "Public solvency signal, Mar 8", x: 3, y: 0, kind: "decision" },
+          { id: "network", label: "Concentrated, networked depositors", x: 3, y: 1, kind: "input" },
+          { id: "app", label: "Mobile banking: instant execution", x: 3, y: 2, kind: "process" },
+          { id: "run", label: "$42B requested in ~8 hours", x: 4, y: 1, kind: "output" }
+        ]}
+        edges={[
+          { from: "rates", to: "htm", label: "duration mismatch", kind: "data" },
+          { from: "htm", to: "afs", label: "capital pressure", kind: "control" },
+          { from: "afs", to: "signal", label: "must disclose", kind: "data" },
+          { from: "signal", to: "run", label: "triggers", kind: "control" },
+          { from: "network", to: "run", label: "coordinates", kind: "async" },
+          { from: "app", to: "run", label: "executes instantly", kind: "async" }
+        ]} />
+    }>
+    **The full loop.** None of the three ingredients — the balance sheet, the network, or the technology — was individually sufficient. A duration-mismatched bank with a diffuse retail depositor base would have leaked deposits slowly, over weeks, the way banks historically failed. A concentrated, networked depositor base at a bank that was actually solvent would have had nothing to run from. It took all three at once: a real insolvency to discover, a network dense enough to discover it in unison, and a UI fast enough to act on it in unison, too.
+  </ScrollyStep>
+</Scrolly>
+
+## What the Fed itself concluded about the physics of this
+
+This is the sentence this entire dispatch has been building toward, and it comes not from a journalist or an academic but from the Federal Reserve's own Vice Chair for Supervision, in the cover letter of the central bank's self-investigation of its own failure to prevent this.
+
+<Pullquote cite="Michael S. Barr, Vice Chair for Supervision, Federal Reserve — Review of the Federal Reserve's Supervision and Regulation of Silicon Valley Bank (April 28, 2023)" href="https://www.federalreserve.gov/publications/files/svb-review-20230428.pdf" kind="quote">
+The combination of social media, a highly networked and concentrated depositor base, and technology may have fundamentally changed the speed of bank runs. Social media enabled depositors to instantly spread concerns about a bank run, and technology enabled immediate withdrawals of funding.
+</Pullquote>
+
+Read that claim precisely, because it is doing more careful work than the popular "Twitter caused a bank run" shorthand that followed the collapse. Barr is not arguing that social media invented a panic out of nothing — his own report spends 118 pages establishing that SVB's insolvency exposure was real, board-known, and Fed-known well before March 9. He is arguing something narrower and more structurally important: that the *conduction speed* of a true signal through a banking system has permanently changed, because two things that used to be slow — spreading concern, and acting on it — are now instant. A 2008-era depositor heard rumors from a newspaper or a phone call, then had to visit a branch or wait for a wire to clear; a 2023-era one saw a venture partner's Slack message and moved the money before finishing the sentence. The Fed's own historical comparison set (Wachovia's 8 days, WaMu's 16) is not a set of examples where regulators had unlimited time to react — it is a demonstration that even *those* runs, by the standards of the era, counted as fast. SVB reset the baseline by roughly two orders of magnitude.
+
+<Callout kind="note" title="Contagion, not just one bank">
+The Barr Report's second stated lesson generalizes the first: "a firm's distress may have systemic consequences through contagion — where concerns about one firm spread to other firms — even if the firm is not extremely large." SVB was not, by pre-crisis standards, systemically important; regulators had exempted it from the Fed's most stringent oversight tier precisely because of its size. The speed of its run is part of why regulators concluded, days later, that letting it fail on ordinary terms risked spreading the same networked panic to other regional banks.
+</Callout>
+
+The contagion mechanism is worth naming precisely, because it is the same network effect that emptied SVB in eight hours, now pointed at every other regional bank simultaneously. The moment SVB failed, a depositor at any other bank with a similar profile — concentrated in one industry, heavy on uninsured balances, sitting on unrealized bond losses — had exactly the same rational incentive SVB's own depositors had: move first, ask questions later. Regulators were not just resolving one failed bank on March 12; they were trying to stop the same eight-hour mechanism from re-triggering at a dozen banks at once, which is the actual justification for a systemic risk exception that, on its face, looks like it is bailing out a single mid-sized regional lender.
+
+## Why one bank's bad bet mattered to the whole system
+
+SVB was not the only bank sitting on paper losses from the 2022 rate shock — it was simply the one whose depositor base was capable of noticing and acting in unison. The scale of the underlying problem, industry-wide, puts SVB's specific failure in context.
+
+<DataTable client:load caption="Unrealized securities losses across all FDIC-insured institutions, Q4 2022. Source: FDIC Quarterly Banking Profile, Fourth Quarter 2022 press release."
+  columns={[
+    { key: "category", label: "Category", type: "string" },
+    { key: "amount", label: "Amount ($B)", type: "number", align: "right" },
+    { key: "note", label: "Note", type: "string" }
+  ]}
+  rows={[
+    { category: "Total unrealized losses on securities, all FDIC-insured banks", amount: 620.4, note: "Down 10.1% from Q3 2022" },
+    { category: "— of which, held-to-maturity", amount: 340.9, note: "SVB's $15.16B alone was ≈4.4% of this industry total" },
+    { category: "— of which, available-for-sale", amount: 279.5, note: "Marked to market; losses already visible on other banks' books" },
+    { category: "Silicon Valley Bank, HTM unrealized loss (for scale)", amount: 15.16, note: "One bank, out of roughly 4,700 FDIC-insured institutions" }
+  ]} />
+
+Nearly every U.S. bank was carrying some version of SVB's problem at the end of 2022 — a $620.4 billion industry-wide paper loss is not a one-bank story. What made SVB the one that failed, and failed at this speed, was the specific combination the rest of this piece has laid out: a duration mismatch large enough to wipe out capital on paper, a business model concentrated in one tightly networked industry, and a depositor base equipped to act on a solvency signal within the hour rather than the month. Change any one of those three variables and this dispatch would not exist — a diversified retail bank with the same bond losses does not fail in eight hours, and a concentrated tech-sector bank without the duration mismatch has no reason to fail at all.
+
+## The resolution, and the bill
+
+Regulators moved almost as fast as the depositors did. The California DFPI seized SVB on the morning of March 10, appointing the FDIC as receiver. Two days later, with a second bank (Signature Bank) also failing amid spillover fears, the Treasury, the Fed, and the FDIC took the unusual step of guaranteeing deposits above the insured limit.
+
+<Timeline client:load caption="March 8–13, 2023 — announcement to resolution, five days."
+  events={[
+    { date: "2023-03-08", label: "SVB announces $1.8B loss, $2.25B capital raise", detail: "Sold substantially all AFS securities at a loss; sought $1.75B common/converts plus $500M from General Atlantic." },
+    { date: "2023-03-09", label: "The run: $42B in withdrawal requests, ~8 hours", detail: "Close-of-business negative cash balance of ~$958M; $100B more in withdrawal requests pending for the next morning." },
+    { date: "2023-03-10", label: "California DFPI seizes SVB; FDIC named receiver", detail: "Second-largest bank failure in U.S. history at the time, per the Congressional Research Service." },
+    { date: "2023-03-12", label: "Systemic risk exception invoked for SVB and Signature Bank", detail: "Treasury, Fed, and FDIC jointly agree to guarantee all deposits, insured and uninsured, at both banks." },
+    { date: "2023-03-13", label: "Depositors regain full access to funds", detail: "No losses borne by taxpayers, per the joint statement; shareholders and certain unsecured debt not protected." }
+  ]} />
+
+<Pullquote cite="Joint Statement by the Department of the Treasury, Federal Reserve, and FDIC (March 12, 2023)" href="https://www.federalreserve.gov/newsevents/pressreleases/monetary20230312b.htm" kind="document">
+Secretary Yellen approved actions enabling the FDIC to complete its resolution of Silicon Valley Bank, Santa Clara, California, in a manner that fully protects all depositors. Depositors will have access to all of their money starting Monday, March 13. No losses associated with the resolution of Silicon Valley Bank will be borne by the taxpayer.
+</Pullquote>
+
+"No losses borne by the taxpayer" was a promise about the federal budget, not about cost — and it is not a promise made by one agency alone: the same joint statement is <Annotation client:load term="independently mirrored, verbatim, on the FDIC's own site" note="FDIC, 'Joint Statement by the Department of the Treasury, Federal Reserve, and FDIC' (press release pr23017.html, fdic.gov, Mar 12 2023) — text-identical to the Federal Reserve's posting of the same statement. Two distinct agencies publishing the identical statement is the genuine independent corroboration for the systemic-risk-exception claims in this piece." />, not just the Fed's. Someone still had to pay, and the bill for making every depositor whole came due on the rest of the banking industry.
+
+<StatBand client:visible caption="The cost of making uninsured depositors whole. Sources: Federal Reserve OIG (initial FDIC estimate); FDIC final special-assessment rule."
+  stats={[
+    { value: 20, prefix: "$", suffix: "B", label: "INITIAL FDIC LOSS ESTIMATE", sub: "SVB alone, Mar 26 2023", href: "https://oig.federalreserve.gov/reports/board-material-loss-review-silicon-valley-bank-sep2023.pdf" },
+    { value: 16.3, prefix: "$", suffix: "B", decimals: 1, label: "SPECIAL ASSESSMENT ON BANKS", sub: "SVB + Signature combined, final", href: "https://www.fdic.gov/news/press-releases/2023/pr23092.html" },
+    { value: 151.6, prefix: "$", suffix: "B", decimals: 1, label: "SVB'S UNINSURED DEPOSITS", sub: "last call report", href: "https://www.congress.gov/crs_external_products/IN/PDF/IN12125/IN12125.1.pdf" }
+  ]} />
+
+The Fed's inspector general recorded the FDIC's early estimate that resolving SVB alone would cost the Deposit Insurance Fund <Annotation client:load term="approximately $20 billion" note="Federal Reserve OIG, Material Loss Review of Silicon Valley Bank (2023-SR-B-013), p.9, citing an FDIC March 26, 2023 press release: 'the FDIC estimated that the loss to the DIF resulting from SVB's failure would be approximately $20 billion.'" />. By late 2023, once the FDIC finalized how it would recover the money, it set the combined cost of protecting uninsured depositors at both SVB and Signature Bank at <Annotation client:load term="approximately $16.3 billion" note="FDIC, Final Rule on Special Assessment Pursuant to Systemic Risk Determination (Nov 16, 2023): 'the FDIC estimates that of the total cost of the failures of Silicon Valley Bank and Signature Bank, approximately $16.3 billion was attributable to the protection of uninsured depositors.'" /> — recovered not from taxpayers but through a special assessment charged to the banking industry itself, weighted toward the banks that carry the largest uninsured-deposit books, which is to say, toward the banks structurally most like SVB.
+
+The systemic-risk guarantee did not fully put the fire out. Seven weeks later, on May 1, 2023, California regulators closed a second, nearly identically sized California bank — First Republic — after it suffered its own deposit flight in the panic's aftershock. First Republic's own year-end 2022 call report listed <Annotation client:load term="about $212.6 billion in total assets and $176.4 billion in total deposits" note="FDIC OIG, Material Loss Review of First Republic Bank (EVAL-24-03, Nov 2023): 'As of December 31, 2022 — according to the Consolidated Reports of Condition and Income (Call Report) — First Republic reported about $212.6 billion in total assets and $176.4 billion in total deposits.'" /> — essentially the same size, bank for bank, as Silicon Valley Bank's own <Annotation client:load term="$209.0 billion in total assets" note="Federal Reserve Barr Report (Apr 28, 2023), p.17 and Figure 2: 'SVBFG's principal subsidiary was Silicon Valley Bank (SVB), a California state-chartered bank with approximately $209 billion in assets'; Figure 2 gives the precise figure as '$209.0 billion.' Independently corroborated by the Congressional Research Service (IN12125, Mar 21 2023): at closure SVB 'was the 16th largest U.S. bank... with... around $209 billion in assets and $175 billion in deposits as of year-end 2022.' (SVB Financial Group, the bank's holding company, separately reported a larger consolidated figure — about $211.8 billion — in its own 10-K; the bank-level $209.0B is the correct apples-to-apples comparison against First Republic's own bank-level Call Report total.)" /> at year-end 2022 — and the FDIC OIG's own material-loss review states plainly that, <Annotation client:load term="“based on the amount of total assets, First Republic was the second largest bank failure in U.S. history at the time”" note="FDIC OIG, Material Loss Review of First Republic Bank (EVAL-24-03, Nov 2023), p.1." />, displacing SVB into third. Two banks of nearly identical size, carrying nearly identical 2022 rate exposure, failed seven weeks apart in the same state, resolved by the same regulator. That is not a coincidence of bad luck. It is the clearest evidence that the mechanism this dispatch describes was systemic, not idiosyncratic to one bank's mismanagement.
+
+## So what — the payoff
+
+Three things fall out of the arithmetic in this piece, and they matter more than the SVB story itself, because the conditions that produced it were not unique to one bank.
+
+First: the eight-hour, $42 billion run was not evidence that mobile banking is dangerous in the abstract. It was evidence that mobile banking is dangerous specifically *combined with* an uninsured, concentrated, professionally networked depositor base — the exact profile of a bank serving one industry's operating cash. A retail bank whose depositors are individually insured up to $250,000 and largely unconnected to one another has neither the incentive nor the coordination mechanism to reproduce this. The Fed's own language is careful on this point: "a highly networked and concentrated depositor base, *and* technology" — the conjunction is load-bearing. Regulators reading this correctly would stress-test concentration and speed together, not technology risk alone.
+
+Second: the balance-sheet mechanism predates and outlasts any single bank's story. Every bank in America that bought long-duration bonds in 2020–2021 and did not hedge the rate risk was carrying some version of SVB's exposure — the $620.4 billion industry-wide unrealized loss figure proves it was not a one-bank phenomenon. What made SVB unique was not the size of its bet but the speed at which its specific depositors could force it to realize the loss. The lesson for supervision is not "watch for bad bond portfolios" — regulators already watch for that, and had, per the Fed's own account, flagged SVB's specifically five weeks before it failed. The lesson is that the *response time* available to fix a flagged problem has collapsed from months to hours, and a supervisory process built for the slower era — an MOU planned for "Q1 2023," proposed at a bank that was already at 110% of capital in unrealized losses — was not fast enough to matter.
+
+Third, and this is the reframing worth carrying forward: distinguish this precisely from a market-microstructure failure like a flash crash, because the fix is entirely different. A flash crash is solved by better circuit breakers and slower matching engines — friction is the cure, because the problem is a false or overreacting signal moving too fast through automated systems. SVB's problem was a *true* signal moving, for the first time, as fast as the automated systems around it — friction cannot cure that, because the signal was correct. The only real fixes are upstream of the speed: better capital and duration-risk requirements so insolvency does not develop silently for a year, and faster, more forceful supervisory escalation so that a flagged 110%-of-capital exposure gets a binding order in weeks, not a memorandum planned for next quarter. The clock speed of a bank run is not going back to 2008. The only lever left is closing the gap before the clock starts.
+
+Fourth, and this is the practical takeaway for anyone who banks the way SVB's clients did: the $250,000 insurance limit is not a rounding error, it is the entire game. Every one of the depositors racing for the exit on March 9 was racing specifically because the money above that line had zero government backstop until regulators chose, after the fact, to extend one. SVB's own uninsured share — <Annotation client:load term="over 94 percent of deposits" note="Federal Reserve OIG, Material Loss Review of Silicon Valley Bank (2023-SR-B-013), p.9." /> — was not an eccentricity of one bank's client base; it is close to the norm for a business operating account holding payroll and runway. The Fed and FDIC's decision to invoke the systemic risk exception protected SVB's and Signature's depositors after the fact, but the joint statement is explicit that this was a discretionary, case-by-case call, not a change to the standing insurance limit — a founder banking the same way today is still, by the letter of the law, uninsured above $250,000, betting on a repeat discretionary rescue that regulators have not promised to make automatic. The lesson the market actually learned from SVB was not "diversify your deposits." It was "diversify your deposits, and hope the next bank that mismanages its duration risk is judged systemically important enough to bail out."
+
+<Callout kind="note" title="Methodology">
+<strong>Data.</strong> The $42 billion / ~8-hour figures are drawn from three independent government documents: the California DFPI's Order Taking Possession (Mar 10, 2023), the DFPI's own Review of its Oversight and Regulation of SVB (May 8, 2023 — the only source giving the precise "approximately eight hours" window), and the Federal Reserve OIG's Material Loss Review (Sep 2023), which independently corroborates the $42B figure and the 25%-of-deposits share. The Federal Reserve's Barr Report (Apr 28, 2023) rounds the March 9 figure to "over $40 billion," consistent with, not contradicting, the more precise $42B. Balance-sheet figures (HTM portfolio size, duration, unrealized losses, total equity) are SVB Financial Group's own audited 2022 Form 10-K, filed with the SEC. The Fed funds rate series is FRED's FEDFUNDS, unmodified. Industry-wide unrealized-loss figures are the FDIC's own Q4 2022 Quarterly Banking Profile press release. The social-media effect size (4.3 percentage points) is a peer-reviewed, published estimate (Cookson et al., <em>Journal of Financial Economics</em>, 2026), not a KHAZANA calculation.
+<br /><br />
+<strong>What the data can't show.</strong> No primary source found in this research gives a minute-by-minute or even hour-by-hour intraday breakdown of the $42 billion — the $5.25B/hour and ~$1.46M/second figures in this piece are averages computed by dividing the total by the DFPI's stated 8-hour window, not a measured flow rate, and the true pace almost certainly accelerated as the day went on rather than staying constant. The brief that seeded this piece referenced "roughly ten hours"; no primary source located supports that figure, and this piece uses the DFPI's own precise "approximately eight hours" instead. The exact ratio of SVB's ~94% uninsured-deposit figure (Fed OIG, year-end 2022) to its $151.6 billion uninsured-deposit figure (CRS, last call report) is not perfectly reconcilable to the decimal from public documents, because the two are drawn from slightly different filings and denominators — both are reported here as independently sourced facts, not reconciled into one derived ratio.
+<br /><br />
+<strong>Where sources disagree.</strong> DFPI's review cites two different Washington Mutual comparisons from two different underlying sources — a $2.8 billion peak single day and an $18.7 billion/16-day total — which are complementary, not conflicting, measurements (peak-day vs. cumulative). The Federal Reserve's Barr Report separately cites WaMu's total as "$19 billion," a rounding of the same $18.7 billion figure, not a competing estimate.
+</Callout>
