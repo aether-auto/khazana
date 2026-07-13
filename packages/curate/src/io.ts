@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { EngagementEventSchema, FeedItemSchema, type EngagementEvent, type FeedItem } from "@khazana/core";
+import { EngagementEventSchema, FeedItemSchema, partitionSafeFeedItems, type EngagementEvent, type FeedItem } from "@khazana/core";
 import type { TastePayload } from "./format-affinity.js";
 
 // Re-exported from @khazana/core so the worker and curate share one contract.
@@ -35,8 +35,15 @@ export function readEvents(dataDir: string): EngagementEvent[] {
 
 export function writeCuratedFeed(dataDir: string, items: FeedItem[]): string {
   const path = join(dataDir, "feed", "curated.json");
+  // Final compile-time safety net before the site builds from curated.json:
+  // drop (don't ship) any item still carrying unsafe markup. Items reaching here
+  // were already sanitized at ingest; this is defense in depth at the render seam.
+  const { safe, dropped } = partitionSafeFeedItems(items);
+  for (const { item, reasons } of dropped) {
+    console.warn(`[curate] DROPPED unsafe item ${item.id} (source=${item.source}): ${reasons.join("; ")}`);
+  }
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, JSON.stringify(items, null, 2) + "\n");
+  writeFileSync(path, JSON.stringify(safe, null, 2) + "\n");
   return path;
 }
 

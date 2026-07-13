@@ -4,12 +4,14 @@ import {
   mergeSourceHealth,
   parseRegistry,
   parseSourceHealthFile,
+  partitionSafeFeedItems,
   RegistrySchema,
   SourceHealthFileSchema,
   type FeedItem,
   type Registry,
   type SourceHealthFile,
 } from "@khazana/core";
+import { sanitizeFeedItemContent } from "./extract.js";
 
 /**
  * Load the registry, layering committed source health onto the SEED when no
@@ -57,9 +59,22 @@ export function saveSourceHealth(dataDir: string, health: SourceHealthFile): voi
   writeFileSync(path, JSON.stringify(SourceHealthFileSchema.parse(health), null, 2) + "\n");
 }
 
+/**
+ * Persist the fetched feed to `data/feed/raw.json`, enforcing the HTML-safety
+ * guarantee at the single convergence point every source type flows through
+ * (post-enrich, regardless of EXTRACT): each item's `summary` is reduced to
+ * safe plain text and `body` to sanitized allowlisted HTML, then a final
+ * structural drop-net excludes anything that STILL looks unsafe (defense in
+ * depth) rather than shipping it to the `set:html` render sink downstream.
+ */
 export function writeFeed(dataDir: string, items: FeedItem[]): string {
   const path = join(dataDir, "feed", "raw.json");
+  const sanitized = items.map(sanitizeFeedItemContent);
+  const { safe, dropped } = partitionSafeFeedItems(sanitized);
+  for (const { item, reasons } of dropped) {
+    console.warn(`[ingest] DROPPED unsafe item ${item.id} (source=${item.source}): ${reasons.join("; ")}`);
+  }
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, JSON.stringify(items, null, 2) + "\n");
+  writeFileSync(path, JSON.stringify(safe, null, 2) + "\n");
   return path;
 }

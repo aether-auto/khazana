@@ -2,6 +2,7 @@ import { Readability } from "@mozilla/readability";
 import { extractFromHtml as articleExtractorFromHtml } from "@extractus/article-extractor";
 import { parseHTML } from "linkedom";
 import sanitizeHtml from "sanitize-html";
+import type { FeedItem } from "@khazana/core";
 
 // ---------------------------------------------------------------------------
 // Boilerplate heuristics (class/id patterns → drop whole element)
@@ -299,6 +300,38 @@ export function htmlToText(html: string): string {
   return sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} })
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/**
+ * Sanitize a card excerpt down to safe plain text. `summary` is never meant to
+ * carry markup (it's rendered as escaped text on cards), so we strip ALL tags —
+ * dropping the content of active-content tags entirely — and collapse
+ * whitespace. This closes the gap where an RSS `<description>` leaked raw HTML
+ * (e.g. `<figure><img>`) into the summary field.
+ */
+export function sanitizePlainSummary(value: string | undefined): string {
+  if (!value) return "";
+  return sanitizeHtml(value, {
+    allowedTags: [],
+    allowedAttributes: {},
+    nonTextTags: ["script", "style", "textarea", "noscript", "iframe"],
+  })
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * The ingest-side sanitization guarantee for a single FeedItem: `summary` ends
+ * up as safe plain text and `body` ends up as sanitized, allowlisted HTML —
+ * ALWAYS, for every source type and regardless of whether the enrich step ran
+ * (EXTRACT=0 paths included). Idempotent: safe to re-apply to already-enriched
+ * items. Returns a new item; does not mutate the input.
+ */
+export function sanitizeFeedItemContent(item: FeedItem): FeedItem {
+  const summary = sanitizePlainSummary(item.summary);
+  const cleanedBody = item.body ? sanitizeArticleHtml(item.body) : "";
+  const body = cleanedBody.trim() ? cleanedBody : undefined;
+  return { ...item, summary, body };
 }
 
 /** Build an ExtractedArticle from raw content HTML, or null if it sanitizes empty. */

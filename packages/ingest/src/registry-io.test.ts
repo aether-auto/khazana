@@ -2,6 +2,7 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, test } from "vitest";
+import { containsUnsafeMarkup } from "@khazana/core";
 import { loadRegistry, loadSourceHealth, saveRegistry, saveSourceHealth, writeFeed } from "./registry-io.js";
 
 let dir: string;
@@ -79,4 +80,46 @@ test("writeFeed writes the items array and returns the path", () => {
   const path = writeFeed(dir, [item as never]);
   expect(path).toContain(join("feed", "raw.json"));
   expect(JSON.parse(readFileSync(path, "utf8"))).toHaveLength(1);
+});
+
+test("writeFeed sanitizes summary to plain text and body to allowlisted HTML before persisting", () => {
+  const item = {
+    id: "1", source: "julia-evans-blog", sourceType: "rss", url: "https://e.com/a", title: "A",
+    publishedAt: "2026-06-20T00:00:00.000Z", fetchedAt: "2026-06-23T00:00:00.000Z",
+    topics: [], entities: [],
+    summary: '<figure class="zine horizontal"><img src="whatever.jpg"></figure>Excerpt text',
+    body: '<p>Real prose long enough to survive the boilerplate stripping pass and be kept as body.</p><script>alert(1)</script>',
+    media: [], kind: "link",
+  } as const;
+  const path = writeFeed(dir, [item as never]);
+  const written = JSON.parse(readFileSync(path, "utf8"));
+  expect(written).toHaveLength(1);
+  expect(written[0].summary).toBe("Excerpt text");
+  expect(written[0].body).not.toMatch(/<script/i);
+  expect(written[0].body).toMatch(/Real prose/);
+});
+
+test("writeFeed guarantees every persisted item is free of unsafe markup, even from nasty raw input", () => {
+  const nasty = [
+    {
+      id: "1", source: "a", sourceType: "rss", url: "https://e.com/1", title: "A",
+      publishedAt: "2026-06-20T00:00:00.000Z", fetchedAt: "2026-06-23T00:00:00.000Z",
+      topics: [], entities: [], summary: '<img src=x onerror="steal()">hi',
+      body: '<iframe src="evil"></iframe><p>prose long enough to survive the boilerplate strip and stay.</p>',
+      media: [], kind: "link",
+    },
+    {
+      id: "2", source: "b", sourceType: "reddit", url: "https://e.com/2", title: "B",
+      publishedAt: "2026-06-20T00:00:00.000Z", fetchedAt: "2026-06-23T00:00:00.000Z",
+      topics: [], entities: [], summary: "clean",
+      body: '<a href="javascript:alert(1)">bad</a> raw selftext',
+      media: [], kind: "discussion",
+    },
+  ] as const;
+  const path = writeFeed(dir, nasty as never);
+  const written = JSON.parse(readFileSync(path, "utf8")) as { summary: string; body?: string }[];
+  for (const it of written) {
+    expect(containsUnsafeMarkup(it.summary)).toBe(false);
+    expect(containsUnsafeMarkup(it.body ?? "")).toBe(false);
+  }
 });

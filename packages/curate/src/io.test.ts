@@ -58,6 +58,14 @@ test("writeCuratedFeed writes the array and returns the path", () => {
   expect(JSON.parse(readFileSync(path, "utf8"))).toHaveLength(1);
 });
 
+test("writeCuratedFeed drops items still carrying unsafe markup before the site builds from it", () => {
+  const clean = { ...item, id: "clean", summary: "safe", body: "<p>fine</p>" };
+  const evil = { ...item, id: "evil", source: "bad", summary: "", body: "<script>steal()</script>" };
+  const path = writeCuratedFeed(dir, [clean as never, evil as never]);
+  const written = JSON.parse(readFileSync(path, "utf8")) as { id: string }[];
+  expect(written.map((i) => i.id)).toEqual(["clean"]);
+});
+
 test("writeTaste writes taste.json and returns the path", () => {
   const payload = { ready: true, topics: { ai: 1 }, entities: {}, formatAffinity: { dispatch: 1 } };
   const path = writeTaste(dir, payload as never);
