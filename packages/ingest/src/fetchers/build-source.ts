@@ -115,6 +115,21 @@ export function buildSource(
   fetchFn: FetchFn = defaultFetch,
   opts: BuildSourceOptions = {},
 ): Source {
+  // Generic (rss / eng-blog / news / arxiv / youtube-RSS) feed fetch: send a
+  // browser-like UA (unblocks bot-UA-gated origins) and a feed-appropriate
+  // Accept (fixes the 406 class). Caller headers override these; defaults fill
+  // the gaps. Throws `<id>: HTTP <status>` on non-2xx so ingest can classify it.
+  const fetchGenericFeed = async (ctx: FetchContext): Promise<FeedItem[]> => {
+    const headers = mergeHeaders(
+      { "User-Agent": BROWSER_USER_AGENT, Accept: FEED_ACCEPT },
+      opts.headers,
+    );
+    const res = await fetchFn(entry.url, { headers });
+    if (!res.ok) throw new Error(`${entry.id}: HTTP ${res.status}`);
+    const items = await parseRssFeed(await res.text(), entry, ctx.now);
+    return ctx.limit ? items.slice(0, ctx.limit) : items;
+  };
+
   return {
     id: entry.id,
     type: entry.type,
@@ -124,27 +139,39 @@ export function buildSource(
       // See fetchReddit; it owns its own UA, retry, and graceful degradation.
       if (entry.type === "reddit") return fetchReddit(entry, fetchFn, ctx);
 
-      // youtube: the registry's `feeds/videos.xml?channel_id=` endpoint now 404s
-      // for ~90-95% of channels, so discovery routes through yt-dlp
-      // --flat-playlist (see youtube-discovery.ts) whenever the direct-youtube
-      // path is gated on AND a yt-dlp binary is present — same gating idiom as
-      // transcript/metadata fetching. Falls through to the RSS path below when
-      // either is unavailable (local/dev without ALLOW_DIRECT_YOUTUBE or yt-dlp).
-      if (entry.type === "youtube" && isDirectYouTubeEnabled() && isYtDlpAvailable()) {
-        return fetchYouTubeChannelVideos(entry, ctx);
+      // youtube: RSS-FIRST. The registry's `feeds/videos.xml?channel_id=`
+      // endpoint is live (HTTP 200 with the channel's recent uploads) for the
+      // vast majority of channels — re-verified 2026-07-12 — so the cheap,
+      // direct RSS fetch is the primary path. yt-dlp --flat-playlist (see
+      // youtube-discovery.ts) is kept ONLY as a fallback for channels whose RSS
+      // yields nothing (genuinely dead/moved), gated on ALLOW_DIRECT_YOUTUBE=1 +
+      // a yt-dlp binary — same idiom as transcript/metadata fetching.
+      //
+      // (An earlier revision routed EVERY youtube source through yt-dlp on the
+      // premise that videos.xml "404s for ~90-95% of channels". Whether or not
+      // that was ever true, it is false now; and on shared CI IPs yt-dlp is
+      // frequently rate-limited/blocked and returns nothing, so the entire
+      // youtube path silently shipped ZERO items — hence this flip.)
+      if (entry.type === "youtube") {
+        let rssError: unknown = null;
+        try {
+          const viaRss = await fetchGenericFeed(ctx);
+          if (viaRss.length > 0) return viaRss;
+        } catch (err) {
+          rssError = err;
+        }
+        if (isDirectYouTubeEnabled() && isYtDlpAvailable()) {
+          const viaYtDlp = await fetchYouTubeChannelVideos(entry, ctx);
+          if (viaYtDlp.length > 0) return viaYtDlp;
+        }
+        // Nothing from either path. Surface a hard RSS failure (e.g. 404/410) so
+        // reconcile classifies it permanent and strikes it toward auto-disable;
+        // a live-but-empty channel (RSS 200, no items) just yields [].
+        if (rssError) throw rssError;
+        return [];
       }
 
-      // Generic (rss / eng-blog / news / arxiv) feed fetch: send a browser-like
-      // UA (unblocks bot-UA-gated origins) and a feed-appropriate Accept (fixes
-      // the 406 class). Caller headers override these; defaults fill the gaps.
-      const headers = mergeHeaders(
-        { "User-Agent": BROWSER_USER_AGENT, Accept: FEED_ACCEPT },
-        opts.headers,
-      );
-      const res = await fetchFn(entry.url, { headers });
-      if (!res.ok) throw new Error(`${entry.id}: HTTP ${res.status}`);
-      const items = await parseRssFeed(await res.text(), entry, ctx.now);
-      return ctx.limit ? items.slice(0, ctx.limit) : items;
+      return fetchGenericFeed(ctx);
     },
   };
 }

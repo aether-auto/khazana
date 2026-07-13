@@ -4,13 +4,18 @@
  *
  * Every seeded youtube `SourceEntry.url` points at the legacy
  * `https://www.youtube.com/feeds/videos.xml?channel_id=<ID>` RSS endpoint. That
- * endpoint now 404s for the vast majority of channels (confirmed empirically),
- * so the generic RSS fetch in `fetchers/build-source.ts` silently yields zero
- * items for ~90-95% of youtube sources. `yt-dlp --flat-playlist` against the
- * same channel's `/videos` tab works fine on the exact same channels, so this
- * module routes discovery through yt-dlp instead — gated on
- * `ALLOW_DIRECT_YOUTUBE=1` + a yt-dlp binary on PATH (see `youtube.ts`), with
- * an RSS fallback preserved for local/dev environments without either.
+ * endpoint is live (HTTP 200 with the channel's recent uploads) for the vast
+ * majority of channels — re-verified 2026-07-12 — so `fetchers/build-source.ts`
+ * uses the generic RSS fetch as the PRIMARY youtube path. This module's
+ * `yt-dlp --flat-playlist` discovery is the FALLBACK, used only for channels
+ * whose RSS yields nothing (genuinely dead/moved) — gated on
+ * `ALLOW_DIRECT_YOUTUBE=1` + a yt-dlp binary on PATH (see `youtube.ts`).
+ *
+ * (An earlier revision made yt-dlp the PRIMARY path on the premise that
+ * videos.xml "404s for ~90-95% of channels". Whether or not that held at the
+ * time, it is false now; worse, on shared CI/Action-runner IPs yt-dlp is
+ * frequently rate-limited/blocked and returns nothing, so making it primary
+ * silently shipped ZERO youtube items in production. Hence RSS-first.)
  *
  * yt-dlp runs as a subprocess (bypasses the HTTP `PerHostLimiter`), and a bulk
  * run touches up to ~208 youtube sources, so every invocation is paced through
@@ -47,13 +52,13 @@ import { sharedYtDlpGateInstance, type YtDlpGate } from "./youtube.js";
  *
  * Lowered 5 → 3 after a live `feed-refresh` run crashed the whole ingest
  * process (undici parser `AssertionError` inside Node's HTTP client, thrown
- * asynchronously from a socket event — no try/catch stops it). Root cause:
- * this discovery poll went from ~0 usable YouTube items (the legacy
- * videos.xml RSS endpoint 404s for ~90-95% of channels) to up to
- * `208 channels * limit` new items in one run, each of which is then run
- * through `enrichContent`'s YouTube branch. 3 trims the worst-case burst by
- * 40% without materially hurting freshness (a discovery poll running 2x/day
- * only needs to catch a channel's last few uploads).
+ * asynchronously from a socket event — no try/catch stops it). The trigger was
+ * this discovery poll fanning out up to `208 channels * limit` new items in one
+ * run, each then run through `enrichContent`'s YouTube branch. 3 trims the
+ * worst-case burst by 40% without materially hurting freshness (a discovery
+ * poll running 2x/day only needs to catch a channel's last few uploads). Note
+ * this fallback now fires only for channels whose RSS videos.xml yields nothing
+ * (build-source.ts is RSS-first), so the realistic fan-out is far below 208.
  */
 export const DEFAULT_YT_DLP_DISCOVERY_LIMIT = 3;
 

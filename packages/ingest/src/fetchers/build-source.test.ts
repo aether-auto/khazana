@@ -190,30 +190,108 @@ const ytEntry: SourceEntry = {
   channels: ["science"],
 };
 
-test("youtube dispatches to fetchYouTubeChannelVideos when ALLOW_DIRECT_YOUTUBE=1 and yt-dlp is available", async () => {
+const YT_RSS_ONE = `<?xml version="1.0"?><rss version="2.0"><channel>
+  <item><title>Fresh RSS video</title><link>https://youtube.com/watch?v=rssvid1</link></item>
+</channel></rss>`;
+
+const fakeYtDlpItems: FeedItem[] = [
+  {
+    id: "fake1", source: ytEntry.id, sourceType: "youtube",
+    url: "https://www.youtube.com/watch?v=abc123DEF45", title: "A yt-dlp discovered video",
+    publishedAt: "2026-06-23T00:00:00.000Z", fetchedAt: "2026-06-23T00:00:00.000Z",
+    topics: ["science"], entities: [], summary: "", media: [], kind: "video",
+  },
+];
+
+test("youtube prefers RSS videos.xml and does NOT call yt-dlp when RSS yields items (even with ALLOW_DIRECT_YOUTUBE=1 + yt-dlp available)", async () => {
+  // RSS-first: the videos.xml endpoint is live for the vast majority of
+  // channels, so a successful RSS fetch must short-circuit before the yt-dlp
+  // subprocess path (which is frequently blocked on shared CI IPs and returns
+  // nothing — the root cause of the whole youtube path shipping zero items).
   process.env["ALLOW_DIRECT_YOUTUBE"] = "1";
   const isAvailSpy = vi.spyOn(youtubeMod, "isYtDlpAvailable").mockReturnValue(true);
-  const fakeItems: FeedItem[] = [
-    {
-      id: "fake1", source: ytEntry.id, sourceType: "youtube",
-      url: "https://www.youtube.com/watch?v=abc123DEF45", title: "A discovered video",
-      publishedAt: "2026-06-23T00:00:00.000Z", fetchedAt: "2026-06-23T00:00:00.000Z",
-      topics: ["science"], entities: [], summary: "", media: [], kind: "video",
-    },
-  ];
   const discoverySpy = vi
     .spyOn(discoveryMod, "fetchYouTubeChannelVideos")
-    .mockResolvedValue(fakeItems);
-  // A fetchFn that would blow up if the RSS fallback were used instead.
-  const fetchFn: FetchFn = async () => {
-    throw new Error("should not hit the RSS fallback when the yt-dlp path is gated on");
+    .mockResolvedValue(fakeYtDlpItems);
+  let sentUrl: string | undefined;
+  const fetchFn: FetchFn = async (url) => {
+    sentUrl = url;
+    return ok({ text: YT_RSS_ONE });
   };
+  const items = await buildSource(ytEntry, fetchFn).fetch({ now: "2026-06-23T00:00:00.000Z" });
+  expect(sentUrl).toBe(ytEntry.url); // tried the videos.xml RSS endpoint first
+  expect(discoverySpy).not.toHaveBeenCalled(); // RSS had items → yt-dlp never touched
+  expect(items).toHaveLength(1);
+  expect(items[0]!.title).toBe("Fresh RSS video");
+  expect(items[0]!.kind).toBe("video");
+  discoverySpy.mockRestore();
+  isAvailSpy.mockRestore();
+  delete process.env["ALLOW_DIRECT_YOUTUBE"];
+});
+
+test("youtube falls back to yt-dlp when RSS yields zero items and yt-dlp is gated on + available", async () => {
+  process.env["ALLOW_DIRECT_YOUTUBE"] = "1";
+  const isAvailSpy = vi.spyOn(youtubeMod, "isYtDlpAvailable").mockReturnValue(true);
+  const discoverySpy = vi
+    .spyOn(discoveryMod, "fetchYouTubeChannelVideos")
+    .mockResolvedValue(fakeYtDlpItems);
+  // RSS 200 but an EMPTY channel feed (no <item>s) → fall back to yt-dlp.
+  const EMPTY_RSS = `<?xml version="1.0"?><rss version="2.0"><channel></channel></rss>`;
+  const fetchFn: FetchFn = async () => ok({ text: EMPTY_RSS });
   const items = await buildSource(ytEntry, fetchFn).fetch({ now: "2026-06-23T00:00:00.000Z" });
   expect(discoverySpy).toHaveBeenCalledWith(
     ytEntry,
     expect.objectContaining({ now: "2026-06-23T00:00:00.000Z" }),
   );
-  expect(items).toEqual(fakeItems);
+  expect(items).toEqual(fakeYtDlpItems);
+  discoverySpy.mockRestore();
+  isAvailSpy.mockRestore();
+  delete process.env["ALLOW_DIRECT_YOUTUBE"];
+});
+
+test("youtube falls back to yt-dlp when the RSS fetch hard-fails (non-200) and yt-dlp is available", async () => {
+  process.env["ALLOW_DIRECT_YOUTUBE"] = "1";
+  const isAvailSpy = vi.spyOn(youtubeMod, "isYtDlpAvailable").mockReturnValue(true);
+  const discoverySpy = vi
+    .spyOn(discoveryMod, "fetchYouTubeChannelVideos")
+    .mockResolvedValue(fakeYtDlpItems);
+  const fetchFn: FetchFn = async () => ({ ok: false, status: 403, text: async () => "", json: async () => ({}) });
+  const items = await buildSource(ytEntry, fetchFn).fetch({ now: "2026-06-23T00:00:00.000Z" });
+  expect(discoverySpy).toHaveBeenCalled();
+  expect(items).toEqual(fakeYtDlpItems);
+  discoverySpy.mockRestore();
+  isAvailSpy.mockRestore();
+  delete process.env["ALLOW_DIRECT_YOUTUBE"];
+});
+
+test("youtube re-throws a hard RSS failure when yt-dlp yields nothing, so the source is struck toward auto-disable", async () => {
+  // A genuinely-dead channel: RSS 404 AND yt-dlp returns nothing. The 404 must
+  // surface (not be swallowed to []) so reconcile classifies it permanent and
+  // strikes it toward DISABLE_THRESHOLD.
+  process.env["ALLOW_DIRECT_YOUTUBE"] = "1";
+  const isAvailSpy = vi.spyOn(youtubeMod, "isYtDlpAvailable").mockReturnValue(true);
+  const discoverySpy = vi
+    .spyOn(discoveryMod, "fetchYouTubeChannelVideos")
+    .mockResolvedValue([]); // yt-dlp also finds nothing
+  const fetchFn: FetchFn = async () => ({ ok: false, status: 404, text: async () => "", json: async () => ({}) });
+  await expect(
+    buildSource(ytEntry, fetchFn).fetch({ now: "2026-06-23T00:00:00.000Z" }),
+  ).rejects.toThrow("404");
+  expect(discoverySpy).toHaveBeenCalled();
+  discoverySpy.mockRestore();
+  isAvailSpy.mockRestore();
+  delete process.env["ALLOW_DIRECT_YOUTUBE"];
+});
+
+test("youtube re-throws a hard RSS failure when yt-dlp is unavailable", async () => {
+  process.env["ALLOW_DIRECT_YOUTUBE"] = "1";
+  const isAvailSpy = vi.spyOn(youtubeMod, "isYtDlpAvailable").mockReturnValue(false);
+  const discoverySpy = vi.spyOn(discoveryMod, "fetchYouTubeChannelVideos");
+  const fetchFn: FetchFn = async () => ({ ok: false, status: 503, text: async () => "", json: async () => ({}) });
+  await expect(
+    buildSource(ytEntry, fetchFn).fetch({ now: "2026-06-23T00:00:00.000Z" }),
+  ).rejects.toThrow("503");
+  expect(discoverySpy).not.toHaveBeenCalled();
   discoverySpy.mockRestore();
   isAvailSpy.mockRestore();
   delete process.env["ALLOW_DIRECT_YOUTUBE"];
