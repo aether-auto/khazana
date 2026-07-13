@@ -415,6 +415,35 @@ test("mergeSourceHealth does not mutate either input", () => {
   expect(registry.sources[0]!.status).toBeUndefined();
 });
 
+test("strikes accumulate across simulated CI runs via the committed health file, disabling a persistently-dead source at DISABLE_THRESHOLD", () => {
+  // Reproduces the real production cycle: every CI run starts from a FRESH clone
+  // (sources.json gitignored → pristine seed), layers the committed
+  // source-health.json onto it (mergeSourceHealth), reconciles this run's fetch
+  // outcomes, then re-extracts the health subset to be committed back. A feed
+  // that 404s every run must therefore climb 1 → 2 → 3 strikes across three runs
+  // and auto-disable — NOT reset to 0 each clone. This is the whole point of the
+  // committed health file; if it regressed, no source could ever be pruned.
+  const seed = (): Registry => ({ version: 1, sources: [src({ id: "dead", url: "https://dead.example/feed" })] });
+  const outcome = permanent({ sourceId: "dead" });
+
+  // Persisted health carried between runs (empty before the first run).
+  let health: SourceHealthFile = { version: 1, sources: [] };
+  const strikesByRun: number[] = [];
+  const disabledByRun: boolean[] = [];
+
+  for (let run = 0; run < 3; run++) {
+    const fresh = mergeSourceHealth(seed(), health); // fresh clone + committed health
+    const { registry: reconciled } = reconcileRegistry(fresh, [outcome], { now: NOW });
+    const entry = reconciled.sources[0]!;
+    strikesByRun.push(entry.consecutiveFailures ?? 0);
+    disabledByRun.push(entry.enabled === false && entry.status === "disabled");
+    health = extractSourceHealth(reconciled); // what pipeline.yml commits back
+  }
+
+  expect(strikesByRun).toEqual([1, 2, 3]); // accumulates, does not reset per clone
+  expect(disabledByRun).toEqual([false, false, true]); // crosses threshold on run 3
+});
+
 test("extractSourceHealth then mergeSourceHealth onto a fresh copy of the same base round-trips the health state", () => {
   const before: Registry = {
     version: 1,
