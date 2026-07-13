@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import { computeGaps, normalizeDomain, renderBrief } from "./gaps.js";
-import type { FeedItem, Registry } from "@khazana/core";
+import { backfillTargets, computeGaps, normalizeDomain, renderBrief } from "./gaps.js";
+import type { FeedItem, Registry, SourceEntry } from "@khazana/core";
 
 const registry: Registry = {
   version: 1,
@@ -68,4 +68,69 @@ test("renderBrief is deterministic markdown that names gaps and the candidates.j
   expect(md).toContain("claimedTrust");
   // generated twice → identical (deterministic)
   expect(renderBrief(g, "2026-06-23T00:00:00.000Z")).toBe(md);
+});
+
+// ── depletion-aware rebalancing: prioritize backfilling channels that just LOST
+// sources to auto-disable, even while they remain above the absolute floor ──
+
+const s = (over: Partial<SourceEntry>): SourceEntry => ({
+  id: "s", type: "rss", url: "https://e.com/feed", channels: ["tech"],
+  enabled: true, trustScore: 0.6, addedBy: "seed", failureCount: 0, ...over,
+});
+
+// science: 3 enabled + 2 auto-disabled youtube (lost the most).
+// tech: 2 enabled + 1 auto-disabled rss.
+// A hand-disabled source (enabled:false but status:"active") is NOT a loss.
+const depletedReg: Registry = {
+  version: 1,
+  sources: [
+    s({ id: "sci1", type: "rss", channels: ["science"] }),
+    s({ id: "sci2", type: "rss", channels: ["science"] }),
+    s({ id: "sci3", type: "rss", channels: ["science"] }),
+    s({ id: "sci-yt1", type: "youtube", channels: ["science"], enabled: false, status: "disabled" }),
+    s({ id: "sci-yt2", type: "youtube", channels: ["science"], enabled: false, status: "disabled" }),
+    s({ id: "tech1", type: "rss", channels: ["tech"] }),
+    s({ id: "tech2", type: "rss", channels: ["tech"] }),
+    s({ id: "tech-dead", type: "rss", channels: ["tech"], enabled: false, status: "disabled" }),
+    s({ id: "hand-off", type: "rss", channels: ["tech"], enabled: false, status: "active" }),
+  ],
+};
+
+test("depletedChannels ranks channels by number of auto-disabled sources, with the lost source types", () => {
+  const g = computeGaps(depletedReg, [], [], { minSourcesPerChannel: 1 });
+  // Both channels are above the floor (science 3 enabled, tech 2), so neither is
+  // "underserved" — but both LOST sources and must surface for backfill.
+  expect(g.underservedChannels).not.toContain("science");
+  expect(g.underservedChannels).not.toContain("tech");
+  expect(g.depletedChannels.map((d) => d.channel)).toEqual(["science", "tech"]); // science lost more → first
+  const sci = g.depletedChannels.find((d) => d.channel === "science")!;
+  expect(sci).toEqual({ channel: "science", enabled: 3, disabled: 2, lostTypes: ["youtube"] });
+  const tech = g.depletedChannels.find((d) => d.channel === "tech")!;
+  expect(tech).toEqual({ channel: "tech", enabled: 2, disabled: 1, lostTypes: ["rss"] });
+});
+
+test("a hand-disabled source (status:active) is NOT counted as a loss", () => {
+  const g = computeGaps(depletedReg, [], [], { minSourcesPerChannel: 1 });
+  const tech = g.depletedChannels.find((d) => d.channel === "tech")!;
+  expect(tech.disabled).toBe(1); // only tech-dead (status:disabled), not hand-off (status:active)
+});
+
+test("backfillTargets orders depleted channels (most-lost first) ahead of floor-underserved, deduped", () => {
+  const g = computeGaps(depletedReg, [], [], { minSourcesPerChannel: 1 });
+  const targets = backfillTargets(g);
+  // depleted first, in loss order
+  expect(targets.indexOf("science")).toBeLessThan(targets.indexOf("tech"));
+  // floor-underserved channels (e.g. history) still present, after the depleted ones
+  expect(targets).toContain("history");
+  expect(targets.indexOf("science")).toBeLessThan(targets.indexOf("history"));
+  // no duplicates
+  expect(targets.length).toBe(new Set(targets).size);
+});
+
+test("renderBrief surfaces the depleted channels with their lost types for aggressive backfill", () => {
+  const g = computeGaps(depletedReg, [], [], { minSourcesPerChannel: 1 });
+  const md = renderBrief(g, "2026-06-23T00:00:00.000Z");
+  expect(md).toContain("science");
+  expect(md).toContain("youtube"); // the lost type is named so backfill is type-aware
+  expect(renderBrief(g, "2026-06-23T00:00:00.000Z")).toBe(md); // deterministic
 });

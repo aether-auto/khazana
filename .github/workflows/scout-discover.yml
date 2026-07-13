@@ -1,22 +1,31 @@
 name: scout-discover
 
-# Weekly Source Scout: discover candidate sources (deterministic, no-AI) → apply
-# → commit the updated seed registry. This is a pure-$0 CODE workflow — no Claude
-# steps. Credibility appraisal now happens OUT-OF-BAND (a Claude routine, or
-# manual review of data/scout/candidate-brief.md) that can write
+# Twice-weekly Source Scout: discover candidate sources (deterministic, no-AI) →
+# apply → commit the updated seed registry. This is a pure-$0 CODE workflow — no
+# Claude steps. Credibility appraisal now happens OUT-OF-BAND (a Claude routine,
+# or manual review of data/scout/candidate-brief.md) that can write
 # data/scout/appraisal.json for a later `scout apply` to consume. With no
 # appraisal present, `scout apply` degrades gracefully: it prunes/repairs the
 # existing registry and auto-adds nothing (candidates just wait in the queue).
 #
+# CADENCE: the daily pipeline auto-DISABLES dead feeds every run (reconcile), but
+# only this workflow discovers REPLACEMENTS — so a weekly-only cadence could
+# leave a channel thin for up to ~6 days after a mid-week disable. Runs Mon+Thu
+# to halve that worst-case backfill latency. Still $0: discovery is deterministic
+# with no bulk/AI network (the one Worker call is the free events fetch), so a
+# second weekly run adds no API-quota risk — it just refreshes the candidate
+# queue + gap brief sooner. The aggressive lever is exclusively on the ADD side;
+# nothing here tightens disable criteria against healthy sources.
+#
 # KEPT SEPARATE from the daily pipeline (not folded in) on purpose:
-#   * cadence: source discovery only needs to run weekly, not daily;
+#   * cadence: source discovery needs at most a few runs a week, not daily;
 #   * blast radius: it commits data/sources.seed.json (a different git artifact
 #     than the daily MDX), so isolating it keeps each commit-back focused.
 
 on:
   schedule:
-    # 05:00 UTC every Monday, ahead of that day's pipeline run.
-    - cron: "0 5 * * 1"
+    # 05:00 UTC Monday and Thursday, ahead of those days' pipeline runs.
+    - cron: "0 5 * * 1,4"
   workflow_dispatch:
 
 concurrency:
