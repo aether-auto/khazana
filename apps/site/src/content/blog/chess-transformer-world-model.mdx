@@ -1,0 +1,309 @@
+---
+title: "The Board Inside the Network: Do Chess Transformers Build a World Model?"
+format: teardown
+channels:
+  - ai
+  - tech
+summary: "Train a transformer on nothing but chess move text and a linear probe pulls the entire board state out of its activations at up to 99.6% accuracy per square — and editing that internal representation directly changes the model's next move, which is the empirical line between a network that mimics chess and one that models it."
+publishedAt: 2026-07-13T09:00:00.000Z
+sources:
+  - title: "Emergent World Models and Latent Variable Estimation in Chess-Playing Language Models (Karvonen, 2024)"
+    url: "https://arxiv.org/abs/2403.15498"
+    tier: high
+    origin: researched
+  - title: "Acquisition of chess knowledge in AlphaZero (McGrath, Kapishnikov, Tomašev, et al. — published in PNAS 2022; cited here via the arXiv preprint)"
+    url: "https://arxiv.org/abs/2111.09259"
+    tier: high
+    origin: researched
+  - title: "Measuring Progress in Dictionary Learning for Language Model Interpretability with Board Game Models (Karvonen, Wright, Rager, et al., 2024)"
+    url: "https://arxiv.org/abs/2408.00113"
+    tier: high
+    origin: researched
+  - title: "Emergent World Representations: Exploring a Sequence Model Trained on a Synthetic Task (Li, Hopkins, Bau, Viégas, Pfister, Wattenberg, ICLR 2023)"
+    url: "https://arxiv.org/abs/2210.13382"
+    tier: high
+    origin: researched
+  - title: "Bridging the Human-AI Knowledge Gap: Concept Discovery and Transfer in AlphaZero (Schut, Tomašev, McGrath, Hassabis, Paquet, Kim)"
+    url: "https://arxiv.org/abs/2310.16410"
+    tier: high
+    origin: researched
+  - title: "Chess-GPT's Internal World Model (Adam Karvonen, 2024)"
+    url: "https://adamkarvonen.github.io/machine_learning/2024/01/03/chess-world-models.html"
+    tier: med
+    origin: researched
+  - title: "Manipulating Chess-GPT's World Model (Adam Karvonen, 2024)"
+    url: "https://adamkarvonen.github.io/machine_learning/2024/03/20/chess-gpt-interventions.html"
+    tier: med
+    origin: researched
+  - title: "Actually, Othello-GPT Has A Linear Emergent World Representation (Neel Nanda)"
+    url: "https://www.neelnanda.io/mechanistic-interpretability/othello"
+    tier: med
+    origin: researched
+  - title: "Acquisition of Chess Knowledge in AlphaZero (ChessBase summary)"
+    url: "https://en.chessbase.com/post/acquisition-of-chess-knowledge-in-alphazero"
+    tier: med
+    origin: researched
+  - title: "When does a chess transformer “see” a knight fork? An initial result from logit lens and attention patterns"
+    url: "https://www.lesswrong.com/posts/z7XuJWYxwiZw9Wk2W/when-does-a-chess-transformer-see-a-knight-fork-an-initial"
+    tier: low
+    origin: curated
+draft: false
+---
+
+import { RunnableCode, Chart, Annotation, StatBand, Pullquote, Sidenote, Diagram, DataTable, Stepper, EventCascade, Quiz, Callout, Detail, Definition } from "../../components/mdx";
+
+Feed a transformer nothing but chess games written as text — `1.e4 e5 2.Nf3 Nc6 3.Bb5 …` — and never once tell it what a rook is, how a knight moves, or that check exists. Train it only to predict the next character. Do this and you get a model that plays legal chess <Annotation client:load term="99.6–99.8% of the time" note="Adam Karvonen, “Chess-GPT’s Internal World Model” (2024): the 16-layer, 50M-parameter model trained on Lichess games reaches a 99.8% legal-move rate; the Stockfish-trained 16-layer model reaches 99.7%. A randomly initialized model of the same architecture plays essentially no legal moves." href="https://adamkarvonen.github.io/machine_learning/2024/01/03/chess-world-models.html" />, at a strength approaching <Annotation client:load term="1300–1500 Elo" note="Karvonen (2024): the 50M-parameter model reaches roughly 1300 Elo after one day of training on four RTX 3090s, and around 1500 Elo with extended training — club-player strength, reached purely from next-character prediction on PGN text." href="https://adamkarvonen.github.io/machine_learning/2024/01/03/chess-world-models.html" />. That is the first surprise. The second, and the one this teardown exists to dissect, is subtler: does that model know where the pieces are, or has it just gotten extremely good at predicting which characters tend to follow which other characters in chess notation?
+
+Those sound like the same question. They are not. A sufficiently good statistical parrot could, in principle, produce mostly-legal move sequences by memorizing enormous numbers of overlapping n-gram patterns in PGN strings, the same way autocomplete can finish "the early bird catches the—" without understanding worms. The only way to tell the two apart is to go inside the network, find out whether a *board* is encoded somewhere in its activations, and then — the part almost nobody does — reach in, edit that encoding by hand, and see whether the model's behavior changes to match. This is a teardown of exactly that experiment: the linear-probe methodology that searches for a chess board inside a language model, the specific numbers it returns, and the causal-intervention test that tells you whether what you found is decorative or load-bearing.
+
+<StatBand client:visible caption="The headline numbers from the two primary research threads this teardown is built on"
+  stats={[
+    { value: 99.6, suffix: "%", label: "BOARD-STATE PROBE ACC.", sub: "16-layer Chess-GPT, per square", href: "https://arxiv.org/abs/2403.15498" },
+    { value: 20.4, suffix: "%", label: "LINEAR PROBE ERROR", sub: "Othello-GPT, naive black/white encoding", href: "https://arxiv.org/abs/2210.13382" },
+    { value: 92.0, suffix: "%", label: "LEGAL MOVES AFTER SURGERY", sub: "editing the residual stream, 50M model", href: "https://adamkarvonen.github.io/machine_learning/2024/03/20/chess-gpt-interventions.html" },
+    { value: 64000, label: "TRAINING STEPS", sub: "when AlphaZero's material concept becomes reliably linear", group: false, href: "https://arxiv.org/abs/2111.09259" }
+  ]} />
+
+## The problem: legality is cheap to fake, hard to sustain
+
+Here's the naive hope, and it's worth stating plainly because the experiment exists to kill it or confirm it. A next-token predictor trained on huge amounts of chess text could get very far by pattern-matching *surface* regularities: certain openings are followed by certain replies, certain move-number ranges tend to feature certain piece letters, certain endgame notations look a certain way. None of that requires tracking where every piece actually sits. And yet the legality numbers say something is tracking the board closely enough to avoid a huge space of illegal continuations, move after move, for an entire game.
+
+<Chart client:visible mark="bar" x="model" y="legal" height={320}
+  caption="Legal-move rate by model — random initialization vs. trained, PGN-only supervision (Karvonen, 2024)"
+  data={[
+    { model: "Random init, 8-layer", legal: 0 },
+    { model: "Random init, 16-layer", legal: 0 },
+    { model: "Lichess-trained, 8-layer", legal: 99.6 },
+    { model: "Lichess-trained, 16-layer", legal: 99.8 },
+    { model: "Stockfish-trained, 16-layer", legal: 99.7 }
+  ]} />
+
+Zero to near-perfect is the cliff. A randomly initialized network of the exact same architecture — same layer count, same width, same tokenizer — plays essentially no legal moves, because it has no idea what a legal move even looks like as a string. <Annotation client:load term="Training alone" note="Karvonen (2024) reports the random-initialization baseline at 0% legal moves for both the 8-layer and 16-layer architectures, versus 99.6–99.8% after training on either Lichess human games or Stockfish self-play games — the same weights, the same probe methodology, only the training data differs." href="https://adamkarvonen.github.io/machine_learning/2024/01/03/chess-world-models.html" /> closes that entire gap, with no rules ever specified. Something got built during training. The question is what, exactly, and whether it deserves the word "model."
+
+## Where to look, and the naive way to look wrong
+
+<Definition client:visible term="linear probe" def="a small classifier — just one matrix multiply and a softmax, no hidden layers — trained to predict some external property (like “is there a knight on f3”) directly from a frozen network's internal activations. If a simple linear function can decode a property from where the activations already sit in space, that property is “linearly represented.”" /> is the tool. Pick a layer inside the network, freeze the whole model, and train 64 small classifiers — one per square — to predict what's sitting there (blank, or one of six piece types in one of two colors: 13 classes per square) purely from the <Definition client:visible term="residual stream" def="the running sum of every layer's output that a transformer passes forward — the vector each subsequent layer reads from and writes back into. It's the natural place to look for anything the network is “remembering” between layers." /> at that point in the game. If the probe can decode piece positions well above chance, from a model that was never told the rules, there's a board-shaped structure in there.
+
+Here's the trap, and it's the single most important methodological wrinkle in this whole literature. The very first version of this experiment — not on chess, on Othello — got a confusing result. Kenneth Li and colleagues trained a transformer on Othello move sequences the same way, then tried to linearly decode each tile as **black**, **white**, or **empty**. It didn't work well: <Annotation client:load term="a 20.4% error rate" note="Li, Hopkins, Bau, Viégas, Pfister, Wattenberg, “Emergent World Representations” (ICLR 2023, arXiv:2210.13382): the linear probe for absolute tile color (black/white/empty) achieves only ~79.6% accuracy (20.4% error). Only a nonlinear two-layer MLP probe recovered board state well, at roughly 1.7–4.6% error in deeper layers." href="https://arxiv.org/abs/2210.13382" />, a full order of magnitude worse than a nonlinear two-layer MLP probe on the same activations. The paper's conclusion, reasonably, was that Othello-GPT's world model is nonlinear — present, but encoded in some curved, entangled way ordinary linear tools can't read off directly.
+
+Neel Nanda's re-analysis of the same public model overturned that reading, and the fix is the crux this whole teardown pivots on. <Annotation client:load term="The model plays both colors" note="Nanda's own framing: “the model plays both black and white moves, so this is far more natural from its perspective” than a fixed black/white encoding — the network has no privileged notion of which color it is, so encoding tiles in absolute color terms forces it to store information it would otherwise never need." href="https://www.neelnanda.io/mechanistic-interpretability/othello" />, so relabeling every tile relative to whoever is about to move — **mine**, **yours**, **empty** — instead of an absolute color, changed everything. Trained on that relabeled target, a *linear* probe suddenly worked, and worked almost perfectly.
+
+<Pullquote cite="Neel Nanda, mechanistic interpretability blog" href="https://www.neelnanda.io/mechanistic-interpretability/othello" kind="quote">
+[Absolute color is] a pathological example for linear probes — the representation flips positive to negative every time [the turn changes].
+</Pullquote>
+
+That line is the whole trick in one sentence. A tile occupied by a white piece is "mine" on white's move and "theirs" on black's move — the same underlying feature flips its label every single turn. Ask a *single, fixed* linear boundary to separate "white" from "black" across a training set that mixes both parities, and you're asking one hyperplane to solve what is structurally a parity problem: the correct label is a function of the piece color **and** whose move it is, not color alone. No single line in activation space can do that job — which is exactly why the original probe needed a nonlinear MLP to paper over the mismatch. Reframe the *target*, not the network, and the same information becomes linearly readable.
+
+Small enough to see directly: below is a synthetic illustration of exactly that geometry — not real activations, just the shape of the problem. One feature axis represents "does this square hold a piece belonging to the side to move." Try to recover *absolute* color from it with one threshold, then try to recover the *relative* ("mine") label with one threshold.
+
+<RunnableCode client:visible caption="Toy geometry: why one straight line can classify “mine” but not “white,” from the same one-dimensional feature. Flip TARGET to “color” and rerun."
+  code={`// One synthetic feature axis: how strongly this square "feels like mine"
+// to the side about to move. Positive = mine, negative = theirs.
+const squares = [
+  { feel: 2.1, color: "white", turn: "white" },  // white's move, white piece  -> mine
+  { feel: 2.4, color: "black", turn: "black" },  // black's move, black piece -> mine
+  { feel: -1.8, color: "black", turn: "white" }, // white's move, black piece -> theirs
+  { feel: -2.0, color: "white", turn: "black" }, // black's move, white piece -> theirs
+  { feel: 1.9, color: "white", turn: "white" },  // white's move, white piece -> mine
+  { feel: -2.2, color: "white", turn: "black" }  // black's move, white piece -> theirs
+];
+
+// A single FIXED threshold at zero: "positive feel" maps to one label.
+function accuracyOfOneThreshold(rows, target) {
+  let correct = 0;
+  for (const r of rows) {
+    const positive = r.feel > 0;
+    if (target === "mine") {
+      const actualMine = r.color === r.turn; // mine = piece color matches side to move
+      if (positive === actualMine) correct++;
+    } else {
+      // naive fixed rule, ignoring whose turn it is: positive -> white
+      const predictedColor = positive ? "white" : "black";
+      if (predictedColor === r.color) correct++;
+    }
+  }
+  return (correct / rows.length * 100).toFixed(0);
+}
+
+const TARGET = "mine"; // <-- flip to "color" and rerun
+console.log(TARGET + " -> one fixed threshold gets " + accuracyOfOneThreshold(squares, TARGET) + "% right");
+return "Same six squares, same one feature axis, two different targets.";`} />
+
+Run it as written and the "mine" target is separable by construction — the feature axis *is* the mine/theirs axis, so a single threshold at zero is perfect. Switch `TARGET` to `"color"` and the same six points, same single threshold, start failing on exactly the rows where the turn flips the label — because "positive" meant white on some rows and black on others. That's the whole mechanism behind the 20.4%-vs-1.7% gap: not that Othello-GPT's board is secretly nonlinear, but that the researchers were asking a linear probe a parity question.
+
+<Callout kind="key-insight" title="The representation was linear all along">
+Li et al.'s nonlinear probe wasn't detecting a genuinely curved representation — it was quietly learning to compute the XOR of color and turn parity, i.e. doing the perspective conversion the researchers hadn't done by hand. Fix the target's basis and the "nonlinear" world model turns out to be linear after all. This is the single most load-bearing methodological lesson in board-game interpretability: a failed linear probe is evidence about your choice of basis before it's evidence about the network.
+</Callout>
+
+<Quiz client:visible caption="check your understanding"
+  questions={[
+    { prompt: "Why did the original absolute black/white/empty linear probe fail on Othello-GPT?", choices: ["The network genuinely has no board representation", "The correct label depends on both piece color and whose turn it is, which a single fixed hyperplane can't separate", "Linear probes never work on transformers", "The model was too small to represent color"], answer: 1, explain: "The label flips with turn parity — a structurally XOR-like problem for a single linear boundary. Reframing the target to “mine/yours” removes the parity dependence and the same information becomes linearly decodable." }
+  ]} />
+
+## The mechanism: from move text to a reconstructed board
+
+Karvonen adopted the mine/yours framing from the start when he ran the same experiment on chess, and the pipeline end to end looks like this:
+
+<Diagram client:visible caption="From a PGN move string to a reconstructed board, one layer's residual stream at a time"
+  nodes={[
+    { id: "pgn", label: "PGN move text\n\"1.e4 e5 2.Nf3…\"", x: 0, y: 0, kind: "input" },
+    { id: "tok", label: "Character tokenizer\n32-token vocabulary", x: 1, y: 0, kind: "process" },
+    { id: "gpt", label: "GPT layers\n8L/25M or 16L/50M", x: 2, y: 0, kind: "process" },
+    { id: "resid", label: "Residual stream\nat move boundary", x: 3, y: 0, kind: "process" },
+    { id: "probes", label: "64 linear probes\n(one per square)", x: 3, y: 1, kind: "process" },
+    { id: "board", label: "Reconstructed board\n13-class per square", x: 2, y: 1, kind: "output" }
+  ]}
+  edges={[
+    { from: "pgn", to: "tok", label: "encode", kind: "data" },
+    { from: "tok", to: "gpt", label: "forward pass", kind: "data" },
+    { from: "gpt", to: "resid", label: "read activations at “.”", kind: "data" },
+    { from: "resid", to: "probes", label: "frozen — probes trained only", kind: "control" },
+    { from: "probes", to: "board", label: "argmax per square", kind: "data" }
+  ]} />
+
+Two details in that pipeline matter more than they look. First, the probes are trained on activations sampled at a specific, consistent point in the string — the character right after a completed move — so every probe sees the board in the same "moment" of the game rather than mid-token noise. Second, mine/yours forces an asymmetry the naive setup wouldn't have: because "mine" flips meaning by whose move it is, Karvonen had to train <Annotation client:load term="two separate groups of 64 probes" note="Karvonen et al., “Emergent World Models and Latent Variable Estimation in Chess-Playing Language Models” (arXiv:2403.15498): one group of 64 linear probes is trained on activations at every white move, a second group of 64 on activations at every black move, because the mine/yours framing is perspective-dependent on whose turn it is." href="https://arxiv.org/abs/2403.15498" /> — one set for reading the board on white's move, a second set for black's move — rather than one universal probe, which is the direct, practical consequence of the parity argument above.
+
+The models themselves are small enough to train on consumer hardware, which matters for how trustworthy this whole result is: nothing here depends on scale as an excuse. Karvonen trained on <Annotation client:load term="5 million Stockfish self-play games and 16 million human games pulled from the Lichess public database" note="Karvonen (2024), “Chess-GPT’s Internal World Model”: roughly 4–7 billion characters of PGN text per dataset, trained across multiple epochs for a total of about 60 billion input characters — the model never receives anything but the move-text characters themselves." href="https://adamkarvonen.github.io/machine_learning/2024/01/03/chess-world-models.html" />, tokenized down to a 32-character vocabulary and fed through a 1024-token context window — roughly 180 moves of history, plenty for a full game. The pretrained models, the training datasets, and the probing code are all published, which is worth noting for a field where "trust me, I ran the experiment" is depressingly common: <Annotation client:load term="the full pipeline is open-sourced" note="Karvonen's chess_llm_interpretability GitHub repository: probe training on the 8-layer model takes about 10 minutes and under 1 GB of VRAM; pretrained models are hosted on Hugging Face at adamkarvonen/chess_llms and the training datasets at adamkarvonen/chess_games." href="https://adamkarvonen.github.io/machine_learning/2024/01/03/chess-world-models.html" />, down to the exact probe weights.
+
+What a linear probe actually *is*, mechanically, is small enough to write out in full. For one square, it's a weight vector per piece class and a dot product:
+
+<RunnableCode client:visible caption="A linear probe for one square: 13 weight vectors, one dot product each, argmax wins. Edit `activation` and watch the predicted class change."
+  code={`// A drastically simplified linear probe: 4-dimensional "activation"
+// (a real residual stream is hundreds of dimensions; the mechanism is identical).
+const classes = ["empty", "white pawn", "white knight", "black pawn", "black knight"];
+
+// One learned weight vector per class (toy numbers, illustrative only).
+const W = [
+  [ 0.9, -0.1,  0.0,  0.1],  // empty
+  [-0.2,  1.1,  0.3, -0.4],  // white pawn
+  [-0.1,  0.2,  1.3,  0.1],  // white knight
+  [ 0.1, -0.9,  0.2,  0.4],  // black pawn
+  [ 0.0,  0.1, -0.8,  1.2]   // black knight
+];
+const bias = [0.1, 0.0, -0.1, 0.0, -0.1];
+
+function classify(activation) {
+  const scores = W.map((w, i) => w.reduce((s, wi, j) => s + wi * activation[j], bias[i]));
+  let best = 0;
+  for (let i = 1; i < scores.length; i++) if (scores[i] > scores[best]) best = i;
+  return { predicted: classes[best], scores: scores.map(s => +s.toFixed(2)) };
+}
+
+const activation = [-0.3, 1.4, 0.2, -0.6]; // <-- try [0.1, 0.1, 1.5, -0.2] for "white knight"
+console.log(classify(activation));
+return "One dot product per class, argmax wins — that's the entire probe.";`} />
+
+There is no hidden layer, no nonlinearity, nothing between the residual stream and the 13-way classification except one matrix multiply. That the network's internal state, at a specific layer, is *linearly readable* by something this dumb — and not just readable but reliably readable — is the empirical claim doing all the work in "the network has a board." Anything more nonlinear than this and you'd be right to worry the probe is doing some of the cognitive labor itself rather than reading it off.
+
+## What the probes actually found
+
+The published numbers span random and trained models, two architectures, and two training-data sources — Lichess human games and Stockfish self-play games at a range of skill levels:
+
+<DataTable client:load caption="Board-state and skill probe accuracy by model (Karvonen, 2024). Board-state accuracy is per-square, 13-class."
+  columns={[
+    { key: "model", label: "Model / training data", type: "string" },
+    { key: "layer", label: "Best layer", type: "string" },
+    { key: "elo", label: "Elo classification acc.", type: "string" },
+    { key: "board", label: "Board-state acc.", type: "string" },
+    { key: "legal", label: "Legal-move rate", type: "string" }
+  ]}
+  rows={[
+    { model: "Random init, 8-layer", layer: "5", elo: "65.8%", board: "70.8%", legal: "0%" },
+    { model: "Random init, 16-layer", layer: "12", elo: "66.5%", board: "70.6%", legal: "0%" },
+    { model: "Lichess-trained, 8-layer", layer: "7", elo: "88.0%", board: "98.0%", legal: "99.6%" },
+    { model: "Lichess-trained, 16-layer", layer: "12", elo: "89.2%", board: "98.6%", legal: "99.8%" },
+    { model: "Stockfish-trained, 16-layer", layer: "12", elo: "—", board: "99.2%", legal: "99.7%" }
+  ]} />
+
+Two things stand out. First, even the *random*, untrained model's probes get ~70% board-state accuracy — a reminder that 70% is closer to the chance floor than it looks, because "empty" is by far the most common of the 13 classes on any given square, so a probe can do reasonably well just by guessing the prior. The gap that matters is trained-vs-random, not trained-vs-zero: roughly 98–99% vs roughly 70%, a difference no amount of class imbalance explains. Second, in the formal write-up of the same experiments, the reported peak figure for the 16-layer trained model is <Annotation client:load term="99.6% per-square accuracy" note="Karvonen et al. (arXiv:2403.15498): “99.6% accuracy in classifying the state of each square across the test games” for the 16-layer trained model, peaking at layer 12; the 8-layer model peaks at 99.1% at layer 6. This is somewhat higher than the 98.6%/98.0% figures reported in the original January 2024 blog post — likely a difference in evaluation methodology or checkpoint between the two write-ups, not a contradiction, but worth flagging rather than picking one number silently." href="https://arxiv.org/abs/2403.15498" />, a touch higher than the blog's own 98.6%. Both numbers come from the same author and the same underlying pipeline — this teardown cites each to its specific publication rather than pretending they're one number, because they aren't quite, and worth stating plainly: this is the same lab's own experiment reported twice, not two independent corroborations, so — like the causal-intervention finding later in this piece — the 99.6% board-state-decodability figure itself still awaits replication by a team other than Karvonen's own.
+
+<Sidenote>
+Karvonen also found the model learns to estimate the *skill level* of the players from the move text alone — an Elo probe hits 89.2% on a binary above/below split versus 66.5% for the random baseline, with regression error around 150 Elo versus 215 for random. He frames this as reminiscent of OpenAI's well-known 2017 finding that a network trained only to predict text characters developed a single neuron tracking sentiment — a useful latent variable nobody explicitly asked for, discovered as a byproduct of the prediction objective.
+</Sidenote>
+
+Heatmaps of the probe outputs (not reproduced here, but described in the source) show the model is confidently, specifically wrong-averse about structural chess facts it was never told: it is near-certain the black king never sits on a square that would require it to have crossed the board illegally, and it tracks pawn back-rank constraints, castling rights, en passant eligibility, and pinned pieces well enough that these show up in the probe's confidence patterns. None of that was in the training signal as a labeled target — it's downstream of learning to predict move text well.
+
+## The test that actually matters: causal intervention
+
+A high probe accuracy is evidence of *correlation* between activations and board state — it is not, by itself, evidence that the network *uses* that structure to decide its next move. A board could be linearly decodable and still be causally inert, a kind of accounting ledger the model keeps but doesn't consult. Karvonen flagged this gap in his own first post before anyone else could:
+
+<Pullquote cite="Adam Karvonen, “Chess-GPT's Internal World Model”" href="https://adamkarvonen.github.io/machine_learning/2024/01/03/chess-world-models.html" kind="quote">
+[This analysis] would be stronger if I also performed causal interventions on the model using these probes.
+</Pullquote>
+
+The follow-up experiment does exactly that, and it's the falsifiable core of the whole "world model" claim. The design:
+
+<EventCascade client:visible caption="The board-state intervention experiment — editing activations, not weights"
+  nodes={[
+    { kind: "cause", label: "Sample Chess-GPT's most likely next move on a real game, then identify the piece and origin square it is about to move",
+      detail: "This fixes a specific piece-square pair to test — e.g. a white pawn on c2 — using the model's own predicted move as the probe target." },
+    { kind: "effect", label: "Silently delete that piece from the board only — the model's activations are left untouched",
+      detail: "The move-generation prompt still describes the original game; nothing in the input text signals the change. Legal-move rate on this now-mismatched board craters to roughly 40–41%, down from ~99.8% on the unmodified board." },
+    { kind: "effect", label: "Subtract that piece's probe-derived direction vector from the residual stream, at the same layer the probes were trained on",
+      detail: "Karvonen reports the simplest version — plain vector subtraction, scaled by a tunable multiplier — outperformed more elaborate gradient-descent and projection-based editing methods." },
+    { kind: "turning-point", label: "Legal-move rate recovers to 92.0% (50M/16-layer model) and 90.4% (25M/8-layer model) — with no change to any weight",
+      detail: "Tuning the scale parameter per move individually pushes this to roughly 98%. Nothing about the network's parameters changed; only the activations at one layer were edited, and the model's subsequent behavior changed to match." }
+  ]} />
+
+<Chart client:visible mark="bar" x="stage" y="legal" height={320}
+  caption="Legal continuation rate through the intervention pipeline (Karvonen, 2024; arXiv:2403.15498)"
+  data={[
+    { stage: "Unmodified board", legal: 99.8 },
+    { stage: "Modified board, no edit", legal: 40.5 },
+    { stage: "Edited, 25M model", legal: 90.4 },
+    { stage: "Edited, 50M model", legal: 92.0 },
+    { stage: "Edited, tuned scale", legal: 98 }
+  ]} />
+
+That recovery — from a floor of roughly 40% back up to 90–98%, produced entirely by editing five-hundred-odd numbers in a residual stream vector and touching nothing else — is the difference between "the board is legible from outside" and "the board is what the model is actually consulting." A purely correlational, cosmetic representation would not do this: erase the model's belief about a piece and its behavior should be unaffected if that belief plays no causal role. It's affected, sharply, in the predicted direction. This is single-lineage evidence — the same author's two publications, not yet independently replicated by a separate lab in the sources this teardown could find — and that caveat matters more than it might for a purely observational claim, because a causal result is exactly the kind of finding a second team should be racing to reproduce or break.
+
+<Detail summary="Go deeper: where the surgery still fails">
+The intervention is real but crude, and Karvonen is explicit about both edges of that. The scale parameter — how hard to push the subtraction — has to sit in a narrow band: too small and the edit does nothing, the model still plays as if the piece is there; too large and the model's output degenerates into effectively random characters, since the activation no longer resembles anything the later layers were trained to expect. And the intervention is markedly weaker off the training distribution: on synthetically constructed random board positions — legal-looking boards the model would essentially never encounter through ordinary play — the same editing procedure recovers only about half of the model's normal-play performance. The world model, in other words, looks less like a clean, general-purpose coordinate system and more like a representation calibrated tightly to the kinds of boards a real game actually produces.
+</Detail>
+
+## A second, unrelated network finds the same thing
+
+Everything so far is one research pipeline: one author, one architecture family, one training objective (next-character prediction on move text). If chess transformers' board representations were some quirk of that specific setup — the tokenizer, the PGN format, next-token prediction specifically — you'd want to see whether a *completely different* system, built for a completely different reason, shows anything similar. AlphaZero is about as different as it gets: a residual convolutional network, not a transformer, that never sees any human game text at all — it learns purely from self-play guided by Monte Carlo tree search, optimizing to win, with no next-token objective anywhere in sight.
+
+McGrath, Kapishnikov, Tomašev and colleagues ran linear probes on AlphaZero's internal activations anyway, but asked a different question than "is the board state in there" — AlphaZero's inputs already encode the board directly, so recovering it would prove nothing interesting. Instead they probed for *human evaluative concepts*: material balance, piece mobility, king safety, threats, passed pawns, and control of space — the vocabulary human players actually reason in, derived from Stockfish 8's hand-built evaluation function and related implementations. The question was whether those concepts, never given as labels during training, show up as linearly decodable directions in a network trained purely to win. <Annotation client:load term="Former world champion Vladimir Kramnik" note="McGrath, Kapishnikov, Tomašev, et al., “Acquisition of chess knowledge in AlphaZero” (PNAS, 2022): the paper pairs the quantitative probing analysis with qualitative commentary on AlphaZero's opening play from Kramnik, and reports large swings in opening preferences — one Ruy Lopez reply ranged from 5.5% to 92.8% across otherwise-identical AlphaZero training runs — that a probe-only analysis wouldn't surface on its own." href="https://en.chessbase.com/post/acquisition-of-chess-knowledge-in-alphazero" /> supplied qualitative commentary on the opening-play side of the analysis, a human-expert check that a probe accuracy number alone can't provide.
+
+<Stepper client:visible mode="reveal" caption="How human chess concepts show up over the course of AlphaZero's training (McGrath et al., PNAS 2022)"
+  steps={[
+    { title: "Early training: material dominates", body: "<p>Simple piece-count material balance is linearly decodable from the earliest checkpoints and stays reliably predictable throughout training — the crudest chess heuristic is also the first one the network's internal state commits to.</p>" },
+    { title: "~32,000 steps: a representational shift", body: "<p>Many concepts begin increasing in decoding accuracy in a concentrated window around 32,000 training steps — a period the authors identify as one of rapid development in both AlphaZero's internal representations and its opening-move preferences.</p>" },
+    { title: "~64,000+ steps: material becomes strongly linear", body: "<p>By roughly 64,000 steps, a linear probe correlates with Stockfish's own material-based evaluation at R² above 0.75 from around layer 10 onward — the coarse concept is fully legible, well before the subtler ones catch up.</p>" },
+    { title: "Later training: king safety and mobility catch up — and material gets stranger", body: "<p>More sophisticated concepts such as king safety and mobility become significant predictors of AlphaZero's own value function only relatively late in training. At the same time, the network's own material evaluation grows <em>less</em> predictable from simple piece-counting after roughly 100,000 steps — AlphaZero's internal notion of material appears to diverge from Stockfish's classical heuristic rather than merely converging on it.</p>" },
+    { title: "~128,000 steps: piece values stabilize", body: "<p>By around 128,000 training steps, the network's implicit piece valuations converge toward figures resembling conventional chess theory — even though nothing in training ever specified what a knight is “worth.”</p>" }
+  ]} />
+
+The authors describe the overall ordering — crude material counting first, richer positional judgment later — as <Annotation client:load term="strikingly similar to how human chess players are taught" note="Reported via ChessBase's summary of McGrath, Kapishnikov, Tomašev, et al., “Acquisition of chess knowledge in AlphaZero” (PNAS, 2022): concept accuracy over AlphaZero's training broadly tracks the pedagogical order in which humans learn to evaluate positions — count material first, then learn subtler judgment. The paper also notes that many of these concepts are regressed more accurately from AlphaZero's internal activations than from its raw input encoding, indicating the network is computing them, not merely passing them through." href="https://en.chessbase.com/post/acquisition-of-chess-knowledge-in-alphazero" />, and the paper's broader point sharpens Karvonen's: many of these concepts can be regressed *more* accurately from AlphaZero's internal activations than from its raw board-state input, which means the network is actively computing something beyond what it was handed, not just passing information through unchanged.
+
+<Callout kind="key-insight" title="Two architectures, one phenomenon">
+A next-token-predicting transformer that has never seen a board (Chess-GPT) and a self-play-trained convolutional value network that has never seen a human game (AlphaZero) both end up with human-legible, linearly-decodable structure describing the position — the first for raw piece placement, the second for the strategic concepts built on top of it. That convergence, from two teams working independently with nothing in common except the game, is the strongest evidence in this literature that board representation is a property of what chess *demands* of any system that gets good at it, not an artifact of one lab's architecture choice.
+</Callout>
+
+A 2025 follow-up from much of the same DeepMind team pushed this further: rather than just reading concepts off AlphaZero, <Annotation client:load term="they extracted concept vectors via convex optimization, filtered them for novelty and teachability, and taught the resulting concepts to four grandmasters" note="Schut, Tomašev, McGrath, Hassabis, Paquet, Kim, “Bridging the Human-AI Knowledge Gap: Concept Discovery and Transfer in AlphaZero” (arXiv:2310.16410): AlphaZero appears to encode chess knowledge extending beyond existing human theory but not beyond human grasp — four top grandmasters showed measurable improvement solving concept-prototype positions built from these extracted vectors." href="https://arxiv.org/abs/2310.16410" /> — a demonstration that these internal directions aren't just decodable, they're specific and useful enough to hand back to the best human players in the world.
+
+## Where the representation runs out
+
+None of this makes "world model" an unconditional yes. Three specific, falsifiable places this teardown found where the linear story is incomplete, not where it's wrong:
+
+**It's basis-dependent, not automatic.** The entire mine/yours-versus-black/white episode is a warning that "no linear representation found" is a claim about your probe's target, not necessarily about the network. A property that looks nonlinear in one framing can be trivially linear in another. Anyone running this kind of experiment on a new domain should assume they haven't found the right basis yet before concluding the network lacks the concept.
+
+**The causal intervention is real but leaky.** Even after scale-tuning, roughly 2% of edited trials still produce an illegal follow-up move, and the recovery is markedly weaker off the training distribution — on synthetic boards unlike anything reachable through ordinary play, the same surgery restores only about half of normal performance. A genuinely clean, fully disentangled linear world model should not care whether the board it's editing looks like a real game or not; this one does.
+
+**A probe finding structure isn't a certificate that the structure is a clean, monosemantic feature.** This is exactly why Karvonen's own follow-up work moved past simple probing. <Annotation client:load term="Sparse autoencoders trained on chess- and Othello-playing models" note="Karvonen, Wright, Rager, Angell, Brinkmann, Smith, Verdun, Bau, Marks, “Measuring Progress in Dictionary Learning for Language Model Interpretability with Board Game Models” (arXiv:2408.00113): the paper uses chess and Othello specifically because they provide natural, ground-truth interpretable features — “there is a knight on F3” — to benchmark sparse-autoencoder feature quality against, introducing a new training technique (“p-annealing”) that improves on prior unsupervised and supervised metrics alike." href="https://arxiv.org/abs/2408.00113" /> are being evaluated against exactly the kind of ground-truth interpretable features a board game hands you for free — proof the field itself doesn't treat "the linear probe got 99%" as the final word on whether a representation is genuinely disentangled or just a convenient projection of something more tangled.
+
+**The single most dramatic number in this piece rests on one lab — and so does the headline one.** The causal-intervention result — 40% to 92%, a vector subtraction changing legal-move behavior — comes from one author's two publications, run on models he trained himself. So does the 99.6% board-state-decodability figure this piece opens with: the blog post and the arXiv formalization are the same author reporting the same underlying pipeline, not two independent teams. Neither is a reason to distrust the results — the methodology is public, the code and datasets are published, and both are exactly the kind of finding that invites replication rather than hides from it — but neither has yet been independently reproduced by a separate team in the sources this teardown could find. What two unrelated teams on two unrelated architectures *did* reach independently is the claim one level up: that task-pressured networks build human-legible, linearly-decodable internal structure at all. Chess-GPT shows that as raw board-state decodability; AlphaZero shows it as evaluative-concept decodability — material, mobility, king safety — since AlphaZero's inputs already encode the board and testing board-state decodability on it would prove nothing. That's a different measurement of a shared underlying phenomenon, not the same measurement replicated twice, and it's worth being precise about which claim, exactly, carries two-lab support and which still rests on one.
+
+<Detail summary="Go deeper: a different probe entirely — logit lens and attention, not linear classifiers">
+Not every attempt to find internal chess representations uses probes at all. A separate thread reads the network's own attention weights and intermediate predictions directly. One initial study on Maia-3 — a transformer trained to imitate human play at a target skill level rather than to play optimally — used the logit lens (projecting an intermediate layer straight through the final unembedding) and attention-pattern analysis to ask when a "knight fork" becomes visible inside the network. Across 500 fork positions, one attention head allocated roughly 23.8% of its attention to the fork's destination square — about fifteen times a roughly 1.6% random baseline — snapping into that pattern at a specific layer. The author flags the obvious confound openly: every position analyzed has a knight move as the objectively best move, so it's unclear whether the head is representing "fork" specifically or just "a knight is about to move somewhere important," and says so before drawing any conclusion. That kind of self-caveated, in-progress result is a different epistemic category from the peer-reviewed, causally-tested probing work above — worth knowing this thread exists, not yet worth citing as settled.
+</Detail>
+
+## The practical takeaway
+
+The honest answer to "do chess transformers build a world model" is neither the triumphant yes nor the deflationary no — it's a specific, falsifiable middle position, and that specificity is the point. Chess-GPT's board state is linearly decodable at up to 99.6% per-square accuracy, but only once you probe in the perspective-relative basis the network actually uses. That representation is not merely correlational: surgically editing it — nothing but a vector subtraction in one layer's residual stream — changes the model's subsequent move choices in the predicted direction, recovering legal play from a floor of roughly 40% up to 90–98%. And the same qualitative phenomenon — human-legible, linearly-recoverable structure emerging from pure task pressure, with no one ever labeling it during training — shows up independently in a categorically different network trained a categorically different way, on the same game.
+
+What it isn't is a complete, general-purpose, fully disentangled internal chess engine. The representation degrades on positions unlike anything the model saw in training, the causal surgery tops out short of 100% even tuned, and a high linear-probe score is a necessary check, not a sufficient one, for calling something a monosemantic concept rather than a useful correlate of one. If you're evaluating a "does my model have a world model" claim anywhere else — code, physics, planning — this is the template worth stealing: don't stop at a probe's accuracy number, ask what basis it needed to get that number, and then go edit the representation and watch whether the model's actual behavior follows.
+
+Chess turns out to be a good testbed precisely because it's unforgiving in a way most domains aren't: a board either has a bishop on c4 or it doesn't, a move either is legal or it isn't, and there's no room for a comforting middle reading of "sort of understands." That's what makes the falsifiability real rather than rhetorical. A model that just memorized surface token statistics would have no reason to have a direction in its residual stream that, when subtracted, makes its next move consistent with a piece no longer being on the board — there is no "surface pattern" explanation for that specific outcome, only a causal one. The stochastic-parrot hypothesis and the world-model hypothesis make different, checkable predictions about what happens when you reach in and edit the model's belief by hand, and on chess, at least, the belief edit wins.

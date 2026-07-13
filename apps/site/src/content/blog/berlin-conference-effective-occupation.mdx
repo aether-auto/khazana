@@ -1,0 +1,336 @@
+---
+title: "Effective Occupation: The Fourteen Weeks That Drew Africa's Borders"
+format: chronicle
+channels:
+  - history
+  - geopolitics
+  - geography
+summary: "In 103 days at the German Foreign Office in the winter of 1884-85, fourteen powers — no African state among them — wrote a two-article legal test into the General Act of the Berlin Conference that converted flag-planting into a formal race to occupy a continent, and the straight lines that race left behind still trace onto today's conflict maps in Mali and Somalia."
+publishedAt: 2026-07-13T09:00:00.000Z
+sources:
+  - title: "General Act of the Conference at Berlin, 26 February 1885 — full English text"
+    url: "https://worldjpn.net/documents/texts/pw/18850226.T1E.html"
+    tier: high
+    origin: researched
+  - title: "General Act of the Conference of Berlin Concerning the Congo — full text with plenipotentiary signatories"
+    url: "https://archive.org/stream/jstor-2212022/2212022_djvu.txt"
+    tier: high
+    origin: researched
+  - title: "General Act of the Berlin West Africa Conference, 26 February 1885 — Political Archive, German Federal Foreign Office"
+    url: "https://archiv.diplo.de/arc-en/the-political-archive/general-act-2684414"
+    tier: high
+    origin: curated
+  - title: "Selection from the 1885 Berlin Conference Final Act — verbatim preamble"
+    url: "https://afrolegends.com/2017/06/28/selection-from-the-1885-berlin-conference-final-act/"
+    tier: med
+    origin: researched
+  - title: "File:Kongokonferenz.jpg — contemporary 1884 engraving of the conference delegates, Adalbert von Roessler"
+    url: "https://commons.wikimedia.org/wiki/File:Kongokonferenz.jpg"
+    tier: high
+    origin: researched
+  - title: "Michalopoulos & Papaioannou, The Long-Run Effects of the Scramble for Africa, American Economic Review 106(7), 2016"
+    url: "https://www.aeaweb.org/articles?id=10.1257%2Faer.20131311"
+    tier: high
+    origin: researched
+  - title: "Alesina, Easterly & Matuszeski, Artificial States, NBER Working Paper 12328"
+    url: "https://www.nber.org/system/files/working_papers/w12328/w12328.pdf"
+    tier: high
+    origin: researched
+  - title: "Paine, Qiu & Ricart-Huguet, Endogenous Colonial Borders: Precolonial States and Geography in the Partition of Africa, American Political Science Review 119(1), 2025"
+    url: "https://www.cambridge.org/core/journals/american-political-science-review/article/endogenous-colonial-borders-precolonial-states-and-geography-in-the-partition-of-africa/132D6CBDE92946D14CCC64E59A94D3D2"
+    tier: high
+    origin: researched
+  - title: "Scramble for Africa — Encyclopædia Britannica"
+    url: "https://www.britannica.com/event/Scramble-for-Africa"
+    tier: med
+    origin: researched
+  - title: "Scramble for Africa — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Scramble_for_Africa"
+    tier: med
+    origin: researched
+  - title: "Berlin Conference — Encyclopædia Britannica"
+    url: "https://www.britannica.com/event/Berlin-West-Africa-Conference"
+    tier: med
+    origin: researched
+  - title: "Berlin Conference — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Berlin_Conference"
+    tier: med
+    origin: researched
+  - title: "Colonising Africa: What happened at the Berlin Conference of 1884-1885? — Al Jazeera"
+    url: "https://www.aljazeera.com/news/2025/2/26/colonising-africa-what-happened-at-the-berlin-conference-of-1884-1885"
+    tier: med
+    origin: researched
+  - title: "Congo Free State — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Congo_Free_State"
+    tier: med
+    origin: researched
+  - title: "Greater Somalia — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Greater_Somalia"
+    tier: med
+    origin: researched
+  - title: "Ethiopia–Somalia border — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Ethiopia%E2%80%93Somalia_border"
+    tier: med
+    origin: researched
+  - title: "Anglo-Ethiopian Treaty of 1897 — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Anglo-Ethiopian_Treaty_of_1897"
+    tier: med
+    origin: researched
+  - title: "Algeria–Mali border — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Algeria%E2%80%93Mali_border"
+    tier: med
+    origin: researched
+  - title: "Azawad — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Azawad"
+    tier: med
+    origin: researched
+  - title: "Fall of Kidal — What JNIM's Latest Offensive Means for Mali's Future — Critical Threats / AEI"
+    url: "https://www.criticalthreats.org/analysis/fall-of-northern-mali-jnim-fla-offensive-russia-issp-camara"
+    tier: high
+    origin: researched
+draft: false
+---
+
+import { getImage } from "astro:assets";
+import { Annotation, Map, RouteMap, Timeline, Scrolly, ScrollyStep, Chart, StatBand, Pullquote, EventCascade, CastGrid, Callout, Detail, DataTable, AnnotatedFigure } from "../../components/mdx";
+import kongokonferenzSrc from "./_assets/berlin-conference-effective-occupation/kongokonferenz.jpg";
+
+export const conferenceImg = await getImage({ src: kongokonferenzSrc, width: 1600 });
+
+It is the afternoon of 15 November 1884, and fourteen men are sitting down at a long table inside the German Foreign Office on the Wilhelmstraße in Berlin, underneath a wall map of Africa so large it has to be unrolled from the ceiling.<Annotation client:load term="the German Foreign Office on the Wilhelmstraße" note="The conference met at the German Foreign Office, Wilhelmstraße 77 in Berlin — Bismarck's official seat as chancellor. Political Archive, German Federal Foreign Office (archiv.diplo.de)." /> The map is nearly blank. It shows coastlines, a scatter of river mouths, a few trading posts flagged in the colors of Portugal, Britain, France — and then an interior that is mostly white paper, unlabeled, unclaimed on any European ledger. Chancellor Otto von Bismarck, who wants nothing from this continent for Germany beyond a free hand for German merchants, has called the meeting anyway, because two of the men in the room — a Portuguese count and the personal envoy of a Belgian king who is not himself present — are about to start a war over a river mouth neither of their countries has ever administered.<Annotation client:load term="a war over a river mouth" note="The immediate trigger was the Anglo-Portuguese Treaty of 26 February 1884, in which Portugal secured British backing to block the rival Congo Society's access to the Atlantic at the river's mouth — a claim that collided with France's and Leopold II's own Congo ambitions and set the stage for the conference Bismarck convened to settle it. Berlin Conference, Wikipedia." /> No African ruler, chief, or state has been invited to send a delegate. One did ask: Sultan Barghash bin Said of Zanzibar, the only African head of state to request a seat, was turned away.<Annotation client:load term="turned away" note="Sultan Barghash's request to send a representative to the Berlin Conference was rejected — the only recorded attempt by an African head of state to participate. Al Jazeera, 'Colonising Africa'; Wikipedia, Berlin Conference." /> For the next 103 days, the fourteen men at this table — and the governments behind them — will decide the legal rules for taking the rest of the continent, and not one African signature will appear on the document that results.
+
+That document has a dry, bureaucratic name — the General Act of the Berlin Conference — and inside it, buried in a sixth chapter that reads like an insurance clause, sit two paragraphs that will do more to determine the shape of modern Africa than any battle of the entire colonial era. Article 34 and Article 35 do not mention war, or race, or a single African place-name. They read, instead, like a change to a filing procedure: a claim on African coastal territory must now be *notified* to the other powers, and the claimant must show it can *actually govern* what it claims. That is the whole of it. And that small, procedural-sounding shift — from a flag on a beach to a functioning administration — is the mechanism this chronicle exists to trace: how "effective occupation" turned the scramble for Africa from a slow accumulation of trading posts into a formal, deadline-shaped race, and how the borders that race drew in a hurry are still visible today, worn into the ground, in the conflict geography of the Sahel and the Horn of Africa.
+
+<AnnotatedFigure
+  client:visible
+  src={conferenceImg.src}
+  width={conferenceImg.attributes.width}
+  height={conferenceImg.attributes.height}
+  alt="An 1884 engraving of the Berlin Conference delegates seated around a long table beneath a large wall map of Africa, with one man standing and pointing at the map."
+  caption="The room, drawn from life: delegates of the fourteen signatory powers gather at the German Foreign Office. The scene dates to November 1884, and the engraving's printed key names each man — a rare case where the primary image and the primary treaty text corroborate the same cast of characters."
+  credit="Adalbert von Roessler, Über Land und Meer, 1884 (public domain)"
+  sourceUrl="https://commons.wikimedia.org/wiki/File:Kongokonferenz.jpg"
+  pins={[
+    { x: 0.35, y: 0.17, label: "The map on the wall", note: "A wall-sized map of Africa, mostly blank in the interior — coastlines and a handful of river mouths marked, the rest unlabeled. It is the physical object every clause in this chapter is written to fill in." },
+    { x: 0.22, y: 0.42, label: "A delegate briefs the room", note: "One plenipotentiary stands and gestures at the map while colleagues take notes below him — the conference spent its early sessions establishing rival claims and free-trade zones before the effective-occupation question was reached in its final phase." },
+    { x: 0.58, y: 0.63, label: "Fürst Bismarck presides", note: "Otto von Bismarck, the host and chair, seated centrally in military dress. Germany claimed almost nothing from this conference for itself; Bismarck's interest was a free hand for German trade and a settled peace among the other powers, not territory." },
+    { x: 0.92, y: 0.52, label: "The delegates by the door", note: "Officials and secretaries — the engraving's printed caption names Kapnist, Said Pascha (representing the Ottoman Empire), Hatzfeldt, van der Straten (Belgium's delegate, standing in for Leopold II), and others, matching the signatory list of the General Act itself." }
+  ]}
+/>
+
+<StatBand
+  client:visible
+  caption="The conference, by the numbers — every figure traced to the General Act itself or its official archive."
+  stats={[
+    { value: 14, label: "SIGNATORY POWERS", sub: "not one of them African", href: "https://en.wikipedia.org/wiki/Berlin_Conference" },
+    { value: 0, label: "AFRICAN DELEGATES", sub: "Zanzibar's request was refused", href: "https://www.aljazeera.com/news/2025/2/26/colonising-africa-what-happened-at-the-berlin-conference-of-1884-1885" },
+    { value: 103, label: "DAYS IN SESSION", sub: "15 Nov 1884 – 26 Feb 1885", href: "https://archiv.diplo.de/arc-en/the-political-archive/general-act-2684414" },
+    { value: 2, label: "ARTICLES", sub: "34 and 35 — the whole of the effective-occupation test", href: "https://worldjpn.net/documents/texts/pw/18850226.T1E.html" },
+    { value: 1885, label: "SIGNED", group: false, sub: "26 February, Berlin", href: "https://worldjpn.net/documents/texts/pw/18850226.T1E.html" }
+  ]}
+/>
+
+## A cake with no one at the table who baked it
+
+The General Act opens not with rules but with a mission statement, and it is worth reading slowly, because the gap between what it says and what it does is the entire subject of this piece.
+
+<Pullquote cite="General Act of the Berlin Conference, Preamble, 26 February 1885" href="https://afrolegends.com/2017/06/28/selection-from-the-1885-berlin-conference-final-act/" kind="document">
+Wishing, in a spirit of good and mutual accord, to regulate the conditions most favourable to the development of trade and civilization in certain regions of Africa… being desirous, on the other hand, to obviate the misunderstandings and disputes which might in future arise from new acts of occupation on the coast of Africa; and concerned, at the same time, as to the means of furthering the moral and material well-being of the native populations…
+</Pullquote>
+
+Nowhere in that sentence is a mechanism for asking the "native populations" what they want their moral and material well-being to consist of. The men who wrote it were not being secretive about the omission — they simply did not consider it one. The conference had three real items of business, and none of them were African: settle the Portuguese-Belgian argument over the mouth of the Congo, guarantee free trade and navigation on the Congo and Niger rivers for all fourteen powers equally, and — the item that would outlast everything else on the agenda — agree on a shared legal test for what counted as a valid claim to African territory, so that the scramble already underway on the coasts would not tip into a war between European armies. <Annotation client:load term="a war between European armies" note="Historians note the conference's core function was averting a great-power war over African claims, not African governance — Bismarck's stated aim was orderly partition among the powers, not African self-determination. Britannica, 'Berlin Conference.'" /> Keeping the peace among fourteen governments was the actual design brief. Africa was the material being divided to achieve it.
+
+<CastGrid
+  caption="A few of the plenipotentiaries at the table — the men whose signatures close the General Act."
+  cast={[
+    { name: "Otto von Bismarck", role: "Chancellor of Germany, conference host and chair",
+      note: "Convened the conference to defuse the Congo dispute and secure German trading access; claimed almost no African territory for Germany itself out of the proceedings.",
+      sourceUrl: "https://en.wikipedia.org/wiki/Berlin_Conference" },
+    { name: "Sir Edward Baldwin Malet", role: "Plenipotentiary, Great Britain",
+      note: "Britain held the largest existing African coastal presence of any power at the table and pressed hardest on the notification requirement in Article 34.",
+      sourceUrl: "https://archive.org/stream/jstor-2212022/2212022_djvu.txt" },
+    { name: "Baron Alphonse de Courcel", role: "Plenipotentiary, France",
+      note: "France's delegate; French claims in West and Central Africa would expand faster than any other power's in the decade after the conference closed.",
+      sourceUrl: "https://archive.org/stream/jstor-2212022/2212022_djvu.txt" },
+    { name: "Count van der Straten-Ponthoz", role: "Plenipotentiary, Belgium",
+      note: "Represented Belgium at the table while King Leopold II — present in the room only through his diplomats — maneuvered separately to have his private International Association of the Congo recognized as a sovereign claimant.",
+      sourceUrl: "https://en.wikipedia.org/wiki/Congo_Free_State" },
+    { name: "John A. Kasson", role: "Plenipotentiary, United States",
+      note: "The US had recognized Leopold's Congo association months earlier and pushed for the free-trade guarantees; it signed the General Act but never ratified it.",
+      sourceUrl: "https://archive.org/stream/jstor-2212022/2212022_djvu.txt" },
+    { name: "Sultan Barghash bin Said", role: "Sultan of Zanzibar — request denied",
+      note: "The only African head of state who asked to send a delegate. His request was refused; no African government was represented at any point in the 103 days of negotiation.",
+      sourceUrl: "https://www.aljazeera.com/news/2025/2/26/colonising-africa-what-happened-at-the-berlin-conference-of-1884-1885" }
+  ]}
+/>
+
+## The clause that changed the rules of taking land
+
+For four centuries before this room, a European claim to overseas territory had rested on something close to ritual: a flag driven into a beach, a cross planted, a proclamation read aloud to whichever local inhabitants happened to be present, and a report sent home describing the ceremony. <Annotation client:load term="a report sent home" note="The doctrine of discovery and symbolic possession — flags, crosses, proclamations — was the dominant legal basis for overseas claims from the 15th through most of the 19th century; a claim needed to be announced, not administered. Scramble for Africa, Wikipedia; Britannica, 'Berlin Conference.'" /> Two rival powers could plant flags on the same stretch of coast in successive years and leave the argument over which claim held to be settled by negotiation, war, or simply whoever showed up next with more men. It was a system built for a slow, low-stakes contest, and by 1884 it was breaking down, because too many powers now wanted too much of the same continent at once, and a ceremony on a beach could not settle a dispute between fourteen governments who all had the same ceremony available to them.
+
+Article 34 and Article 35 replace the ceremony with a test. Follow the sequence: it starts as a paperwork requirement, and ends as a demand that a claimant actually run the place.
+
+<Scrolly client:visible caption="From flag to filing: how two paragraphs converted a ceremony into a legal test.">
+  <ScrollyStep graphic={
+      <Chart client:visible mark="bar" x="stage" y="requirement" height={300}
+        caption="What a valid coastal claim required, before and after Chapter VI (illustrative scale: 1 = symbolic act only, 3 = notify + administer)."
+        data={[
+          { stage: "Pre-1885 custom", requirement: 1 },
+          { stage: "Article 34 (notify)", requirement: 2 },
+          { stage: "Article 35 (govern)", requirement: 3 }
+        ]} />
+    }>
+    **The old rule.** Before Berlin, a claim needed only to be announced. No other power had a formal right to be told, and no other power had a formal standard by which to challenge it. Custom, not law, decided most disputes — which is precisely the kind of ambiguity fourteen crowded, competing empires could no longer afford.
+  </ScrollyStep>
+  <ScrollyStep graphic={
+      <Pullquote cite="General Act of the Berlin Conference, Article 34" href="https://worldjpn.net/documents/texts/pw/18850226.T1E.html" kind="document">
+        Any Power which henceforth takes possession of a tract of land on the coasts of the African Continent… shall accompany the respective act with a notification thereof, addressed to the other Signatory Powers… in order to enable them, if need be, to make good any claims of their own.
+      </Pullquote>
+    }>
+    **Article 34 — notify or forfeit priority.** A claim now had to be formally announced to all thirteen other signatories, with a window for a rival to contest it. This alone was new: it converted a private ceremony into a public, timestamped filing, racing every other power's clock the moment it was made.
+  </ScrollyStep>
+  <ScrollyStep graphic={
+      <Pullquote cite="General Act of the Berlin Conference, Article 35" href="https://worldjpn.net/documents/texts/pw/18850226.T1E.html" kind="document">
+        The Signatory Powers… recognize the obligation to insure the establishment of authority in the regions occupied by them… sufficient to protect existing rights, and, as the case may be, freedom of trade and of transit under the conditions agreed upon.
+      </Pullquote>
+    }>
+    **Article 35 — govern it or lose it.** Notification bought priority, but priority was worthless without this second clause: the claimant had to install "authority… sufficient" to actually run the territory — garrisons, administrators, treaties with local rulers, functioning courts and customs posts. The German Foreign Office's own archive puts the practical effect bluntly: after Berlin, a flag on a beach was no longer enough.<Annotation client:load term="no longer enough" note="'Merely symbolic acts such as the raising of a flag would no longer suffice' for a legitimate claim — the Political Archive of the German Federal Foreign Office's own description of Chapter VI's effect. archiv.diplo.de." />
+  </ScrollyStep>
+</Scrolly>
+
+Read the two articles again and notice what they do not specify: no minimum garrison size, no timetable, no independent verification, no African consent requirement, no penalty beyond a rival power's own claim. The test is self-policing and adversarial — each signatory is both the judge of its own "sufficient authority" and the prosecutor watching every other power's claim for a weakness to exploit. That design, more than any battlefield event of the next thirty years, is what turned the partition of Africa from a slow accretion into a sprint. A power that waited to build a genuinely sufficient administration risked a faster rival notifying a claim first and forcing a dispute Berlin had no tribunal to resolve. The rational strategy, for every government at that table, was to move first and build the "sufficient authority" the treaty demanded *after* the flag was already up — administer fast, administer thin, but administer *before* a rival's notification arrived in the mailbag.
+
+<EventCascade client:visible caption="From two paragraphs in Berlin to a continent redrawn in three decades — the causal chain, one link at a time."
+  nodes={[
+    { kind: "cause", label: "Articles 34-35 replace symbolic claims with a notify-and-govern test",
+      detail: "A claim now has to be announced to thirteen rivals and backed by real administrative presence — garrisons, treaties, customs posts — not just a flag." },
+    { kind: "effect", label: "Every signatory races to notify first and administer fast",
+      detail: "Slow, careful colonization becomes a liability: a rival's faster notification can pre-empt a claim years in the making." },
+    { kind: "effect", label: "Bilateral boundary commissions draw lines under time pressure",
+      detail: "Surveying real ethnic, political, and geographic boundaries takes years the race does not allow; latitude lines, rivers, and watershed guesses are administratively cheap and fast to agree." },
+    { kind: "effect", label: "Borders get fixed with little regard for who already lives on either side",
+      detail: "Precolonial polities, trade networks, and kin groups are split wherever a fast-drawn line happens to fall — sometimes deliberately, often simply because no one on the commission had better information in time." },
+    { kind: "turning-point", label: "Independence-era states inherit the race-drawn lines whole",
+      detail: "The postcolonial norm of uti possidetis — keep the colonial borders you inherited, however they were drawn — freezes the 1885-1914 land grab's geometry into permanent sovereign frontiers." }
+  ]} />
+
+<Timeline
+  client:load
+  caption="From the treaty that started the argument to the treaty that settled it — and the personal empire it produced within six months."
+  events={[
+    { date: "1884-02-26", label: "The spark", detail: "Britain and Portugal sign a treaty to block the Congo Society's access to the Atlantic — colliding with France's and Leopold II's own Congo ambitions." },
+    { date: "1884-11-15", label: "Conference opens", detail: "Fourteen powers convene at the German Foreign Office, Berlin. No African government is represented." },
+    { date: "1885-02-26", label: "General Act signed", detail: "Exactly one year after the treaty that triggered it. Articles 34-35 codify effective occupation as the legal standard for African coastal claims." },
+    { date: "1885-08-01", label: "The first claimant", detail: "Leopold II proclaims the Congo Free State — roughly 2.3 million km² of Central Africa held as his personal property, not Belgium's." }
+  ]}
+/>
+
+The date on the General Act is not a coincidence worth skipping past: 26 February 1885, exactly one year to the day after the Anglo-Portuguese treaty that started the whole argument. And the first power to convert the new doctrine into a functioning claim was not one of the great empires at the table — it was Leopold II of Belgium, who was not personally present in Berlin at all, working through diplomats to have his private International Association of the Congo recognized as a legitimate claimant under the new rules. <Annotation client:load term="his private International Association of the Congo" note="Leopold's Congo claim was recognized separately from Belgium's own delegation at the conference; the General Act confirmed the territory would be held under Leopold's personal sovereignty, with 'no connection with Belgium, beyond a personal union.' Congo Free State, Wikipedia." /> Within five months of the signing, he proclaimed roughly <Annotation client:load term="2.3 million square kilometres" note="The Congo Free State — recognized via the Berlin process and formally proclaimed 1 August 1885 — covered an estimated 2,344,000 km² with roughly 30 million inhabitants, held as Leopold II's personal property rather than Belgian state territory. Congo Free State, Wikipedia." /> of Central Africa his personal property, a private fiefdom the size of Western Europe, run for profit and administered — in exactly the sense Article 35 required — by concession companies and a colonial constabulary answerable to him alone. Effective occupation had been designed as a brake on reckless claims. Its first major test case was a king who had never set foot in the territory he now personally owned.
+
+<Callout kind="key-insight" title="The doctrine did not require good administration — only enough">
+Article 35 says "authority… sufficient," not "authority beneficial to the governed." Nothing in the text conditions a claim on the interests of the people already living there — only on a rival power's ability to detect and challenge insufficient control. The bar the drafters set was competitive, not humanitarian, however the preamble reads.
+</Callout>
+
+## The race outward
+
+<Map
+  client:visible
+  caption="Africa by 1914 — nearly the whole continent absorbed into a European empire in the three decades after Berlin codified the rules for claiming it. Only Ethiopia and Liberia remained outside formal colonial control."
+  labels={{ ETH: "Ethiopia — independent", LBR: "Liberia — independent", DZA: "Algeria (France)", EGY: "Egypt (Britain)", LBY: "Libya (Italy)", MAR: "Morocco (France/Spain)", NGA: "Nigeria (Britain)", COD: "Congo Free State → Belgian Congo", SDN: "Anglo-Egyptian Sudan", KEN: "Kenya (Britain)", TZA: "German East Africa → Britain", ZAF: "South Africa (Britain)", AGO: "Angola (Portugal)", MOZ: "Mozambique (Portugal)", SEN: "French West Africa", SOM: "Italian/British Somaliland" }}
+  values={{ ETH: 0, LBR: 0, DZA: 100, EGY: 100, LBY: 100, MAR: 100, NGA: 100, COD: 100, SDN: 100, KEN: 100, TZA: 100, ZAF: 100, AGO: 100, MOZ: 100, SEN: 100, SOM: 100 }}
+/>
+
+Hold the two numbers next to each other, because the contrast is the entire argument for how fast the effective-occupation test worked. In the early 1870s, before the scramble had properly begun, Europeans controlled roughly <Annotation client:load term="ten per cent" note="As late as the 1870s, formal European control was confined to a narrow band of coastal territories — roughly 10% of Africa's total land area. Scramble for Africa, Britannica and Wikipedia (independently corroborating)." /> of the African landmass, nearly all of it coastal. By 1914, three decades later and less than thirty years after Chapter VI was signed, that figure had risen to roughly <Annotation client:load term="ninety per cent" note="By 1914, an estimated 90% of Africa's land area had been absorbed into a European colonial empire — every present-day country on the continent except Ethiopia and Liberia. Scramble for Africa, Britannica and Wikipedia." />, with only Ethiopia — which had just handed Britain the Somali-inhabited Ogaden under its own version of the occupy-first logic, a story this piece returns to — and Liberia remaining outside formal colonial control. Historians describe the acceleration plainly: the pace of colonization "greatly accelerated after the conference," <Annotation client:load term="greatly accelerated after the conference" note="Encyclopædia Britannica's own account of the Berlin Conference's aftermath: colonization efforts had begun earlier, but 'the pace of colonization greatly accelerated after the conference.' Britannica, 'Berlin Conference.'" /> not because the technology of conquest changed in 1885, but because the *incentive structure* did. A claim now had a clock on it, and the clock started the moment a rival's notification hit the wire.
+
+Drawing that much territory that fast created an administrative problem no single conference session had time to solve: how do you fix a border between two rival claims when neither side has more than a rough sketch of who actually lives on the ground, and when both sides are under pressure to notify a line before the other one does? The honest answer, worked out by the boundary commissions that fanned out across the continent over the following three decades, was: whatever is fastest to survey and hardest to dispute later. A river is fast — it is visible from a boat and doesn't need a land survey. A parallel of latitude is faster still — it requires no fieldwork at all, only a sextant reading and a ruler on a European desk. Neither method asks a single question about which villages, trade routes, or kinship networks the line happens to cut through. Two case studies make the mechanism concrete.
+
+## Case one: a people cut into five
+
+<RouteMap
+  client:visible
+  caption="The Somali-inhabited Horn, divided by treaty into five separate colonial jurisdictions between the 1880s and 1908 — the borders drawn under the same occupy-first, formalize-after logic Berlin had codified for the coastal powers."
+  points={[
+    { at: [45.34, 9.56], label: "British Somaliland" },
+    { at: [46.20, 2.05], label: "Italian Somaliland" },
+    { at: [42.55, 11.59], label: "French Somaliland (Djibouti)" },
+    { at: [43.5, 7.5], label: "The Ogaden — ceded to Ethiopia, 1897" },
+    { at: [40.0, 1.0], label: "Northern Frontier District — Kenya" }
+  ]}
+  routes={[
+    { from: [38.75, 9.03], to: [43.5, 7.5], label: "Menelik II's forces occupy the Ogaden, 1896 — before the treaty that formalized it", kind: "march" }
+  ]}
+  values={{ SOM: 100, ETH: 40, DJI: 100, KEN: 20 }}
+  labels={{ SOM: "Somalia (British + Italian Somaliland)", ETH: "Ethiopia (the Ogaden)", DJI: "French Somaliland", KEN: "Kenya (Northern Frontier District)" }}
+/>
+
+By the time the paperwork settled, Somali-speaking East Africa had been cut into five separate jurisdictions: British Somaliland in the north, Italian Somaliland in the south and center, French Somaliland on the strategic coast that is now Djibouti, the vast interior region called the Ogaden absorbed into Ethiopia, and the Northern Frontier District folded into British-administered Kenya.<Annotation client:load term="five separate jurisdictions" note="Colonial partition split Somali-inhabited land into British Somaliland, Italian Somaliland, French Somaliland (Djibouti), Ethiopia's Ogaden, and Kenya's Northern Frontier District — corroborated across Wikipedia's 'Greater Somalia,' 'Ethiopia–Somalia border,' and 'Anglo-Ethiopian Treaty of 1897' entries." /> None of these lines were drawn by a Somali government, because none existed in the form European treaty law recognized; they were drawn between Britain, France, Italy, and an expansionist Ethiopian monarchy, each pursuing the same notify-and-administer logic Berlin had set loose three years earlier.
+
+The Ethiopian case is the sharpest illustration of how the doctrine's logic spread beyond its original signatories. Ethiopia never signed the General Act — it was never invited to. But its ruler, Emperor Menelik II, was fighting for survival against the same European encroachment as everyone else on the continent, and he understood the new rules perfectly well without having been in the room. In 1896, Menelik's forces physically occupied Somali-inhabited territory in the Ogaden.<Annotation client:load term="physically occupied Somali-inhabited territory" note="Menelik II's forces expanded into and occupied Somali territory in 1896, establishing physical control before any formal boundary agreement — the same occupy-first, formalize-after sequence Berlin's Articles 34-35 had built into the coastal claims process. Ethiopia–Somalia border, Wikipedia." /> Only afterward, in May 1897, did Britain formally cede the region to him in a treaty negotiated by the diplomat Sir Rennell Rodd — a treaty the Somali clans it concerned were never consulted about and, by Britain's own protectorate obligations, had no legal power to authorize.<Annotation client:load term="never consulted about" note="Britain ceded Somali-inhabited land to Ethiopia 'without the consent or knowledge of Somalis that were legally under their protection.' International-law scholar W. Michael Reisman later argued the transfer was void because Britain lacked the authority to make it. Anglo-Ethiopian Treaty of 1897, Wikipedia." /> Occupation first, paperwork after — exactly the sequence effective occupation had made rational for a coastal power notifying Berlin, independently reproduced by a non-signatory monarch fighting to keep his kingdom out of the same carve-up.
+
+<Detail summary="Go deeper: how thin the paperwork actually was">
+A full demarcation of the Ethiopia–Somalia frontier did not happen even after the 1897 treaty. Amendments followed in 1907 and negotiations dragged into 1908 without full resolution; large sectors of the border remained what boundary specialists call a "Provisional Administrative Line" rather than a definitively surveyed frontier — a line good enough to notify, never good enough to finish. Ethiopia–Somalia border, Wikipedia.
+</Detail>
+
+The consequence arrived within a generation of independence. Somalia became a sovereign state in 1960, and unifying the Somali-inhabited territories split by colonial partition — not just the land inside its own colonial-era lines — became a focal objective of the new government: an irredentist claim on the Ogaden, the Northern Frontier District, and French Somaliland all at once.<Annotation client:load term="an irredentist claim" note="After 1960, successive Somali governments campaigned to reclaim the Somali-inhabited 'lost territories,' raising the issue at the UN and regional bodies; unifying Ogaden, the Northern Frontier District, and French Somaliland into 'Greater Somalia' became a focal national objective. Greater Somalia, Wikipedia." /> That claim produced a border war with Ethiopia in 1964 and, in 1977-78, the full-scale Ogaden War — a conventional invasion fought over a colonial-era treaty line, which sent an estimated 800,000 refugees fleeing into Somalia when Ethiopian and Cuban-backed forces reversed the Somali advance.<Annotation client:load term="800,000 refugees" note="The 1977-78 Ogaden War between Somalia and Ethiopia — fought over the territory ceded by the 1897 Anglo-Ethiopian Treaty — displaced an estimated 800,000 people into Somalia. Greater Somalia, Wikipedia." /> The line a British diplomat and an Ethiopian emperor had agreed on in 1897, without asking a single Somali clan elder, was still being fought over eighty years later by two independent states that had inherited it whole.
+
+## Case two: a homeland split five ways
+
+<RouteMap
+  client:visible
+  caption="Azawad — the Tuareg homeland — spans a border geometry fixed by French and Algerian colonial administrators in 1905 and 1909, with no reference to Tuareg political or kinship structure."
+  points={[
+    { at: [0.5, 17.5], label: "Azawad / northern Mali (Kidal, Timbuktu, Gao)" },
+    { at: [8.0, 17.0], label: "Niger (Agadez)" },
+    { at: [4.3, 20.0], label: "Algeria (Tin Zaouatine)" },
+    { at: [13.0, 24.0], label: "Libya" },
+    { at: [-1.5, 12.4], label: "Burkina Faso" }
+  ]}
+  routes={[
+    { from: [4.3, 20.0], to: [0.5, 17.5], label: "1905 Algeria–French Sudan boundary — a ≈752 km straight-line segment", kind: "path" }
+  ]}
+  values={{ MLI: 100, NER: 60, DZA: 30, LBY: 20, BFA: 15 }}
+  labels={{ MLI: "Mali (Azawad's core)", NER: "Niger", DZA: "Algeria", LBY: "Libya", BFA: "Burkina Faso" }}
+/>
+
+The Tuareg — the Kel Tamasheq, in their own language — are a Saharan and Sahelian people whose traditional territory, the region they call Azawad, straddles what became five separate modern states: Mali, Niger, Algeria, Libya, and Burkina Faso.<Annotation client:load term="five separate modern states" note="Tuareg (Kel Tamasheq) territory spans the modern borders of Mali, Niger, Algeria, Libya, and Burkina Faso — a homeland split by colonial administrative boundaries that took no account of Tuareg political or clan structure. Azawad, Wikipedia." /> Unlike the Ogaden, no war of conquest against a rival African monarchy produced this fragmentation — it happened through French internal administrative convenience, layered onto a boundary with Algeria that colonial officers on both sides of a single ministry needed to fix quickly so the books could be closed. On 7 June 1905, a French commander from what would become French Sudan and his counterpart in French Algeria's southern military territory agreed a boundary; a further Niamey Convention in June 1909 refined it.<Annotation client:load term="a boundary" note="The Algeria–French Sudan (later Mali) boundary was agreed on 7 June 1905 between the local French commanders, with the Niamey Convention of June 1909 further defining it. Algeria–Mali border, Wikipedia." /> For its first roughly 752 kilometres running northwest, that boundary is a literal straight line on the map<Annotation client:load term="752 kilometres" note="The northwestern segment of the Algeria–Mali border, continuing the Algeria–Mauritania line, runs approximately 752 km as a straight line before the border shifts to follow wadis and irregular terrain further southeast. Algeria–Mali border, Wikipedia." /> — not a river, not a watershed, not a line consulted with a single Tuareg confederation whose grazing routes and trade networks it now cut across. Because both sides of the line were French territory at the time, the boundary carried no immediate practical weight; it became a hard international frontier only when Mali and Algeria became independent states in 1960 and 1962, inheriting a division neither had drawn and neither had been asked about.
+
+Note what this example does and does not prove, because the honest version of this story is more interesting than the simple one. French administrators reached for a straight line here not out of malice toward the Tuareg specifically, but because it was the cheapest way to formalize an internal boundary between two French-run territories that nobody in Paris expected to ever become an international frontier. The line's *effect* — carving a historically mobile, cross-border people into permanent minorities in five separate postcolonial states — was real regardless of the intent behind drawing it, and that gap between bureaucratic convenience and lasting political consequence is the throughline of the whole doctrine, not an exception to it.
+
+The postcolonial history is well documented and does not need embellishing here: Mali has faced four distinct Tuareg rebellions since its 1960 independence — in 1962-64, 1990-95, 2007-09, and 2012<Annotation client:load term="four distinct Tuareg rebellions" note="Mali has experienced Tuareg-led rebellions in 1962-64, 1990-95, 2007-09, and 2012, each rooted in the region's contested position within a state boundary drawn without Tuareg input. Azawad, Wikipedia." /> — each one, at root, a renegotiation of how a homeland split by a 1905 administrative line should relate to a national government in Bamako that inherited, rather than drew, the boundary it now polices. That contest is still unresolved: in April 2026, a coalition combining the jihadist group JNIM with a Tuareg-led separatist faction retook Kidal and several other northern towns from the Malian state.<Annotation client:load term="retook Kidal" note="An April 2026 coordinated JNIM–FLA offensive retook Kidal and several other northern Malian towns — the latest chapter in a contest over Azawad this Read does not narrate in detail; it is the subject of the companion dispatch on Africa's drone wars. Critical Threats/AEI." /> This chronicle does not follow that offensive — it belongs to a separate, already-told story about the drones and doctrine now fighting over that same terrain. What this chronicle can say with confidence is where the terrain's shape came from: a boundary agreed in 1905 by two French officers who needed to close a filing, formalized under exactly the administrative logic Berlin had made the price of a valid claim twenty years earlier.
+
+<DataTable
+  client:load
+  caption="The pattern, in numbers — from the doctrine's macro effect to its two case studies."
+  columns={[
+    { key: "metric", label: "Metric", type: "string" },
+    { key: "figure", label: "Figure", type: "string" },
+    { key: "source", label: "Source", type: "string" }
+  ]}
+  rows={[
+    { metric: "African land under formal European control, 1870s", figure: "≈10%", source: "Britannica; Wikipedia" },
+    { metric: "African land under formal European control, 1914", figure: "≈90%", source: "Britannica; Wikipedia" },
+    { metric: "African ethnic groups (of 825 mapped) split by a colonial border", figure: "229 (≈28%)", source: "Michalopoulos & Papaioannou, AER 2016" },
+    { metric: "African bilateral borders following lines of latitude/longitude", figure: "≈80% (Alesina et al., 2011) — revised to ≈37% strictly straight by Paine, Qiu & Ricart-Huguet, 2025", source: "NBER/JEEA; APSR" },
+    { metric: "Colonial jurisdictions the Somali-inhabited Horn was divided into", figure: "5", source: "Wikipedia, Greater Somalia" },
+    { metric: "Modern countries the Tuareg (Kel Tamasheq) homeland spans", figure: "5 — Mali, Niger, Algeria, Libya, Burkina Faso", source: "Wikipedia, Azawad" },
+    { metric: "Straight-line segment of the 1905/1909 Algeria–Mali boundary", figure: "≈752 km", source: "Wikipedia, Algeria–Mali border" }
+  ]}
+/>
+
+## The complication worth keeping
+
+It would be tidy to end here with a single clean image — European rulers hunched over a blank map, drawing lines with no thought for anyone already living inside them. It would also be a slight overstatement of what the best current research actually shows, and a chronicle built on a legal mechanism owes its reader the same standard of evidence in its conclusion as in its opening scene.
+
+The 80%-straight-lines figure that anchors most popular retellings of this story comes from a genuinely influential 2011 paper — economists Alberto Alesina, William Easterly, and Janina Matuszeski found that a striking majority of Africa's land borders track lines of latitude and longitude, more than on any other continent, and that this "artificiality" correlates with worse political and economic outcomes decades later.<Annotation client:load term="worse political and economic outcomes" note="Alesina, Easterly & Matuszeski (NBER Working Paper 12328; Journal of the European Economic Association, 2011) find African land borders disproportionately follow lines of latitude/longitude and that this measure of 'artificiality,' along with ethnic partitioning, correlates with worse governance and development outcomes." /> But a 2025 paper in the *American Political Science Review*, by Jack Paine, Xiaoyan Qiu, and Joan Ricart-Huguet, re-measured the same borders with finer-grained methods and reached a more complicated answer: only about 37% of bilateral African borders are strictly straight, against 63% that follow rivers, watersheds, or other natural features — and, more strikingly, the precolonial political frontiers of African states and kingdoms directly shaped 62% of the bilateral borders the researchers examined, 66 out of 107 cases.<Annotation client:load term="66 out of 107 cases" note="Paine, Qiu & Ricart-Huguet (APSR 119(1), 2025) find water features (63%) more commonly define African bilateral borders than straight lines (37%), and that precolonial state boundaries directly influenced 62% of the bilateral borders studied — complicating the popular 'arbitrary ruler-line' narrative without overturning the documented conflict correlations of partitioned homelands." /> That is a real scholarly disagreement, not a footnote to smooth over: colonial cartographers were not always ignoring the political map already on the ground. Sometimes they were tracing it, however imperfectly, and blaming the interior on a ruler and a blank sheet of paper understates how much colonial officials on the ground actually knew — and occasionally used.
+
+What the newer research does not overturn is the conflict-correlation finding itself. Whether a given border was a ruler-line or a river-line, partition — the act of putting an international frontier through the middle of a people who considered themselves one polity, one trade network, one set of kin obligations — carries a measurable cost. Michalopoulos and Papaioannou's finding stands on its own evidence: the incidence, severity, and duration of political violence are all higher for partitioned ethnic homelands, and those homelands see more cross-border military intervention and more entanglement in government-led discrimination than ethnic groups that stayed whole inside one state's borders.<Annotation client:load term="entanglement in government-led discrimination" note="Michalopoulos & Papaioannou (AER 2016) find partitioned ethnic homelands experience higher incidence, severity, and duration of political violence, more frequent cross-border military intervention, and are more often caught between government discrimination and ethnic conflict than non-partitioned groups." /> The precise geometry of a given line — straight, riverine, or inherited from a precolonial kingdom — turns out to matter less than the raw fact of the cut itself, and the speed with which Article 34 and 35's race forced that cut to be made.
+
+<Callout kind="note" title="What this chronicle is not claiming">
+Colonial border-drawing did not invent African conflict, and pre-1885 Africa was not a continent without its own wars, rivalries, or contested frontiers. The claim here is narrower and better supported by the evidence: a specific legal test, written into two articles in the winter of 1884-85, changed the *speed and incentive structure* under which borders were fixed — and that acceleration, documented in the pace of colonization itself, measurably increased how many borders were drawn through the middle of existing peoples rather than around them.
+</Callout>
+
+## What the doctrine actually built
+
+Return, for a last moment, to the room. Fourteen men signing a document in a chancellery on the Wilhelmstraße did not draw the Mali–Algeria frontier or the Ethiopia–Somalia line themselves; no one in that room in February 1885 could have named the Tuareg confederations or the Somali clans whose future the General Act's Chapter VI would eventually reach. What they wrote was smaller and, in its way, more consequential than a map: a legal test that made speed rational, administration-on-paper sufficient, and African consultation structurally absent from the claim process by design, not oversight. Everything that followed — the boundary commissions working from thin surveys under real time pressure, the rivers and parallels reached for because they were fast to agree, the peoples split because no clause in the treaty required anyone to check — is the doctrine executing exactly as its incentives predicted.
+
+The General Act's preamble promised to further "the moral and material well-being of the native populations." Its operative text, Articles 34 and 35, built a machine that measured a valid claim by a rival power's ability to detect a gap in someone else's administration — a standard with no place in it for the people whose well-being the preamble had just invoked. A hundred and forty years on, the lines that machine produced still carry weight nobody in that room intended to measure: not a ceremony's worth of consequence, but a filing procedure's worth, multiplied by every border it touched.
