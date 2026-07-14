@@ -57,3 +57,49 @@ export type ReferenceRater = z.infer<typeof ReferenceRaterSchema>;
 export const CADENCE_LANES = ["fast", "medium", "slow"] as const;
 export const CadenceLaneSchema = z.enum(CADENCE_LANES);
 export type CadenceLane = z.infer<typeof CadenceLaneSchema>;
+
+// --- Atlas Government Structure vocabularies (2026-07-07-atlas-government-structure-design.md §3) ---
+
+// §3.1 — classified system type
+export const SYSTEM_TYPES = [
+  "parliamentary", "presidential", "semi-presidential",
+  "constitutional-monarchy", "absolute-monarchy",
+  "one-party", "military-junta", "directorial", "provisional", "other",
+] as const;
+export const SystemTypeSchema = z.enum(SYSTEM_TYPES);
+export type SystemType = z.infer<typeof SystemTypeSchema>;
+
+// §3.1 — the branches of government an institution belongs to
+export const GOV_BRANCHES = ["executive", "legislative", "judicial", "electoral", "other"] as const;
+export const GovBranchSchema = z.enum(GOV_BRANCHES); // "electoral" for Latin-American-style 4th-branch electoral courts
+export type GovBranch = z.infer<typeof GovBranchSchema>;
+
+// §3.1 — federal levels; "national" = union/central
+export const GOV_TIERS = ["national", "state", "local"] as const;
+export const GovTierSchema = z.enum(GOV_TIERS);
+export type GovTier = z.infer<typeof GovTierSchema>;
+
+// §3.1 — institution kind taxonomy
+export const INSTITUTION_KINDS = [
+  "head-of-state", "head-of-government", "cabinet", "chamber",
+  "apex-court", "constitutional-court", "election-authority",
+  "subnational-executive", "subnational-legislature", "other",
+] as const;
+export const InstitutionKindSchema = z.enum(INSTITUTION_KINDS);
+export type InstitutionKind = z.infer<typeof InstitutionKindSchema>;
+
+// §3.1 — the directed authority relations that bind institutions, charter's 8 core
+export const POWER_RELATIONS = [
+  "appoints", "dismisses", "confirms", "dissolves",
+  "vetoes", "reviews", "elects", "confidence", // "confidence": TO holds the confidence of / can unseat FROM
+] as const;
+export const PowerRelationSchema = z.enum(POWER_RELATIONS);
+export type PowerRelation = z.infer<typeof PowerRelationSchema>;
+
+// §3.1 — how an office-holder is selected
+export const SELECTION_METHODS = [
+  "direct-election", "indirect-election", "hereditary",
+  "appointment", "ex-officio", "legislature-elected", "mixed", "other",
+] as const;
+export const SelectionMethodSchema = z.enum(SELECTION_METHODS);
+export type SelectionMethod = z.infer<typeof SelectionMethodSchema>;

@@ -86,6 +86,21 @@ ds-sports, data-strategy, finance, ideas, diy, 3d-printing, iot, embedded, ai-pr
 
 **CadenceLane:** `fast, medium, slow`
 
+**SystemType:** `parliamentary, presidential, semi-presidential, constitutional-monarchy,
+absolute-monarchy, one-party, military-junta, directorial, provisional, other`
+
+**GovBranch:** `executive, legislative, judicial, electoral, other`
+
+**GovTier:** `national, state, local`
+
+**InstitutionKind:** `head-of-state, head-of-government, cabinet, chamber, apex-court,
+constitutional-court, election-authority, subnational-executive, subnational-legislature, other`
+
+**PowerRelation:** `appoints, dismisses, confirms, dissolves, vetoes, reviews, elects, confidence`
+
+**SelectionMethod:** `direct-election, indirect-election, hereditary, appointment, ex-officio,
+legislature-elected, mixed, other`
+
 ---
 
 ## Model-tiering policy
