@@ -56,7 +56,7 @@ export type JudiciaryBlock = z.infer<typeof JudiciaryBlockSchema>;
 
 // §3.2 — a sub-national tier's self-rule signal.
 export const FederalTierSchema = z.object({
-  tier: GovTierSchema, // "state" | "local"
+  tier: z.enum(["state", "local"]), // sub-national only; "national" is not a federal tier
   unitLabel: z.string(), // "states" | "Länder" | "provinces" | "cantons"
   unitCount: z.number().int().positive().optional(),
   /** 0–100 self-rule signal from RAI/SNG-WOFI where covered; omitted for unitary states. */
