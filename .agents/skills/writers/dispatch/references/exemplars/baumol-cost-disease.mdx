@@ -1,0 +1,395 @@
+<!-- EXEMPLAR (teaching reference) — dispatch — not a shipped read -->
+---
+title: "Baumol's Cost Disease: Why the Things We Need Most Keep Getting More Expensive"
+format: dispatch
+channels:
+  - finance
+summary: "Since 2000, US hospital prices rose 285% and toys fell 74% — and the gap is one number, not a coincidence: sectors where output-per-hour can't grow must pay economy-wide wages, so their prices climb without limit."
+publishedAt: 2026-07-02T09:00:00.000Z
+sources:
+  - title: "FRED — CPI: Hospital & Related Services, U.S. City Average (CUUR0000SEMD)"
+    url: "https://fred.stlouisfed.org/series/CUUR0000SEMD"
+  - title: "FRED — CPI: Tuition, Other School Fees & Childcare (CUUR0000SEEB)"
+    url: "https://fred.stlouisfed.org/series/CUUR0000SEEB"
+  - title: "FRED — CPI: Medical Care Services, U.S. City Average (CUUR0000SAM2)"
+    url: "https://fred.stlouisfed.org/series/CUUR0000SAM2"
+  - title: "FRED — CPI: Toys, U.S. City Average (CUUR0000SERE01)"
+    url: "https://fred.stlouisfed.org/series/CUUR0000SERE01"
+  - title: "FRED — CPI: New Vehicles, U.S. City Average (CUUR0000SETA01)"
+    url: "https://fred.stlouisfed.org/series/CUUR0000SETA01"
+  - title: "FRED — CPI for All Urban Consumers: All Items (CPIAUCSL)"
+    url: "https://fred.stlouisfed.org/series/CPIAUCSL"
+  - title: "FRED — Average Hourly Earnings of All Employees, Total Private (CES0500000003)"
+    url: "https://fred.stlouisfed.org/series/CES0500000003"
+  - title: "FRED — CPI: Rent of Shelter, U.S. City Average (CUUR0000SAH1)"
+    url: "https://fred.stlouisfed.org/series/CUUR0000SAH1"
+  - title: "AEI Carpe Diem — Chart of the Day… or Century? (Jan 2000–June 2022)"
+    url: "https://www.aei.org/carpe-diem/chart-of-the-day-or-century-8/"
+  - title: "Nordhaus — Baumol's Diseases: A Macroeconomic Perspective (NBER WP 12218)"
+    url: "https://www.nber.org/papers/w12218"
+  - title: "Helland & Tabarrok — Why Are the Prices So Damn High? (Mercatus, 2019)"
+    url: "https://www.mercatus.org/research/books/why-are-prices-so-damn-high"
+  - title: "World Bank — Current Health Expenditure (% of GDP), United States"
+    url: "https://data.worldbank.org/indicator/SH.XPD.CHEX.GD.ZS?locations=US"
+  - title: "CMS — National Health Expenditure Fact Sheet"
+    url: "https://www.cms.gov/data-research/statistics-trends-and-reports/national-health-expenditure-data/nhe-fact-sheet"
+  - title: "IRPP Policy Options — review/interview on Baumol's The Cost Disease (2012)"
+    url: "https://policyoptions.irpp.org/magazines/come-together/baumol/"
+draft: false
+---
+
+import { Chart, Scrolly, ScrollyStep, DataTable, Annotation, StatBand, Pullquote, Callout, Detail, Definition, Slopegraph, Scatter, SmallMultiples, Math, EventCascade, Distribution } from "../../components/mdx";
+
+{/* HOOK — one sharp question, then the KEY chart immediately, above the fold. */}
+
+Here is a puzzle that ought to bother you more than it does. Over the last twenty-six years the American economy got dramatically better at making things — and dramatically worse at delivering the things that decide whether a life goes well. A flat-screen television costs a fraction of what it did in 2000. A hospital stay costs almost four times as much. Same economy. Same quarter-century. Opposite directions, and the gap keeps widening.
+
+<Chart
+  client:load
+  mark="line"
+  x="year"
+  y="index"
+  series="category"
+  height={360}
+  caption="US consumer prices indexed to January 2000 = 100. Real CPI category data, Jan 2000 → May 2026 (all-items CPI to June 2026). Source: BLS via FRED."
+  data={[
+    { year: 2000, index: 100.0, category: "Hospital services" }, { year: 2004, index: 132.9, category: "Hospital services" }, { year: 2008, index: 169.9, category: "Hospital services" }, { year: 2012, index: 214.0, category: "Hospital services" }, { year: 2016, index: 253.2, category: "Hospital services" }, { year: 2020, index: 295.6, category: "Hospital services" }, { year: 2024, index: 348.9, category: "Hospital services" }, { year: 2026, index: 385.0, category: "Hospital services" },
+    { year: 2000, index: 100.0, category: "College tuition" }, { year: 2004, index: 127.2, category: "College tuition" }, { year: 2008, index: 161.1, category: "College tuition" }, { year: 2012, index: 192.9, category: "College tuition" }, { year: 2016, index: 220.8, category: "College tuition" }, { year: 2020, index: 243.5, category: "College tuition" }, { year: 2024, index: 267.5, category: "College tuition" }, { year: 2026, index: 285.3, category: "College tuition" },
+    { year: 2000, index: 100.0, category: "Overall CPI" }, { year: 2004, index: 110.0, category: "Overall CPI" }, { year: 2008, index: 125.3, category: "Overall CPI" }, { year: 2012, index: 134.6, category: "Overall CPI" }, { year: 2016, index: 140.4, category: "Overall CPI" }, { year: 2020, index: 153.1, category: "Overall CPI" }, { year: 2024, index: 182.9, category: "Overall CPI" }, { year: 2026, index: 192.9, category: "Overall CPI" },
+    { year: 2000, index: 100.0, category: "New cars" }, { year: 2004, index: 96.3, category: "New cars" }, { year: 2008, index: 95.5, category: "New cars" }, { year: 2012, index: 100.1, category: "New cars" }, { year: 2016, index: 102.9, category: "New cars" }, { year: 2020, index: 102.8, category: "New cars" }, { year: 2024, index: 124.6, category: "New cars" }, { year: 2026, index: 124.7, category: "New cars" },
+    { year: 2000, index: 100.0, category: "Toys" }, { year: 2004, index: 78.5, category: "Toys" }, { year: 2008, index: 63.7, category: "Toys" }, { year: 2012, index: 51.4, category: "Toys" }, { year: 2016, index: 40.0, category: "Toys" }, { year: 2020, index: 28.2, category: "Toys" }, { year: 2024, index: 26.5, category: "Toys" }, { year: 2026, index: 25.9, category: "Toys" }
+  ]} />
+
+Read the fan of lines and the story tells itself. The overall price level roughly doubled — the grey CPI line ends near 193. Toys, in real terms, collapsed: a toy that cost a dollar in 2000 costs about 26 cents in 2026 dollars, a <Annotation client:load term="74% decline" note="CPI Toys (CUUR0000SERE01): Jan 2000 index 107.2 → May 2026 index 28.44, indexed to 100 at Jan 2000 = 25.9, i.e. −74.1%. Source: BLS via FRED." /> that never once reversed. Hospital services went the other way with the same relentlessness, ending near 385 — up roughly 285%. The categories that peel upward are not random. They are, almost to a line, the things you cannot outsource, automate, or ship from a factory in Shenzhen: care, teaching, a bed in a ward. The categories that peel downward are the things a machine can now make.
+
+That is not a coincidence, a conspiracy, or a failure of policy — though policy makes it worse. It is a mechanism, and it has a name. It is called Baumol's cost disease, and once you see it you cannot unsee it.
+
+{/* STATBAND — earned: the lede IS these numbers; scale/delta is the whole argument. */}
+
+<StatBand client:visible caption="Twenty-six years, one economy, two destinies. Real CPI category indices, Jan 2000 → 2026 (BLS via FRED)."
+  stats={[
+    { value: 285, prefix: "+", suffix: "%", label: "HOSPITAL SERVICES", sub: "CPI, Jan 2000 → May 2026", href: "https://fred.stlouisfed.org/series/CUUR0000SEMD" },
+    { value: 185, prefix: "+", suffix: "%", label: "COLLEGE TUITION & CHILDCARE", sub: "CPI, Jan 2000 → May 2026", href: "https://fred.stlouisfed.org/series/CUUR0000SEEB" },
+    { value: 74, prefix: "-", suffix: "%", label: "TOYS", sub: "CPI, Jan 2000 → May 2026", href: "https://fred.stlouisfed.org/series/CUUR0000SERE01" },
+    { value: 93, prefix: "+", suffix: "%", label: "OVERALL PRICE LEVEL", sub: "All-items CPI, 2000 → 2026", href: "https://fred.stlouisfed.org/series/CPIAUCSL" }
+  ]} />
+
+Hold those four numbers. Everything below is an attempt to explain why they belong together — why the same twenty-six years that made a television nearly free made a hospital bed nearly unaffordable, and why the connection between the two is not ironic but causal.
+
+## The barber and the violinist
+
+Start with the cleanest example anyone has found, because it strips the problem down to something you can hold in one hand.
+
+<Pullquote cite="William Baumol & William Bowen, Performing Arts: The Economic Dilemma (1966)" href="https://en.wikipedia.org/wiki/Baumol_effect" kind="quote">
+The output per man-hour of the violinist playing a Schubert quartet in a standard concert hall is relatively fixed.
+</Pullquote>
+
+In 1966, two economists — William Baumol and William Bowen — were hired to explain a stubborn fact about the performing arts: orchestras, theaters, and opera companies were perpetually broke and getting broker, and no amount of good management seemed to fix it. Their answer became one of the most quietly important ideas in economics. A string quartet written in the nineteenth century takes four musicians a set amount of time to perform. It took four musicians then; it takes four musicians now. You cannot make the quartet more "productive." Play it twice as fast and you have destroyed it. The <Definition client:visible term="labor productivity" def="output produced per hour of work. In a car factory it rises relentlessly as machines and methods improve; in a live string quartet it is fixed by the score." /> of the quartet is frozen at the value it had two centuries ago.
+
+Now hold that fixed quartet next to the rest of the economy, which did *not* stand still. Since 1826, a manufacturing worker's real output per hour has multiplied many times over. Wages rose with it, because that is what a growing economy does — it pays its people more. And here is the trap: the musicians live in that same economy. To keep a cellist from quitting and taking a better-paid job elsewhere, the orchestra must raise the cellist's wage roughly in line with everyone else's — even though the cellist's *output* per hour has not budged since Schubert. The wage rises; the productivity doesn't; so the *cost per performance* rises, and rises, and keeps rising, with no ceiling.
+
+<Callout kind="key-insight" title="The mechanism in one sentence">
+When wages rise across the whole economy but output-per-hour rises only in some sectors, the sectors where productivity <em>can't</em> rise must pay the higher wage anyway — so their costs, and their prices, climb without limit relative to everything a machine can make.
+</Callout>
+
+Baumol's own modern illustrators put a number on the quartet. Economists Eric Helland and Alex Tabarrok, updating the example in 2019, traced a production worker's real wage from about <Annotation client:load term="$1.14 an hour in 1826" note="Helland & Tabarrok, Why Are the Prices So Damn High? (Mercatus, 2019): real production-worker wage rose from ~$1.14/hr (1826) to ~$26.44/hr (2010), ≈23× in real terms." /> to about $26.44 an hour in 2010 — roughly a 23-fold increase in real terms. Because a quartet still consumes the same musician-hours, that means a live performance of the same music is *about 23 times more expensive to produce* than it was when the ink was still wet. Nobody played worse. The world simply got richer around a thing that could not get more efficient, and the bill for standing still is paid in relative price.
+
+<Detail summary="Go deeper: why the wage has to rise (the labor-market link)">
+The load-bearing assumption is labor mobility. If musicians, teachers, and nurses were trapped in their sectors — unable to leave for a factory or a software firm — their wages could stagnate along with their productivity, and the cost disease would not bite. In the real world labor is mobile enough that a nurse who is badly underpaid relative to the wider economy eventually leaves nursing. So the stagnant sector is forced to track economy-wide wages to retain its people. The disease is, at bottom, a story about opportunity cost: the hour a nurse spends nursing is an hour she could have spent in a rising-productivity job, and she must be paid roughly what that alternative would pay. Baumol called the two halves of the economy the "progressive" sector (rising productivity) and the "stagnant" or "non-progressive" sector.
+</Detail>
+
+The barber is the same story in a chair. Cutting hair takes about as long as it did in 1970 — there is no robot barber, no economy of scale in a single head of hair. Yet a haircut costs far more than it did, not because barbers are lazy or gouging, but because the barber, too, lives in an economy where the wage floor keeps rising underneath a job whose productivity cannot follow. Barbers, string quartets, kindergarten teachers, nurses, home-care aides, live-theater actors, family doctors: the same fixed-productivity trap, the same rising relative price, the same puzzled customers wondering why *this* keeps getting more expensive when everything with a microchip in it keeps getting cheaper.
+
+Baumol formalized the two halves of the economy with deliberately plain names. The **progressive** sector is where output per hour rises cumulatively — manufacturing, agriculture, software, anything a machine can be thrown at. The **stagnant** or **non-progressive** sector is where it can't — the quartet, the classroom, the ward. His 1967 statement of what happens when the two share one labor market is worth reading slowly, because every line of the divergence chart is contained in it.
+
+<Pullquote cite="William Baumol, 'Macroeconomics of Unbalanced Growth' (1967), as quoted in the Baumol-effect literature" href="https://en.wikipedia.org/wiki/Baumol_effect" kind="document">
+If productivity per man hour rises cumulatively in one sector relative to its rate of growth elsewhere in the economy, while wages rise commensurately in all areas, then relative costs in the nonprogressive sectors must inevitably rise, and these costs will rise cumulatively and without limit.
+</Pullquote>
+
+"Without limit" is the phrase that unsettles people, and it should. It does not mean the stagnant sector eventually consumes the entire economy — Baumol was careful about that, and we will return to it. It means there is no natural stopping point *for the relative price*: as long as the progressive sector keeps improving and wages keep tracking it, the price of a fixed-productivity service keeps climbing relative to everything else, decade after decade, with no equilibrium at which it settles. A haircut is not "done" getting relatively more expensive. Neither is a semester, or a hospital night. The chart at the top is not mid-adjustment toward some new steady state; on Baumol's logic it is the steady state — a permanently opening fan.
+
+## Watch the divergence assemble
+
+The single fan chart at the top hides how the pattern was built. Let it assemble one layer at a time — because the order in which the lines separate is itself the argument.
+
+<Scrolly client:visible caption="How the price fan opens: goods, then services, then the gap. Real CPI indices, Jan 2000 = 100. Source: BLS via FRED.">
+  <ScrollyStep graphic={
+      <Chart client:visible mark="line" x="year" y="index" height={320}
+        caption="Overall CPI — the price level roughly doubled. Base Jan 2000 = 100."
+        data={[
+          { year: 2000, index: 100.0 }, { year: 2004, index: 110.0 }, { year: 2008, index: 125.3 }, { year: 2012, index: 134.6 }, { year: 2016, index: 140.4 }, { year: 2020, index: 153.1 }, { year: 2024, index: 182.9 }, { year: 2026, index: 192.9 }
+        ]} />
+    }>
+    **Step one — the baseline.** Start with the whole basket. Overall consumer prices rose about 93% from January 2000 to 2026 — an index that ends near 193. This is "inflation" as most people mean it: the average. Everything that follows is measured against this line. Keep it in your eye; it is the mark of the middle.
+  </ScrollyStep>
+  <ScrollyStep graphic={
+      <Chart client:visible mark="line" x="year" y="index" series="category" height={320}
+        caption="Add the things machines make. Toys and new cars fall below — or barely track — the average."
+        data={[
+          { year: 2000, index: 100.0, category: "Overall CPI" }, { year: 2008, index: 125.3, category: "Overall CPI" }, { year: 2016, index: 140.4, category: "Overall CPI" }, { year: 2026, index: 192.9, category: "Overall CPI" },
+          { year: 2000, index: 100.0, category: "Toys" }, { year: 2008, index: 63.7, category: "Toys" }, { year: 2016, index: 40.0, category: "Toys" }, { year: 2026, index: 25.9, category: "Toys" },
+          { year: 2000, index: 100.0, category: "New cars" }, { year: 2008, index: 95.5, category: "New cars" }, { year: 2016, index: 102.9, category: "New cars" }, { year: 2026, index: 124.7, category: "New cars" }
+        ]} />
+    }>
+    **Step two — the goods peel down.** Now add the manufactured things. Toys don't just beat inflation; they fall in *absolute* nominal terms — the index drops from 100 to 26 while everything else rises. New cars barely move for two decades, ending near 125 despite a pandemic-era jump. Where a factory and a global supply chain can multiply output per worker, the price sinks below the average line and keeps sinking.
+  </ScrollyStep>
+  <ScrollyStep graphic={
+      <Chart client:visible mark="line" x="year" y="index" series="category" height={320}
+        caption="Add the things people do. Medical care and hospitals peel sharply up and away."
+        data={[
+          { year: 2000, index: 100.0, category: "Overall CPI" }, { year: 2008, index: 125.3, category: "Overall CPI" }, { year: 2016, index: 140.4, category: "Overall CPI" }, { year: 2026, index: 192.9, category: "Overall CPI" },
+          { year: 2000, index: 100.0, category: "Toys" }, { year: 2008, index: 63.7, category: "Toys" }, { year: 2016, index: 40.0, category: "Toys" }, { year: 2026, index: 25.9, category: "Toys" },
+          { year: 2000, index: 100.0, category: "Medical care" }, { year: 2008, index: 146.1, category: "Medical care" }, { year: 2016, index: 186.6, category: "Medical care" }, { year: 2026, index: 248.2, category: "Medical care" },
+          { year: 2000, index: 100.0, category: "Hospital services" }, { year: 2008, index: 169.9, category: "Hospital services" }, { year: 2016, index: 253.2, category: "Hospital services" }, { year: 2026, index: 385.0, category: "Hospital services" }
+        ]} />
+    }>
+    **Step three — the services peel up.** The labor-bound sectors do the opposite. Medical care services end near 248; hospital services near 385. These are the lines that scared the Federal Reserve economists who circulated this chart for years. The reader has now discovered the whole shape: a *fan*, hinging on the year 2000, goods below and services above, with the widest gap between the two things a modern economy most obviously does — build machines, and care for people.
+  </ScrollyStep>
+</Scrolly>
+
+The divergence is not a wobble around a common trend. It is a scissor. And the blade that cuts up — the labor-intensive, hard-to-automate services — is exactly the blade Baumol's model predicts should cut up. The blade that cuts down is exactly the one it predicts should cut down. The chart is not describing an economy that went wrong. It is describing an economy behaving *exactly as the theory says it must*.
+
+## The relationship, in one plot
+
+If the cost disease is real, there should be a straight line hiding in the data: the faster a sector's productivity grows, the faster its relative price should *fall*. Sectors that can't improve should get relatively dearer; sectors that can should get relatively cheaper. That is a testable claim, and it has been tested.
+
+<Scatter client:visible x="productivity" y="price" fit="linear"
+  xLabel="labor-productivity growth (illustrative, by sector character)"
+  yLabel="relative price change since 2000 (%, CPI)"
+  caption="Each point is a broad category: productivity growth on the x-axis, real CPI price change 2000→2026 on the y-axis. Price data real (BLS via FRED); productivity axis is an ordinal reading of each sector's automatability, not a measured index — see methodology."
+  data={[
+    { sector: "Toys", productivity: 9, price: -74 },
+    { sector: "Software/electronics", productivity: 10, price: -70 },
+    { sector: "New cars", productivity: 5, price: 25 },
+    { sector: "Apparel", productivity: 6, price: 10 },
+    { sector: "Food at home", productivity: 4, price: 91 },
+    { sector: "Overall CPI", productivity: 3, price: 93 },
+    { sector: "Shelter", productivity: 2, price: 122 },
+    { sector: "College tuition", productivity: 1, price: 185 },
+    { sector: "Medical care", productivity: 1, price: 148 },
+    { sector: "Hospital services", productivity: 0.5, price: 285 }
+  ]} />
+
+The fitted line slopes down, hard: low-productivity-growth sectors sit high on the price axis, high-productivity sectors sit low, and the relationship is close to monotonic. This is not a khazana novelty. William Nordhaus — the Nobel laureate who later won for climate economics — ran the rigorous version across roughly 67 US industries from 1948 to 2001 and found the association almost mechanical.
+
+<Pullquote cite="William Nordhaus, 'Baumol's Diseases: A Macroeconomic Perspective,' NBER WP 12218 (2006)" href="https://www.nber.org/papers/w12218" kind="document">
+Technologically stagnant sectors clearly have rising relative prices and declining relative real outputs. The negative association is clear.
+</Pullquote>
+
+Nordhaus regressed each industry's price change on its productivity change and got a coefficient of about <Annotation client:load term="−0.965" note="Nordhaus (NBER WP 12218): regression of log relative price change on log productivity change across ~67 US industries, 1948–2001, coefficient ≈ −0.965, 'not significantly different from one.'" />, statistically indistinguishable from −1. Read that number plainly: a one-percent gain in a sector's productivity buys, on average, a one-percent fall in its relative price. Productivity gains pass through, almost pound-for-pound, into cheaper output — *and their absence passes through into dearer output just as completely.* The scatter you just saw is the cartoon; Nordhaus's −0.965 is the photograph.
+
+To feel how differently the two halves of the economy actually move, put the individual trajectories side by side rather than tangled on one axis. Each panel below is the same twenty-six-year window; only the category changes.
+
+<SmallMultiples client:visible mark="line" x="year" y="index" facet="category"
+  caption="One panel per category, same Jan 2000 = 100 base, same 2000–2026 window. Watch how sharply the labor-bound services (top row) diverge from the machine-made goods (bottom). Real CPI data, BLS via FRED."
+  data={[
+    { category: "Hospital services", year: 2000, index: 100 }, { category: "Hospital services", year: 2008, index: 170 }, { category: "Hospital services", year: 2016, index: 253 }, { category: "Hospital services", year: 2026, index: 385 },
+    { category: "College tuition", year: 2000, index: 100 }, { category: "College tuition", year: 2008, index: 161 }, { category: "College tuition", year: 2016, index: 221 }, { category: "College tuition", year: 2026, index: 285 },
+    { category: "Medical care", year: 2000, index: 100 }, { category: "Medical care", year: 2008, index: 146 }, { category: "Medical care", year: 2016, index: 187 }, { category: "Medical care", year: 2026, index: 248 },
+    { category: "Overall CPI", year: 2000, index: 100 }, { category: "Overall CPI", year: 2008, index: 125 }, { category: "Overall CPI", year: 2016, index: 140 }, { category: "Overall CPI", year: 2026, index: 193 },
+    { category: "New cars", year: 2000, index: 100 }, { category: "New cars", year: 2008, index: 96 }, { category: "New cars", year: 2016, index: 103 }, { category: "New cars", year: 2026, index: 125 },
+    { category: "Toys", year: 2000, index: 100 }, { category: "Toys", year: 2008, index: 64 }, { category: "Toys", year: 2016, index: 40 }, { category: "Toys", year: 2026, index: 26 }
+  ]} />
+
+The shared axis is the point. Every panel starts at 100 and every panel runs the same years, so the *shape* of each line is all that differs — and the shapes sort themselves cleanly into two families. Top row: convex climbs that never turn over. Bottom row: a flat car line, a toy line falling off a cliff. There is no panel that wanders in between with no clear direction; the economy does not have many "medium-productivity" consumer categories that drift sideways. It has things people do, and things machines make, and the fan opens exactly along that seam. When a pattern holds this cleanly across six independent series, it is not noise you are looking at. It is a mechanism.
+
+Notice one more thing the small multiples make visible that the tangled fan hides: the labor-bound lines are *smooth*. Hospital services didn't lurch; it compounded — a steady few percent a year, every year, for a quarter-century. That smoothness is a fingerprint. A price driven by a scandal or a shortage spikes and reverts. A price driven by the slow, structural gap between economy-wide wages and flat sector productivity does exactly what these lines do: it grinds upward, patiently, without drama, forever.
+
+<Callout kind="caution" title="An honest caveat about that scatter">
+The price axis above is real CPI data. The productivity axis is <em>not</em> a measured productivity index — it is an ordinal reading of how automatable each sector is, placed to show the shape of the relationship the literature measures rigorously. The rigorous version is Nordhaus's −0.965 across 67 industries; treat our scatter as an illustration of his result, not an independent measurement. The methodology note says so plainly.
+</Callout>
+
+## The complication: it isn't only the disease
+
+Here is where an honest dispatch has to slow down, because the clean story is too clean. If Baumol's mechanism were the *whole* explanation, every low-productivity service would rise at about the same rate. They don't. Look at the spread.
+
+<DataTable client:load caption="US CPI category change, Jan 2000 → 2026 (real, BLS via FRED for the aggregate lines; AEI/BLS reported figures for item-level lines). Not every 'labor-bound' service rose the same amount — the residual is where the other explanations live."
+  columns={[
+    { key: "category", label: "Category", type: "string" },
+    { key: "change", label: "Price change since 2000 (%)", type: "number", align: "right" },
+    { key: "kind", label: "Character", type: "string" },
+    { key: "source", label: "Series / source", type: "string" }
+  ]}
+  rows={[
+    { category: "Hospital services", change: 285, kind: "labor-bound service", source: "CUUR0000SEMD (FRED)" },
+    { category: "College tuition & childcare", change: 185, kind: "labor-bound service", source: "CUUR0000SEEB (FRED)" },
+    { category: "College textbooks", change: 162, kind: "goods, but captive market", source: "AEI 2022 (BLS)" },
+    { category: "Medical care services", change: 148, kind: "labor-bound service", source: "CUUR0000SAM2 (FRED)" },
+    { category: "Childcare (item-level)", change: 115, kind: "labor-bound service", source: "AEI 2022 (BLS)" },
+    { category: "Shelter (rent of shelter)", change: 122, kind: "supply-constrained", source: "CUUR0000SAH1 (FRED)" },
+    { category: "Food at home", change: 91, kind: "goods + services mix", source: "CUUR0000SAF11 (FRED)" },
+    { category: "Overall CPI", change: 93, kind: "the average", source: "CPIAUCSL (FRED)" },
+    { category: "New cars", change: 25, kind: "quality-adjusted good", source: "CUUR0000SETA01 (FRED)" },
+    { category: "Toys", change: -74, kind: "commodity good", source: "CUUR0000SERE01 (FRED)" },
+    { category: "TVs", change: -97, kind: "quality-adjusted good", source: "AEI 2022 (BLS)" }
+  ]} />
+
+Before reading the table, absorb one measurement caveat that changes how you should weigh the two ends, because critics of the famous chart raise it fairly. The goods lines are *quality-adjusted* and the service lines mostly are not. When the Bureau of Labor Statistics prices a television, it uses hedonic methods to strip out quality: a 2026 TV is vastly better than a 2000 TV — bigger, sharper, smarter — so a set that sells for the same dollars is recorded as a huge price *decline*, because you are getting so much more for the money. As the economist Zachary Bartsch put it, a $1,000 TV from 2000 would be priced around $20 today for equivalent quality — "we're not seeing $20 TVs" on the shelf, but "the features that make TVs worth buying are 98% cheaper." Healthcare gets little of this treatment; as Timothy Lee noted, the BLS "doesn't even try to adjust health care inflation statistics for quality the way they do for cars and televisions." So part of the fan's spread is an artifact of measurement: some of the goods decline is quality we now take for granted, and some of the services rise is better care the index can't see. This does not erase the divergence — the labor-bound services genuinely rose far faster than wages, quality-adjusted or not — but it does mean the raw gap slightly overstates the pure-price story at both ends.
+
+<Detail summary="Go deeper: is the quality-adjustment gap a fatal flaw in the chart?">
+It is a real limitation, not a refutation. Three things keep the divergence standing. First, even fully quality-adjusted, medical and education prices rose well ahead of the overall CPI — the direction is not in doubt, only the exact magnitude. Second, the goods side's quality adjustment, if anything, <em>strengthens</em> the Baumol reading: it shows exactly how much productivity growth the progressive sector delivered, which is the numerator's worth pouring into cheaper output. Third, Noah Smith checked the most common "gotchas" — cherry-picked start year, log-scale asymmetry — and found the chart robust: shift the endpoints and "the graph looks basically the same." The honest verdict: the chart is directionally rock-solid and quantitatively a bit soft at the extremes, which is why this dispatch leans on the trend and the −0.965 pass-through rather than on any single headline percentage.
+</Detail>
+
+Two rows in that table quietly break the pure-Baumol story, and a careful reader should notice them.
+
+The first is **college textbooks, up 162%** — a manufactured good, printed on a press, exactly the kind of thing that *should* have gotten cheaper like every other manufactured good. It didn't, because a textbook is sold into a captive market where the professor picks and the student pays; the discipline that crushes toy prices never reaches it. As the economist Noah Smith noted when the chart went viral, "college textbooks are not highly regulated, and yet their price went up enormously" — a data point that fits *neither* a pure Baumol story nor a pure regulation story.
+
+The second is **shelter, up 122%** — expensive not because housing has low productivity growth (construction productivity is genuinely poor, but that is a smaller effect) but mainly because supply is throttled by zoning and land, a restriction that has nothing to do with Baumol at all. Housing rose sharply for reasons the cost disease does not touch.
+
+<Callout kind="warning" title="The residual is real — don't over-sell one mechanism">
+Baumol's effect is the <em>trend</em> engine — it explains why a whole class of labor-bound services drifts upward decade after decade. But the <em>level</em> of any single category also carries other forces: third-party payment and subsidies in healthcare, student loans in tuition, occupational licensing, and supply restriction in housing. These don't refute Baumol; Helland and Tabarrok argue a roughly-constant distortion like regulation can't by itself produce a <em>rising</em> trend. But they set how far above the Baumol baseline a given line ends up.
+</Callout>
+
+So how much is Baumol and how much is everything else? The best decomposition anyone has published comes from Helland and Tabarrok's study of US education, and their answer is bracing.
+
+<EventCascade client:visible caption="Decomposing the rise in US K–12 spending per student, 1980 → 2007 (Helland & Tabarrok, 2019). Real per-pupil spending roughly doubled; here is what accounts for it."
+  nodes={[
+    { kind: "cause", label: "Real spending per K–12 student doubled, 1980–2007",
+      detail: "From ~$6,920 to ~$13,992 per pupil in constant dollars — the 'mystery' the study set out to explain." },
+    { kind: "effect", label: "Staffing barely rose: 10.0 → 12.5 staff per 100 students (+25%)",
+      detail: "If the money had bought a lot more people, staffing would have surged. It didn't." },
+    { kind: "effect", label: "Only about one-quarter of the increase is more real resources",
+      detail: "\"Only one-quarter of the actual increase in expenditures can be explained by the increase in staff.\"" },
+    { kind: "turning-point", label: "The other ~three-quarters is Baumol: paying the same people economy-wage",
+      detail: "Teacher salaries had to track the rising wider economy while teacher output-per-hour stayed roughly flat — the cost disease, accounting for the bulk of the rise." }
+  ]}
+/>
+
+Roughly three-quarters of the doubling in per-student cost was not more teachers, smaller classes, or fancier buildings. It was the same amount of teaching, bought at a wage that had to keep pace with an economy getting richer around it. Helland and Tabarrok ran the healthcare version too: physician and nurse salaries "almost tripled since 1960," and because the number of nurses per capita more than doubled on top of that, "nursing costs have also increased by more than a factor of six." The disease is doing most of the work; the other explanations are riding on top.
+
+This matters because the popular alternatives to Baumol share a fatal structural flaw, and Helland and Tabarrok drove a stake through it. The usual villains — administrative bloat, over-regulation, industry concentration, insurance middlemen — are largely *constant* distortions. A bureaucracy that is 30% too fat imposes a one-time 30% penalty; it does not, by sitting there, generate a price that rises every single year for fifty years. To explain a *rising trend* you need a *rising cause*, and the authors found that "neither regulation nor concentration does much to explain long-run changes in prices." The one thing that rises reliably, everywhere, and forever is the economy-wide wage — which is precisely Baumol's engine. A constant distortion sets the *height* of a price line; only the wage-productivity gap sets its *slope*.
+
+Not everyone concedes the point, and the disagreement is worth attributing honestly rather than smoothing over. The economist Bryan Caplan, reviewing the same book, argued that government's role is larger than the Baumol share suggests — that in a genuinely free market, "prices could easily fall by 50% or more," because subsidies and third-party payment don't merely sit there as a constant, they *feed back* by inflating demand year after year. The peer-reviewed literature is likewise mixed: careful cross-country studies of health spending find Baumol effects present but not always dominant. The fair reading is not that Baumol explains everything, but that he explains the one thing the alternatives structurally cannot — the relentless, cumulative *slope* — while the alternatives explain how far a given sector overshoots that slope.
+
+## Where the money actually goes
+
+Zoom out from prices to the national bill, and the cost disease stops being an abstraction about relative indices and becomes a claim on the whole economy. If the price of care keeps rising faster than everything else, care must eat an ever-larger share of what the country spends. It has.
+
+<Chart client:visible mark="area" x="year" y="share" height={320}
+  caption="US current health expenditure as a share of GDP, 2000–2023 (World Bank, WHO/SHA basis). The COVID spike in 2020 reflects GDP collapsing faster than health spending, then normalizing."
+  data={[
+    { year: 2000, share: 12.5 }, { year: 2003, share: 14.3 }, { year: 2005, share: 14.6 }, { year: 2008, share: 15.3 }, { year: 2010, share: 16.2 }, { year: 2013, share: 16.0 }, { year: 2015, share: 16.4 }, { year: 2018, share: 16.6 }, { year: 2020, share: 18.5 }, { year: 2021, share: 17.4 }, { year: 2022, share: 16.5 }, { year: 2023, share: 16.7 }
+  ]} />
+
+On the World Bank's WHO-basis measure, US health spending climbed from about <Annotation client:load term="12.5% of GDP in 2000" note="World Bank, Current Health Expenditure (% of GDP), USA: 2000 = 12.49%, 2010 = 16.20%, 2020 = 18.52% (COVID GDP-denominator spike), 2023 = 16.69%." /> to roughly 16.7% in 2023. On the broader US-official measure — the CMS National Health Expenditure accounts, which include categories WHO excludes — the 2024 figure is <Annotation client:load term="18.0% of GDP" note="CMS National Health Expenditure Fact Sheet: 2024 NHE = $5.3 trillion, $15,474 per person, 18.0% of GDP; 2023 = 17.6%. In 1960, ~5.0% of GDP." /> — about $5.3 trillion, or $15,474 for every person in the country. Zoom the timeline all the way back and the trajectory is unmistakable: US health spending was around **5% of GDP in 1960**. It has more than tripled its share of the entire economy in a lifetime.
+
+<StatBand client:visible caption="The national bill for the stagnant sector. Sources: CMS NHE (2024, 2060 projection), Federal Reserve G.19 (student debt Q4 2025)."
+  stats={[
+    { value: 5, suffix: "%", label: "HEALTH SHARE OF GDP", sub: "1960", href: "https://www.cms.gov/data-research/statistics-trends-and-reports/national-health-expenditure-data/nhe-fact-sheet" },
+    { value: 18.0, decimals: 1, suffix: "%", label: "HEALTH SHARE OF GDP", sub: "2024 (CMS NHE)", href: "https://www.cms.gov/data-research/statistics-trends-and-reports/national-health-expenditure-data/nhe-fact-sheet" },
+    { value: 15474, prefix: "$", label: "HEALTH SPENDING PER PERSON", sub: "2024", href: "https://www.cms.gov/data-research/statistics-trends-and-reports/national-health-expenditure-data/nhe-fact-sheet" },
+    { value: 1.84, prefix: "$", suffix: "T", decimals: 2, label: "STUDENT DEBT OUTSTANDING", sub: "Q4 2025", href: "https://www.federalreserve.gov/releases/g19/hist/cc_hist_memo_levels.html" }
+  ]} />
+
+The tripling did not happen because Americans got three times sicker, or because doctors got three times greedier. It happened because a hospital is one of the most labor-dense institutions in the modern economy — a building full of highly-trained humans whose hours cannot be compressed the way a factory's can — sitting inside an economy whose wages rose for fifty years. Every nurse, technician, and physician had to be paid something like what the rising progressive sector would pay them, while the number of patient-hours in a day stayed stubbornly human. The share of GDP going to health is the cost disease integrated over the whole population.
+
+Baumol looked at that trajectory and did not flinch from extrapolating it. In his 2012 book — bluntly titled *The Cost Disease: Why Computers Get Cheaper and Health Care Doesn't* — he projected that on current trends, health care would rise from about 15% of the average person's income in 2005 to <Annotation client:load term="62% by 2105" note="William Baumol, The Cost Disease (2012), as quoted in IRPP Policy Options: healthcare 'will rise from 15 percent of the average person's total income in 2005 to 62 percent by 2105.' A different reviewer paraphrases as ~60% of GDP — cite the 62%-of-income figure, which is the direct quote." />. A number that sounds insane — how could a society spend most of its income on health? — until you understand the second half of Baumol's argument, which is the one almost everyone forgets.
+
+## Is it even a bad thing?
+
+Now the twist, and it is the most counterintuitive turn in the whole subject. Baumol's own conclusion was not despair. It was that we can *afford* the rising bill — precisely because of the same force that makes it rise.
+
+<Pullquote cite="Helland & Tabarrok, Why Are the Prices So Damn High? (Mercatus, 2019)" href="https://www.mercatus.org/research/books/why-are-prices-so-damn-high" kind="quote">
+The increase in the relative price of the string quartet makes string quartets costlier but not less affordable, because the economy has become richer.
+</Pullquote>
+
+Watch the two forces separately, because the whole optimistic case lives in the gap between them.
+
+<Slopegraph client:visible beforeLabel="2000 (index)" afterLabel="2026 (index)"
+  caption="Two things move at once: the relative price of care rises, but so does purchasing power. Real CPI indices (Jan 2000 = 100), BLS via FRED; wages are average hourly earnings, total private."
+  data={[
+    { label: "Hospital services (price)", before: 100, after: 385 },
+    { label: "College tuition (price)", before: 100, after: 285 },
+    { label: "Average hourly wage", before: 100, after: 237 },
+    { label: "Overall price level", before: 100, after: 193 },
+    { label: "Toys (price)", before: 100, after: 26 }
+  ]} />
+
+Here is the thing to notice, and it is subtle: hospital prices rose faster than wages, so care did get *relatively* more expensive — that part is real and it hurts. But wages themselves rose far faster than the price of everything a machine makes. Average hourly earnings roughly <Annotation client:load term="2.3× in nominal terms" note="AEI/BLS: average hourly wages rose ~123% from Jan 2000 to Dec 2024, an index near 223, extending to ~237 (a 2.3× level) by mid-2026 — well above the ~93% rise in the overall CPI. FRED CES0500000003 corroborates the pace over its available 2006→2026 window." /> — well above the 93% rise in the overall price level, and astronomically above the *falling* price of toys, electronics, clothing, and food-in-real-terms. So the citizen of 2026 buys vastly more televisions, clothing, calories, and computing per hour worked than the citizen of 2000, and pays for it partly by devoting more hours to the one thing that got dearer: care.
+
+Baumol's insight is that this is not a contradiction — it is the *arithmetic of a rich society*. The whole reason wages could rise enough to make the hospital bill payable is that productivity soared in the progressive sector. The same engine that inflates the relative price of the quartet also swells the income that pays for it. Helland and Tabarrok put the point at its sharpest: "The cost disease is not a disease but a blessing." We can, as they wrote, "have our healthcare and our smartphones, too."
+
+Work the quartet arithmetic all the way through, because it is the cleanest proof that "more expensive" and "less affordable" are different claims. Suppose producing the quartet costs 23 times more real labor than in 1826 — Helland and Tabarrok's figure. If the average worker's real hourly income had risen by *exactly* 23 times over the same span, the quartet would cost the same number of *work-hours* to attend as it always did: no change in affordability, all change in the price tag. But real income per hour did not rise 23-fold; the productivity revolution pushed it far higher. So the number of hours an average worker must labor to buy a seat at the quartet has actually *fallen*, even as the dollar price soared. The rising price and the rising affordability are two readings of one thermometer. What changed is not whether you can afford the quartet — you can afford it more easily than your great-great-grandparents — but what *fraction* of your now-enormous income the quartet claims.
+
+Apply the same logic to the hospital and the classroom and the optimistic case snaps into focus. A society getting steadily better at making everything a machine can make will, mechanically, spend a rising share of its income on the things only humans can do — not because those things failed, but because everything else got so cheap that there was little left to spend the surplus on *except* care, education, and experience. On this reading the "crisis" in service prices is the shadow cast by an abundance in goods. The chart is not a photograph of decline. It is a photograph of a society so productive at manufacturing that it has run out of expensive goods to buy, and is pouring the difference into each other.
+
+<Callout kind="key-insight" title="The optimistic reading, stated precisely">
+Rising <em>relative</em> price is not the same as falling affordability. A string quartet costs 23× more to produce than in 1826 — and is more affordable than ever, because the average person's real income rose far more than 23×. The cost disease redistributes what fraction of our income goes to care; it does not, by itself, make care unreachable. What makes care <em>feel</em> unreachable is when this benign relative-price shift collides with the <em>other</em> distortions — third-party payment, supply restriction, debt-financed demand — that push a category well above its Baumol baseline.
+</Callout>
+
+There is a catch in the optimism, and it is worth stating so the piece doesn't oversell. The blessing is an *average*. If your wages tracked the top of the economy, the rising hospital bill is an annoyance. If your wages stagnated — as they did for large parts of the American workforce for long stretches — then the relative-price rise in care is not a redistribution you can shrug off; it is a squeeze that eats your standard of living. The cost disease is benign for the economy as a whole and can be brutal for the household whose income didn't share in the productivity boom. Both things are true, and a dispatch that told you only the cheerful half would be lying by omission.
+
+This is the resolution of the paradox that opens every angry article about the cost of living: how can economists insist things are more affordable than ever while ordinary people feel crushed by exactly the bills — care, tuition, rent — that Baumol predicts? The answer is that the two statements describe different baskets. The affordability gain is concentrated in the goods that got cheap: the average household owns more screens, clothes, appliances, and computing power per hour worked than any generation in history, and barely notices, because those things faded into background abundance. The pain is concentrated in the handful of labor-bound necessities that got dear — and because they are *necessities*, you cannot opt out of them to enjoy your cheap televisions. A family cannot decline the hospital, skip the childcare, or forgo the degree the labor market now demands. So the cost disease lands as a lived crisis even in an economy that is, on the arithmetic, richer than ever: the abundance is optional and the inflation is mandatory. That asymmetry — cheap wants, expensive needs — is why the chart feels like a betrayal even when the theory says it is a triumph.
+
+## Not just an American disease
+
+If the divergence were really about American dysfunction — its insurers, its zoning, its student loans — then countries with tighter regulation and universal systems should be immune. They are not, and that fact is one of the strongest pieces of evidence that the cost disease is a mechanism rather than a policy artifact.
+
+<DataTable client:load caption="Current health expenditure as a share of GDP, selected rich economies, 2000 vs latest (World Bank, WHO/SHA basis). Every system — single-payer, insurance-based, mixed — shows the same upward drift; the levels differ, the direction does not."
+  columns={[
+    { key: "country", label: "Country", type: "string" },
+    { key: "y2000", label: "Health % GDP, 2000", type: "number", align: "right" },
+    { key: "recent", label: "Health % GDP, latest", type: "number", align: "right" },
+    { key: "system", label: "System type", type: "string" }
+  ]}
+  rows={[
+    { country: "United States", y2000: 12.5, recent: 16.7, system: "mixed / insurance" },
+    { country: "Germany", y2000: 9.8, recent: 12.3, system: "social insurance" },
+    { country: "France", y2000: 9.6, recent: 11.5, system: "social insurance" },
+    { country: "United Kingdom", y2000: 7.1, recent: 11.1, system: "single-payer (NHS)" },
+    { country: "Japan", y2000: 7.0, recent: 10.7, system: "universal insurance" },
+    { country: "Canada", y2000: 8.2, recent: 11.3, system: "single-payer" }
+  ]} />
+
+The levels tell you how much of the overshoot is American policy: the US sits several points above its peers, and that gap is the price of third-party payment, supply restriction, and a fragmented insurance market — the residual, again, doing its damage. But the *direction* is identical everywhere. Britain's tightly-budgeted single-payer NHS could not hold health spending flat; it drifted from about 7% of GDP in 2000 toward 11%. Germany's, France's, Japan's, Canada's all climbed. No system on earth has repealed the arithmetic that a labor-dense service, paid economy-wide wages, gets relatively more expensive over time. Policy sets the *level*; Baumol sets the *slope*; and the slope points up in every advanced country regardless of how the bills are paid.
+
+## Does it ever end?
+
+Every generation predicts the cure. If the disease comes from human labor that can't be automated, then automation — real, deep automation, of the kind that finally reaches the exam room and the classroom — should be the antidote. Is it happening?
+
+<Distribution client:visible value="passthrough" bins={10}
+  valueLabel="productivity-to-price pass-through (Nordhaus: −1 ≈ full)"
+  marker={[{ at: -1, label: "full pass-through" }]}
+  caption="Nordhaus found productivity gains pass through to relative price at roughly −1 across 67 industries. The cost-disease sectors cluster near zero pass-through — because their productivity barely moved. AI's promise is to drag them leftward. Illustrative distribution around Nordhaus's central estimate; see methodology."
+  data={[
+    { passthrough: -0.1 }, { passthrough: -0.2 }, { passthrough: -0.05 }, { passthrough: -0.3 }, { passthrough: -0.9 }, { passthrough: -1.0 }, { passthrough: -1.1 }, { passthrough: -0.95 }, { passthrough: -0.8 }, { passthrough: -1.2 }, { passthrough: -0.7 }, { passthrough: -1.05 }, { passthrough: -0.6 }, { passthrough: -0.4 }, { passthrough: -0.9 }, { passthrough: -1.0 }
+  ]} />
+
+History offers a cautionary precedent. Agriculture was once the ultimate stagnant sector — most of humanity spent most of its labor growing food, and for millennia food's relative price stayed high because there was no way to make a farmhand's hour much more productive. Then mechanization, fertilizer, and genetics arrived, and US agricultural output per hour rose <Annotation client:load term="roughly seventeenfold" note="USDA Economic Research Service: US agricultural output per hour of labor grew roughly 17× over 1948–2017 — one of the largest sustained sector-productivity gains on record." /> across the second half of the twentieth century. Food fell from the dominant claim on a household budget to a minor one, and the farm sector shrank from most of the workforce to a rounding error. A sector that looked permanently stagnant was not; it was merely waiting for the technology that made its labor productive. The question for medicine and education is whether they are string quartets — genuinely fixed — or pre-mechanization farms, stagnant only until the right tool arrives.
+
+The logic of the cure is exactly Baumol's logic run in reverse. Helland and Tabarrok state the condition crisply: "The better capital is as a substitute for labor, the more the Baumol effect will disappear." A stagnant sector is only stagnant *by assumption* — the assumption that its output-per-hour cannot rise. Break that assumption and the disease breaks with it. A sector that finally learns to make its labor productive stops being non-progressive, its price line bends from the hospital curve toward the toy curve, and Nordhaus's −0.965 pass-through starts working *for* it instead of against it.
+
+There are real examples, not just hopes. When Virginia Mason Medical Center standardized the treatment of back pain — turning a bespoke, physician-hours-heavy process into something closer to a protocol — Helland and Tabarrok cite them as having cut the cost per case by about 55%. Helland and Tabarrok note that AI radiologists were already, at their writing, "more accurate than physicians for some problems" — a genuine productivity gain in a slice of medicine that had been pure human-hours for a century. Each such win is a small local defeat of the cost disease: a piece of care that used to be a fixed-productivity quartet becoming, at least partly, a manufactured good. Multiply enough of them across the care economy and the disease could, in principle, be pushed into remission — the price line for the automatable parts of medicine peeling away from hospital-services-at-385 and drifting down toward the goods.
+
+But the reverse-Baumol cure runs into a wall that is philosophical as much as technical. In some sectors, the human labor *is the product*. As UNESCO argued in a recent analysis, in education a teacher's attention is not an inefficient means to an end you could automate away — for much of what schooling does, the attention *is* the end. A chatbot that grades essays faster does not make the same product as a teacher who reads a child. Where the labor is instrumental — diagnosing a scan, processing a claim, transcribing a note — AI can genuinely raise productivity and drag the price line down. Where the labor is the point — teaching, comforting, performing, caring — the cost disease may be less a bug to be fixed than a permanent feature of what it means to pay humans to do human things.
+
+<Detail summary="Go deeper: the AI-cure debate, both sides">
+The optimists (a16z's Vijay Pande; Forbes contributors) argue that to cure the cost disease you must turn professional labor into something "manufactured, commoditized, industrialized, and automated" — and that AI is the first tool general enough to do that to knowledge work at scale. The realists note the near-term scope is modest: Pande's own 2020 framing put AI's reach at "perhaps 5% of the human labor of analyzing bills and claims," not the clinical core. The skeptics (UNESCO; parts of the education-economics literature) argue that in the sectors where labor is the end product, no substitution ratio ever reaches one, so the disease is structural. The honest position in 2026: AI is a genuine reverse-Baumol force in the <em>instrumental</em> parts of care and education, an unproven one in the <em>relational</em> parts, and the size of the eventual cure is exactly the size of the boundary between the two — which nobody yet knows.
+</Detail>
+
+## So what — the payoff
+
+Line up what the data actually established, because the "so what" is sharper than the usual complaint about inflation.
+
+The prices of the things we need most did not rise because of greed, waste, or a broken system — or not only. They rose because those things are made of human hours that cannot be sped up, in an economy whose wages must rise anyway. That is the mechanism, and it is measured: Nordhaus's −0.965 pass-through means productivity gains buy price cuts almost one-for-one, and their absence buys price increases just as reliably. The fan chart at the top is that coefficient, drawn.
+
+Three consequences fall out of it, and they reframe how you should read every future headline about the "crisis" in healthcare or college costs.
+
+<Math client:visible tex="\text{relative price of care} \; \propto \; \frac{\text{economy-wide wage}}{\text{care-sector productivity}}"
+  caption="The cost disease as a ratio: when the numerator keeps rising and the denominator stays flat, the relative price of care must climb — with no ceiling, until something moves the denominator." />
+
+First: the rising *relative* price of care and education is not, by itself, evidence of a system failing. It is the expected signature of a healthy, productive economy — the same signature you would see in Sweden, Germany, or Japan, all of which show the same goods-cheap, services-dear divergence. Any explanation that blames a single villain and predicts the trend would vanish if only *that* were fixed is almost certainly wrong, because the trend is bigger than any one villain.
+
+Second: the fight worth having is not against the Baumol trend, which is close to a law of arithmetic, but against the *extra* markup the other distortions pile on top of it. The residual — the distance between what Baumol predicts and where hospital prices, tuition, and rent actually ended up — is where third-party payment, captive markets, licensing, debt-financed demand, and zoning do their damage. That residual is real, it is large in exactly the American sectors people complain about most, and *unlike the disease, it is fixable*. This reframes the entire policy conversation. Politicians promise to "bend the cost curve" of healthcare or "make college affordable again," implying that the right reform could return these prices to some earlier, cheaper level. The Baumol analysis says that promise is mostly hollow for the trend and entirely valid for the overshoot: no reform will make care as cheap relative to goods as it was in 1960, because the economy that made goods cheap is the same economy that made care dear. What reform *can* do is close the gap between the US and its peers — the several points of GDP that America overspends on health thanks to fragmentation, and the tuition premium that debt-financed demand and captive textbook markets tack on. Aim at the residual, not the disease, and there is real money to be won. Aim at the disease, and you are fighting arithmetic.
+
+There is a third reframing hiding in the small multiples, and it is the most hopeful one. If the automatable slices of medicine and education really do peel away from the hospital curve toward the goods curve — AI reading the scan, the protocol standardizing the procedure, the model grading the essay — then the sectors won't cure uniformly. They will *split*. The commoditizable part becomes a manufactured good and gets cheap; the irreducibly human part — the bedside conversation, the teacher who notices a child is struggling, the surgeon's judgment in the unexpected moment — stays a string quartet and stays dear. And that residual quartet may be worth every rising dollar, because it is the part we were paying for all along. The cost disease, followed to its end, doesn't tell us that human services are doomed to bankrupt us. It tells us which parts of them are truly irreplaceable — because those are precisely the parts whose price refuses to fall.
+
+Third, and this is the number to end on: the same force that makes care cost more is the force that lets us pay for it. A string quartet is <Annotation client:load term="23 times costlier to produce than in 1826" note="Helland & Tabarrok (2019): the real production wage rose ~23× since 1826, and since a quartet takes the same musician-hours, it is ~23× more expensive to produce — yet more affordable than ever, because average real income rose far more than 23×." /> — and more affordable than it has ever been. Hold those two facts together without flinching and you understand the cost disease completely: the price of standing still, in a world that keeps moving, is exactly the measure of how far the world has moved.
+
+<Callout kind="note" title="Methodology">
+<strong>Data.</strong> Category price indices are US CPI, All Urban Consumers, US City Average, indexed to January 2000 = 100, pulled from BLS via FRED (series noted per row): hospital services <code>CUUR0000SEMD</code>, tuition & childcare <code>CUUR0000SEEB</code>, medical care services <code>CUUR0000SAM2</code>, toys <code>CUUR0000SERE01</code>, new vehicles <code>CUUR0000SETA01</code>, rent of shelter <code>CUUR0000SAH1</code>, all-items CPI <code>CPIAUCSL</code>, average hourly earnings <code>CES0500000003</code>. Latest CPI values are May 2026; all-items CPI and wages run to June 2026. Item-level figures for TVs (−97%), college textbooks (+162%), and childcare (+115%) are the AEI Carpe Diem "Chart of the Century" reported values (Jan 2000–June 2022 vintage), which draw on the same BLS CPI item series (<code>SERA01</code>, <code>SSEA011</code>, <code>SEEB03</code>) that FRED does not redistribute. Health share of GDP — for the US and for the six-country comparison — is World Bank current-health-expenditure (WHO/SHA basis; US 2000–2023, other countries 2000 → latest available 2023 or 2024), pulled from the World Bank Open Data API; the 18.0%-of-GDP and 5%-in-1960 figures are CMS National Health Expenditure accounts, a broader US-official definition — the two measures are not interchangeable and are labeled where used (the US line in the cross-country table uses the World Bank basis for comparability, so it reads 16.7% rather than the CMS 18.0%). Student debt is the Federal Reserve G.19 memo (Q4 2025). Productivity pass-through (−0.965) is Nordhaus, NBER WP 12218 (67 industries, 1948–2001).
+<br /><br />
+<strong>What the data can't show.</strong> The productivity axis of the scatter and the pass-through distribution are <em>illustrative</em> orderings around Nordhaus's measured central estimate, not independent per-sector productivity measurements — the rigorous relationship is his, not ours. CPI item indices are quality-adjusted for goods (a 2026 TV is far better than a 2000 TV, which is part of why the index falls so far) but healthcare and education indices are only lightly quality-adjusted, so some of the services rise reflects better care, not pure price — a known asymmetry the divergence chart cannot separate. Baumol's 62%-by-2105 projection is an extrapolation, not a measurement. And this is US data; the divergence appears across rich economies, but the levels differ.
+<br /><br />
+<strong>Where sources disagree.</strong> Baumol's 2105 projection is reported as "62% of personal income" (direct quote, cited) and loosely paraphrased elsewhere as "~60% of GDP" — the income figure is the sourced one. Recent AEI chart vintages report the overall-CPI reference line as +87% to +90% depending on the exact end-month; our +93% is the FRED all-items figure through mid-2026, a slightly later window.
+</Callout>

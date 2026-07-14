@@ -197,6 +197,40 @@ candidate) if you couldn't. This is a pre-check, not full research: 1–2 search
 candidate, then stop. Respect the $0/subscription budget — do not fan out dozens of
 searches.
 
+**Why this matters more than it looks: the downstream verify gate requires ≥60%
+corroboration of load-bearing claims by ≥2 independent-domain sources, and any single
+high-stakes claim needs independent corroboration regardless of aggregate rate**
+(`.claude/agents/reads-verify.md`). Historically, over half of picked ideas get dropped at
+that stage — after a full writer draft, a first verify, a repair cycle, and a second verify
+have all already run. That is 2x writer + 2x verify token spend burned for zero output, and
+it traces back almost entirely to grounding weaknesses this pre-check should have caught:
+fabricated/misattributed specifics, claims a source doesn't actually support, and thin
+corroboration on the exact claim the thesis depends on. **Your pre-check is the cheap place
+to kill these ideas — before a writer, not after one.**
+
+So sharpen the pre-check with two additional checks, still within the 1–2 search budget:
+- **Corroboration check, not just existence check.** Don't stop at "a primary source exists
+  for this topic" — for the thesis's one or two **load-bearing claims** (the specific
+  number, quote, or causal link the whole angle depends on), confirm you can see it stated
+  by **at least one genuinely primary source**, and that a second independent-domain source
+  plausibly corroborates it (a Scholar/News hit from a different domain, a dataset
+  cross-reference). If your 1–2 searches surface the topic broadly but you can't see the
+  *specific* load-bearing claim confirmed anywhere, that is a groundability defect — score
+  it down or drop it, don't round up on topic-level plausibility.
+- **Flag single-source high-stakes claims explicitly.** If the thesis leans on one striking
+  quote, statistic, or attribution and your pre-check only turned up one source for it, say
+  so plainly in `groundabilityEvidence` (e.g. "single-sourced: only the original paper states
+  this figure, no corroboration found") rather than presenting it as settled. The orchestrator
+  should weigh that flag in Stage 2 curation — a candidate can still be picked, but going in
+  with eyes open is what prevents a late verify FAIL after a writer has already drafted.
+
+**Calibrate down, don't just calibrate up.** A candidate whose pre-check found the topic
+exists but not that its specific load-bearing claim is verifiable should score meaningfully
+lower on groundability than one where the pre-check confirmed the exact claim from a primary
+source — even if both "found something." The goal is a slate where the ideas that make it
+through are ideas a `reads-writer` can actually finish and a `reads-verify` can actually
+pass, not just ideas that are plausible enough to attempt.
+
 <phase>Diversity pass (HARD)</phase>
 Before emitting, enforce spread across the slate — a slate is never allowed to be an
 AI/tech monoculture:
@@ -279,6 +313,12 @@ present.
   plausible primary-source base; every pick, feed-grounded or interest-driven, is
   pre-checked against the live web. Interest-driven ≠ speculative: the topic comes from the
   world, the evidence still comes from real cited primary sources.
+- **The pre-check verifies the specific load-bearing claim, not just the topic.** "Primary
+  sources exist about this subject" is not the bar — "the specific number/quote/link this
+  thesis depends on is stated by a primary source, and ideally corroborated by a second
+  independent domain" is. A candidate that only clears the shallower bar gets a lower
+  groundability score and an explicit single-source flag in `groundabilityEvidence`, not a
+  free pass.
 - **Two lanes, not one.** The feed is a signal, not a boundary. Draw from feed-grounded
   synthesis AND interest-driven world/channel topics; a slate that never leaves the feed
   has failed the mandate.

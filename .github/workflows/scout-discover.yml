@@ -2,11 +2,14 @@ name: scout-discover
 
 # Twice-weekly Source Scout: discover candidate sources (deterministic, no-AI) →
 # apply → commit the updated seed registry. This is a pure-$0 CODE workflow — no
-# Claude steps. Credibility appraisal now happens OUT-OF-BAND (a Claude routine,
-# or manual review of data/scout/candidate-brief.md) that can write
-# data/scout/appraisal.json for a later `scout apply` to consume. With no
-# appraisal present, `scout apply` degrades gracefully: it prunes/repairs the
-# existing registry and auto-adds nothing (candidates just wait in the queue).
+# Claude steps. Credibility appraisal happens OUT-OF-BAND via the `scout-appraise`
+# Claude routine (.claude/commands/scout-appraise.md, registered like the Reads
+# routine — see docs/RUNBOOK.md "Registering the Scout appraisal routine"), which
+# reads data/scout/candidate-brief.md (committed by this workflow) and writes
+# data/scout/appraisal.json for the NEXT run of this workflow's `scout apply` step
+# to consume. With no appraisal present, `scout apply` degrades gracefully: it
+# prunes/repairs the existing registry and auto-adds nothing (candidates just wait
+# in the queue).
 #
 # CADENCE: the daily pipeline auto-DISABLES dead feeds every run (reconcile), but
 # only this workflow discovers REPLACEMENTS — so a weekly-only cadence could

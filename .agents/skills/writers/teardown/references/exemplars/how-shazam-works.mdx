@@ -1,0 +1,460 @@
+<!-- EXEMPLAR (teaching reference) — teardown — not a shipped read -->
+---
+title: "How Shazam Recognizes Any Song in Seconds"
+format: teardown
+channels:
+  - tech
+  - science
+summary: "Shazam identifies a song from a noisy 10-second phone recording by turning audio into a constellation of spectrogram peaks, hashing pairs of peaks into 32-bit tokens, and finding the one song whose peaks line up on a diagonal — a trick that makes the search roughly 10,000× faster while staying immune to noise."
+publishedAt: 2026-07-02T09:00:00.000Z
+sources:
+  - title: "An Industrial-Strength Audio Search Algorithm (Avery Li-Chun Wang, ISMIR 2003)"
+    url: "https://www.ee.columbia.edu/~dpwe/papers/Wang03-shazam.pdf"
+  - title: "abracadabra: How does Shazam work? (Cameron MacLeod)"
+    url: "https://www.cameronmacleod.com/blog/how-does-shazam-work"
+  - title: "Creating Shazam in Java (Roy van Rijn)"
+    url: "https://www.royvanrijn.com/blog/2010/06/creating-shazam-in-java/"
+  - title: "A Short Introduction to Audio Fingerprinting with a Focus on Shazam (Simon Froitzheim, 2017)"
+    url: "https://hpac.cs.umu.se/teaching/sem-mus-17/Reports/Froitzheim.pdf"
+  - title: "Short-time Fourier transform (Wikipedia)"
+    url: "https://en.wikipedia.org/wiki/Short-time_Fourier_transform"
+draft: false
+---
+
+import { RunnableCode, Chart, Annotation, StatBand, Pullquote, Sidenote, Diagram, CodeWalkthrough, Stepper, StateMachine, Math, Quiz, Callout, Detail, Definition, EventCascade, DataTable } from "../../components/mdx";
+
+You are in a bar. A song you half-recognize is playing under a wall of conversation, the clink of glasses, someone laughing two feet from your phone. You hold the phone up for ten seconds. Before you've set it back down, a name appears: the track, the artist, the album. It feels like a party trick — but the machine on the other end just solved a genuinely hard problem. It took a smeared, noise-drenched, codec-mangled ten-second smear of audio and found the one matching song inside a catalog of, at the time the algorithm was published, <Annotation client:load term="over a million tracks" note="Wang (2003) abstract: 'out of a database of over a million tracks.' Wang's 2006 CACM follow-up ('The Shazam Music Recognition Service') specifies the deployed catalog had grown to nearly 2M tracks by that time." href="https://www.ee.columbia.edu/~dpwe/papers/Wang03-shazam.pdf" />. In a few hundred milliseconds of search time.
+
+Almost every "how Shazam works" explanation gets you to the phrase *audio fingerprint* and then waves its hands. This teardown does not. We are going to build the fingerprint — the actual one, from the actual 2003 paper by Avery Li-Chun Wang, Shazam's co-founder — piece by piece, in runnable code you can edit. And we are going to slow all the way down at the one idea that makes the whole thing work: pairing peaks into hashes. That is the trick. Everything else is setup and payoff.
+
+<StatBand client:visible caption="The problem Shazam solved, by the numbers Wang (2003) reports"
+  stats={[
+    { value: 1, prefix: ">", suffix: "M", label: "TRACKS IN DATABASE", sub: "deployed service, Wang (2003)", href: "https://www.ee.columbia.edu/~dpwe/papers/Wang03-shazam.pdf" },
+    { value: 15, suffix: " SEC", label: "SAMPLE LENGTH", sub: "phone microphone", group: false },
+    { value: 500, prefix: "5–", suffix: " MS", label: "SEARCH TIME", sub: "~20k-track DB on a PC", href: "https://www.ee.columbia.edu/~dpwe/papers/Wang03-shazam.pdf" },
+    { value: 1.5, prefix: "~", suffix: "%", label: "HASHES THAT SURVIVE", sub: "and it still matches", href: "https://www.ee.columbia.edu/~dpwe/papers/Wang03-shazam.pdf" }
+  ]} />
+
+Hold onto that last number, because it is the most surprising claim in the paper and the one this teardown exists to explain. Wang reports that from a heavily corrupted 15-second sample, a confident match can be found with only about <Annotation client:load term="1–2% of the generated hash tokens" note="Wang (2003), §3.1: 'from a heavily corrupted 15 second sample, a statistically significant match can be determined with only about 1-2% of the generated hash tokens actually surviving and contributing to the offset cluster.'" href="https://www.ee.columbia.edu/~dpwe/papers/Wang03-shazam.pdf" /> actually surviving. Throw away 98% of the fingerprint and it still works. By the end, that will feel inevitable rather than magical.
+
+## Why matching raw audio is the wrong idea
+
+Start with the naive plan, because seeing it fail tells you exactly what the real algorithm must fix. You have a recording. Every song in the database is a recording. Why not just compare the waveforms — line up the sample against each track and measure how well the amplitude-over-time curves agree?
+
+Two reasons, and they are fatal.
+
+The first is that your recording is not the song. It is the song convolved with the room, the phone's cheap microphone, a GSM voice codec, someone's laugh, and whatever the bartender is shouting. The raw waveform of what your phone captured looks almost nothing like the raw waveform in the database, even though a human hears "the same song." Sample-by-sample comparison is comparing the wrong thing.
+
+The second is scale. Even if waveform comparison worked, sliding a 10-second clip against every possible starting position in every one of two million tracks is an astronomical number of comparisons. A song is a few minutes; a catalog is nearly a billion seconds of audio. You cannot brute-force that on a budget and answer in half a second.
+
+<Callout kind="key-insight" title="The two constraints that shape everything">
+The fingerprint has to be **robust** (survive noise, EQ, compression, and other sound mixed on top) and **fast to search** (reducible to a hash lookup, not a scan). Wang's paper is, start to finish, the story of a representation that is both at once. Every design choice below serves one or both of these.
+</Callout>
+
+So we throw the waveform away. The first move — the one every audio algorithm since the 1990s shares — is to stop looking at the signal in time and start looking at it in *frequency*.
+
+## Layer one: from waveform to spectrogram
+
+A microphone gives you amplitude over time — a single wiggling line. That representation is fragile: shift the clip by a few milliseconds, add a little noise, and every number changes. What is far more stable is *which frequencies are present, and when*. A bass note is energy near 100 Hz; a hi-hat is energy up near 10 kHz. Those facts about a song survive a bad microphone far better than the exact waveform does.
+
+The tool that converts a chunk of waveform into "how much energy at each frequency" is the <Definition client:visible term="Fourier transform" def="a mathematical operation that decomposes a signal into the sum of pure sine waves at different frequencies, telling you how much of each frequency is present." />. But a plain Fourier transform of the whole song throws away *time* — it tells you the song contains a C note somewhere, not when. As Roy van Rijn put it in his own reimplementation, "if you transform the data into the frequency domain you lose every bit of information regarding time." That is useless for us: a fingerprint needs to know a bass hit landed *at second 12*, not merely that the song contains bass.
+
+The fix is the <Definition client:visible term="short-time Fourier transform" def="chop the signal into short overlapping windows and Fourier-transform each window separately, so you get a frequency spectrum for each slice of time." /> (STFT). Chop the audio into short windows — van Rijn used 4096-sample chunks at a 44,100 Hz sample rate — and Fourier-transform each chunk on its own. Stack the resulting spectra side by side and you get a **spectrogram**: a 2D image with time across the bottom, frequency up the side, and brightness for how much energy sits at that time and frequency.
+
+<Diagram client:visible caption="The pipeline, top to bottom. Each stage discards information the next stage doesn't need — which is exactly why the result is robust."
+  nodes={[
+    { id: "wave", label: "Waveform\n(amplitude vs time)", x: 0, y: 0, kind: "input" },
+    { id: "stft", label: "STFT\n(window + FFT)", x: 1, y: 0, kind: "process" },
+    { id: "spec", label: "Spectrogram\n(time × freq × energy)", x: 2, y: 0, kind: "process" },
+    { id: "peaks", label: "Peak picking\n(local maxima)", x: 2, y: 1, kind: "process" },
+    { id: "const", label: "Constellation map\n(time × freq only)", x: 1, y: 1, kind: "process" },
+    { id: "hash", label: "Combinatorial hashing\n(pairs → 32-bit tokens)", x: 0, y: 1, kind: "output" }
+  ]}
+  edges={[
+    { from: "wave", to: "stft", label: "chunk + transform", kind: "data" },
+    { from: "stft", to: "spec", label: "stack spectra", kind: "data" },
+    { from: "spec", to: "peaks", label: "find local maxima", kind: "data" },
+    { from: "peaks", to: "const", label: "drop amplitude", kind: "data" },
+    { from: "const", to: "hash", label: "pair anchors→targets", kind: "data" }
+  ]} />
+
+There is no free lunch in choosing the window size, and it is worth naming the trade because it explains why Shazam's spectrogram looks the way it does. The frequency resolution of each FFT is <Math client:visible tex="\Delta f = \frac{f_s}{N}" label="(1)" caption="Frequency bin width: sample rate over window length." /> where `f_s` is the sample rate and `N` is the window length in samples. A wider window (bigger `N`) buys you finer frequency bins — but a wider window also smears more time together, so you lose the ability to say precisely *when* something happened. Narrow the window for sharp timing and the frequency bins get coarse. You cannot have both; this is the time-frequency <Annotation client:load term="uncertainty principle" note="The STFT's core limitation: 'a wide window gives better frequency resolution but poor time resolution; a narrower window gives good time resolution but poor frequency resolution' — a bound analogous to Heisenberg's, per the STFT reference." href="https://en.wikipedia.org/wiki/Short-time_Fourier_transform" /> of signal processing.
+
+Here is the STFT's core move, small enough to run: chop a signal into windows and take the transform of each. This computes the energy at a single target frequency inside one window — the atom the full spectrogram is built from.
+
+<RunnableCode client:visible caption="One spectrogram cell: energy at a target frequency inside one window. Edit targetHz and re-run — a 440 Hz signal lights up at 440 and stays dark elsewhere."
+  code={`// A 1024-sample window of a pure 440 Hz tone, sampled at 8000 Hz.
+const fs = 8000, N = 1024, toneHz = 440;
+const window = [];
+for (let n = 0; n < N; n++) {
+  window.push(Math.sin(2 * Math.PI * toneHz * n / fs));
+}
+
+// The Fourier "energy at frequency f" = how well the window
+// correlates with a sine/cosine at f. (One bin of a DFT.)
+function energyAt(sig, f, fs) {
+  let re = 0, im = 0;
+  for (let n = 0; n < sig.length; n++) {
+    const ang = 2 * Math.PI * f * n / fs;
+    re += sig[n] * Math.cos(ang);
+    im += sig[n] * Math.sin(ang);
+  }
+  return Math.sqrt(re * re + im * im);
+}
+
+const targetHz = 440;   // <-- try 300, or 1000: energy collapses
+console.log("energy @ " + targetHz + " Hz:", energyAt(window, targetHz, fs).toFixed(1));
+console.log("energy @ 300 Hz:", energyAt(window, 300, fs).toFixed(1));
+console.log("energy @ 1000 Hz:", energyAt(window, 1000, fs).toFixed(1));
+return "440 Hz dominates; neighbors are ~0";`} />
+
+Run it and the 440 Hz probe returns a big number while 300 and 1000 return almost nothing. That is the whole idea of a spectrogram column: at each moment, which frequencies ring? Do this for every window, stack the columns, and you have turned a fragile 1D waveform into a 2D picture where a song's structure — its bass line, its melody, its cymbals — is laid out as a landscape of bright ridges. Wang's paper works in <Annotation client:load term="8 kHz, mono, 16-bit" note="Wang (2003), §3.1: 'Audio sampling and processing was carried out using 8KHz, mono, 16-bit samples.'" href="https://www.ee.columbia.edu/~dpwe/papers/Wang03-shazam.pdf" /> audio — deliberately low fidelity, because the fingerprint must survive a phone line, and there is no point analyzing detail a phone line destroys.
+
+## Layer two: the constellation map
+
+We have a spectrogram — but it is still an *image*, dense and heavy, and still fragile in an important way. Turn up the bass on your stereo and every value in that image shifts. Add noise and the dim regions fill in with garbage. We need to distill this picture down to the few features that will *not* move when the audio is abused.
+
+Wang's answer is the heart of the front end, and it is beautifully simple: **keep only the peaks**. A time-frequency point is kept if it has higher energy than all its neighbors in a region around it — a local maximum in the spectrogram landscape. Everything else is thrown away, *including the amplitude itself*. What remains is a sparse scatter of `(time, frequency)` coordinates that Wang calls a <Definition client:visible term="constellation map" def="the sparse set of (time, frequency) coordinates of spectrogram peaks, with amplitude discarded — so named because the scatter of dots resembles a star field." />, "since the coordinate scatter plots often resemble a star field."
+
+Why peaks, and why does dropping amplitude *help*? Two reasons, and they are the crux of the robustness story.
+
+<EventCascade client:visible caption="Why the peak survives when everything else drowns"
+  nodes={[
+    { kind: "cause", label: "A peak is, by definition, the loudest point in its neighborhood",
+      detail: "Wang: 'the highest amplitude peaks are most likely to survive the distortions.' For noise to erase a peak, the noise must be louder than the peak itself — a high bar." },
+    { kind: "effect", label: "Ambient noise, being spread across frequencies, rarely out-shouts a strong local peak",
+      detail: "MacLeod: 'A spectrogram peak is the point least likely to be affected by noise. Noise has to be louder than the spectrogram peak to make it unrecognisable.'" },
+    { kind: "effect", label: "Dropping amplitude makes the map insensitive to EQ and volume",
+      detail: "Wang: a peak 'is still a peak with the same coordinates in a filtered spectrum.' Bass boost changes loudness, not which points are local maxima. Only the (t, f) location matters now." },
+    { kind: "turning-point", label: "The song reduces to a noise-immune, EQ-immune star field",
+      detail: "Two identical recordings, however differently distorted, produce nearly the same constellation — because peaks are the last thing to move." }
+  ]} />
+
+That second point deserves a beat. By discarding amplitude, the fingerprint stops caring how *loud* anything is — it cares only about the *pattern* of where energy concentrates. A club's booming subwoofer and a laptop's tinny speaker produce audio with wildly different amplitudes but nearly the same peak *locations*. This is why Wang can call the representation "fairly insensitive to EQ": an equalizer changes the height of the ridges, but a peak in the original spectrum is, with rare exceptions, still a peak at the same coordinates in the filtered one.
+
+There is a design knob here. You don't want to keep *every* local maximum — a loud passage would generate a blizzard of peaks and a quiet one almost none. Wang picks peaks by a <Annotation client:load term="density criterion" note="Wang (2003), §2.1: candidate peaks are chosen 'according to a density criterion in order to assure that the time-frequency strip for the audio file has reasonably uniform coverage,' and by amplitude, since the highest peaks 'are most likely to survive the distortions.'" href="https://www.ee.columbia.edu/~dpwe/papers/Wang03-shazam.pdf" /> so the map has roughly uniform coverage in time, and by amplitude within each region so the survivors are the strongest. Let's actually pick peaks.
+
+<RunnableCode client:visible caption="Peak picking on a tiny spectrogram. A cell is a peak if it beats all 8 neighbors. Edit the grid and watch which stars survive."
+  code={`// A tiny 6-wide (time) x 5-tall (freq) spectrogram of energies.
+// Rows = frequency bins (top = high freq), cols = time frames.
+const spec = [
+  [1, 2, 1, 0, 1, 0],
+  [2, 9, 3, 1, 8, 2],   // two bright peaks: 9 and 8
+  [1, 3, 2, 4, 2, 1],
+  [0, 1, 7, 2, 1, 1],   // a peak: 7
+  [1, 0, 1, 1, 2, 1],
+];
+const H = spec.length, W = spec[0].length;
+
+function isPeak(r, c) {
+  const v = spec[r][c];
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      if (dr === 0 && dc === 0) continue;
+      const nr = r + dr, nc = c + dc;
+      if (nr < 0 || nr >= H || nc < 0 || nc >= W) continue;
+      if (spec[nr][nc] >= v) return false;   // a neighbor ties or wins
+    }
+  }
+  return true;
+}
+
+const constellation = [];
+for (let r = 0; r < H; r++)
+  for (let c = 0; c < W; c++)
+    if (isPeak(r, c)) constellation.push({ time: c, freq: H - 1 - r, energy: spec[r][c] });
+
+console.log("kept peaks (time, freq):");
+constellation.forEach(p => console.log("  t=" + p.time + " f=" + p.freq + "  (was " + p.energy + ")"));
+return constellation.length + " stars kept from " + (H * W) + " cells";`} />
+
+Run it: from 30 spectrogram cells, three survive — the 9, the 8, and the 7, each a local maximum. Those three `(time, freq)` coordinates are the constellation. Notice what just happened: we compressed the audio by ~10× *and* made it robust, in one step. The star field for your noisy bar recording will be missing some stars (noise deleted them) and will have a few spurious extra stars (noise created them) — but the *strong* stars, the ones that were genuinely the loudest points in the real song, are almost all still there, at almost exactly the same coordinates.
+
+<Callout kind="note" title="Why not just match constellation maps directly?">
+You could. Wang describes it vividly: print the database song's star field on a strip chart, print the sample's on transparent plastic, slide the plastic along until a bunch of stars line up. That works — noise deletes some stars and adds others, but a real match still shows many coincidences. The problem is *speed*: a raw peak carries only its frequency, and a 1024-bin frequency axis is at most 10 bits of information. Wang's own words: matching raw constellation points "can be rather slow, due to raw constellation points having low entropy." A single star is not distinctive enough to look up. It matches too many songs.
+</Callout>
+
+That last sentence is the doorway to the crux. A single peak — "there's energy at 900 Hz at some moment" — describes millions of moments across the catalog. It has almost no discriminating power. To turn the star field into something you can *look up* in a database, we need each fingerprint to be far more specific. This is where Shazam's cleverest idea lives.
+
+## The crux: combinatorial hashing of peak pairs
+
+Here is the problem stated precisely. A single peak gives roughly 10 bits of frequency information — about 1,000 distinguishable values. In a catalog with hundreds of millions of peaks, each of those 1,000 buckets holds an enormous pile of matches. Searching by single peaks means every one of your sample's peaks returns a haystack, and you spend all your time sifting haystacks. The entropy per fingerprint is too low.
+
+Wang's fix is the move that names the paper. Don't fingerprint peaks. **Fingerprint _pairs_ of peaks.**
+
+<Pullquote cite="Avery Li-Chun Wang, ISMIR 2003, §2.2" href="https://www.ee.columbia.edu/~dpwe/papers/Wang03-shazam.pdf" kind="document">
+Fingerprint hashes are formed from the constellation map, in which pairs of time-frequency points are combinatorially associated. Anchor points are chosen, each anchor point having a target zone associated with it. Each anchor point is sequentially paired with points within its target zone, each pair yielding two frequency components plus the time difference between the points.
+</Pullquote>
+
+Read that twice, because it is the entire idea. Pick a peak — call it an <Definition client:visible term="anchor point" def="a chosen constellation peak that serves as the reference point for a batch of hashes; each anchor is paired with several nearby later peaks." />. Look at a <Definition client:visible term="target zone" def="a small region of the constellation map slightly ahead in time of the anchor, from which a limited number of target peaks are selected to pair with the anchor." /> just ahead of it in time. For each of the (say) ten peaks in that target zone, form a fingerprint from three numbers: **the anchor's frequency, the target's frequency, and the time gap between them.** That triple — `(f_anchor, f_target, Δt)` — is one hash.
+
+<Diagram client:visible caption="One anchor, its target zone, and the pairs it produces. The hash is the geometry of a pair: two frequencies and the gap between them."
+  nodes={[
+    { id: "anchor", label: "★ ANCHOR\nf₁, t₁", x: 0, y: 1, kind: "input" },
+    { id: "tz", label: "target zone\n(just ahead in time)", x: 1, y: 0, kind: "decision" },
+    { id: "t1", label: "target A\nf₂, t₂", x: 2, y: 0, kind: "process" },
+    { id: "t2", label: "target B\nf₃, t₃", x: 2, y: 1, kind: "process" },
+    { id: "t3", label: "target C\nf₄, t₄", x: 2, y: 2, kind: "process" },
+    { id: "h", label: "hashes:\n(f₁,f₂,Δt_A)\n(f₁,f₃,Δt_B)\n(f₁,f₄,Δt_C)", x: 3, y: 1, kind: "output" }
+  ]}
+  edges={[
+    { from: "anchor", to: "tz", label: "define zone", kind: "control" },
+    { from: "tz", to: "t1", kind: "data" },
+    { from: "tz", to: "t2", kind: "data" },
+    { from: "tz", to: "t3", kind: "data" },
+    { from: "t1", to: "h", label: "pair", kind: "data" },
+    { from: "t2", to: "h", kind: "data" },
+    { from: "t3", to: "h", kind: "data" }
+  ]} />
+
+Why does pairing rescue us? Do the entropy arithmetic, which Wang lays out directly. One peak is ~10 bits. A pair is two frequencies plus a time delta:
+
+<Math client:visible tex="\underbrace{10\text{ bits}}_{f_{\text{anchor}}} + \underbrace{10\text{ bits}}_{f_{\text{target}}} + \underbrace{10\text{ bits}}_{\Delta t} \;=\; 30\text{ bits}" label="(2)"
+  steps={[
+    { tex: "\text{single peak} \Rightarrow \sim 10 \text{ bits} \Rightarrow \sim 10^3 \text{ buckets}", note: "one frequency, ~1024 values — too many collisions" },
+    { tex: "\text{peak pair} \Rightarrow \sim 30 \text{ bits} \Rightarrow \sim 10^9 \text{ buckets}", note: "two frequencies + Δt — a billion buckets" },
+    { tex: "2^{30} / 2^{10} = 2^{20} \approx 10^6", note: "the pair is ~a million times more specific" }
+  ]}
+  caption="Wang's entropy argument: pairing lifts a fingerprint from ~10 to ~30 bits of specificity." />
+
+Thirty bits is about a *billion* distinguishable fingerprints instead of a thousand. Wang's phrasing: "the specificity of the hash would be about a million times greater, due to the 20 extra bits, and thus the search speed for a single hash token is similarly accelerated." A pair packs into a **32-bit unsigned integer** — the whole fingerprint, three numbers, in four bytes. Suddenly each fingerprint you look up returns a *small* list of candidates instead of a haystack.
+
+Let's build the hash. This is the single most important piece of code in the teardown — the exact operation Shazam runs millions of times per song. We pack two frequencies and a time delta into one integer, exactly as the paper describes.
+
+<RunnableCode client:visible caption="The Shazam hash: pack (f_anchor, f_target, Δt) into one 32-bit integer. Edit a frequency by one and watch the hash change completely."
+  code={`// Pack a peak pair into a 32-bit hash, per Wang (2003):
+// two frequencies + the time gap, each quantized to a bit field.
+// Layout used here: f1 (10 bits) | f2 (10 bits) | dt (12 bits) = 32 bits.
+function pairHash(f1, f2, dt) {
+  const F1 = f1 & 0x3FF;        // 10 bits: 0..1023
+  const F2 = f2 & 0x3FF;        // 10 bits
+  const DT = dt & 0xFFF;        // 12 bits: 0..4095 frames
+  // shift into non-overlapping fields, combine:
+  return ((F1 << 22) | (F2 << 12) | DT) >>> 0;   // >>> 0 keeps it unsigned
+}
+
+// An anchor peak at 900 Hz-bin, paired with three targets in its zone:
+console.log("(900, 910, dt=5)  ->", pairHash(900, 910, 5));
+console.log("(900, 910, dt=6)  ->", pairHash(900, 910, 6));   // dt off by one
+console.log("(901, 910, dt=5)  ->", pairHash(901, 910, 5));   // anchor off by one
+console.log("(900, 512, dt=20) ->", pairHash(900, 512, 20));
+
+// Two identical pairs hash identically — that's the whole point:
+const a = pairHash(900, 910, 5), b = pairHash(900, 910, 5);
+console.log("identical pairs match:", a === b);
+return "same geometry -> same hash; any change -> different bucket";`} />
+
+Run it. A pair `(900, 910, Δt=5)` produces one specific integer. Nudge any of the three inputs — the anchor frequency, the target frequency, or the time gap — and you land in a completely different bucket. Two recordings that share the same peak geometry produce the *same* integer, which is what lets a lookup work. This is a hash in the plainest sense: identical structured inputs collapse to the identical key.
+
+<Callout kind="key-insight" title="Why the Δt is the secret ingredient">
+The time delta is what makes the pair *translation-invariant* — the property that a fingerprint means the same thing no matter where in the song it occurs. The hash stores the *gap* between two peaks, not their absolute times. So whether a lick happens at 0:12 or 3:45, the pair `(900 Hz, 910 Hz, 5 frames apart)` hashes to the same value. Absolute time is stripped out of the hash and stored *separately* — which, as we'll see, is exactly what makes the final matching step a clean geometric alignment. The hash answers "what does this pair look like"; the stored offset answers "where was it." Splitting those two questions is the design's quiet genius.
+</Callout>
+
+Here is the fingerprinting loop end to end — anchor by anchor, walking each target zone, emitting `(hash, anchorTime)` records. This is the code that runs over every song in the catalog and over your 10-second sample alike.
+
+<CodeWalkthrough lang="js" caption="The full fingerprint generator: constellation in, (hash, time) records out."
+  steps={[
+    { lines: [1, 4], note: "Input: the constellation map — a list of {time, freq} peaks, sorted by time. This is the star field from the previous section." },
+    { lines: [6, 9], note: "Two knobs. FAN_OUT (Wang's F) caps how many targets each anchor pairs with — the paper uses F≈10. TARGET_DT_MAX bounds how far ahead a target may be, keeping pairs temporally local." },
+    { lines: [12, 15], note: "Outer loop: every peak is taken as an anchor. Wang: 'if each constellation point is taken to be an anchor point...'" },
+    { lines: [17, 24], note: "Inner loop walks forward to peaks in the target zone: later in time, within TARGET_DT_MAX. We stop after FAN_OUT pairs — this is the limit that stops a combinatorial explosion." },
+    { lines: [26, 31], note: "For each pair, emit one record: the packed hash AND the anchor's absolute time. The hash is translation-invariant; the time is stored alongside for the alignment step." },
+    { lines: [34, 36], note: "A song becomes a flat list of (hash, time) records — roughly F times as many records as it had peaks. That fan-out is the storage cost we pay for the speed." }
+  ]}
+  code={`// constellation: array of { time, freq }, sorted ascending by time.
+// Returns fingerprint records: { hash, anchorTime }.
+function fingerprint(constellation) {
+  const records = [];
+
+  const FAN_OUT = 10;          // Wang's F: targets paired per anchor
+  const TARGET_DT_MIN = 1;     // target must be strictly after the anchor
+  const TARGET_DT_MAX = 100;   // ...but not too far ahead (the target zone)
+
+  const n = constellation.length;
+
+  for (let i = 0; i < n; i++) {
+    const anchor = constellation[i];
+    let paired = 0;
+
+    for (let j = i + 1; j < n && paired < FAN_OUT; j++) {
+      const target = constellation[j];
+      const dt = target.time - anchor.time;
+
+      if (dt < TARGET_DT_MIN) continue;
+      if (dt > TARGET_DT_MAX) break;   // sorted by time: nothing further qualifies
+
+      const h = pairHash(anchor.freq, target.freq, dt);
+      records.push({ hash: h, anchorTime: anchor.time });
+      paired++;
+    }
+  }
+
+  return records;
+}
+
+// (pairHash is the 32-bit packer from the previous island.)`} />
+
+Now the speed payoff, which Wang quantifies exactly and which is the reason Shazam is *fast* and not merely *accurate*. Let `F` be the fan-out. Compared to searching single points, pairing makes the search roughly `1,000,000 / F²` times faster. Plug in `F = 10`:
+
+<Math client:visible tex="\text{speedup} \approx \frac{1{,}000{,}000}{F^{2}} = \frac{1{,}000{,}000}{100} = 10{,}000\times" label="(3)"
+  caption="Wang (2003), §2.2: the combinatorial-hashing speedup over single-point search, with F = 10." />
+
+Where does the `F²` come from? The extra 20 bits of specificity give a raw factor of a million. But you generate `F` times as many hashes in the *sample* to look up, and there are `F` times as many hashes in the *database* to match against — so the million is divided by `F × F`. Net: about 10,000× faster. Wang's own summary of the whole trade: "we have traded off approximately 10 times the storage space for approximately 10,000 times improvement in speed, and a small loss in probability of signal detection."
+
+That "small loss in probability" is the last subtlety of the crux, and it is where the paper is at its most elegant. Pairing has a cost: a hash needs *both* its peaks to survive. If any single peak survives the noisy journey with probability `p`, then a specific pair survives with probability only about `p²` — worse. So why isn't pairing fragile?
+
+<Math client:visible tex="P(\text{at least one hash survives per anchor}) \;\approx\; p\,\bigl[\,1-(1-p)^{F}\,\bigr]" label="(4)"
+  steps={[
+    { tex: "P(\text{a specific pair survives}) \approx p^2", note: "both the anchor AND that one target must survive — pairing squares the risk" },
+    { tex: "P(\text{anchor survives}) = p", note: "but the anchor is shared across all F of its pairs" },
+    { tex: "P(\text{≥1 of F targets survives}) = 1-(1-p)^F", note: "you only need ONE of the F targets to come through" },
+    { tex: "p\,[\,1-(1-p)^F\,] \approx p \quad (F \gtrsim 10,\; p \gtrsim 0.1)", note: "for reasonable F and p this is ≈ p — 'not much worse off than before'" }
+  ]}
+  caption="Wang's survival argument: fan-out F rescues the p² penalty. You need only one surviving target per anchor, and there are F of them." />
+
+Read equation (4) slowly, because it is the resolution of the apparent paradox. Yes, any *single* pair is fragile — it needs both endpoints. But each anchor spawns `F` pairs sharing the same anchor, and you only need *one* of them to make it through. The probability that at least one of `F` targets survives is `1 - (1-p)^F`, which for `F = 10` is close to 1 even when `p` is small. Multiply by the anchor's own survival `p` and you get approximately `p` back — barely worse than a single peak, as Wang notes: "we are actually not much worse off than before." **The fan-out that squares your risk also multiplies your redundancy, and the redundancy wins.** That is why throwing away 98% of the hashes still leaves a match: you never needed a particular hash, only enough of *some* hash per region.
+
+<Quiz client:visible caption="Check the crux before we move on"
+  questions={[
+    { prompt: "Why does pairing two peaks make a fingerprint ~a million times more specific than a single peak?", choices: ["It uses a cryptographic hash function", "Two ~10-bit frequencies plus a Δt give ~30 bits instead of ~10 (2²⁰ ≈ 10⁶ more buckets)", "It stores the amplitude of both peaks", "It compresses the audio further"], answer: 1, explain: "A single peak is ~10 bits (~1000 values). A pair encodes two frequencies plus the time gap — about 30 bits, roughly a billion buckets. The extra 20 bits are the ~10⁶ specificity gain (Wang §2.2)." },
+    { prompt: "Storing the time GAP between peaks in the hash (not their absolute times) buys which property?", choices: ["Noise robustness", "Translation invariance — the pair means the same thing anywhere in the song", "Faster FFT", "Smaller database"], answer: 1, explain: "Because the hash encodes Δt, the same peak geometry hashes identically no matter where in the track it occurs. Absolute time is stored separately for the alignment step." },
+    { prompt: "A specific pair survives noise with probability ~p². So why isn't the fingerprint fragile?", choices: ["Because p is always close to 1", "Because each anchor spawns F pairs and you need only ONE to survive: 1−(1−p)^F ≈ 1", "Because the database is large", "Because amplitude is discarded"], answer: 1, explain: "Fan-out F gives redundancy. You need just one of an anchor's F targets to survive; 1−(1−p)^F is near 1 for F≈10, so per-anchor survival ≈ p — barely worse than a single peak (Wang eq. for p·[1−(1−p)^F])." }
+  ]} />
+
+## Layer three: the inverted index and the diagonal line
+
+We can now fingerprint a song into a list of `(hash, time)` records. The database is built by doing this for every track and storing the results in an <Definition client:visible term="inverted index" def="a lookup table keyed by hash value; each key maps to the list of (song, time-offset) locations where that hash occurs — so you can jump straight from a fingerprint to every place it appears." />: a giant table keyed by the 32-bit hash, where each key points to the list of `(song ID, anchor time)` places that hash occurs. Wang stores each database entry as a 64-bit struct — 32 bits of hash, 32 bits packing the track ID and time offset — and sorts them by hash value so a lookup is a fast search. Crucially, the absolute time is *not* part of the hash; it rides alongside as data.
+
+To identify your sample, you fingerprint it the same way, then for each of its hashes you look up the matching bucket in the index. Every hit gives you a **time pair**: the time this hash occurred in your sample, and the time it occurs in some database track. Group all the hits by track ID. Now — how do you decide which track is the real match?
+
+This is where the earlier decision to strip absolute time out of the hash pays off spectacularly. A wrong track will have some accidental hash collisions with your sample, scattered at random offsets. The *right* track will have something a wrong track can't fake: **its matching hashes all agree on the same time offset.** If your 10-second clip started 47 seconds into the song, then a hash that appears at 3 seconds into your clip appears at 50 seconds in the track; one at 6 seconds in your clip appears at 53 in the track; and so on. Every real match sits on a line of constant offset.
+
+<Stepper client:visible mode="reveal" caption="Turning raw hash hits into a confident match"
+  steps={[
+    { title: "Look up every sample hash", body: "<p>For each of the sample's ~hundreds of hashes, probe the inverted index. Each hit yields a pair: <code>(sample_time, track_time)</code>, filed under a track ID.</p>" },
+    { title: "Group hits by track", body: "<p>Bin the time pairs by which database track they came from. A wrong track collects a few chance hits; the right track collects many.</p>" },
+    { title: "Compute the offset for each hit", body: "<p>For every pair, compute <code>δ = track_time − sample_time</code>. For genuine matches this offset is the fixed distance from the song's start to where your clip began.</p>" },
+    { title: "Histogram the offsets", body: "<p>Tally the δ values for a track. A true match makes a <em>spike</em>: dozens of hashes all reporting the same δ. A false match makes a flat smear of random δ values.</p>" },
+    { title: "Score = the tallest spike", body: "<p>The match score is the height of the biggest histogram bin. The track with a tall, sharp spike is your song. No spike anywhere ⇒ no match.</p>" }
+  ]} />
+
+Wang frames this geometrically, and it is worth seeing why the histogram trick is so cheap. Plot every hit for a candidate track as a point: sample time on one axis, track time on the other. For a true match, all the points fall on a **diagonal line** of slope 1, offset by where your clip began — because `track_time = sample_time + offset`. For a wrong track, the points are scattered noise with no line. Detecting a match is detecting that diagonal.
+
+<Pullquote cite="Avery Li-Chun Wang, ISMIR 2003, §2.3" href="https://www.ee.columbia.edu/~dpwe/papers/Wang03-shazam.pdf" kind="document">
+The problem of deciding whether a match has been found reduces to detecting a significant cluster of points forming a diagonal line within the scatterplot… For each (t_k′, t_k) coordinate in the scatterplot, we calculate δt_k = t_k′ − t_k. Then we calculate a histogram of these δt_k values and scan for a peak.
+</Pullquote>
+
+You could detect a diagonal line with heavy machinery — Wang mentions a Hough transform — but he points out that is "overly general, computationally expensive, and susceptible to outliers." Because the diagonal here has known slope 1, you don't need any of that. Subtract to get each offset `δ = track_time − sample_time`, histogram the `δ` values, and look for a tall bin. A diagonal line of slope 1 in the scatterplot *is* a spike in the offset histogram. That collapses line-detection into counting, which runs in roughly `N log N` time and, Wang notes, "takes on the order of microseconds per bin." Let's do it.
+
+<RunnableCode client:visible caption="The alignment step: a real song's hits spike at one offset; a wrong song's smear out. Run it."
+  code={`// Each entry: [sampleTime, trackTime] for a hash that matched a track.
+// The RIGHT track: a clip that started at offset 47 -> every hit has
+// trackTime = sampleTime + 47, plus a few random noise hits.
+const rightTrack = [
+  [3, 50], [6, 53], [9, 56], [12, 59],
+  [15, 62], [1, 48], [4, 51], [8, 55],   // 8 real hits, all offset 47
+  [40, 12], [22, 90]                      // 2 chance/noise hits
+];
+// A WRONG track: only chance collisions, random offsets.
+const wrongTrack = [
+  [3, 88], [6, 12], [9, 71], [12, 4], [15, 55], [2, 40]
+];
+
+function score(pairs) {
+  const hist = {};
+  for (const [st, tt] of pairs) {
+    const delta = tt - st;                // offset of this hit
+    hist[delta] = (hist[delta] || 0) + 1; // tally it
+  }
+  let bestDelta = null, best = 0;
+  for (const d in hist) if (hist[d] > best) { best = hist[d]; bestDelta = +d; }
+  return { best, bestDelta, hist };
+}
+
+const r = score(rightTrack), w = score(wrongTrack);
+console.log("RIGHT track: peak of", r.best, "hits at offset", r.bestDelta);
+console.log("  histogram:", JSON.stringify(r.hist));
+console.log("WRONG track: peak of", w.best, "hits at offset", w.bestDelta);
+console.log("  histogram:", JSON.stringify(w.hist));
+return "Right track scores " + r.best + " vs wrong track's " + w.best + " — the spike decides.";`} />
+
+Run it. The right track produces a histogram with a fat bin — eight hits all at offset 47 — while its two noise hits scatter harmlessly into bins of their own. The wrong track produces six bins of height one: pure smear, no spike. The score is the tallest bin, and the gap between "8" and "1" is the entire confidence of the match.
+
+<Callout kind="key-insight" title="Why the histogram beats length bias and dropouts at once">
+Scoring on the *tallest single offset bin* — not the total number of matching hashes — quietly solves two problems. First, length bias: as MacLeod notes, a longer song racks up more chance collisions overall, but those spread across many offset bins, so they don't inflate the peak. Second, dropouts: if your clip has a gap (someone bumped the phone), the hashes before and after the gap still share the *same* offset, so they pile into the same bin. Wang: "discontinuities are irrelevant, allowing immunity to dropouts and masking due to interference." The alignment doesn't care that time is missing — only that what remains agrees.
+</Callout>
+
+Step back and watch the whole match as a state machine, because the flow from "raw audio" to "confident answer" is exactly a sequence of states, each of which can fail cleanly.
+
+<StateMachine client:visible caption="A query's journey from microphone to answer. A failed state at any point returns 'no match' rather than a wrong guess."
+  start="capture"
+  states={[
+    { id: "capture", label: "CAPTURE", x: 0, y: 0 },
+    { id: "spec", label: "SPECTROGRAM", x: 1, y: 0 },
+    { id: "const", label: "CONSTELLATION", x: 2, y: 0 },
+    { id: "hash", label: "HASHES", x: 2, y: 1 },
+    { id: "probe", label: "INDEX PROBE", x: 1, y: 1 },
+    { id: "align", label: "OFFSET HISTOGRAM", x: 0, y: 1 },
+    { id: "match", label: "MATCH", x: 0, y: 2 },
+    { id: "nomatch", label: "NO MATCH", x: 2, y: 2 }
+  ]}
+  transitions={[
+    { from: "capture", to: "spec", on: "STFT" },
+    { from: "spec", to: "const", on: "pick peaks" },
+    { from: "const", to: "hash", on: "pair anchors→targets" },
+    { from: "hash", to: "probe", on: "look up each hash" },
+    { from: "probe", to: "align", on: "group by track, δ = t_track − t_sample" },
+    { from: "align", to: "match", on: "tall offset spike" },
+    { from: "align", to: "nomatch", on: "no significant spike" }
+  ]}
+  sequence={["capture>spec", "spec>const", "const>hash", "hash>probe", "probe>align", "align>match"]} />
+
+## What breaks, and the trade-offs Shazam accepted
+
+A teardown owes you the failure modes, because they define the edges of what this design can and cannot do. Wang is unusually candid about them.
+
+<DataTable client:load caption="Where the algorithm bends or breaks — and why the designers accepted it"
+  columns={[
+    { key: "mode", label: "Failure / limit", type: "string" },
+    { key: "cause", label: "Root cause", type: "string" },
+    { key: "accepted", label: "Why it's an acceptable trade", type: "string" }
+  ]}
+  rows={[
+    { mode: "Can't identify live performances or covers", cause: "The fingerprint keys on the exact peak geometry of one specific recording; a re-performance has different micro-timing and peaks.", accepted: "Wang: it 'is not expected to generalize to live recordings.' Shazam's job is to match a known master, and version-sensitivity is a feature — it picks the exact pressing." },
+    { mode: "Fails below a noise floor (~ −3 to −9 dB SNR)", cause: "When noise is louder than the peaks themselves, too few of them survive to form a spike.", accepted: "50% recognition holds down to about −9 dB (15s), −6 dB (10s), −3 dB (5s) — well past normal ambient noise. Longer samples buy more margin." },
+    { mode: "Occasional false positives", cause: "A chance offset spike, OR genuine musical sampling/plagiarism sharing real peak geometry.", accepted: "The false-positive rate is a tunable threshold on spike height; Wang notes many 'false' hits were real samples of one track inside another." },
+    { mode: "Storage grows ~F× vs. peak count", cause: "Fan-out F emits F hashes per anchor instead of one fingerprint per peak.", accepted: "Wang: '~10× the storage space for ~10,000× improvement in speed.' Disk is cheap; latency is not." },
+    { mode: "Tuning is per-application", cause: "F and peak density trade speed, storage, and noise-robustness against each other.", accepted: "Radio monitoring uses low F and low density (clean audio, max speed); the noisy phone case uses high F and density. One algorithm, dialable." }
+  ]} />
+
+The noise cliff is worth seeing as a curve, because it is the headline robustness result and it is measured, not asserted. Wang ran recognition experiments against a database of roughly 20,000 tracks on a PC, using noise recorded in an actual pub, and reports the signal-to-noise ratio at which recognition falls to 50%. Longer samples tolerate more noise — more audio means more anchors means more chances for a spike to clear the threshold.
+
+<Chart client:visible mark="line" x="length" y="snr50" height={300}
+  series="condition"
+  caption="SNR (dB) at which recognition drops to 50%, by sample length. Lower is better — it means the algorithm still wins in worse noise. Data: Wang (2003), Figs. 4–5. GSM compression (the phone-line case) costs ~6 dB across the board."
+  data={[
+    { length: "5 sec", snr50: -3, condition: "additive noise" },
+    { length: "10 sec", snr50: -6, condition: "additive noise" },
+    { length: "15 sec", snr50: -9, condition: "additive noise" },
+    { length: "5 sec", snr50: 4, condition: "noise + GSM codec" },
+    { length: "10 sec", snr50: 0, condition: "noise + GSM codec" },
+    { length: "15 sec", snr50: -3, condition: "noise + GSM codec" }
+  ]} />
+
+Two things to read off that chart. First, a 15-second clip survives down to about −9 dB SNR of additive noise — the noise is *louder than the music* and it still works. That is the constellation-map robustness paying off: peaks are the last thing to drown. Second, running the mixture through the GSM voice codec (what actually happens on a phone call) costs roughly 6 dB — the −9 dB point becomes −3 dB. The codec throws away exactly the kind of spectral detail the fingerprint leans on, so this is the price of the phone line. Shazam accepted it, and simply recommends a longer sample when conditions are bad. <Sidenote>There's a lovely tell in the paper about how *specific* the fingerprint is: Wang reports the algorithm occasionally matched artists performing live in concert — because those performers had "extremely accurate and reproducible timing (with millisecond precision), or are more plausibly lip synching." The fingerprint is precise enough to out someone miming.</Sidenote>
+
+<Detail summary="Go deeper: why 'transparency' — matching several songs mixed together — falls out for free" defaultOpen={false}>
+Wang reports a surprising property he calls *transparency*: even in a large database, the algorithm can correctly identify **several tracks mixed together at once**, including multiple versions of the same piece. This isn't a separate feature — it's a consequence of the whole design. Because a match needs only a small fraction of its hashes to survive (~1–2%), and because scoring is done per-track by looking for that track's *own* offset spike, two songs playing simultaneously simply produce two independent spikes in two different tracks' histograms. Song A's peaks form A's diagonal; song B's peaks form B's diagonal; neither interferes with the other's alignment, because they align at different offsets in different tracks. The peaks are, in Wang's words, "approximately linearly superposable" — mixing audio roughly unions their constellation maps, and the matcher happily finds both star fields.
+</Detail>
+
+## The takeaway
+
+If you build search over noisy, distorted signals — audio, images, sensor traces — steal the three moves that make Shazam work, in order.
+
+**Fingerprint the features that survive, not the raw signal.** Spectrogram peaks are robust precisely because a peak is the loudest thing in its neighborhood; for noise to erase it, the noise must out-shout it. Find your domain's equivalent — the local maximum, the corner, the invariant — and throw the rest away, amplitude included. Robustness comes from *what you choose to ignore*.
+
+**Manufacture entropy by combining features.** A single feature is rarely specific enough to index. Pairing peaks lifts a fingerprint from ~10 bits to ~30 — a million-fold gain in specificity — and packs into a 32-bit integer you can look up in O(1). When one feature is too ambiguous to search, hash a *relationship between two* of them. Store the invariant (the gap), not the absolute coordinates.
+
+**Turn the match decision into counting.** Strip position out of the fingerprint and keep it as data alongside. Then a correct match reveals itself as many fingerprints agreeing on one offset — a spike in a histogram, computable in microseconds, immune to dropouts and length bias alike. You never had to compare waveforms, and you never had to detect a line with heavy machinery. You just counted votes for an offset.
+
+That is the whole engine. Peaks that noise can't kill, pairs that carry real entropy, and an offset histogram that lets a hundred fragile agreements add up to one certain answer — which is how a phone held over a noisy bar finds one song among two million before you've lowered your arm.

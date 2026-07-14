@@ -1,0 +1,27 @@
+<!-- EXEMPLAR (teaching reference) — field-notes — not a shipped read -->
+---
+title: "The AI Scaling Axis Turned Ninety Degrees"
+format: field-notes
+channels:
+  - ai
+summary: "Two independent 2025 results agree the marginal AI dollar now buys thinking time, not parameters — a quiet inversion of the scaling story."
+publishedAt: 2026-07-01T12:00:00.000Z
+sources:
+  - title: "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning — arXiv 2501.12948"
+    url: "https://arxiv.org/abs/2501.12948"
+  - title: "Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters — Snell et al., arXiv 2408.03314"
+    url: "https://arxiv.org/abs/2408.03314"
+draft: false
+---
+
+import { Annotation } from "../../components/mdx";
+
+For five years the AI scaling story ran one direction: bigger model, more pre-training, better results. Two results now bracketing 2025 quietly rotated that axis. The claim is no longer "train it larger" but "let it think longer" — and the marginal compute dollar has moved from training to inference.
+
+The DeepMind/Berkeley result stated it first and cleanly: allocate test-time compute well and a *smaller* model can beat one <Annotation client:load term="14× larger" note="Snell et al. (arXiv:2408.03314): with compute-optimal test-time allocation, a smaller model outperforms a ~14× larger one at matched total compute — reframing inference-time 'thinking' as a substitute for parameters, not just a add-on." /> at matched total compute. That reframes inference-time reasoning as a *substitute* for parameters, not a garnish. Then DeepSeek-R1 supplied the existence proof at frontier scale: pure reinforcement learning, no supervised warm-up, and its R1-Zero variant taught itself to reason — reflecting, backtracking, spending more tokens on hard problems — hitting 79.8% on AIME 2024 against OpenAI o1's 79.2%.
+
+Two labs, different methods, same conclusion: reasoning is a resource you buy at run time. That matters to anyone building on these models because it flips the cost curve you plan around. Capability used to be a fixed asset you paid for once in training; now a meaningful slice of it is a variable cost you pay per query, and you can *dial* it — cheap fast answers or expensive deliberate ones, same weights.
+
+<Callout kind="key-insight" title="Watch for">
+The product consequence is a knob you didn't have a year ago: quality is now a runtime budget, not a model choice. Watch for the API primitive that exposes it directly — a "reasoning effort" / thinking-token parameter you set per request — and price it, because your inference bill stops being proportional to *calls* and starts being proportional to *how hard each call thinks*. The teams that win will be the ones that learn which queries deserve the expensive setting and which don't.
+</Callout>

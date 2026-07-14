@@ -1,0 +1,75 @@
+---
+# DISPATCH — annotated skeleton. Charts lead; prose follows. Real data only
+# (see scripts/fetch-data.py). Keep frontmatter exactly as below. Delete comments.
+title: "[Sharp title naming the pattern or the answer]"
+format: dispatch
+channels:
+  - [channel from the brief, e.g. finance]
+summary: "[One sentence: the quantifiable answer, with the key number.]"
+publishedAt: 2026-06-24T06:00:00.000Z
+sources:
+  - title: "[Real source / dataset title]"
+    url: "[verbatim brief source URL]"
+draft: false
+---
+
+import { Chart, Scrolly, ScrollyStep, DataTable, Annotation } from "../../components/mdx";
+
+{/* HOOK — 100–150w. One sharp question or sledgehammer stat. Then the KEY chart
+    IMMEDIATELY, before any explanation. Above the fold => client:load. */}
+<Chart
+  client:load
+  mark="line"
+  x="[xField]"
+  y="[yField]"
+  height={300}
+  caption="[what to notice, with units]"
+  data={[ /* paste fetch-data.py output here; real values only */ ]}
+/>
+
+One short prose beat naming what the reader just saw — the conclusion, legible up
+front. Every number contextualized against a baseline.
+
+{/* CONTEXT LAYER 1 — <Scrolly>, 300–400w. Each step adds ONE variable/filter.
+    The reader discovers the pattern. */}
+<Scrolly client:visible caption="[the build]">
+  <ScrollyStep graphic={
+      <Chart client:visible mark="line" x="[x]" y="[y]" caption="[step 1]" data={[ /* real */ ]} />
+    }>
+    **Step one.** The raw series. What it looks like before normalization.
+  </ScrollyStep>
+  <ScrollyStep graphic={
+      <Chart client:visible mark="line" x="[x]" y="[y]" series="[series]" caption="[step 2]" data={[ /* real */ ]} />
+    }>
+    **Step two.** Split by [series]. Now the divergence shows.
+  </ScrollyStep>
+  <ScrollyStep graphic={
+      <Chart client:visible mark="bar" x="[x]" y="[y]" caption="[step 3]" data={[ /* real */ ]} />
+    }>
+    **Step three.** The slice that drives the result.
+  </ScrollyStep>
+</Scrolly>
+
+{/* COMPLICATION — 200–300w. What the simple read misses. The detailed breakdown
+    the headline chart hides. */}
+<DataTable
+  client:load
+  caption="[the breakdown]"
+  columns={[
+    { key: "category", label: "Category", type: "string" },
+    { key: "value", label: "Value", type: "number", align: "right" }
+  ]}
+  rows={[ /* numbers cited from sources */ ]}
+/>
+
+{/* CONTEXT LAYER 2 — <Scrolly> or a single chart, 300–400w. Deeper/causal cut. */}
+
+{/* SO WHAT — 200–300w. The payoff (not a summary). What the pattern means, with
+    the sharpest number last. Inline citations. */}
+This is what the data says, and why it matters:
+<Annotation client:load term="[the key figure]" note="[cited gloss with source]" />.
+
+{/* METHODOLOGY — 100–150w. Dataset, vintage, coverage, limits. Cite fetch-data
+    SOURCE lines and brief sources. */}
+**Methodology.** Data: [source + vintage]. Coverage: [what]. This cannot show
+[honest limitation].

@@ -1,0 +1,43 @@
+---
+# FIELD NOTES — annotated skeleton. ~300–500 words. No preamble. Every word earns
+# its place. Keep frontmatter exactly as below. Delete these comment lines.
+title: "[What happened, stated plainly]"
+format: field-notes
+channels:
+  - [channel from the brief, e.g. ai]
+summary: "[One sentence: the development and why it matters to this reader.]"
+publishedAt: 2026-06-24T12:00:00.000Z
+sources:
+  - title: "[Real source article title]"
+    url: "[verbatim brief source URL]"
+draft: false
+---
+
+import { Annotation, DataTable } from "../../components/mdx";
+
+{/* LEDE — 2–3 sentences. What happened, who did it, when. The first sentence IS
+    the point. No preamble. */}
+
+{/* WHY IT MATTERS — 2–3 sentences. Channel-specific: why THIS reader cares. One
+    cited source. */}
+This matters because [channel-specific stake], per
+<Annotation client:load term="[the source claim]" note="[cited gloss]" />.
+
+{/* THE NUMBER — 1 sentence + the crystallizing figure. <Annotation> (cited), or a
+    tight <DataTable> only if a small comparison sharpens it. */}
+<Annotation client:load term="[the number, with unit]" note="[cited context: baseline, source]" />.
+
+{/* Optional — only if a 2–4 row comparison earns its place:
+<DataTable
+  client:load
+  caption="[the comparison]"
+  columns={[
+    { key: "item", label: "Item", type: "string" },
+    { key: "value", label: "Value", type: "number", align: "right" }
+  ]}
+  rows={[ ... ]}
+/>
+*/}
+
+{/* WATCH FOR — 1 sentence. Specific, ideally timed. A concrete indicator/date/name. */}
+**Watch for:** [specific indicator or date to monitor].

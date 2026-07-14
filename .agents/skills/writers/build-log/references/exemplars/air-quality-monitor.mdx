@@ -1,0 +1,481 @@
+---
+title: "Building a $70 Open-Source Air-Quality Monitor You Can Actually Trust"
+format: build-log
+channels:
+  - iot
+  - embedded
+  - diy
+summary: "A from-scratch PM2.5 + VOC + CO2 node — Plantower PMS5003, Sensirion SGP40 and SCD40, an ESP32 — and the calibration work that turns a cheap sensor's confident lie into a number you can defend."
+publishedAt: 2026-07-02T09:00:00.000Z
+sources:
+  - title: "Plantower PMS5003 Digital Universal Particle Concentration Sensor — Data Manual V2.3"
+    url: "https://www.aqmd.gov/docs/default-source/aq-spec/resources-page/plantower-pms5003-manual_v2-3.pdf"
+  - title: "Sensirion SCD4x CO2 Sensor Datasheet (V1.5, July 2023)"
+    url: "https://sensirion.com/media/documents/48C4B7FB/64C134E7/Sensirion_SCD4x_Datasheet.pdf"
+  - title: "Sensirion SGP40 Indoor Air Quality Sensor for VOC Measurements — Datasheet (V1.0)"
+    url: "https://files.waveshare.com/upload/c/c2/Sensirion_Gas-Sensors_SGP40_Datasheet.pdf"
+  - title: "Jaffe et al. (2023), An evaluation of the U.S. EPA's correction equation for PurpleAir sensor data — Atmos. Meas. Tech. 16, 1311–1322"
+    url: "https://amt.copernicus.org/articles/16/1311/2023/amt-16-1311-2023.pdf"
+  - title: "Sensirion Gas Index Algorithm (VOC/NOx Index from SGP4x raw signals) — reference implementation"
+    url: "https://github.com/Sensirion/gas-index-algorithm"
+  - title: "AirGradient — How Your Monitor Handles Calibration and Data Processing"
+    url: "https://www.airgradient.com/blog/airgradient-calibration-and-data-processing"
+  - title: "Towards a hygroscopic growth calibration for low-cost PM2.5 sensors — Atmos. Meas. Tech. 17, 1051 (2024)"
+    url: "https://amt.copernicus.org/articles/17/1051/2024/"
+  - title: "ESP32 Pinout Reference: which GPIO pins should you use?"
+    url: "https://randomnerdtutorials.com/esp32-pinout-reference-gpios/"
+draft: false
+---
+
+{/* EXEMPLAR (teaching reference) — build-log — not a shipped read.
+    Study the moves: (1) every heavy island LEADS, prose interprets the one
+    number that matters; (2) ~7,500 words / 11 knowledge-carrying islands ≈ one
+    per ~680 words, well past the 800–1000w floor (Annotation/Sidenote/Callout
+    are marginalia and do NOT count); (3) every spec, pin, hex command, and
+    calibration coefficient traces to a datasheet or peer-reviewed paper in
+    sources[] — the Barkjohn equation is corroborated twice; (4) the failures
+    section is the spine, three real symptom→fix stories. Asset imports below
+    point at the repo's committed _demo assets so the contract is exact; in a
+    real post you import your OWN committed build photos from ./_assets/<slug>/. */}
+
+import { DataTable, Diagram, GanttStrip, Checklist, RunnableCode, StatBand, Chart, CompareSlider, Figure, Model3D, Annotation, Sidenote, Callout, Detail, Pullquote, CodeWalkthrough } from "../../components/mdx";
+import { getImage } from "astro:assets";
+import cmpBefore from "../../content/blog/_assets/_demo/compare-before.png";
+import cmpAfter from "../../content/blog/_assets/_demo/compare-after.png";
+import enclosureFig from "../../content/blog/_assets/_demo/annotated-demo.png";
+import modelDemoUrl from "../../content/blog/_assets/_demo/model-demo.glb?url";
+
+export const wireBefore = await getImage({ src: cmpBefore, width: 1200 });
+export const wireAfter = await getImage({ src: cmpAfter, width: 1200 });
+
+There is a specific kind of lie a $12 air sensor tells, and it is worth understanding before you spend a cent. On a humid morning your bedroom does not fill with smoke — but a raw Plantower reading will climb anyway, past 30, past 40, sometimes doubling, because the water in the air has swollen the very particles the laser counts. The sensor is not broken. It is doing exactly what a nephelometer does: measuring scattered light and assuming a fixed relationship between that light and mass. When fog rolls in, the assumption breaks, and the number lies with total confidence.
+
+This build is about earning back that confidence. We are going to put three good sensors — a Plantower PMS5003 for particulates, a Sensirion SGP40 for volatile organics, a Sensirion SCD40 for CO2 — on one ESP32 node, wire them correctly, read their real protocols byte for byte, and then do the part almost every hobby tutorial skips: **correct the particulate channel against a known reference** so the number you log is a number you can defend. Total spend is about $70. The difference between this node and the $12 one on a marketplace listing is not the parts. It is roughly forty lines of correction math and one afternoon of honesty.
+
+<StatBand client:visible caption="What you're building — the whole project in four numbers"
+  stats={[
+    { value: 70, prefix: "$", label: "TOTAL BOM", sub: "three sensors + ESP32" },
+    { value: 3, label: "MEASURANDS", sub: "PM2.5 · VOC · CO2", group: false },
+    { value: 5.71, label: "EPA INTERCEPT", sub: "the correction constant", href: "https://amt.copernicus.org/articles/16/1311/2023/amt-16-1311-2023.pdf" },
+    { value: 2.0, suffix: "×", label: "HUMID-AIR ERROR", sub: "uncorrected, vs reference", href: "https://amt.copernicus.org/articles/17/1051/2024/" }
+  ]} />
+
+Those four numbers frame the whole thing. Seventy dollars, three measurands, one correction equation whose intercept is `5.71`, and the error it exists to kill — up to a factor of two in humid air. Hold onto that last one. Everything technical here bends toward it.
+
+## The bill of materials
+
+Order all of it before you read another word. Half of these ship slowly, and you do not want the SCD40 to arrive three weeks after everything else.
+
+<DataTable client:load caption="Bill of materials — one trustworthy node"
+  columns={[
+    { key: "part", label: "Part", type: "string" },
+    { key: "why", label: "Why this one", type: "string" },
+    { key: "qty", label: "Qty", type: "number", align: "right" },
+    { key: "cost", label: "Cost ($)", type: "number", align: "right" }
+  ]}
+  total="cost"
+  rows={[
+    { part: "Plantower PMS5003 (with cable)", why: "laser PM1/2.5/10, 0.3 µm floor", qty: 1, cost: 22 },
+    { part: "Sensirion SGP40 breakout", why: "VOC Index, humidity-compensated", qty: 1, cost: 12 },
+    { part: "Sensirion SCD40 breakout", why: "true NDIR CO2 + onboard RH/T", qty: 1, cost: 22 },
+    { part: "ESP32-DevKitC (WROOM-32)", why: "Wi-Fi, 2× UART, hardware I²C", qty: 1, cost: 8 },
+    { part: "Bi-directional logic level shifter (4-ch)", why: "5 V PMS TX → 3.3 V ESP32 RX", qty: 1, cost: 2 },
+    { part: "Solderless breadboard + jumpers", why: "rev-A before you commit to solder", qty: 1, cost: 4 }
+  ]} />
+
+The table sums to about **$70**, and the single line that earns its place is the $2 one. The PMS5003 is a 5-volt part — its fan needs 5 V to spin — but its data pin idles at 3.3 V logic, so you might reasonably think you can wire it straight to the ESP32. You can, in exactly one direction. The datasheet is blunt about the other: <Annotation client:load term="the high level of data pin is 3.3 V" note="PMS5003 datasheet, Circuit Attentions §1: 'DC 5V power supply is needed because the FAN should be driven by 5V. But the high level of data pin is 3.3V. Level conversion unit should be used if the power of host MCU is 5V.'" />. The ESP32 is a 3.3 V MCU, so the sensor's TX won't fry it — but if you ever send commands *to* the PMS (to sleep it, or switch modes), your 3.3 V line is talking to a part living on a 5 V rail, and the level shifter is the two-dollar insurance that keeps the handshake clean. Buy it now.
+
+A note on part choice, since a build log owes you the roads not taken. I picked the **SGP40 over the SGP41** because we don't need the NOx channel for a home node, and the **SCD40 over the SCD41** because our budget for CO2 accuracy is modest and the SCD40's <Annotation client:load term="±(50 ppm + 5 % of reading)" note="Sensirion SCD4x datasheet §1.1, Table 1: SCD40 CO2 accuracy is ±(50 ppm + 5 % of reading) over 400–2000 ppm at 25 °C, 50 %RH." /> over 400–2000 ppm is plenty to tell a stuffy office (1,200 ppm) from a fresh one (500 ppm). If you want the wider 400–5000 ppm range and tighter mid-band accuracy, the SCD41 is a drop-in on the same I²C bus with the same command set — the code below runs on it unchanged.
+
+## How the three sensors talk
+
+<Diagram client:visible caption="System bus topology — one UART, one shared I²C bus, one level shifter"
+  nodes={[
+    { id: "pms", label: "PMS5003 (5 V)", x: 0, y: 0, kind: "input" },
+    { id: "lvl", label: "Level shifter", x: 1, y: 0, kind: "process" },
+    { id: "esp", label: "ESP32-WROOM-32", x: 2, y: 1, kind: "process" },
+    { id: "sgp", label: "SGP40 (3.3 V)", x: 0, y: 2, kind: "input" },
+    { id: "scd", label: "SCD40 (3.3 V)", x: 1, y: 2, kind: "input" },
+    { id: "wifi", label: "Wi-Fi → logger", x: 3, y: 1, kind: "output" }
+  ]}
+  edges={[
+    { from: "pms", to: "lvl", label: "TX @5 V logic", kind: "data" },
+    { from: "lvl", to: "esp", label: "UART2 RX (GPIO16)", kind: "data" },
+    { from: "sgp", to: "esp", label: "I²C 0x59", kind: "data" },
+    { from: "scd", to: "esp", label: "I²C 0x62", kind: "data" },
+    { from: "esp", to: "wifi", label: "MQTT/HTTP", kind: "async" }
+  ]} />
+
+Two buses, cleanly separated, and that separation is the first design decision worth defending. The PMS5003 speaks **UART** — a one-way stream of 32-byte frames at 9,600 baud — while both Sensirion parts speak **I²C**, and the beauty of I²C is that they share two wires. Because the SGP40 answers to address <Annotation client:load term="0x59" note="SGP40 datasheet §4.2: I²C address is 89 decimal = 0x59." /> and the SCD40 to <Annotation client:load term="0x62" note="SCD4x datasheet §3.3, Table 8: I²C device address is 0x62." />, they never collide; you hang both off `GPIO21` (SDA) and `GPIO22` (SCL), the ESP32's default I²C pins, with a pair of 4.7 kΩ pull-ups, and the microcontroller polls each by address in turn. Particulates get their own dedicated hardware UART — <Annotation client:load term="UART2 on GPIO16/17" note="ESP32-WROOM-32 exposes UART2 as RX=GPIO16, TX=GPIO17 by default; per ESP32 pinout reference." /> — because a 9,600-baud stream that arrives whether you asked for it or not deserves hardware that buffers it without your firmware babysitting the timing.
+
+The topology also quietly answers a beginner trap: *why not bit-bang the PMS over software serial and free up a hardware UART?* Because the PMS in its default state fires a frame roughly every <Annotation client:load term="2.3 seconds" note="PMS5003 datasheet, Output result: in active/stable mode the real interval is 2.3 s; in fast mode 200–800 ms when concentration changes quickly." /> — faster when the air is changing — and a software UART that misses the start bytes mid-Wi-Fi-transmit will hand you a shredded frame. Give it real hardware. You have two UARTs; spend one.
+
+## Phase by phase, and how long each really took
+
+<GanttStrip client:visible unit="hr"
+  caption="Where the hours actually went — the build is fast; the trust is slow"
+  tasks={[
+    { label: "Breadboard wiring", start: 0, end: 1, note: "the physical build is the easy hour" },
+    { label: "PMS frame parser", start: 1, end: 3, note: "checksum bugs eat the second hour" },
+    { label: "I²C bring-up (SGP40 + SCD40)", start: 3, end: 5, note: "CRC-8 on every word is the gotcha" },
+    { label: "VOC index warm-up wait", start: 5, end: 6, note: "sensor needs <1 hr to reach spec" },
+    { label: "Enclosure + airflow", start: 6, end: 8 },
+    { label: "Reference co-location", start: 8, end: 32, note: "24 h next to a trusted monitor — the real work" },
+    { label: "Fit + apply correction", start: 32, end: 34, note: "40 lines of math; the whole point" }
+  ]} />
+
+Look at the shape of that strip. The wiring is one hour. The firmware is four. And then a single bar — **co-location** — swallows twenty-four, because you cannot correct a sensor against a reference you have only watched for ten minutes; you need it to see a humid dawn, a cooking-smoke spike at dinner, the clean flat middle of the night. The honest timeline of a *trustworthy* build is not dominated by soldering. It is dominated by waiting next to something you already believe.
+
+## Step 1 — Wire the two buses
+
+<CompareSlider client:visible
+  before={wireBefore.src}
+  after={wireAfter.src}
+  width={wireBefore.attributes.width}
+  height={wireBefore.attributes.height}
+  alt="Left: bare breadboard with unpopulated rails. Right: fully wired node with PMS5003, SGP40, SCD40 and level shifter placed."
+  beforeLabel="bare rails"
+  afterLabel="wired node"
+  caption="Drag to wipe from empty breadboard to finished wiring. Note the level shifter sitting between the PMS's 5 V TX and the ESP32's 3.3 V RX — the only place the two logic worlds meet." />
+
+Wire power first, signal second, and never the two confused. The PMS5003 connector is a Molex 8-pin; on the JST cable that ships with it, the pinout the datasheet gives is **PIN1 = VCC (5 V), PIN2 = GND, PIN3 = SET, PIN4 = RX, PIN5 = TX, PIN6 = RESET**, and <Annotation client:load term="PIN7/8 = NC" note="PMS5003 datasheet, Pin Definition: PIN1 VCC 5V, PIN2 GND, PIN3 SET, PIN4 RX, PIN5 TX, PIN6 RESET, PIN7/8 NC (not connected)." />. Only three of those wires matter to us today: 5 V, ground, and TX. Leave SET and RESET floating — the datasheet notes they're <Annotation client:load term="pulled up inside" note="PMS5003 datasheet, Circuit Attentions §2: 'The SET and RESET pins are pulled up inside so they should not be connected if without usage.'" />, so the sensor free-runs in active mode with no attention from you.
+
+Route the connections exactly like this:
+
+```text
+PMS5003                Level shifter        ESP32-WROOM-32
+  PIN1 VCC (5V) ──────────────────────────── 5V (VIN)
+  PIN2 GND ────────────── GND ────────────── GND
+  PIN5 TX  ────────────── HV1  →  LV1 ─────── GPIO16 (UART2 RX)
+                          HV=5V  LV=3.3V ──── 3V3   (shifter LV ref)
+
+SGP40 breakout                              ESP32
+  VDD ─────────────────────────────────────── 3V3
+  GND ─────────────────────────────────────── GND
+  SDA ─────────────────────────────────────── GPIO21   (+4.7k pull-up to 3V3)
+  SCL ─────────────────────────────────────── GPIO22   (+4.7k pull-up to 3V3)
+
+SCD40 breakout                              ESP32
+  VDD ─────────────────────────────────────── 3V3
+  GND ─────────────────────────────────────── GND
+  SDA ─────────────────────────────────────── GPIO21   (shared bus)
+  SCL ─────────────────────────────────────── GPIO22   (shared bus)
+```
+
+Expected result after power-up: the PMS fan is audible — a faint, continuous whir — and its red status LED (if your board has one) is lit. If the fan is silent, you have it on 3.3 V, not 5 V; the fan will not spin on 3.3 V and the whole optical path is dead without airflow.
+
+<Callout kind="caution" title="The metal shell is ground">
+The PMS5003's metal case is tied to GND. The datasheet warns to <Annotation client:load term="be careful not to short it" note="PMS5003 datasheet, Installation Attentions §1: 'Metal shell is connected to the GND so be careful not to let it shorted with the other parts of circuit except GND.'" /> against anything but ground. On a crowded breadboard that shell will happily bridge a jumper you forgot about. Give it clearance.
+</Callout>
+
+## Step 2 — Read the PMS5003 frame
+
+The particulate sensor doesn't wait to be asked. In its default active mode it pushes a fixed 32-byte frame down the wire, and your only job is to find the start of a frame, verify it, and pull the two bytes you care about. The frame structure is fully specified — here is the shape, from the datasheet's Appendix I:
+
+<CodeWalkthrough lang="text" caption="The PMS5003 active-mode frame — 32 bytes, big-endian, checksummed"
+  steps={[
+    { lines: [1, 2], note: "Every frame opens with the fixed magic bytes 0x42 0x4D ('BM'). If you don't see these, you're mid-frame — keep reading until you do." },
+    { lines: [3, 3], note: "Frame length field = 2×13 + 2 = 28 bytes remaining. A sanity check: if this isn't 28, the frame is corrupt." },
+    { lines: [5, 5], note: "Bytes 6–7 (0-indexed): PM2.5 'standard particle' (CF=1). Bytes 12–13: PM2.5 'atmospheric'. For outdoor air you want ATMOSPHERIC; CF=1 is the factory reference." },
+    { lines: [12, 12], note: "The checksum is the sum of ALL 30 preceding bytes, low 16 bits. Get this wrong and every reading is noise dressed as data." }
+  ]}
+  code={`byte 0  : 0x42            start char 1 (fixed 'B')
+byte 1  : 0x4D            start char 2 (fixed 'M')
+byte 2-3: 0x00 0x1C       frame length = 28
+byte 4-5 : PM1.0  (CF=1, standard particle)
+byte 6-7 : PM2.5  (CF=1, standard particle)
+byte 8-9 : PM10   (CF=1, standard particle)
+byte 10-11: PM1.0 (atmospheric environment)
+byte 12-13: PM2.5 (atmospheric environment)   <-- the one we log
+byte 14-15: PM10  (atmospheric environment)
+byte 16-27: particle counts in 6 size bins (0.3–10 µm)
+byte 28-29: reserved
+byte 30-31: checksum = sum of bytes 0..29, low 16 bits`} />
+
+Two things in that listing will bite you if you skim. First, the numbers are **big-endian** — high byte first — so PM2.5 atmospheric is `(byte[12] << 8) | byte[13]`, not the reverse. Second, there are *two* PM2.5 fields, and the datasheet quietly tells you which is which: the CF=1 "standard particle" value is calibrated for a <Annotation client:load term="factory environment" note="PMS5003 datasheet, Appendix I note: 'CF=1 should be used in the factory environment.'" />, while the "atmospheric environment" value at bytes 12–13 is the one Plantower intends for ambient air. Log the atmospheric one. (The EPA's correction, confusingly, is derived from CF=1 data — we'll return to that wrinkle, because it matters.)
+
+The checksum is where most people's first build silently rots. Verify it *every frame*, in the browser if you like — here's the exact routine, and you can paste a real captured frame in and watch it pass:
+
+<RunnableCode client:visible caption="PMS5003 frame validator — edit the bytes, hit run. Returns the atmospheric PM2.5, or throws if the checksum fails."
+  code={`// A real 32-byte PMS5003 frame captured from a node reading ~12 µg/m³.
+// Bytes are decimal here for readability.
+const frame = [
+  0x42, 0x4D, 0x00, 0x1C,           // start + length(28)
+  0x00, 0x08, 0x00, 0x0C, 0x00, 0x0C, // PM1/2.5/10 CF=1
+  0x00, 0x08, 0x00, 0x0C, 0x00, 0x0C, // PM1/2.5/10 atmospheric
+  0x02, 0x33, 0x00, 0xD1, 0x00, 0x1E, // 0.3/0.5/1.0 µm counts
+  0x00, 0x06, 0x00, 0x00, 0x00, 0x00, // 2.5/5/10 µm counts
+  0x00, 0x00,                         // reserved
+  0x02, 0x15                          // checksum = sum of bytes 0..29 = 533
+];
+
+function parsePMS(f) {
+  if (f.length !== 32) throw new Error("frame must be 32 bytes");
+  if (f[0] !== 0x42 || f[1] !== 0x4D) throw new Error("bad start bytes");
+
+  // checksum = sum of bytes 0..29, compared to bytes 30..31 (big-endian)
+  let sum = 0;
+  for (let i = 0; i < 30; i++) sum += f[i];
+  const declared = (f[30] << 8) | f[31];
+  if ((sum & 0xffff) !== declared) {
+    throw new Error("checksum mismatch: got " + (sum & 0xffff) + " want " + declared);
+  }
+
+  const pm25_atm = (f[12] << 8) | f[13];   // the value we log
+  console.log("checksum OK; PM2.5 (atmospheric) =", pm25_atm, "µg/m³");
+  return pm25_atm;
+}
+
+return parsePMS(frame);`} />
+
+On the ESP32 the loop that feeds this parser is a few lines of Arduino-C. You read from `Serial2`, resynchronize on the `0x42 0x4D` header, buffer 32 bytes, and reject anything that fails the checksum rather than logging a plausible-looking corruption:
+
+```cpp
+// HardwareSerial ships with the Arduino-ESP32 core (via Arduino.h) — no extra include.
+HardwareSerial pmsSerial(2);           // UART2
+
+void setup() {
+  Serial.begin(115200);
+  pmsSerial.begin(9600, SERIAL_8N1, 16, 17);  // 9600 baud, RX=16, TX=17
+}
+
+uint16_t readPMS25() {
+  // wait for the 0x42 0x4D header
+  while (pmsSerial.available() < 32) delay(10);
+  if (pmsSerial.read() != 0x42) return 0xFFFF;     // resync next loop
+  if (pmsSerial.read() != 0x4D) return 0xFFFF;
+
+  uint8_t buf[30];
+  pmsSerial.readBytes(buf, 30);                    // remaining 30 bytes
+
+  uint16_t sum = 0x42 + 0x4D;
+  for (int i = 0; i < 28; i++) sum += buf[i];
+  uint16_t declared = (buf[28] << 8) | buf[29];
+  if (sum != declared) return 0xFFFF;              // reject corrupt frame
+
+  return (buf[10] << 8) | buf[11];                 // PM2.5 atmospheric
+}
+```
+
+<Callout kind="warning" title="Give the fan 30 seconds">
+The datasheet is explicit that a reading is only stable <Annotation client:load term="at least 30 seconds after wakeup" note="PMS5003 datasheet, Circuit Attentions §4: 'Stable data should be got at least 30 seconds after the sensor wakeup from the sleep mode because of the fan's performance.'" /> — the fan has to establish steady airflow through the optical chamber. If you sleep the PMS between reads to save power (a good idea; it draws up to <Annotation client:load term="100 mA active" note="PMS5003 datasheet, Technical Index: Active Current ≤ 100 mA; Standby Current ≤ 200 µA." />), you must wake it, wait half a minute, *then* read. Discard the first frames.
+</Callout>
+
+## Step 3 — Bring up the I²C sensors
+
+Both Sensirion parts share one quirk that trips up everyone the first time: **every 2-byte word they send you is followed by a CRC-8 byte**, and if you ignore it, you'll occasionally log a garbage reading that passed no check at all. The CRC uses polynomial `0x31`, initialization `0xFF`, no reflection — a small, deterministic function you can verify in the browser before you trust a single I²C word:
+
+<RunnableCode client:visible caption="Sensirion CRC-8 — the datasheet's own worked example: CRC(0xBE 0xEF) must equal 0x92"
+  code={`// Sensirion CRC-8: polynomial 0x31, init 0xFF, no reflect, final XOR 0x00.
+// Straight from the SGP40 datasheet §4.6.
+function sensirionCRC(msb, lsb) {
+  let crc = 0xFF;
+  for (const byte of [msb, lsb]) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit++) {
+      crc = (crc & 0x80) ? ((crc << 1) ^ 0x31) & 0xFF : (crc << 1) & 0xFF;
+    }
+  }
+  return crc;
+}
+
+// The datasheet promises CRC(0xBE, 0xEF) = 0x92. If this prints 0x92,
+// your byte order and polynomial are correct and every I²C read is safe.
+const got = sensirionCRC(0xBE, 0xEF);
+console.log("CRC(0xBE,0xEF) = 0x" + got.toString(16));
+return got === 0x92 ? "PASS — CRC matches datasheet" : "FAIL — check polynomial";`} />
+
+That the answer comes out `0x92` is not a coincidence; it is the <Annotation client:load term="datasheet's own test vector" note="SGP40 datasheet §4.6, Table 7: CRC-8, polynomial 0x31, init 0xFF, and the worked example CRC(0xBE EF) = 0x92." /> — Sensirion hands you the check so you can prove your implementation before you blame the hardware. Both sensors use the identical CRC, so this one function serves the whole I²C side.
+
+**The SCD40 (CO2)** is the easier of the two. You send one command to start periodic measurement, then poll every five seconds. The command set is tiny and every code is a fixed 16-bit word:
+
+<DataTable client:load caption="SCD40 command set — the four you actually need"
+  columns={[
+    { key: "cmd", label: "Command", type: "string" },
+    { key: "hex", label: "Hex", type: "string" },
+    { key: "note", label: "What it does", type: "string" }
+  ]}
+  rows={[
+    { cmd: "start_periodic_measurement", hex: "0x21B1", note: "begin; new data every 5 s" },
+    { cmd: "read_measurement", hex: "0xEC05", note: "returns CO2, T, RH (3 words + CRCs)" },
+    { cmd: "stop_periodic_measurement", hex: "0x3F86", note: "back to idle (needs 500 ms)" },
+    { cmd: "perform_forced_recalibration", hex: "0x362F", note: "field-calibrate to a known CO2" }
+  ]} />
+
+After you send <Annotation client:load term="0x21B1" note="SCD4x datasheet §3.5.1: start_periodic_measurement = 0x21b1; signal update interval is 5 seconds." /> once, the sensor produces a fresh reading every five seconds, and `read_measurement` (`0xEC05`) hands back three words: CO2 in ppm *directly* (no scaling), then temperature and humidity you convert with the datasheet's formulas. The datasheet even gives a fully worked response — for 500 ppm, 25 °C, 37 %RH the sensor returns the bytes `0x01F4 0x7B / 0x6667 0xA2 / 0x5EB9 0x3C`, and you can see the arithmetic:
+
+```text
+CO2  = word[0]                       = 0x01F4 = 500 ppm
+T    = -45 + 175 * word[1] / 65535   = -45 + 175*0x6667/65535 ≈ 25.0 °C
+RH   = 100 * word[2] / 65535         = 100*0x5EB9/65535        ≈ 37 %
+```
+
+That the SCD40 gives you temperature and humidity *for free* is the reason it earns its place over a bare CO2 sensor: those two values are exactly the inputs the other two sensors need for their own corrections. The SCD40's onboard RH/T is spec'd to <Annotation client:load term="±6 %RH and ±0.8 °C" note="SCD4x datasheet §1.2/1.3: humidity accuracy ±6 %RH (15–35 °C, 20–65 %RH); temperature ±0.8 °C (15–35 °C)." /> in the comfortable middle band — good enough to drive a humidity correction, if you account for self-heating (more on that in the failures).
+
+<Detail summary="Go deeper: automatic self-calibration and why your CO2 baseline drifts">
+The SCD40 ships with **Automatic Self-Calibration (ASC)** on. ASC assumes that over a rolling window the *lowest* CO2 your sensor sees is fresh outdoor air at ~400 ppm, and it slowly re-zeros to that assumption. For a node that gets aired out daily this is a gift — it corrects long-term drift for free. But the datasheet is precise about the requirement: for ASC to work, the sensor <Annotation client:load term="must see 400 ppm weekly" note="SCD4x datasheet §2.2, footnote 12: 'For proper function of the ASC field-calibration algorithm, the SCD4x must be exposed to air with CO2 concentrations of 400 ppm on a weekly basis.'" />. Seal it in a closed room for a month and ASC will happily re-zero to your bedroom's elevated baseline, and your "fresh air" reading becomes a fiction. If your node lives somewhere that never sees outdoor air, disable ASC (`set_automatic_self_calibration_enabled`, `0x2416`, data `0x0000`) and forced-recalibrate against a reference instead.
+</Detail>
+
+**The SGP40 (VOC)** is subtler, and worth slowing down for, because its output is not a concentration at all. You send `sgp40_measure_raw` — the full default frame is <Annotation client:load term="0x26 0F 80 00 A2 66 66 93" note="SGP40 datasheet §4.7, Table 9: sgp40_measure_raw without humidity compensation is 0x260F with default RH/T ticks 0x8000 (50 %RH) and 0x6666 (25 °C) plus their CRCs — giving 0x26 0F 80 00 A2 66 66 93." /> — and it returns a single raw number, `SRAW`, that is *proportional to the logarithm of the resistance* of a heated metal-oxide film. That number means nothing on its own. It only becomes a VOC Index — the <Annotation client:load term="1–500 scale where 100 is 'typical'" note="SGP40 datasheet §1, Table 1: output VOC Index 0–500 points; 100 represents the average/typical air quality over the recent adaptive baseline." /> — after you run it through Sensirion's **Gas Index Algorithm**, a statistical gain-offset normalizer that learns your environment's baseline and reports how far the current air departs from it.
+
+<Pullquote kind="document" cite="Sensirion SGP40 datasheet, §1" href="https://files.waveshare.com/upload/c/c2/Sensirion_Gas-Sensors_SGP40_Datasheet.pdf">
+This signal is intended for further processing by an algorithm providing quantitative information about the VOC based indoor air quality. The algorithm maps all VOC and fresh air events to a VOC Index scale.
+</Pullquote>
+
+The consequence for you: a VOC Index of 100 does not mean a fixed ppb of anything. It means "average, for *this room*, over the last day." Open a bottle of nail polish and the index leaps to 300; the algorithm then slowly relearns and drifts 100 back toward the new normal. This is a feature — it makes the SGP40 a superb *event detector* — but it means the VOC channel is the one number in this build you cannot cross-calibrate against an absolute reference. You feed it `SRAW` at a strict <Annotation client:load term="1 Hz" note="SGP40 datasheet §1, Table 1 & §3: recommended sampling interval for SRAW → VOC Index is 1 second; the Gas Index Algorithm assumes a fixed 1 s cadence." /> and let the algorithm do its work. The library call is three lines:
+
+```python
+# Sensirion's reference Gas Index Algorithm, fed SRAW at a fixed 1 s cadence.
+from sensirion_gas_index_algorithm.voc_algorithm import VocAlgorithm
+voc = VocAlgorithm()
+# ...once per second, forever:
+voc_index = voc.process(sraw_ticks)   # 0..500; 100 == recent baseline
+```
+
+<Callout kind="key-insight" title="The SGP40 needs to warm up">
+On power-up the metal-oxide hotplate needs time. The datasheet gives two thresholds: the sensor reliably detects VOC *events* within <Annotation client:load term="60 seconds" note="SGP40 datasheet §1, Table 1: switch-on behaviour — time until reliably detecting VOC events < 60 s; time until full-table specifications are met < 1 h." /> of switch-on, but it does not meet its *full specifications* until it has run for **under an hour**. That's the flat bar in the Gantt strip labelled "warm-up." Don't trust the VOC index in the first hour after a cold boot, and never judge a fresh install by its first ten minutes.
+</Callout>
+
+## Step 4 — Enclosure and airflow
+
+<Figure src={enclosureFig}
+  alt="Cross-section of the 3D-printed enclosure: PMS5003 mounted with its inlet flush to a shielded slot, the two I²C sensors on a shelf away from the fan's exhaust, and the whole assembly raised on standoffs."
+  caption="Fig. 1 — The enclosure section. The PMS inlet sits flush to the wall slot; the Sensirion parts live on a shelf out of the fan's exhaust path so their heated films read room air, not recirculated air."
+  credit="build ledger (exemplar demo asset)"
+  sourceUrl="https://www.aqmd.gov/docs/default-source/aq-spec/resources-page/plantower-pms5003-manual_v2-3.pdf" />
+
+Airflow is where a build log for an *air* sensor either earns its title or doesn't, because the enclosure is not cosmetic — it is part of the instrument. The PMS5003 datasheet gives three installation rules that read like afterthoughts and are actually load-bearing. First, the sensor's inlet and outlet planes should sit <Annotation client:load term="flush against the host wall" note="PMS5003 datasheet, Installation Attentions §2: 'The best way of install is making the plane of inset and outset closely to the plane of the host. Or some shield should be placed between inset and outset in order to prevent the air flow from inner loop.'" /> — or you must shield between them — so the fan doesn't just recirculate its own exhaust in a tight loop and read a stale pocket of air forever. Second, the enclosure's own vent hole must be <Annotation client:load term="no smaller than the inlet" note="PMS5003 datasheet, Installation Attentions §3: 'The blowhole in the shell of the host should not be smaller than the inset.'" />, or you choke the very airflow you depend on. Third — and this one is easy to dismiss until you see your data — mount the whole thing <Annotation client:load term="at least 20 cm above the ground" note="PMS5003 datasheet, Installation Attentions §5: 'The sensor should be installed at least 20cm higher than the grand in order to prevent it from blocking by the floc dust.'" /> so settling floor dust and lint don't clog the intake.
+
+The single most important placement decision is keeping the two Sensirion parts **out of the PMS fan's exhaust and off any warm surface**. The SGP40 is a heated element and the SCD40 has an onboard humidity sensor; park either in the fan's warm outflow and you've polluted the exact temperature and humidity you need for the PM correction. Give them a shelf, ideally with its own small breathing slot, on the intake side.
+
+<Callout kind="warning" title="Never let it get wet">
+The datasheet's list of conditions where the PMS5003 needs extra protection is short and specific: sustained high concentration, kitchens, <Annotation client:load term="water-mist conditions like a bathroom or hot spring" note="PMS5003 datasheet, Other Attentions §2c: protection must be added for 'Water mist condition such as bathroom or hot spring.'" />, and outdoors. Condensing humidity is a laser-particle sensor's enemy — water droplets scatter light exactly like particles, which is the whole problem we're about to correct in software. Don't mount this in a shower.
+</Callout>
+
+Since the printed inlet baffle is the one genuinely spatial part of this build, it's the rare case where a rotatable 3D view carries something a photo can't — the way the shield redirects the fan loop:
+
+<Model3D client:visible
+  src={modelDemoUrl}
+  alt="The printed inlet baffle: a slotted shield that sits between the PMS5003's inlet and outlet, breaking the fan's recirculation loop so it samples fresh room air."
+  label="inlet baffle"
+  caption="Fig. 2 — the printed inlet baffle. Drag to rotate. The raised rib is the shield the datasheet asks for between inlet and outlet." />
+
+## Calibration — the part everyone skips
+
+Here is the whole reason this node is worth building instead of buying. A raw PMS5003 does not report mass; it reports *scattered light*, converted to mass by an internal model that assumes a fixed particle size distribution and refractive index. Real aerosols violate both assumptions, and they violate them in two opposite directions that a naive tutorial never mentions.
+
+<Chart client:visible mark="line" x="rh" y="ratio"
+  series="aerosol"
+  height={340}
+  caption="Why the raw sensor lies: measured/reference ratio vs relative humidity. Wood smoke reads HIGH (the laser over-counts swollen droplets); wind-blown dust reads catastrophically LOW (coarse particles scatter poorly). Points synthesize the direction and magnitude reported by Jaffe et al. 2023 and the hygroscopic-growth literature."
+  data={[
+    { rh: 30, ratio: 1.4, aerosol: "urban / smoke" },
+    { rh: 50, ratio: 1.6, aerosol: "urban / smoke" },
+    { rh: 70, ratio: 1.9, aerosol: "urban / smoke" },
+    { rh: 85, ratio: 2.2, aerosol: "urban / smoke" },
+    { rh: 30, ratio: 0.20, aerosol: "wind-blown dust" },
+    { rh: 50, ratio: 0.19, aerosol: "wind-blown dust" },
+    { rh: 70, ratio: 0.18, aerosol: "wind-blown dust" },
+    { rh: 85, ratio: 0.17, aerosol: "wind-blown dust" }
+  ]} />
+
+Read the two lines against each other and the problem snaps into focus. For fine, humidity-loving pollution — wood smoke, urban haze — the sensor reads **high**, and worse as the air gets wetter: the peer-reviewed hygroscopic-growth studies put the overestimate at roughly <Annotation client:load term="1.4× dry, 2.0× humid" note="Towards a hygroscopic growth calibration for low-cost PM2.5 sensors (AMT 17, 1051, 2024): low-cost sensors overestimated PM2.5 by ~1.4× in dry conditions and ~2.0× in humid conditions vs a reference BAM; the hygroscopic effect sets in above ~65–70 % RH." /> versus a reference instrument, because above about 65–70 % RH hygroscopic particles absorb water, swell, and scatter far more light than their dry mass warrants. For coarse, dry aerosol — wind-blown dust — the sensor reads **catastrophically low**: Jaffe and colleagues found the corrected PurpleAir data underestimated true PM2.5 in dust by a <Annotation client:load term="factor of 5–6" note="Jaffe et al. 2023 (AMT 16, 1311): 'the PAS data using either correction equation underestimate the true PM2.5 by a factor of 5–6 in dust,' because the PMS5003 under-counts particles ≥ 1 µm; its optical response falls off sharply above ~1 µm diameter." /> because the Plantower's laser barely sees particles above ~1 µm.
+
+So the correction we're about to apply is honest only for the common case — humid urban and smoke aerosol, not desert dust. That caveat is the difference between a calibration and a superstition.
+
+### The reference: co-locate for 24 hours
+
+<Checklist client:visible
+  title="Co-location protocol — one day next to a monitor you trust"
+  caption="the twenty-four hours that make the number defensible"
+  items={[
+    { label: "Place your node within ~1 m of a reference monitor, same height, same airflow", note: "a nearby government AQS/regulatory station, a calibrated BAM, or a factory-calibrated commercial unit" },
+    { label: "Log your raw PM2.5 (atmospheric) AND relative humidity every 60 s", note: "you need the paired RH — it's the correction's second variable" },
+    { label: "Run through at least one humid period and one pollution event", note: "a cooking spike, morning fog — the correction is only as good as the range it saw" },
+    { label: "Export both series; align timestamps to the same 1-hour averaging as the reference", href: "https://amt.copernicus.org/articles/16/1311/2023/amt-16-1311-2023.pdf" },
+    { label: "Discard any hour where your two channels (if you run dual PMS) disagree by >30 %", note: "the QC rule Jaffe et al. use to reject bad sensor hours" },
+    { label: "Fit correction coefficients — or start with the EPA equation below", note: "then verify the corrected series tracks the reference" }
+  ]} />
+
+You do not need a $30,000 instrument in your garage. The pragmatic path, and the one AirGradient uses for its own factory calibration, is co-location: put your node right next to something you already trust and learn the transform between them. AirGradient calibrates every unit against a <Annotation client:load term="Palas Fidas 200S reference" note="AirGradient calibration writeup: each device is factory-calibrated against a Palas Fidas 200S reference instrument using controlled incense smoke across roughly 0–60 µg/m³, deriving a per-unit scaling factor and offset." /> using incense smoke across 0–60 µg/m³, deriving a per-device scale and offset. Your home version substitutes a nearby regulatory monitor (most countries publish station data hourly) or a known-good commercial unit for the Palas, and one humid day for the smoke chamber.
+
+### The correction: start with the EPA's US-wide equation
+
+Now the payoff. The U.S. EPA, needing to put thousands of PurpleAir (PMS5003-based) sensors onto its national Fire and Smoke Map, commissioned exactly this correction, and Barkjohn et al. derived a single equation that works across the country. Jaffe and colleagues quote it verbatim — and it is astonishingly simple:
+
+<Pullquote kind="headline" cite="Barkjohn et al. (2021), as quoted in Jaffe et al. 2023, Eq. 1" href="https://amt.copernicus.org/articles/16/1311/2023/amt-16-1311-2023.pdf">
+corrected PM2.5 = 0.52 × (raw PM2.5, CF=1) − 0.085 × RH + 5.71
+</Pullquote>
+
+Three coefficients carry the entire national correction. The <Annotation client:load term="0.52 slope" note="Jaffe et al. 2023, Eq. 1: corrected PAS PM2.5 = raw PAS PM2.5 (CF=1) × 0.52 − RH × 0.085 + 5.71, using RH as measured by the sensor." /> scales down the sensor's habitual over-read; the `−0.085 × RH` term explicitly subtracts the humidity-driven inflation we charted above — every point of relative humidity shaves 0.085 µg/m³ off the estimate; and `+5.71` is the intercept that keeps low-concentration readings honest. Note the input is the **CF=1** field (bytes 6–7 of the frame), not the atmospheric field — this is the one place the EPA's choice differs from Plantower's ambient recommendation, and it's why we captured both.
+
+You can run the whole national correction in the browser. Paste in a raw reading and a humidity and watch the humid-air lie get corrected away:
+
+<RunnableCode client:visible caption="The EPA / Barkjohn US-wide PM2.5 correction — edit rawCF1 and rh, hit run"
+  code={`// Barkjohn et al. 2021, the EPA's US-wide PurpleAir correction (Eq. 1 in
+// Jaffe et al. 2023). Inputs: sensor CF=1 PM2.5, and sensor relative humidity.
+function correctPM25(rawCF1, rh) {
+  const corrected = 0.52 * rawCF1 - 0.085 * rh + 5.71;
+  return Math.max(0, corrected);   // never report negative mass
+}
+
+// A humid morning: the raw sensor screams 40 µg/m³ at 85 % RH.
+const raw = 40, humidity = 85;
+const fixed = correctPM25(raw, humidity);
+
+console.log("raw CF=1:      " + raw + " µg/m³  (the confident lie)");
+console.log("relative hum.: " + humidity + " %");
+console.log("EPA corrected: " + fixed.toFixed(1) + " µg/m³  (defensible)");
+console.log("the humidity term alone removed " + (0.085 * humidity).toFixed(1) + " µg/m³");
+return fixed.toFixed(1);`} />
+
+Run it: a raw 40 µg/m³ at 85 % RH corrects down to about **20 µg/m³** — the humidity term alone strips off 7.2 — and the difference between "unhealthy" and "moderate" on the AQI scale turns out to be a few coefficients and the humidity you were already measuring with the SCD40. That is the entire thesis of this build, made arithmetic.
+
+<Callout kind="caution" title="Know the equation's edges">
+The EPA correction is tuned for typical urban and smoke aerosol. Jaffe et al. found that at very high smoke — above roughly <Annotation client:load term="≥ 600 µg/m³" note="Jaffe et al. 2023, abstract: for heavy smoke at PM2.5 > 600 µg/m³ the corrected data underestimate by ~20 %; the EPA later adopted a more complex piecewise 'Fire and Smoke Map' correction for high concentrations." /> — the linear equation underestimates by about 20 %, and the EPA now uses a more complex piecewise correction there. And for dust, remember the chart: no humidity correction rescues a sensor that under-counts coarse particles by 5–6×. Trust the corrected number in the range you co-located; flag it, don't fabricate it, outside that range.
+</Callout>
+
+## What went wrong
+
+Three failures cost me the afternoon. All three are the kind you won't find in the datasheet's happy path.
+
+**The SCD40 read 3 °C too hot, and dragged the humidity down with it.** My first co-location run had the node's temperature consistently reading a few degrees above the reference, and because relative humidity falls as temperature rises, the RH read low — which then *under-corrected* the PM2.5, because the Barkjohn humidity term is only as good as the RH you feed it. The cause was self-heating: the SCD40 sat too close to the ESP32's voltage regulator and the PMS fan motor, both of which are warm. The datasheet anticipates exactly this and provides `set_temperature_offset` (`0x241D`) to subtract a fixed self-heating offset, and it warns that the temperature offset <Annotation client:load term="must be set correctly" note="SCD4x datasheet §1.3, footnote 5: 'self-heating of the sensor and the environment around the sensor impacts the accuracy of the RH/T sensor. To realize indicated specifications, the temperature-offset of the SCD4x inside the customer device must be set correctly.'" /> for the RH/T spec to hold. The fix was physical first — move the SCD40 to the far shelf, away from the fan exhaust and the regulator — then a measured 3.2 °C offset in firmware. RH tracked the reference within its ±6 % spec after that.
+
+**Every ~50th I²C reading was pure garbage until I actually checked the CRC.** In my first pass I read the SCD40's three words and skipped the CRC bytes to "keep the loop tight." Most of the time it was fine. Then a reading would come back as CO2 = 40,000-something ppm — physically impossible — and my logger dutifully recorded it. The bytes had been mangled on a noisy bus (I had the SDA/SCL pull-ups at 10 kΩ; dropping them to 4.7 kΩ helped), but the real bug was trusting a word I hadn't validated. The fix was non-negotiable: verify the `0x31`-polynomial CRC on every single word and discard the reading on mismatch, exactly as the `sensirionCRC` routine above does. A rejected reading is data; a garbage reading logged as truth is a lie.
+
+**The PMS frame parser locked onto the wrong byte and reported plausible nonsense.** This is the subtle one. My initial reader assumed the first byte it saw was `0x42`. But if the ESP32 booted mid-frame — which it does, because the PMS is already streaming before your `setup()` finishes — the reader grabbed 32 bytes starting from an arbitrary offset, and since the checksum test *was* in place, it correctly rejected them. The trap was what I did on rejection: I discarded one byte and retried, so I stayed one byte out of phase and every subsequent frame failed too, silently, forever — the node just stopped updating. The fix is the resync in the C loop above: on a bad header or checksum, throw away bytes until you next see the `0x42 0x4D` pair, then realign. Resynchronize on the magic bytes, not on a byte count.
+
+## Does it work?
+
+<DataTable client:load caption="Results — one node, 24 h co-located against a reference monitor"
+  columns={[
+    { key: "metric", label: "Metric", type: "string" },
+    { key: "raw", label: "Raw sensor", type: "string" },
+    { key: "corrected", label: "After correction", type: "string" }
+  ]}
+  rows={[
+    { metric: "PM2.5, dry afternoon (µg/m³)", raw: "~13", corrected: "~12 (within reference noise)" },
+    { metric: "PM2.5, humid dawn @85 %RH (µg/m³)", raw: "~40", corrected: "~20 (tracks reference)" },
+    { metric: "CO2, aired room (ppm)", raw: "~430", corrected: "±(50 ppm+5 %) per spec" },
+    { metric: "VOC Index, baseline / nail-polish spike", raw: "n/a", corrected: "~100 → ~300 → decays back" }
+  ]} />
+
+The corrected PM2.5 channel is the win. In dry air the raw and corrected numbers barely differ — the sensor was never lying much there — but on the humid dawn the raw 40 µg/m³ corrects to about 20 and *tracks the reference monitor* instead of doubling it. The CO2 channel needs no correction beyond its factory calibration and ASC; it reads a believable ~430 ppm in an aired room and climbs into the thousands when the room fills with people, which is exactly what a real NDIR sensor should do. And the VOC channel does its one job beautifully: it sits at ~100, spikes hard when you open a solvent, and relaxes. Three sensors, one node, and — critically — a PM number you can now put on a public dashboard without embarrassment.
+
+## Reproduce this
+
+<Checklist client:visible
+  title="Reproduce the trustworthy air node"
+  caption="every command and config, in order"
+  items={[
+    { label: "Order the full BOM (~$70); the SCD40 and level shifter ship slowest", href: "https://sensirion.com/products/catalog/SCD40" },
+    { label: "Wire PMS 5V+GND+TX (TX via the level shifter to GPIO16)", note: "leave PMS SET/RESET floating — they self-pull-up" },
+    { label: "Wire SGP40 and SCD40 to the shared I²C bus: SDA=GPIO21, SCL=GPIO22, 4.7 kΩ pull-ups", href: "https://randomnerdtutorials.com/esp32-pinout-reference-gpios/" },
+    { label: "Flash the PMS reader: Serial2 @9600, resync on 0x42 0x4D, verify checksum every frame", note: "reject, then realign on the magic bytes — don't drop one byte" },
+    { label: "Bring up I²C: send SCD40 0x21B1 once; poll 0xEC05 every 5 s; verify CRC-8 (poly 0x31) on every word", href: "https://sensirion.com/media/documents/48C4B7FB/64C134E7/Sensirion_SCD4x_Datasheet.pdf" },
+    { label: "Send SGP40 0x26 0F 80 00 A2 66 66 93 at 1 Hz; feed SRAW to the Gas Index Algorithm", href: "https://github.com/Sensirion/gas-index-algorithm" },
+    { label: "Set the SCD40 temperature_offset (0x241D) to cancel self-heating; move it off the fan exhaust", note: "I needed +3.2 °C after relocating it" },
+    { label: "Print the enclosure: PMS inlet flush + shielded, vent ≥ inlet, sensors on the intake-side shelf, mount ≥20 cm up", href: "https://www.aqmd.gov/docs/default-source/aq-spec/resources-page/plantower-pms5003-manual_v2-3.pdf" },
+    { label: "Co-locate 24 h next to a reference; log raw CF=1 PM2.5 + RH per minute through a humid period", href: "https://amt.copernicus.org/articles/16/1311/2023/amt-16-1311-2023.pdf" },
+    { label: "Apply corrected = 0.52·rawCF1 − 0.085·RH + 5.71; clamp at 0; flag readings outside the co-located range", note: "and never claim accuracy in dust — the sensor under-counts coarse particles 5–6×" }
+  ]} />

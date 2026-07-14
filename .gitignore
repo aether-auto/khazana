@@ -35,3 +35,7 @@ data/generation/
 packages/*/.cache/
 screenshots/
 videos/
+
+Icon\r
+.claude/*.local.md
+docs/cofounder/

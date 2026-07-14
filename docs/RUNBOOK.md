@@ -107,6 +107,39 @@ so newly-committed Reads go live within ~3h.
 
 ---
 
+### Registering the Scout appraisal routine (adds new sources)
+
+New sources are **not** appraised in GitHub Actions either. `scout-discover.yml`
+(Mon+Thu 05:00 UTC) only *generates* candidates deterministically and commits
+`data/scout/candidate-brief.md` — it has no Claude steps and makes no credibility
+call. Judging those candidates (is this a real, trustworthy source? which
+channel does it fit?) is a **Sonnet routine** you register the same way as the
+Reads routine, running on the same subscription:
+
+1. Confirm Claude Code is logged in (`claude -p "hello"` works) — same session
+   the Reads routine uses, no separate token.
+2. Register a **scheduled routine that runs the `scout-appraise` command**
+   (`.claude/commands/scout-appraise.md`). Fire it **after** `scout-discover.yml`'s
+   Mon/Thu 05:00 UTC run has had time to commit a fresh `candidate-brief.md` —
+   e.g. Mon/Thu ~06:00 UTC. It reads the brief, judges each candidate, and
+   commits `data/scout/appraisal.json` + `data/scout-appraise-log.jsonl`. The
+   **next** `scout-discover.yml` run's `scout apply` step then merges those
+   verdicts into the registry (auto-add high-trust, queue borderline into
+   `sources.pending.json`).
+3. **Same permission-mode rule as the Reads routine** — register it
+   **headless/non-interactive** (`bypassPermissions` or an explicit tool
+   allowlist covering Read/Write/Bash/WebFetch/WebSearch). An interactive
+   default stalls it silently on the first unanswered prompt. After any
+   re-registration, do a manual dry run and confirm `data/scout-appraise-log.jsonl`
+   gets a new line — a scheduled slot with no new ledger line means the routine
+   never fired or stalled; check its permission mode first.
+4. With no `appraisal.json` present, `scout apply` still runs safely — it
+   prunes/repairs the existing registry and just adds nothing (candidates wait
+   in the pending queue), so a missed or delayed appraisal run never breaks the
+   discover job.
+
+---
+
 ### `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` — Worker deploy
 
 1. Sign in at <https://dash.cloudflare.com> (free account).
@@ -244,12 +277,16 @@ bundle at build time and used by the events fetch.
 6. **Confirm the site is live** at `PUBLIC_SITE_URL`, then **lock the Worker
    CORS** (`ALLOWED_ORIGIN` = Pages origin) and redeploy the Worker.
 7. **Let the crons take over.** `pipeline.yml` runs daily (06:00 UTC),
-   `feed-refresh.yml` every 3h, `scout-discover.yml` weekly (Mon 05:00 UTC).
-   Adjust the `cron:` lines to taste.
+   `feed-refresh.yml` every 3h, `scout-discover.yml` twice weekly (Mon+Thu
+   05:00 UTC). Adjust the `cron:` lines to taste.
 8. **Register the Reads routine** (§ "Registering the Reads routine"): the
    `reads-run` Opus orchestrator, 2×/day, on your subscription. It authors NEW
    Reads on its own cadence and commits+pushes the MDX; `feed-refresh.yml` picks
    them up and they go live within ~3h — independent of the daily pipeline.
+9. **Register the Scout appraisal routine** (§ "Registering the Scout appraisal
+   routine"): the `scout-appraise` Sonnet routine, Mon+Thu after
+   `scout-discover.yml` fires. Without it, new sources are generated but never
+   judged — they just sit in `sources.pending.json` forever.
 
 ---
 
