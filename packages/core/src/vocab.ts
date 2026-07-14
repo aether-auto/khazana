@@ -21,3 +21,39 @@ export const FORMAT_NAMES = [
 ] as const;
 export const FormatNameSchema = z.enum(FORMAT_NAMES);
 export type FormatName = z.infer<typeof FormatNameSchema>;
+
+// --- World Data Spine vocabularies (2026-07-07-world-data-spine-design.md) ---
+
+// §3.1 — license ceiling a source permits
+export const LICENSE_TIERS = ["redistribute-raw-ok", "derived-only"] as const;
+export const LicenseTierSchema = z.enum(LICENSE_TIERS);
+export type LicenseTier = z.infer<typeof LicenseTierSchema>;
+
+// §3.2 — indicator field taxonomy
+export const INDICATOR_FIELDS = [
+  "macro", "governance", "corruption", "wellbeing",
+  "procurement", "fiscal", "elections", "conflict",
+] as const;
+export const IndicatorFieldSchema = z.enum(INDICATOR_FIELDS);
+export type IndicatorField = z.infer<typeof IndicatorFieldSchema>;
+
+// §3.5 — world-event category + severity
+export const WORLD_EVENT_CATEGORIES = [
+  "conflict", "diplomacy", "politics", "economy", "disaster", "society", "science-tech",
+] as const;
+export const WorldEventCategorySchema = z.enum(WORLD_EVENT_CATEGORIES);
+export type WorldEventCategory = z.infer<typeof WorldEventCategorySchema>;
+
+export const EVENT_SEVERITIES = ["low", "medium", "high", "critical"] as const;
+export const EventSeveritySchema = z.enum(EVENT_SEVERITIES);
+export type EventSeverity = z.infer<typeof EventSeveritySchema>;
+
+// §3.4 — reference bias raters
+export const REFERENCE_RATERS = ["allsides", "adfontes", "mbfc"] as const;
+export const ReferenceRaterSchema = z.enum(REFERENCE_RATERS);
+export type ReferenceRater = z.infer<typeof ReferenceRaterSchema>;
+
+// §3.7 — refresh cadence lanes
+export const CADENCE_LANES = ["fast", "medium", "slow"] as const;
+export const CadenceLaneSchema = z.enum(CADENCE_LANES);
+export type CadenceLane = z.infer<typeof CadenceLaneSchema>;
