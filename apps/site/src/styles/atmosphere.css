@@ -1,0 +1,76 @@
+/* ── TWO-FACE ATMOSPHERE LAYER ─────────────────────────────────────────────
+   khazana wears two atmospheres over ONE invariant reading room. The face is
+   SSR-stamped onto `<html data-face>` (Shell.astro) — zero runtime JS, no
+   FOUC. This file is imported immediately after tokens.css in global.css, so
+   these deltas cascade OVER the base tokens but AHEAD of every component's CSS.
+
+   Study  = the warm reading room (default). The current Observatory palette.
+   Atlas  = a colder, blue-near-black instrument atmosphere for the world/atlas
+            surfaces — same room, different light.
+
+   HARD INVARIANT (art-direction §8 + reading-comfort contract): a face may
+   ONLY re-tune ATMOSPHERE tokens — the --bg ladder, structural chrome
+   (--rule/--rule-bright), halation, glass tint. A face MUST NEVER touch the
+   reading-comfort invariants — --measure, --t-read, --lh-read, --read,
+   --track-read — nor the --s-* spacing scale, the type families, or the
+   semantic MEANING of a role. The reading column is byte-identical in both
+   faces. Deliverable-5 grep gate enforces the reading-invariant half. */
+
+/* ── STUDY: the warm default made explicit (no-op over base tokens) ──────────
+   tokens.css already carries these warm values; this block only stamps the
+   `--face` marker so the active atmosphere is queryable and the two faces stay
+   visibly symmetric in this file. It deliberately re-tunes NOTHING else. */
+[data-face="study"] {
+  --face: "study";
+}
+
+/* ── ATLAS: cold blue-near-black delta (dark scheme) ─────────────────────────
+   The ground ladder shifts from warm-near-black toward a cold blue-near-black;
+   structural chrome cools toward the --info slate; halation tightens and cools
+   from incandescent amber toward a colder instrument glow. Reading inks, type,
+   and spacing are untouched — they inherit the invariant base. */
+[data-face="atlas"] {
+  --face: "atlas";
+
+  /* cold ground ladder — colder + slightly deeper than the warm Study ground,
+     so the light reading ink contrast only ever RISES (WCAG-safe). */
+  --bg-inset: #050608; /* deepest cold well */
+  --bg: #08090b; /* ground — cold blue-near-black, NOT pure #000 */
+  --bg-card: #0b0d10;
+  --bg-raised: #101318;
+  --bg-hover: #141821;
+  --bg-active: #1c212b;
+
+  /* structural chrome toward cool slate */
+  --rule: #20242b;
+  --rule-bright: #333a44;
+
+  /* tighter, cooler halation — a colder instrument glow, not candlelight */
+  --halo-display: 0 0 48px rgba(107, 138, 158, 0.16), 0 0 100px rgba(107, 138, 158, 0.045);
+  --halo-star: 0 0 20px rgba(107, 138, 158, 0.24);
+
+  /* liquid-glass tint follows the cold raised surface (mirrors the base recipe
+     at the same 0.72 alpha, cooled toward the Atlas ladder). */
+  --glass-bg: rgba(16, 19, 24, 0.72);
+}
+
+/* ── ATLAS: cold paper delta (light scheme) ─────────────────────────────────
+   The light Study ground is a warm cream; Atlas cools it toward a cold
+   grey-blue paper. Halation stays off in light (as base). --read stays the
+   invariant dark ink on a still-light ground → contrast stays comfortably
+   above AAA. */
+@media (prefers-color-scheme: light) {
+  [data-face="atlas"] {
+    --bg-inset: #e6e9ee;
+    --bg: #eef1f5; /* cold grey-blue paper ground */
+    --bg-card: #f6f8fb;
+    --bg-raised: #f8fafc;
+    --bg-hover: #e9edf2;
+    --bg-active: #dde2ea;
+    --rule: #d5dae1;
+    --rule-bright: #bcc3cd;
+    --halo-display: none;
+    --halo-star: none;
+    --glass-bg: rgba(248, 250, 252, 0.72);
+  }
+}

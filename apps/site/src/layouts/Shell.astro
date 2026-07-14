@@ -42,6 +42,13 @@ interface Props {
   feedPage?: boolean;
   /** The currently active channel filter (empty string = all). */
   activeChannel?: string;
+  /**
+   * Which of the two atmospheres this page belongs to. SSR-stamped onto
+   * `<html data-face>` so the cold Atlas delta in atmosphere.css cascades over
+   * the warm base tokens with ZERO runtime JS — no face-detection script, no
+   * FOUC. Study is the default; Atlas layouts thread `face="atlas"` through.
+   */
+  face?: "study" | "atlas";
 }
 const {
   title,
@@ -52,6 +59,7 @@ const {
   freshCount,
   feedPage = false,
   activeChannel = "",
+  face = "study",
 } = Astro.props;
 
 const base = import.meta.env.BASE_URL;
@@ -98,7 +106,7 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
 ---
 
 <!doctype html>
-<html lang="en" class:list={[{ glass: GLASS }]}>
+<html lang="en" data-face={face} class:list={[{ glass: GLASS }]}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
