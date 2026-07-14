@@ -1,0 +1,69 @@
+{
+  "$schema": "internal://khazana/permission-requests/theater-geometry",
+  "description": "Tracking record for the two data-use permission requests that gate ONLY the future geometryStatus:'licensed' primary-geometry path for Phase A7 Conflict Theaters. Non-sensitive: no personal email addresses, no message bodies, no credentials, no source geometry, and no permission claim not received in writing. A pending record is NOT consent; silence is NOT consent.",
+  "gateScope": "licensed-primary-geometry",
+  "doesNotBlock": [
+    "clean-spine-and-fallback-theater-work",
+    "ucdp-layer",
+    "unhcr-layer",
+    "firms-layer",
+    "black-marble-layer",
+    "gdelt-layer",
+    "derived-aggregates",
+    "wikipedia-cc-by-sa-fallback-geometry",
+    "globe-persistent-theater-regions",
+    "sudan-link-out-only"
+  ],
+  "requests": [
+    {
+      "provider": "DeepStateMap",
+      "status": "pending",
+      "officialContactUrl": "https://api.deepstatemap.live/request",
+      "licenseReferenceUrl": "https://deepstatemap.live/license-en.html",
+      "contactRouteVerifiedAt": "2026-07-14",
+      "requestDraftPath": "docs/cofounder/permission-requests/deepstatemap-request.md",
+      "submissionStatus": "queued-awaiting-founder-send",
+      "sentAt": "2026-07-14",
+      "followUpAt": "2026-07-28",
+      "requestedRights": [
+        "automated-retrieval",
+        "storage",
+        "render-embed",
+        "attribution",
+        "update-cadence",
+        "revocation",
+        "private-use",
+        "future-public-use"
+      ],
+      "geometryStatus": "link-out-only",
+      "gate": "licensed-primary-geometry",
+      "responseReference": null,
+      "notes": "Official route is the DeepStateMap API/commercial data-use request form. Agent cannot submit the form; founder submits and overwrites sentAt with the real submission timestamp. status stays 'pending' until a written grant arrives. Draft does NOT claim permission and does NOT present the current link-out/fallback posture as licensed use."
+    },
+    {
+      "provider": "ISW/CTP",
+      "status": "pending",
+      "officialContactUrl": "https://www.understandingwar.org/fair-use-and-attribution-policy",
+      "permissionEmailReference": "press@understandingwar.org",
+      "contactRouteVerifiedAt": "2026-07-14",
+      "requestDraftPath": "docs/cofounder/permission-requests/isw-ctp-request.md",
+      "submissionStatus": "queued-awaiting-founder-send",
+      "sentAt": "2026-07-14",
+      "followUpAt": "2026-07-28",
+      "requestedRights": [
+        "automated-retrieval",
+        "storage",
+        "render-embed",
+        "attribution",
+        "update-cadence",
+        "revocation",
+        "private-use",
+        "future-public-use"
+      ],
+      "geometryStatus": "link-out-only",
+      "gate": "licensed-primary-geometry",
+      "responseReference": null,
+      "notes": "ISW Fair Use and Attribution Policy explicitly requires prior written permission to incorporate ISW/CTP materials into other datasets, mapping platforms, analytic products, or systems, and bars bulk/API/automated redistribution. Draft acknowledges this policy and asks whether additional rights-holder approval is required. Agent cannot send the email; founder sends and overwrites sentAt with the real timestamp. status stays 'pending' until a written grant arrives."
+    }
+  ]
+}
