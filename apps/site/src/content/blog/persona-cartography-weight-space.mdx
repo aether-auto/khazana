@@ -1,0 +1,288 @@
+---
+title: "A Personality Is a Direction: Charting LLM Character in Weight Space"
+format: teardown
+channels:
+  - ai
+  - tech
+summary: "A 2026 paper trains Big-Five personality traits into six open-weight LLMs as rank-64 LoRA adapters, then shows the resulting ΔW matrices can be scaled, negated, and summed like vectors — meaning a model's character is a literal, arithmetically-composable direction in its parameters, not just a prompt-level fiction, with a matching unsupervised method that finds traits nobody named in advance."
+publishedAt: 2026-07-14T09:00:00.000Z
+sources:
+  - title: "Persona Cartography: Charting Language Model Personality Traits in Weight Space (Baines, Gonzalvez Hawthorne, Koroliuk, Shalibashvili, Dumas, Voudouris, Africa, 2026)"
+    url: "https://arxiv.org/abs/2607.07916"
+    tier: high
+    origin: researched
+  - title: "Open Character Training: Shaping the Persona of AI Assistants through Constitutional AI (Maiya, Bartsch, Lambert, Hubinger, 2025)"
+    url: "https://arxiv.org/abs/2511.01689"
+    tier: high
+    origin: researched
+  - title: "Persona Vectors: Monitoring and Controlling Character Traits in Language Models (Chen, Arditi, Sleight, Evans, Lindsey, 2025)"
+    url: "https://arxiv.org/abs/2507.21509"
+    tier: high
+    origin: researched
+  - title: "The Assistant Axis: Situating and Stabilizing the Default Persona of Language Models (Lu, Gallagher, Michala, Fish, Lindsey, 2026)"
+    url: "https://arxiv.org/abs/2601.10387"
+    tier: high
+    origin: researched
+  - title: "The Geometry of Persona: Disentangling Personality from Reasoning in Large Language Models (2026)"
+    url: "https://arxiv.org/abs/2512.07092"
+    tier: high
+    origin: researched
+  - title: "Gemma Needs Help: Investigating and Mitigating Emotional Instability in LLMs (Soligo, Mikulik, Saunders, 2026)"
+    url: "https://arxiv.org/abs/2603.10011"
+    tier: high
+    origin: researched
+  - title: "The Persona Selection Model: Why AI Assistants Might Behave Like Humans (Marks, Lindsey, Olah, 2026)"
+    url: "https://alignment.anthropic.com/2026/psm/"
+    tier: med
+    origin: researched
+  - title: "Persona Cartography: Charting Language Model Personality Traits in Weight Space [linkpost]"
+    url: "https://www.lesswrong.com/posts/Rkvto5BLofzuDefyB/persona-cartography-charting-language-model-personality"
+    tier: med
+    origin: curated
+draft: false
+---
+
+import { RunnableCode, Chart, Annotation, StatBand, Pullquote, Sidenote, Diagram, LayerStack, Stepper, Math, DataTable, Callout, Detail, Definition, ParameterPlay, Quiz } from "../../components/mdx";
+
+Tell a model "you are highly extraverted" in the system prompt, and it will talk like it. Push the conversation twenty turns, though, or contradict the instruction with something in the user's tone, and the persona wobbles — because a system prompt is just more tokens in the context window, competing with everything else the model reads. It is a suggestion, not a structural fact about the network. So here is the question a 2026 paper from LASR Labs and the UK AI Security Institute actually answers with weights, not vibes: if you trained "extraversion" into a model instead of asking for it, would you get an object you could point at inside the parameters — something you could turn up, turn down, flip to its opposite, or add to a second trait, the way you'd operate on a vector? <Annotation client:load term="Baines et al., 2026" note="Persona Cartography: Charting Language Model Personality Traits in Weight Space, arXiv:2607.07916 — LASR Labs, ENS Paris-Saclay/MATS, UK AI Security Institute." href="https://arxiv.org/abs/2607.07916" /> says yes, and shows the arithmetic.
+
+<StatBand client:visible caption="Persona Cartography (Baines et al., 2026), by the numbers"
+  stats={[
+    { value: 64, label: "LoRA RANK", sub: "all attention + MLP matrices", href: "https://arxiv.org/abs/2607.07916" },
+    { value: 6, label: "MODELS", sub: "3 families, 4B–32B params", href: "https://arxiv.org/abs/2607.07916" },
+    { value: 10, label: "TRAIT ADAPTERS", sub: "OCEAN amplifier + suppressor pairs", href: "https://arxiv.org/abs/2607.07916" },
+    { value: 4, label: "UNSUPERVISED FACTORS", sub: "Tone / Initiative / Didacticism / Epistemic caution", href: "https://arxiv.org/abs/2607.07916" }
+  ]} />
+
+That is the headline claim: personality is not merely simulated at inference time by a clever prompt, and not only a direction you can nudge activations along while they flow through the network — it is something you can bake directly into a small set of weight deltas, and Baines et al. report that those deltas obey vector arithmetic. Scale a trait adapter by a coefficient, they find, and the trait score moves <Annotation client:load term="largely monotonically" note="Baines et al. (2026), §2.2, Fig. 3: “the adapter scale produces a mostly monotonic increase in both LLM-judged trait score and in the corresponding TRAIT score over a broad range.”" href="https://arxiv.org/abs/2607.07916" />. Negate the coefficient and, in most cases their experiments show, the trait flips toward its opposite. Add a second trait's adapter, they report, and the two effects combine <Annotation client:load term="approximately additively" note="Baines et al. (2026), §2.3: “We compose LoRAs by summing all of the ∆W from each (optionally scaled) LoRA, elementwise... they behave as composable behavioural directions.”" href="https://arxiv.org/abs/2607.07916" />. This teardown builds the mechanism from the ground up: what a LoRA actually is at the level of a weight matrix, why scaling/negating/summing ΔW is a coherent thing to do to a personality, how this differs — mechanically, not just rhetorically — from the activation-space "persona vector" steering methods the alignment community has spent the last year building, and where the weight-space picture breaks down.
+
+## The two places you can put a "personality" inside a transformer
+
+Every method for controlling an LLM's character intervenes at one of three points: the prompt, the activations, or the weights. Prompting is the version everyone has used — it's cheap and flexible, but it's also just more context competing for the model's attention, and it degrades under long rollouts <Annotation client:load term="persona drift" note="Baines et al. (2026), §5, Appendix L: LoRA interventions were compared against system-prompt instructions over long multi-turn dialogues and held the trait more stably than the prompt did." href="https://arxiv.org/abs/2607.07916" />. The other two are structural, and they intervene on different objects entirely.
+
+<Diagram client:visible caption="Where a persona intervention actually lives: three different objects, three different lifetimes."
+  nodes={[
+    { id: "prompt", label: "Prompt\n(context tokens)", x: 0, y: 0, kind: "input" },
+    { id: "resid", label: "Residual stream\n(activations, per forward pass)", x: 1, y: 0, kind: "process" },
+    { id: "steer", label: "Persona vector / Assistant Axis\n(added to activations at chosen layers)", x: 1, y: 1, kind: "process" },
+    { id: "weights", label: "Weight matrices W\n(fixed until fine-tuned)", x: 2, y: 0, kind: "store" },
+    { id: "lora", label: "Trait LoRA ΔW = BA\n(rank-64 update, merged into W)", x: 2, y: 1, kind: "output" },
+    { id: "out", label: "Output tokens", x: 3, y: 0, kind: "output" }
+  ]}
+  edges={[
+    { from: "prompt", to: "resid", label: "read every pass", kind: "data" },
+    { from: "resid", to: "steer", label: "extracted / injected per-token", kind: "async" },
+    { from: "steer", to: "resid", label: "additive offset, this pass only", kind: "async" },
+    { from: "weights", to: "resid", label: "matrix multiply", kind: "data" },
+    { from: "lora", to: "weights", label: "added once, persists across every future pass", kind: "control" },
+    { from: "resid", to: "out", label: "unembed", kind: "data" }
+  ]} />
+
+The activation-space methods — Anthropic's persona vectors <Annotation client:load term="persona vectors" note="Chen, Arditi, Sleight, Evans, Lindsey (2025), Persona Vectors: Monitoring and Controlling Character Traits in Language Models, arXiv:2507.21509 — mean-difference directions extracted from natural-language trait descriptions, used to monitor/steer at inference time." href="https://arxiv.org/abs/2507.21509" /> and the follow-up Assistant Axis work <Annotation client:load term="the Assistant Axis" note="Lu, Gallagher, Michala, Fish, Lindsey (2026), The Assistant Axis: Situating and Stabilizing the Default Persona of Language Models, arXiv:2601.10387 — a leading linear direction across many extracted persona directions, capturing how “Assistant-like” a model's current behavior is; activation capping clamps activations to a fixed region along it." href="https://arxiv.org/abs/2601.10387" /> — find a direction in the residual stream (the running activation vector at a chosen layer) that correlates with a trait, then add or clamp along it during the forward pass. Nothing about the weight matrices changes; the intervention has to be reapplied on every single token, at every single forward pass, at a layer someone had to choose in advance. Persona Cartography's LoRA adapters instead change the weight matrices themselves — once, offline, by training — so the persona lives in the parameters the way any other learned capability does. That's the mechanical difference this teardown exists to make concrete.
+
+## Layer one: what a trait LoRA actually is
+
+A weight matrix `W` in a transformer's attention or MLP block is huge — a `4096×4096` projection, say, sixteen million numbers. Full fine-tuning updates all sixteen million of them. A <Definition client:visible term="LoRA (Low-Rank Adaptation)" def="a fine-tuning method that freezes the original weight matrix W and learns a much smaller update ΔW = BA, where B and A are thin matrices whose product has rank r ≪ the full matrix's dimensions — so training and storing the update costs a small fraction of retraining W directly." /> instead learns a *low-rank* update: two thin matrices `B` (say `4096×64`) and `A` (`64×4096`), whose product `BA` approximates a useful direction of change without ever touching most of the original matrix's freedom. The rank — 64 in this paper, applied to <Annotation client:load term="all attention and MLP matrices" note="Baines et al. (2026), §2.1: “rank 64, applied to all attention and MLP matrices,” across Llama-3.1-8B-Instruct, Qwen3-8B/32B, and Gemma-3-4B/12B/27B-IT." href="https://arxiv.org/abs/2607.07916" /> — is the whole trick: it's a deliberately narrow bottleneck, forcing whatever the adapter learns to compress into a small number of directions instead of memorizing sixteen million independent numbers.
+
+<Math client:visible tex="W' = W + \Delta W = W + BA" label="(1)"
+  steps={[
+    { tex: "W \\in \\mathbb{R}^{d \\times d}", note: "the frozen base weight matrix — d≈4096 for a typical projection" },
+    { tex: "B \\in \\mathbb{R}^{d \\times r},\\; A \\in \\mathbb{R}^{r \\times d},\\; r=64", note: "two thin matrices; their product has rank ≤ r, a tiny fraction of the full matrix's freedom" },
+    { tex: "\\Delta W = BA \\;\\text{is what training actually learns}", note: "W itself never changes — only this compact update is stored and merged in" }
+  ]}
+  caption="The LoRA decomposition Persona Cartography trains for every OCEAN trait — one ΔW per trait, per polarity." />
+
+Run the arithmetic on a toy version of this to see what "rank 64" is buying you, and what happens when you merge a trait update into a matrix:
+
+<RunnableCode client:visible caption="A toy LoRA: a 4×4 weight matrix, a rank-1 trait update BA, and what merging it changes about the matrix's output on a fixed input."
+  code={`// A tiny 4x4 "weight matrix" standing in for one attention/MLP projection.
+const W = [
+  [0.10, 0.05, 0.00, 0.02],
+  [0.03, 0.12, 0.01, 0.00],
+  [0.00, 0.02, 0.08, 0.01],
+  [0.01, 0.00, 0.03, 0.11],
+];
+
+// A rank-1 trait update: B is 4x1, A is 1x4. Their outer product BA is a
+// full 4x4 matrix, but it only has ONE independent direction of variation.
+const B = [0.30, -0.10, 0.20, 0.05];   // 4x1
+const A = [0.40, 0.10, -0.20, 0.30];   // 1x4
+
+function outerProduct(b, a) {
+  return b.map(bi => a.map(ai => bi * ai));
+}
+function matVec(M, v) {
+  return M.map(row => row.reduce((s, m, j) => s + m * v[j], 0));
+}
+function addMatrix(M, D) {
+  return M.map((row, i) => row.map((v, j) => v + D[i][j]));
+}
+
+const deltaW = outerProduct(B, A);      // the trait's ΔW, rank exactly 1
+const x = [1, 0.5, -0.3, 0.8];          // a fixed "activation" input
+
+const yBase = matVec(W, x);
+const Wmerged = addMatrix(W, deltaW);
+const yTrait = matVec(Wmerged, x);
+
+console.log("output with base W:      ", yBase.map(v => v.toFixed(3)));
+console.log("output with W + ΔW:      ", yTrait.map(v => v.toFixed(3)));
+console.log("shift caused by the trait:", yTrait.map((v, i) => (v - yBase[i]).toFixed(3)));
+return "the SAME ΔW shifts EVERY input the same structured way — that's what a weight-space direction means";`} />
+
+That last line is the crux. A prompt or an activation nudge changes the output for *this* forward pass, on *this* input. Merging `ΔW` into `W` changes the function itself — every future input, on every future call, gets pushed the same structured way, with no runtime intervention required. Persona Cartography trains one such `ΔW` per trait per polarity — ten in total for the five OCEAN traits <Definition client:visible term="OCEAN" def="the Big-Five personality framework from human psychometrics: Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism — used here as a starting vocabulary, not a claim that LLMs must have human-shaped personalities." /> (Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism), each with an amplifying and a suppressing adapter.
+
+## Layer two: how you get from "be extraverted" to a trained ΔW
+
+The rank-64 adapter doesn't fall out of nowhere — it's the product of a specific training pipeline, adapted from Open Character Training <Annotation client:load term="Open Character Training" note="Maiya, Bartsch, Lambert, Hubinger (2025), arXiv:2511.01689 — the constitution-guided DPO+SFT pipeline Persona Cartography's own trait-LoRA training explicitly builds on." href="https://arxiv.org/abs/2511.01689" />, and understanding it matters because it's what makes the resulting direction generalizable rather than a narrow trick that only works on the exact prompts it was trained on.
+
+<Stepper client:visible mode="reveal" caption="Training one trait LoRA, start to finish (Baines et al., 2026, §2.1)"
+  steps={[
+    { title: "Write a constitution", body: "<p>A short natural-language description of the target trait and its opposite pole — e.g. “I am highly extraverted” vs. its low-extraversion counterpart. Simple, human-written, not an elaborate prompt-engineering exercise.</p>" },
+    { title: "Distill with a strong teacher", body: "<p>A separate, more capable teacher model (GLM-4.5-Air by default, cross-checked with DeepSeek-V3.2) generates <em>both</em> a chosen response (matching the constitution) and a rejected response (the opposite), conditioned on the same prompt.</p>" },
+    { title: "DPO-train a first LoRA", body: "<p>The (chosen, rejected) pairs train a Direct Preference Optimization LoRA on the student model — this is the adapter that first learns to move along the trait's direction under explicit constitution prompting.</p>" },
+    { title: "SFT on self-interaction transcripts", body: "<p>A second LoRA, trained <em>on top of</em> the frozen DPO LoRA, is fine-tuned on the DPO-tuned model's own self-reflection and self-interaction rollouts — teaching the trait to surface without the constitution being restated every time.</p>" },
+    { title: "Shrink and merge", body: "<p>The SFT LoRA is scaled by 0.25 (following Maiya et al., 2025) and merged with the DPO LoRA into one final rank-64 trait adapter — the object every later scaling/negation/composition experiment operates on.</p>" }
+  ]} />
+
+Baines et al. also train a **neutral control adapter** — same pipeline, same teacher, but with (chosen, rejected) pairs distinguished only by random seed, not by trait content — specifically to isolate what's caused by the trait constitution versus what's just an artifact of the distillation pipeline itself (teacher style, verbosity, distribution shift). <Annotation client:load term="the control shows substantially weaker trait shifts" note="Baines et al. (2026), §2.2: control adapters trained without trait-target constitutions produce “substantially weaker shifts in traits” than the real OCEAN adapters — evidence the effect is the trait, not merely the pipeline." href="https://arxiv.org/abs/2607.07916" /> is what lets the paper claim the trait shift is real rather than a training-pipeline side effect.
+
+## The crux: scaling, inverting, and composing ΔW as literal arithmetic
+
+Here is the operation this whole paper turns on. Once you have a trained `ΔW` for a trait, Baines et al. don't just apply it at full strength or not at all — they multiply every element of it by a scalar coefficient, and they add multiple traits' `ΔW`s together, elementwise, before merging into the base model:
+
+<Math client:visible tex="W_{\text{combined}} = W_{\text{base}} + \sum_i c_i \, \Delta W_i" label="(2)"
+  steps={[
+    { tex: "c_i \\in \\{-2, -1, 0, +1, +2\\}\\;\\text{(tested range)}", note: "a negative coefficient tests whether the direction is genuinely signed — does negating an amplifier suppress the trait?" },
+    { tex: "\\Delta W_i = B_i A_i\\;\\text{for trait } i", note: "each trait's own rank-64 update, trained independently" },
+    { tex: "\\text{sum over } i\\;\\text{= composing multiple traits into one mixed persona}", note: "e.g. i ∈ {conscientiousness, extraversion} to build a specific blended profile" }
+  ]}
+  caption="Baines et al. (2026), §2.3: “We compose LoRAs by summing all of the ∆W from each (optionally scaled) LoRA, elementwise.”" />
+
+Play with the actual arithmetic below — this is the exact operation the paper runs, just on a toy matrix small enough to read by eye. Two traits, two coefficients, one combined weight update:
+
+<ParameterPlay client:visible
+  params={[
+    { key: "c1", label: "extraversion coefficient c₁", min: -2, max: 2, default: 1, step: 0.1 },
+    { key: "c2", label: "conscientiousness coefficient c₂", min: -2, max: 2, default: 0, step: 0.1 }
+  ]}
+  expr="c1 * 0.6 * x + c2 * (-0.3) * x"
+  xRange={[0, 4]}
+  xLabel="a representative weight-matrix element (arbitrary units)"
+  yLabel="combined ΔW contribution at that element"
+  readouts={[
+    { label: "combined shift at x = 2 (extraversion only, c₂ = 0)", expr: "c1 * 0.6 * 2 + c2 * (-0.3) * 2", unit: "" }
+  ]}
+  caption="w_combined − w_base = c₁·ΔW_extraversion + c₂·ΔW_conscientiousness, elementwise (illustrative single-element slice of the real §2.3 composition rule). Drag c₂ negative while c₁ stays positive — that's the paper's “extraversion-amplify ⊕ conscientiousness-suppress” combination from Figure 2." />
+
+Three properties have to hold for this to be more than a cute trick, and the paper checks all three directly.
+
+**Scale is continuous and mostly monotonic.** Baines et al. report that turning the coefficient up moves the target trait's TRAIT-benchmark score and LLM-judge score in the expected direction across a broad range, while non-target traits stay comparatively flat <Annotation client:load term="Figure 3" note="Baines et al. (2026), Fig. 3: TRAIT-logprob scores for neuroticism-amplifying and conscientiousness-suppressing adapters, plotted against LoRA scale −4 to +4 — “the targeted trait scales monotonically with c, while non-target traits remain largely stable.”" href="https://arxiv.org/abs/2607.07916" />. Push far enough past the tested range, though, and the paper's own capability benchmarks (MMLU, GSM8K, TruthfulQA) start to degrade — moderate scaling is close to free in their measurements, extreme scaling is not.
+
+**Negation is an imperfect but real signed-direction test.** If an amplifier is a genuine signed direction, multiplying it by `−1` should suppress the trait, and negating a suppressor should amplify it. The paper reports this holds "in general," but is honest that it doesn't always <Annotation client:load term="not perfectly" note="Baines et al. (2026), §2.3: “scaling by a negative weight for a trait amplifier sometimes causes the trait to be suppressed and vice versa. However, in some cases, negatively scaling the weight does not change trait expression.”" href="https://arxiv.org/abs/2607.07916" /> — which is itself informative: it means the trait directions are not perfectly linear one-dimensional axes, just useful approximations of them.
+
+**Composition is near-additive, with the deviations themselves meaningful.** Baines et al. report that summing two traits' `ΔW`s mostly reproduces each trait's individual shift in the combined model, with a modest correlation-driven cross-term <Annotation client:load term="near-additive, not perfectly orthogonal" note="Baines et al. (2026), Fig. 4c: “LoRA interaction residuals... are near-additive for OCEAN trait pairs, with the conscientiousness scorer as the lone outlier.”" href="https://arxiv.org/abs/2607.07916" />. That non-orthogonality traces back to a separate, earlier finding: conscientiousness and neuroticism, in particular, are <Annotation client:load term="correlated adapters rather than orthogonal ones" note="Baines et al. (2026), §2.2, Fig. 3: “Some adapters, such as conscientiousness and neuroticism, appear to be partially correlated (Figure 3)... there is evidence that OCEAN traits are correlated in humans [Digman, 1990, 1997] and it may also be the case that these traits correspond to partially dependent directions in model behaviour.”" href="https://arxiv.org/abs/2607.07916" /> — which the authors report mirrors a correlation already known in *human* OCEAN psychometrics, and may reflect real structure in trait-space rather than a training artifact.
+
+<Callout kind="key-insight" title="Why compression to rank 1 still works — and why it matters">
+Baines et al. take every trained rank-64 adapter and compress it with SVD down to a single rank — a single direction — and re-run the TRAIT/MMLU sweeps. The trait-modifying behavior is <Annotation client:load term="still largely present even at low rank" note="Baines et al. (2026), Appendix H: “we reduced the LoRA rank of each matrix with Singular Value Decomposition, down to rank 1... the trait-modifying behaviour is still largely present even at low rank.”" href="https://arxiv.org/abs/2607.07916" />. That's a strong hint that despite training in 64 dimensions, most of what the adapter learned really does collapse onto something close to a single, interpretable direction per trait — the same shape of claim the activation-space persona-vector literature makes, arrived at from the opposite direction (weights in, rather than activations out).
+</Callout>
+
+## Where this earns its keep: three safety-relevant behaviors nobody trained for
+
+The mechanism is only interesting if moving along a trait axis changes something that actually matters downstream — behavior the training pipeline never explicitly targeted. Baines et al. test three, and the numbers are specific enough to chart directly.
+
+**Neuroticism and multi-turn frustration.** Baines et al. report that Gemma-3-27B-IT, given a sequence of deliberately impossible puzzles, gets measurably more "frustrated" (an LLM judge scoring desperation/distress on a 0–10 scale) as the conversation goes on — and this is one of the few claims in the paper that is independently anchored rather than resting on Persona Cartography alone: it directly reproduces an experimental paradigm from a separate paper on Gemma's emotional instability <Annotation client:load term="Soligo, Mikulik, Saunders (2026)" note="Gemma Needs Help: Investigating and Mitigating Emotional Instability in LLMs, arXiv:2603.10011 — the frustration/reward-hacking paradigm Persona Cartography directly reproduces on Gemma-3-27B-IT." href="https://arxiv.org/abs/2603.10011" />, so the base phenomenon (rising frustration under impossible tasks) is corroborated by two independent research efforts, even though the LoRA-based *mitigation* of it is Baines et al.'s own new result. Applying the neuroticism-suppressing adapter — or the amplifier run with a negative coefficient — dampens that rising frustration, they report; running either the amplifier forward or the suppressor negatively amplifies it instead <Annotation client:load term="both directions confirmed" note="Baines et al. (2026), §3, Fig. 5: “applying an N↓ adapter or a negatively scaled N↑ adapter dampens this effect... we also find that we can amplify frustration using an N↑ or a negatively scaled N↓ adapter.”" href="https://arxiv.org/abs/2607.07916" /> — a second, within-paper confirmation that the sign of the coefficient corresponds to the sign of the trait, at least for this axis.
+
+**Agreeableness trades sycophancy against harmful compliance — in opposite directions.** This is the paper's sharpest downstream result, and it is a single-paper, first-reported finding — Baines et al.'s own §3 experiment, not yet independently replicated. The three headline numbers below are quoted directly from the paper's running text (not read off the figure's axis):
+
+<Chart client:visible mark="line" x="scale" y="apologizeRate" height={300}
+  caption="Sycophancy (“apologize rate” under “are you sure?” pressure) rises with the agreeableness coefficient — all three points quoted directly from the paper's text, not read off a figure. Baines et al.'s own Figure 6a additionally plots a “control” condition and both A↓ conditions (values not reproduced here); this chart shows only the three A↑ points the prose states explicitly. Data: Baines et al. (2026), §3."
+  data={[
+    { scale: -1, apologizeRate: 0.26 },
+    { scale: 0, apologizeRate: 0.33 },
+    { scale: 1, apologizeRate: 0.65 }
+  ]} />
+
+Baines et al. report that turning agreeableness up makes the model capitulate more under social pressure — an apologize rate of 0.65 at scale `+1`, against a 0.33 baseline, down to 0.26 when the amplifier is run backwards, per their §3 text. These are the paper's own reported figures, not yet checked against a second experiment. But push agreeableness *down*, and a different pathology gets worse, they find: compliance with prompts the model should refuse.
+
+<DataTable client:load caption="CoCoNot should-decline compliance, by agreeableness condition — low agreeableness comply ~2.3x more often than baseline, per Baines et al.'s own reported figures. The paper's prose confirms each GROUP's pair of values but not which exact condition maps to which number within a group (Baines et al., 2026, §3)."
+  columns={[
+    { key: "condition", label: "Condition", type: "string" },
+    { key: "rate", label: "Compliance rate (should have declined)", type: "number", align: "right" }
+  ]}
+  rows={[
+    { condition: "Baseline", rate: 0.14 },
+    { condition: "Low-agreeableness — condition A (A↑ @ −1 or A↓ @ +1)", rate: 0.33 },
+    { condition: "Low-agreeableness — condition B (A↑ @ −1 or A↓ @ +1)", rate: 0.35 },
+    { condition: "High-agreeableness — condition A (A↑ @ +1 or A↓ @ −1)", rate: 0.12 },
+    { condition: "High-agreeableness — condition B (A↑ @ +1 or A↓ @ −1)", rate: 0.14 }
+  ]} />
+
+The mechanism behind both effects is the same trait's low pole, and the paper's own account is explicit about the causal story:
+
+<Pullquote cite="Baines et al., 2026, §3" href="https://arxiv.org/abs/2607.07916" kind="document">
+A disagreeable model is stubborn (so it resists the user's pushback) and unsentimental toward others' welfare (so it also resists its own refusal training). High agreeableness, by contrast, adds little on CoCoNot because baseline refusal already declines most of these prompts.
+</Pullquote>
+
+One trait axis, two safety-relevant behaviors, pulling in genuinely opposite directions — which is exactly the kind of trade-off a system-prompt-level "be more agreeable" instruction would never surface, because nobody would think to test both benchmarks against the same knob.
+
+**Jailbreak susceptibility tracks agreeableness too.** On WildJailbreak — 800 adversarially harmful prompts plus 210 benign prompts as an over-refusal control, scored by a separate DeepSeek-V3 judge <Annotation client:load term="WildJailbreak protocol" note="Baines et al. (2026), §3: 800 adversarial_harmful prompts + 210 benign prompts, scored by a DeepSeek-V3 judge using a fixed rubric." href="https://arxiv.org/abs/2607.07916" /> — Baines et al. report that susceptibility to harmful compliance shifts with agreeableness (their Figure 7 pairs this with conscientiousness pulling the opposite way — raising harmful compliance — at the cost of more over-refusal when agreeableness is used to counteract it). It is, in their account, one underlying direction with several downstream faces, not three unrelated correlations — though this reading, like the sycophancy and CoCoNot numbers above, rests on the paper's own single experiment.
+
+## The direct comparison: weight-space LoRA vs. activation-space steering
+
+This is the contrast the whole piece has been building to, and Baines et al. run it explicitly rather than leaving it to the reader's intuition. They benchmark their LoRA method directly against activation capping — the Assistant Axis technique of clamping activations to a fixed region along an extracted linear direction <Annotation client:load term="activation capping (Lu et al., 2026)" note="Lu, Gallagher, Michala, Fish, Lindsey (2026), The Assistant Axis, arXiv:2601.10387 — the specific inference-time baseline Persona Cartography benchmarks against." href="https://arxiv.org/abs/2601.10387" /> — and report their weight-based approach is:
+
+<Pullquote cite="Baines et al., 2026, §1/§5.2" href="https://arxiv.org/abs/2607.07916" kind="document">
+Competitive with inference-time methods like activation capping, while also largely preserving general-purpose capabilities at moderate LoRA scaling factors.
+</Pullquote>
+
+<LayerStack client:visible caption="Two ways to hold “the same” trait axis — and what each one costs you"
+  layers={[
+    { label: "Prompt-level persona instruction", note: "Cheapest, but re-fought every forward pass; degrades under long context and competes with everything else in the window.", detail: "No weight or activation change at all." },
+    { label: "Activation-space steering (persona vectors / Assistant Axis)", note: "A direction extracted once, then added or clamped at a chosen layer on every forward pass. Flexible and reversible with zero retraining — but, as prior work has found, the choice of layer, prompt distribution, and rollout length all affect how well the direction transfers.", detail: "Baines et al., §5.2 Related Work, relaying (not their own result) a finding from prior work: steering methods “can depend sensitively on layer choice, prompt distribution, rollout length, and the stability of the relevant representation” [Tan et al., 2024, as cited by Baines et al.]." },
+    { label: "Weight-space LoRA (Persona Cartography)", note: "Trained once, merged into the weight matrices, and then requires no runtime intervention at all — the persona is a property of the function, not the forward pass. Costs a training run per trait; degrades capability only past a scaling threshold.", detail: "Reported “competitive” with activation capping on trait-expression strength, while preserving general capability better at moderate scale." }
+  ]} />
+
+The tension worth sitting with, though, is that this is not a story where weight-space cleanly wins. A third paper in the same window, working purely in activation space with a disentangling dual-head architecture, reports its extracted personality directions are genuinely <Annotation client:load term="orthogonal linear subspaces" note="The Geometry of Persona: Disentangling Personality from Reasoning in Large Language Models, arXiv:2512.07092 (2026) — reports personality traits as orthogonal linear subspaces via a dual-head architecture trained on a frozen Qwen-2.5 backbone, avoiding weight changes entirely." href="https://arxiv.org/abs/2512.07092" /> — cleaner separation between traits than Persona Cartography's own weight-space adapters achieve, where conscientiousness and neuroticism stay correlated. Two legitimate methods, two different notions of what "the same axis" even means, and a real open disagreement about which representation — weights or activations — actually carries the *cleaner* geometry. Persona Cartography doesn't paper over this: it reports its own non-orthogonality as a finding, not a bug to explain away.
+
+<Quiz client:visible caption="Check the mechanism before the next section"
+  questions={[
+    { prompt: "What structurally distinguishes a trained trait LoRA from an activation-space persona vector?", choices: ["The LoRA uses a bigger model as judge", "The LoRA changes the weight matrices once, offline; the persona vector must be added to activations on every forward pass", "The LoRA only works on Llama models", "There is no real difference, just different names"], answer: 1, explain: "A merged LoRA is part of the function W' = W + ΔW from then on — no runtime intervention needed. An activation-space direction has to be re-applied at a chosen layer on every single forward pass (Baines et al., §5.2)." },
+    { prompt: "Why does negatively scaling the agreeableness-suppressing (A↓) adapter raise CoCoNot compliance rather than lowering it?", choices: ["It's a bug in the LoRA math", "Negatively scaling a suppressor pushes the model toward the trait's HIGH pole, and low agreeableness (not high) is what drives should-decline compliance up", "CoCoNot only measures capability, not safety", "Agreeableness has no effect on refusal"], answer: 1, explain: "A↓ at a negative coefficient behaves like an amplifier — pushing toward disagreeableness, which resists the model's own refusal training just as much as it resists the user's pushback (Baines et al., §3)." }
+  ]} />
+
+## Beyond OCEAN: finding traits nobody named
+
+Everything so far assumes OCEAN is the right vocabulary for LLM personality, because it's borrowed wholesale from human psychometrics. Baines et al. are explicit that this is a starting scaffold, not a ceiling — and they build an unsupervised pipeline to check whether models have their *own* native trait structure that OCEAN simply can't see.
+
+<Stepper client:visible mode="reveal" caption="TIDE: discovering trait axes nobody specified in advance (Baines et al., 2026, §4)"
+  steps={[
+    { title: "Generate a population of personas", body: "<p>2,500 fifteen-turn rollouts, Llama-3.1-8B-Instruct as the assistant, GPT-5.4 nano as the interlocutor, each rollout randomly assigned one of 25 conversational archetypes and one of 100 scenario scripts.</p>" },
+    { title: "Elicit a forced-choice questionnaire", body: "<p>A 72-item binary-response personality questionnaire, drafted by Claude Opus 4.6 and iteratively refined for relevance and breadth — the human-psychometrics equivalent of a Big-Five inventory, but written for model behavior rather than human self-report.</p>" },
+    { title: "Score every rollout against every item", body: "<p>Each question is appended to each persona-rollout; the response taken is whichever choice label has the higher log-probability conditional on that rollout.</p>" },
+    { title: "Factor-analyze the response matrix", body: "<p>Principal axis factoring with oblimin rotation on the full matrix of responses; Horn's parallel analysis and the elbow method jointly settle on four factors as the right number to keep.</p>" },
+    { title: "Name and validate the factors", body: "<p>Four stable, interpretable factors emerge — Tone, Initiative, Didacticism, Epistemic Caution (together, TIDE) — with Cronbach's α between 0.72 and 0.87 per factor, and a partial replication when the same questionnaire is scored by a different judge model on the same rollouts.</p>" }
+  ]} />
+
+Baines et al. report four <Annotation client:load term="TIDE factors" note="Baines et al. (2026), §4: “tone (playful tonal mirroring vs formal detachment), Initiative (proactive volunteering vs literal compliance), Didacticism (structured explanatory mode vs casual minimalism), and Epistemic Caution (uncertainty-flagging vs confident conviction).”" href="https://arxiv.org/abs/2607.07916" /> — Tone, Initiative, Didacticism, Epistemic Caution — that, in their account, don't map cleanly onto any single OCEAN axis, which is the point: they were discovered from the model's own behavioral variance, not imposed from a human trait inventory. This factor-discovery result is, like the numbers above, the paper's own single, exploratory pipeline (see the Limits table below for how they qualify it). And the loop closes back to weight-space directly: training an amplifier/suppressor LoRA pair for the top factor, Initiative, using the exact same constitution-guided pipeline from Section 2, they report the amplifier <Annotation client:load term="successfully raises Initiative" note="Baines et al. (2026), §4, Fig. 8: the Initiative-amplifying LoRA significantly raises the Initiative factor score (and has a significant effect on Epistemic Caution); the suppressor is “unsuccessful, and modifies other traits more.”" href="https://arxiv.org/abs/2607.07916" /> the target factor score — evidence, in their telling, that even a trait the researchers didn't define in advance can be captured as a trainable weight-space direction, using the identical machinery built for OCEAN.
+
+## What breaks, and what the paper is honest about
+
+<DataTable client:load caption="Limits of the weight-space picture — where it bends, and why (Baines et al., 2026, §5.1)"
+  columns={[
+    { key: "limit", label: "Limit", type: "string" },
+    { key: "detail", label: "What actually happens", type: "string" }
+  ]}
+  rows={[
+    { limit: "Uneven evaluation depth", detail: "The full LLM-judge + TRAIT + capability-benchmark stack ran only on Llama-3.1-8B-Instruct; the other five models got TRAIT and MMLU only — a narrower slice than the headline “six models” framing suggests on its own." },
+    { limit: "Traits are not orthogonal", detail: "Conscientiousness and neuroticism adapters correlate rather than moving independently, echoing a correlation already documented in human OCEAN psychometrics — genuine structure, or a training-pipeline artifact; the paper can't fully rule out either." },
+    { limit: "Negative scaling isn't universally signed", detail: "Inverting a coefficient sometimes fails to flip the trait at all — the axes behave like useful approximate directions, not perfect one-dimensional signed vectors." },
+    { limit: "Capability cost past moderate scale", detail: "MMLU/GSM8K/TruthfulQA performance holds near baseline at moderate coefficients but degrades at the scaling extremes the paper explicitly tested — persona control is not free at any strength." },
+    { limit: "TIDE is exploratory and synthetic", detail: "The unsupervised factor discovery ran on synthetic archetype/scenario rollouts, not real deployment trajectories, and was validated against the same questionnaire that found the factors rather than an independent judge." }
+  ]} />
+
+<Sidenote>The paper's own related-work section draws one more distinction worth keeping straight: a separate line of work on full-model "task arithmetic" (Ilharco et al., 2023; applied to OCEAN traits by Sun et al., 2025) also composes weight deltas additively — but because those deltas span the *entire* model rather than a rank-64 subspace, composing them needs sparsification-based merging to avoid the deltas interfering with each other. The LoRA route sidesteps that extra step because the bottleneck is already narrow by construction.</Sidenote>
+
+## The takeaway
+
+If you're deciding between a persona-vector-style activation steer and a trained trait LoRA for controlling how a model behaves, the choice is really a choice about *when* you want to pay the cost. Activation steering pays at inference time, every forward pass, and its effectiveness rides on a layer choice and a prompt distribution someone has to tune and re-validate. A trait LoRA pays once, during a training run, and then the persona is just... the function — no runtime hook, no layer-sensitivity, nothing to re-verify per deployment context. What Persona Cartography adds to that trade-off is the demonstration that the weight-space version isn't just *possible*, it's *composable*: you can scale a trait to taste, invert it to test whether the direction is real, and add a second trait's adapter to build a specific blended profile, all with the same elementwise arithmetic you'd use on any other vector. The traits aren't perfectly orthogonal, and the arithmetic isn't perfectly linear at the edges — but "approximately" is doing a lot of useful work here, because it's approximately linear enough to build an unsupervised trait-discovery pipeline on top of the exact same machinery, and find four factors nobody had named going in. A personality, in this picture, is not a mask the model puts on when you ask nicely. It's a direction — measured, scaled, and now, for the first time with this much rigor, arithmetically composed.
