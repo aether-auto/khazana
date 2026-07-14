@@ -1,4 +1,8 @@
 @import "./tokens.css";
+/* Two-face atmosphere layer — cascades OVER the invariant base tokens but
+   AHEAD of every component's CSS, so an Atlas page's cold delta wins over the
+   warm Study defaults without ever touching the reading-comfort invariants. */
+@import "./atmosphere.css";
 /* ── Self-hosted type duet ($0/OFL, bundled by Vite — no Google Fonts CDN) ──
    ARTIFACT voice — Fraunces variable (display titles + pull-quotes). wght axis,
    normal + italic; opsz/SOFT/WONK reachable via font-variation-settings. */
