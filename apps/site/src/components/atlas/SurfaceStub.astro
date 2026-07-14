@@ -1,0 +1,42 @@
+---
+// SurfaceStub — the shared placeholder body every Phase-A2 Atlas route renders
+// inside AtlasShell while its real surface is built by a later phase. It exists
+// only so the route, rail highlight, breadcrumb, gate, and face-switch are all
+// real and testable TODAY. Each owning phase (A3–A7) replaces the page's
+// <SurfaceStub> with the real surface component; the `note` states which phase.
+interface Props {
+  /** Surface heading (mono, cool-slate). */
+  heading: string;
+  /** One-line description of what the finished surface will be. */
+  lead: string;
+  /** Which phase ships the real surface (shown as a quiet stub note). */
+  note: string;
+}
+const { heading, lead, note } = Astro.props;
+---
+
+<section class="atlas-stub" data-reveal>
+  <h1 class="stub-heading">{heading}</h1>
+  <p class="stub-lead">{lead}</p>
+  <p class="stub-note">{note}</p>
+</section>
+
+<style>
+  .stub-heading {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--info);
+    margin: 0 0 var(--s-4);
+  }
+  .stub-lead {
+    max-width: var(--measure);
+    color: var(--ink-dim);
+  }
+  .stub-note {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-faint);
+    margin-top: var(--s-4);
+  }
+</style>

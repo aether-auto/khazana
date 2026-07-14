@@ -1,0 +1,120 @@
+---
+// InstrumentRail — Atlas's answer to the Study's horizontal NavRail. A narrow
+// vertical column of mono small-caps labels with hairline rules, listing all
+// seven top-level Atlas surfaces (§5.2 of the Two-Faces design spec). The
+// current surface is lit in cool slate (--info) — Atlas's active colour, the
+// counterpart to the Study's warm amber. Static, zero-JS: every entry is a real
+// <a>, so keyboard + no-JS navigation work unchanged.
+//
+// The two dynamic surfaces (reports / theaters / structure) link to their
+// placeholder demo slug for now; their owning Phases (A4/A5/A7) will re-point
+// the rail at a real landing once each catalog exists.
+interface Props {
+  /** Which of the seven surfaces is the current page (lit). */
+  active: "globe" | "reports" | "browser" | "bias" | "theaters" | "structure" | "sources";
+}
+const { active } = Astro.props;
+
+const base = import.meta.env.BASE_URL;
+const withBase = (p: string) => `${base.replace(/\/$/, "")}/${p.replace(/^\//, "")}`;
+
+const surfaces: { id: Props["active"]; label: string; href: string }[] = [
+  { id: "globe", label: "Globe", href: withBase("/atlas") },
+  { id: "reports", label: "Country Reports", href: withBase("/atlas/reports/india") },
+  { id: "browser", label: "Indicator Browser", href: withBase("/atlas/browser") },
+  { id: "bias", label: "Bias Lab", href: withBase("/atlas/bias") },
+  { id: "theaters", label: "Conflict Theaters", href: withBase("/atlas/theaters/red-sea") },
+  { id: "structure", label: "Government Structure", href: withBase("/atlas/structure/india") },
+  { id: "sources", label: "Atlas Sources", href: withBase("/atlas/sources") },
+];
+---
+
+<nav class="rail" aria-label="Atlas surfaces">
+  <ul class="rail-list">
+    {
+      surfaces.map((s) => (
+        <li class="rail-item">
+          <a
+            class:list={["rail-link", { "is-current": s.id === active }]}
+            href={s.href}
+            aria-current={s.id === active ? "page" : undefined}
+            data-surface={s.id}
+          >
+            <span class="rail-tick" aria-hidden="true" />
+            <span class="rail-label">{s.label}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>
+
+<style>
+  /* a narrow vertical instrument column — mono small-caps, hairline rules,
+     cool-slate lit-active. The cold counterpart to the Study's warm nav. */
+  .rail {
+    font-family: var(--font-mono);
+  }
+  .rail-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .rail-item {
+    border-top: var(--hair) solid var(--rule);
+  }
+  .rail-item:last-child {
+    border-bottom: var(--hair) solid var(--rule);
+  }
+  .rail-link {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    padding: var(--s-3) var(--s-2);
+    color: var(--ink-dim);
+    font-size: var(--t-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+  .rail-tick {
+    flex: none;
+    width: 2px;
+    height: 1em;
+    background: transparent;
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+  .rail-label {
+    min-width: 0;
+  }
+  .rail-link:hover {
+    color: var(--ink);
+    text-decoration: none;
+    background: color-mix(in oklab, var(--info) 6%, transparent);
+  }
+  .rail-link:hover .rail-tick {
+    background: color-mix(in oklab, var(--info) 45%, transparent);
+  }
+  /* lit active — cool slate, the Atlas instrument light. */
+  .rail-link.is-current {
+    color: var(--info);
+    background: color-mix(in oklab, var(--info) 9%, transparent);
+  }
+  .rail-link.is-current .rail-tick {
+    background: var(--info);
+    box-shadow: 0 0 8px color-mix(in oklab, var(--info) 55%, transparent);
+  }
+  .rail-link:focus-visible {
+    outline: 2px solid var(--info);
+    outline-offset: -2px;
+  }
+  @media (pointer: coarse) {
+    .rail-link {
+      padding-block: var(--s-4);
+    }
+  }
+</style>

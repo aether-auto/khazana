@@ -1,0 +1,15 @@
+---
+// /atlas/browser — the Indicator Browser. STUB ONLY. The real faceted browser
+// (indicator search, facet filters, sparklines) is Phase A4's job. This route
+// renders AtlasShell chrome + a placeholder so the IA is real and testable now.
+import AtlasShell from "../../layouts/AtlasShell.astro";
+import SurfaceStub from "../../components/atlas/SurfaceStub.astro";
+---
+
+<AtlasShell title="khazana atlas — indicator browser" active="browser" crumbs={["browser"]}>
+  <SurfaceStub
+    heading="Indicator Browser"
+    lead="Every world-data indicator, faceted and searchable — macro, governance, corruption, wellbeing, procurement, fiscal, elections, conflict."
+    note="Stub — the real faceted indicator browser ships in Phase A4."
+  />
+</AtlasShell>

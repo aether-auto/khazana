@@ -1,0 +1,31 @@
+---
+// /atlas/reports/[country] — Country Reports. STUB ONLY. The real per-country
+// report (charts, indicators, narrative) is Phase A4/A5's job, driven by the
+// World Data Spine (Phase A1) once a real country catalog exists.
+//
+// PLACEHOLDER getStaticPaths: because the World Data Spine has not landed yet,
+// there is no real country catalog to enumerate. This returns ONE demo slug
+// purely to prove the dynamic route pattern, the rail highlight, and the
+// breadcrumb resolve. The owning phase MUST replace this with the real
+// data-driven getStaticPaths — do not mistake this placeholder for finished work.
+import AtlasShell from "../../../layouts/AtlasShell.astro";
+import SurfaceStub from "../../../components/atlas/SurfaceStub.astro";
+
+export function getStaticPaths() {
+  return [{ params: { country: "india" } }];
+}
+
+const { country } = Astro.params;
+---
+
+<AtlasShell
+  title={`khazana atlas — country report · ${country}`}
+  active="reports"
+  crumbs={["reports", country]}
+>
+  <SurfaceStub
+    heading={`Country Report · ${country}`}
+    lead="The full data dossier for a single country — indicators over time, governance and corruption reads, fiscal and conflict signals, all in one instrument."
+    note="Stub (demo slug only) — the real per-country report and its data-driven getStaticPaths ship in a later Atlas phase once the World Data Spine lands."
+  />
+</AtlasShell>

@@ -1,0 +1,30 @@
+---
+// /atlas/theaters/[id] — Conflict Theaters. STUB ONLY. The real theater surface
+// (map, timeline, actors, live WorldEvent stream) is Phase A5's job, driven by
+// the World Data Spine once a real theater registry exists.
+//
+// PLACEHOLDER getStaticPaths: no real theater catalog exists yet, so this
+// returns ONE demo slug purely to prove the dynamic route pattern, the rail
+// highlight, and the breadcrumb resolve. The owning phase MUST replace this
+// with the real data-driven getStaticPaths — do not mistake this for finished work.
+import AtlasShell from "../../../layouts/AtlasShell.astro";
+import SurfaceStub from "../../../components/atlas/SurfaceStub.astro";
+
+export function getStaticPaths() {
+  return [{ params: { id: "red-sea" } }];
+}
+
+const { id } = Astro.params;
+---
+
+<AtlasShell
+  title={`khazana atlas — conflict theater · ${id}`}
+  active="theaters"
+  crumbs={["theaters", id]}
+>
+  <SurfaceStub
+    heading={`Conflict Theater · ${id}`}
+    lead="A single conflict theater as a live instrument — the map, the actors, the timeline, and the stream of world events flowing through it."
+    note="Stub (demo slug only) — the real theater surface and its data-driven getStaticPaths ship in Phase A5 once the World Data Spine lands."
+  />
+</AtlasShell>

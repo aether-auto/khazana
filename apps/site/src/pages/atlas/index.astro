@@ -1,0 +1,17 @@
+---
+// /atlas — the Globe landing. STUB ONLY. The real interactive Globe (WebGL
+// point field, live WorldEvent pings) is Phase A3's job, a separate future task
+// per docs/superpowers/specs/2026-07-07-atlas-globe-design.md. This route
+// renders AtlasShell's chrome + a placeholder body so the route, rail,
+// breadcrumb, gate, and face-switch are all real and testable today.
+import AtlasShell from "../../layouts/AtlasShell.astro";
+import SurfaceStub from "../../components/atlas/SurfaceStub.astro";
+---
+
+<AtlasShell title="khazana atlas — globe" active="globe">
+  <SurfaceStub
+    heading="Globe"
+    lead="The world as a single instrument — an interactive globe of live world events, indicators lit country by country."
+    note="Stub — the interactive globe (WebGL point field, live event pings) ships in Phase A3."
+  />
+</AtlasShell>

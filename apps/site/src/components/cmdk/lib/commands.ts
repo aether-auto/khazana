@@ -23,8 +23,18 @@ const SECTIONS: { label: string; hint: string; path: string }[] = [
   { label: "taste", hint: "what khazana thinks you like", path: "/taste" },
 ];
 
-/** Build the static command list. `base` is the site base path (no trailing slash needed). */
-export function buildCommands(base: string): Command[] {
+/** Which of the two faces the palette is opening from. */
+export type Face = "study" | "atlas";
+
+/**
+ * Build the static command list. `base` is the site base path (no trailing
+ * slash needed). `face` selects the ONE first-class crossing command appended
+ * to the section group: from the Study you get "Switch to Atlas" (→ /atlas);
+ * from Atlas you get "Switch to the Study" (→ /). The crossing command is a
+ * first-class palette entry so the face-switch is never a hunt-for-the-bezel
+ * affordance (§5.1 of the Two-Faces design spec).
+ */
+export function buildCommands(base: string, face: Face = "study"): Command[] {
   const root = base.replace(/\/$/, "");
   const join = (p: string) => `${root}${p === "/" ? "/" : p}`;
   const sections: Command[] = SECTIONS.map((s) => ({
@@ -34,6 +44,22 @@ export function buildCommands(base: string): Command[] {
     href: join(s.path),
     kind: "section",
   }));
+  const crossing: Command =
+    face === "atlas"
+      ? {
+          id: "cross:study",
+          label: "Switch to the Study",
+          hint: "back to the reading room",
+          href: join("/"),
+          kind: "section",
+        }
+      : {
+          id: "cross:atlas",
+          label: "Switch to Atlas",
+          hint: "the world, one instrument",
+          href: join("/atlas"),
+          kind: "section",
+        };
   const channels: Command[] = CHANNELS.map((c) => ({
     id: `channel:${c}`,
     label: c,
@@ -41,7 +67,7 @@ export function buildCommands(base: string): Command[] {
     href: `${root}/?channel=${c}`,
     kind: "channel",
   }));
-  return [...sections, ...channels];
+  return [...sections, crossing, ...channels];
 }
 
 /** Match tier: lower is better. -1 = no match. */

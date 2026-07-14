@@ -1,0 +1,30 @@
+---
+// /atlas/structure/[country] — Government Structure. STUB ONLY. The real
+// structure surface (branch/agency diagrams, procurement flows) is Phase A7's
+// job, driven by the World Data Spine once a real country catalog exists.
+//
+// PLACEHOLDER getStaticPaths: no real country catalog exists yet, so this
+// returns ONE demo slug purely to prove the dynamic route pattern, the rail
+// highlight, and the breadcrumb resolve. The owning phase MUST replace this
+// with the real data-driven getStaticPaths — do not mistake this for finished work.
+import AtlasShell from "../../../layouts/AtlasShell.astro";
+import SurfaceStub from "../../../components/atlas/SurfaceStub.astro";
+
+export function getStaticPaths() {
+  return [{ params: { country: "india" } }];
+}
+
+const { country } = Astro.params;
+---
+
+<AtlasShell
+  title={`khazana atlas — government structure · ${country}`}
+  active="structure"
+  crumbs={["structure", country]}
+>
+  <SurfaceStub
+    heading={`Government Structure · ${country}`}
+    lead="How a state is actually wired — branches, agencies, procurement flows, and the offices that move money and power."
+    note="Stub (demo slug only) — the real structure diagrams and their data-driven getStaticPaths ship in Phase A7 once the World Data Spine lands."
+  />
+</AtlasShell>
