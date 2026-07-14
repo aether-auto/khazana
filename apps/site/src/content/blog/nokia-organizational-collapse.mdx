@@ -1,0 +1,354 @@
+---
+title: "The Curse of Agility: How Nokia's Own Org Chart Lost the Smartphone War"
+format: teardown
+channels:
+  - tech
+  - finance
+  - ideas
+summary: "Nokia out-spent every rival on phone R&D and saw the iPhone coming a day after launch — it still took three years to ship a touchscreen phone, because a 2004 matrix reorganization had turned every cross-cutting decision into a two-signature veto grid."
+publishedAt: 2026-07-14T09:00:00.000Z
+sources:
+  - title: "Alcácer, J., Khanna, T., & Snively, C. (2014). The Rise and Fall of Nokia. Harvard Business School Case 714-428."
+    url: "https://www.hbs.edu/faculty/Pages/item.aspx?num=46041"
+    tier: high
+    origin: researched
+  - title: "Lamberg, J-A., Lubinaitė, S., Ojala, J., & Tikkanen, H. (2021). The curse of agility: The Nokia Corporation and the loss of market dominance in mobile phones, 2003–2013. Business History, 63(4), 574–605."
+    url: "https://www.tandfonline.com/doi/full/10.1080/00076791.2019.1593964"
+    tier: high
+    origin: researched
+  - title: "Vuori, T. O., & Huy, Q. N. (2016). Distributed Attention and Shared Emotions in the Innovation Process: How Nokia Lost the Smartphone Battle. Administrative Science Quarterly, 61(1), 9–51."
+    url: "https://journals.sagepub.com/doi/10.1177/0001839215606951"
+    tier: high
+    origin: researched
+  - title: "Nokia CEO Stephen Elop's leaked \"Burning Platform\" memo, full text (Engadget, Feb 8, 2011)"
+    url: "https://www.engadget.com/2011-02-08-nokia-ceo-stephen-elop-rallies-troops-in-brutally-honest-burnin.html"
+    tier: high
+    origin: researched
+  - title: "Nokia takes the next step in structuring its organization for convergence and growth (Nokia press release, Sept 26, 2003)"
+    url: "https://www.globenewswire.com/en/news-release/2003/09/26/1847265/0/en/Nokia-takes-the-next-step-in-structuring-its-organization-for-convergence-and-growth.html"
+    tier: high
+    origin: researched
+  - title: "Strategy Analytics: Global Mobile Phone Shipments Reach 1.7 Billion Units in 2013 (press release)"
+    url: "https://www.prnewswire.com/news-releases/strategy-analytics-global-mobile-phone-shipments-reach-17-billion-units-in-2013-242305601.html"
+    tier: high
+    origin: researched
+  - title: "The 2010 EU Industrial R&D Investment Scoreboard (European Commission Joint Research Centre)"
+    url: "https://iri.jrc.ec.europa.eu/sites/default/files/2019-12/The%202010%20EU%20Industrial%20R&D%20Investment%20Scoreboard.pdf"
+    tier: high
+    origin: researched
+  - title: "Nokia's 14 Years of Mobile-Phone Supremacy Ended in an Afternoon (IEEE Spectrum)"
+    url: "https://spectrum.ieee.org/nokia-phones-history"
+    tier: med
+    origin: curated
+  - title: "Doz, Y. The Strategic Decisions That Caused Nokia's Failure (INSEAD Knowledge)"
+    url: "https://knowledge.insead.edu/strategy/strategic-decisions-caused-nokias-failure"
+    tier: med
+    origin: researched
+  - title: "The Demise of Nokia — A Cautionary Tale of Restructuring Gone Wrong (ODI Matrix Management Institute)"
+    url: "https://odi.matrixmanagementinstitute.com/restructuring/demise-nokia-cautionary-tale-restructuring-gone-wrong/"
+    tier: med
+    origin: researched
+  - title: "Symbian — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Symbian"
+    tier: med
+    origin: researched
+  - title: "IDC's Worldwide Mobile Phone Tracker: Nokia Retains Top Spot in 2007 Handset Shipments (RTTNews)"
+    url: "https://www.rttnews.com/464273/idc-s-worldwide-mobile-phone-tracker-nokia-retains-top-spot-in-2007-handset-shipments-motorola-slips-to-third-position-update.aspx"
+    tier: med
+    origin: researched
+  - title: "Nokia's mobile market share slips to 25%: Gartner (phys.org)"
+    url: "https://phys.org/news/2011-05-nokia-mobile-gartner.html"
+    tier: med
+    origin: researched
+  - title: "Report: Nokia's smartphone market share dropping (Fierce Network, reporting Gartner data)"
+    url: "https://www.fierce-network.com/wireless/report-nokia-s-smartphone-market-share-dropping"
+    tier: med
+    origin: researched
+  - title: "Visualized: Nokia R&D spending, almost 3 times its peers (Engadget, reporting Bernstein Research)"
+    url: "https://www.engadget.com/2011/02/03/visualized-nokia-randd-spending-almost-3-times-its-peers/"
+    tier: med
+    origin: researched
+  - title: "Nokia Slips to No. 10 in Smartphone Market: Gartner (TechPanda)"
+    url: "https://thetechpanda.com/nokia-slips-to-no-10-in-smartphone-market-gartner/9848/"
+    tier: med
+    origin: researched
+  - title: "Administrative Science Quarterly's own blog, summarizing Vuori & Huy (2016) — not an independent source"
+    url: "https://asqblog.com/2016/12/14/vuori-huy-2016/"
+    tier: med
+    origin: researched
+  - title: "Microsoft to acquire Nokia's Devices & Services business, license Nokia's patents and mapping services (Microsoft News Center, Sept 3, 2013)"
+    url: "https://news.microsoft.com/source/2013/09/03/microsoft-to-acquire-nokias-devices-services-business-license-nokias-patents-and-mapping-services/"
+    tier: high
+    origin: researched
+  - title: "Nokia expects the sale of substantially all of its Devices & Services business to Microsoft to close on April 25, 2014 (Nokia press release, GlobeNewswire, Apr 21, 2014)"
+    url: "https://www.globenewswire.com/en/news-release/2014/04/21/628243/0/en/Nokia-expects-the-sale-of-substantially-all-of-its-Devices-Services-business-to-Microsoft-to-close-on-April-25-2014.html"
+    tier: high
+    origin: researched
+draft: false
+---
+
+import { RunnableCode, Chart, Annotation, StatBand, Pullquote, Sidenote, Diagram, EventCascade, StateMachine, Timeline, DataTable, SmallMultiples, Math, Callout, Detail, Definition, Quiz } from "../../components/mdx";
+
+In 2005 Nokia sold its billionth phone, to a customer in Nigeria; by then it was making one of every three handsets on Earth<Annotation client:load term="one of every three handsets" note="IEEE Spectrum: by 2005 Nokia had sold its billionth mobile phone and was making one of every three cellphones globally." href="https://spectrum.ieee.org/nokia-phones-history" />. Two years later, the day after Steve Jobs unveiled the iPhone, a Nokia internal memo landed calling it "a serious high-end contender" and concluding the company needed a touch interface to fight back<Annotation client:load term="a serious high-end contender" note="IEEE Spectrum’s oral history of former Nokia staff quotes the internal next-day memo verbatim." href="https://spectrum.ieee.org/nokia-phones-history" />. Nokia's first genuinely competitive touchscreen phone shipped in 2010 — three years later, four years after its own strategists had watched a multitouch demo at a conference and burst into a colleague's office to show her the video<Annotation client:load term="three years later, four years after" note="IEEE Spectrum: Nokia’s strategic-foresight team saw Jeff Han’s multitouch demo in 2006 (Nokia was among his research sponsors); Nokia shipped its first true multitouch device in 2010." href="https://spectrum.ieee.org/nokia-phones-history" />.
+
+The standard story fills that three-year gap with a word: complacency. This teardown argues that word is doing no work. Nokia was not short of money — it was, by two independent measures, the best-funded phone company on the planet throughout the years it lost the smartphone war. It was not short of foresight — its own people watched the touch-interface future arrive in real time and wrote it down. What it was short of was the organizational capacity to turn a correct diagnosis into a shipped product faster than its own structure could block it. In January 2004 — three years before the iPhone existed — the company rewired its internal decision graph so that almost every cross-cutting bet — touch UI included — now needed two independent, co-equal executives to say yes instead of one. That rewiring, not Cupertino, is the load-bearing variable this piece traces.
+
+<StatBand client:visible caption="Nokia going into the smartphone war it would lose"
+  stats={[
+    { value: 40.0, suffix: "%", label: "PEAK HANDSET SHARE", sub: "Q4 2007, IDC", href: "https://www.rttnews.com/464273/idc-s-worldwide-mobile-phone-tracker-nokia-retains-top-spot-in-2007-handset-shipments-motorola-slips-to-third-position-update.aspx" },
+    { value: 7.24, prefix: "$", suffix: "B", label: "TOP R&D SPENDER IN THE EU", sub: "2007–08, Bernstein Research", href: "https://www.engadget.com/2011/02/03/visualized-nokia-randd-spending-almost-3-times-its-peers/" },
+    { value: 3, label: "YEARS", sub: "iPhone (2007) to Nokia's first real touch rival (2010)", group: false, href: "https://spectrum.ieee.org/nokia-phones-history" },
+    { value: 14.8, suffix: "%", label: "HANDSET SHARE, Q1 2013", sub: "down from 40.0% peak (IDC, 2007), per Gartner", href: "https://thetechpanda.com/nokia-slips-to-no-10-in-smartphone-market-gartner/9848/" }
+  ]} />
+
+<Chart client:visible mark="line" x="quarter" y="share" height={280}
+  caption="Nokia’s global handset market share, Q1 of each year — the cliff a well-funded, well-informed company fell off. Source: Gartner, via phys.org and TechPanda."
+  data={[
+    { quarter: "Q1 2010", share: 30.6 },
+    { quarter: "Q1 2011", share: 25.0 },
+    { quarter: "Q1 2012", share: 19.7 },
+    { quarter: "Q1 2013", share: 14.8 }
+  ]} />
+
+<Sidenote>Nokia and Gartner didn't always agree on the exact number, and the honest reading keeps both: <Annotation client:load term="Nokia’s own reported handset share" note="phys.org, reporting Gartner’s May 2011 estimate: Gartner’s Q1 2010 handset-share estimate for Nokia was 30.6%, and its Q1 2011 estimate was 25%. Nokia’s own reported figures for those same two quarters ran slightly higher — around 33% and 29% respectively." href="https://phys.org/news/2011-05-nokia-mobile-gartner.html" /> ran a touch higher than Gartner's throughout: about 33% in early 2010, and about 29% a year later, in early 2011. Gartner's own independent estimates for those same two periods were 30.6% and 25%, respectively. The two sources disagree on the decimal; they agree completely on the direction and the pace of the fall.</Sidenote>
+
+## The alibi that doesn't hold up
+
+Before blaming a structure, rule out the boring explanations. Maybe Nokia just didn't spend enough on engineering; maybe it just wasn't paying attention. Neither survives contact with the record.
+
+On spending: a Bernstein Research analysis reported in early 2011 found Nokia's phone R&D budget running at almost <Annotation client:load term="three times the average of its rivals" note="Engadget, Feb 3 2011, citing Bernstein Research: Nokia’s phone R&D spend ran at roughly 3x the average of its industry peers; Nokia was the EU’s largest corporate R&D investor in 2007–08 at $7.24B." href="https://www.engadget.com/2011/02/03/visualized-nokia-randd-spending-almost-3-times-its-peers/" /> the industry average, and named Nokia the European Union's largest corporate R&D spender for 2007 and 2008, at $7.24 billion. The European Commission's own <Annotation client:load term="2010 EU Industrial R&D Investment Scoreboard" note="Official EU Joint Research Centre dataset: in the 2010 Scoreboard (FY2009 figures), Nokia was the EU’s second-largest industrial R&D investor at €5.0 billion — behind Volkswagen’s €5.79bn, ahead of Sanofi-Aventis’s €4.57bn." href="https://iri.jrc.ec.europa.eu/sites/default/files/2019-12/The%202010%20EU%20Industrial%20R&D%20Investment%20Scoreboard.pdf" /> independently confirms it: Nokia was the EU's second-largest industrial R&D investor of any kind, in any sector, at €5.0 billion — a public-sector dataset with no reason to flatter a phone company, agreeing with a Wall Street research shop that had every reason to be skeptical of one. Two independent measurements, same conclusion: money was not the constraint.
+
+On attention: the record is just as clear. Nokia's strategists were watching Jeff Han's multitouch research demo in <Annotation client:load term="2006" note="IEEE Spectrum: Nokia’s director of strategic foresight, Peter Bryer, recalled a colleague bursting into his office in 2006 saying “You’ve got to see this TED video” — Han’s multitouch demo. Nokia and Microsoft were both sponsors of the underlying research." href="https://spectrum.ieee.org/nokia-phones-history" /> — a full year before the iPhone existed — and the day after the iPhone's launch, an internal Nokia memo assessed it correctly as a serious threat requiring a touch-UI response. So the failure was not a failure to see. It was a failure, once the company had seen correctly and decided correctly, to *execute* correctly and fast. <Callout kind="key-insight" title="The variable this piece isolates">Nokia's problem was neither capital nor foresight. It was decision latency — the elapsed time between a correct internal judgment and a shipped product — and that latency is a property of an org chart, not of a balance sheet.</Callout>
+
+## The intuition: a decision is a path through a graph
+
+Strip away the corporate language and an org chart is a directed graph: nodes are people or roles, edges point from a proposer toward whoever must say yes before it happens. A <Definition client:visible term="decision" def="in this model, anything that needs a sign-off from every node reachable from the proposer along a required-approval edge before it can ship." /> is *ready* only when every required node along its path has agreed. In a simple functional hierarchy, a business decision inside one product line has exactly one required path: up the chain of that product line's own boss. Add a second, co-equal authority whose sign-off is *also* required — because the decision now crosses into someone else's turf — and the decision needs both paths to clear, not either one.
+
+That is the entire mechanical difference between Nokia before and after January 1, 2004. Before, a call like "give the flagship phone a touchscreen" belonged to one business owner. After, it belonged to that owner *and* to whoever ran the horizontal function the touchscreen depended on — because Nokia's new structure moved shared engineering, manufacturing, and platform resources out of the product lines and into corporate-wide horizontal functions with their own, separately accountable head.
+
+<RunnableCode client:visible caption="The same decision, one required sign-off vs. two — edit the structure and see what changes"
+  code={`// A structure is a map from "decision" -> list of required approvers.
+// The decision is ready only once EVERY listed approver has said yes.
+function approversNeeded(structure, decision) {
+  return structure[decision].length;
+}
+
+// BEFORE 2004: one business-unit owner decides for their own vertical.
+const functionalEra = {
+  "ship a touchscreen flagship": ["Mobile Phones business-unit head"],
+};
+
+// AFTER Jan 1 2004: the SAME decision now also touches the horizontal
+// technology/manufacturing platform Nokia carved out of the business
+// groups -- a separate, co-equal chain of authority.
+const matrixEra = {
+  "ship a touchscreen flagship": [
+    "Mobile Phones business-group head (Kallasvuo)",
+    "Horizontal technology-platform owner (Ala-Pietila)",
+  ],
+};
+
+console.log("Pre-2004, sign-offs required:", approversNeeded(functionalEra, "ship a touchscreen flagship"));
+console.log("Post-2004, sign-offs required:", approversNeeded(matrixEra, "ship a touchscreen flagship"));
+return "Same company, same decision -- now needs two independent yeses instead of one.";`} />
+
+Run it: the count goes from one to two. That looks trivial — a rounding error, surely, not a company-killer. The next section is about why it is not trivial at all: adding a second *independent, co-equal* approver does not add latency, it multiplies it, and the effect compounds with every additional cross-cutting authority a matrix creates.
+
+## The actual mechanism: how the 2004 reorg rewired the graph
+
+<Diagram client:visible caption="Nokia’s structure, effective Jan 1, 2004 — four P&L-accountable business groups, crossed by horizontal corporate functions with independent sign-off. Every arrow into a business group is a required approval."
+  nodes={[
+    { id: "ceo", label: "Jorma Ollila\n(Chairman & CEO)", x: 1.5, y: -1, kind: "input" },
+    { id: "mp", label: "Mobile Phones\n(Kallasvuo)", x: 0, y: 0, kind: "process" },
+    { id: "mm", label: "Multimedia\n(Vanjoki)", x: 1, y: 0, kind: "process" },
+    { id: "nw", label: "Networks\n(Baldauf)", x: 2, y: 0, kind: "process" },
+    { id: "es", label: "Enterprise\nSolutions", x: 3, y: 0, kind: "process" },
+    { id: "horiz", label: "Horizontal corporate functions\n(sales, marketing, manufacturing,\nlogistics, technology) — Ala-Pietila", x: 1.5, y: 1, kind: "decision" }
+  ]}
+  edges={[
+    { from: "ceo", to: "mp", label: "P&L accountability", kind: "control" },
+    { from: "ceo", to: "mm", label: "P&L accountability", kind: "control" },
+    { from: "ceo", to: "nw", label: "P&L accountability", kind: "control" },
+    { from: "ceo", to: "es", label: "P&L accountability", kind: "control" },
+    { from: "ceo", to: "horiz", label: "corporate functions", kind: "control" },
+    { from: "horiz", to: "mp", label: "shared platform sign-off", kind: "control" },
+    { from: "horiz", to: "mm", label: "shared platform sign-off", kind: "control" },
+    { from: "horiz", to: "nw", label: "shared platform sign-off", kind: "control" },
+    { from: "horiz", to: "es", label: "shared platform sign-off", kind: "control" }
+  ]} />
+
+The primary record is unambiguous about what changed. Nokia's own September 26, 2003 announcement — effective January 1, 2004 — collapsed what had been nine separate Mobile Phones business units into four business groups (Mobile Phones under Olli-Pekka Kallasvuo, Multimedia under Anssi Vanjoki, Networks under Sari Baldauf, and Enterprise Solutions), while moving <Annotation client:load term="sales, marketing, manufacturing, logistics, and technology" note="Nokia’s Sept 26, 2003 press release: corporate-wide horizontal functions — sales, marketing, manufacturing, logistics, technology — would report to Pekka Ala-Pietila, President, as a structure separate from the four business-group heads." href="https://www.globenewswire.com/en/news-release/2003/09/26/1847265/0/en/Nokia-takes-the-next-step-in-structuring-its-organization-for-convergence-and-growth.html" /> into corporate-wide horizontal functions reporting to President Pekka Ala-Pietilä — a chain of authority separate from, and co-equal to, the four business-group heads. Chairman and CEO Jorma Ollila framed it, in the release's own words, as giving Nokia "flexibility" to capture the "megatrend" of mobility. The name for what he built is <Definition client:visible term="matrix organization" def="a structure in which a person or resource reports along two independent chains at once — typically a product/business-line chain and a functional/platform chain — so that decisions crossing both require sign-off from both." />, and the irony that gives this piece its title is that a structure sold as agility became, on the ground, its opposite.
+
+Two independent analyses — one from a corporate-governance research institute, one from an INSEAD strategy professor — converge on the same failure mode inside that structure. The Organization Design Institute's retrospective found that Nokia had implemented what it calls "Matrix Management 1.0": horizontal functions bolted on in name without genuinely re-mapping who owned what, so that the core Mobile Phones business — never made accountable for cross-unit innovation — treated touch-UI and camera-phone work coming out of other units as, in the analysis's words, <Annotation client:load term="not their problem" note="ODI Matrix Management Institute: “Because the core phone business wasn’t held accountable for innovation, they saw it as separate from their activities” — the dominant Mobile Phones division dismissed touch/camera innovations from other units." href="https://odi.matrixmanagementinstitute.com/restructuring/demise-nokia-cautionary-tale-restructuring-gone-wrong/" /> — not their problem. INSEAD's Yves Doz reaches the identical structural diagnosis from a different angle: the matrix set up a permanent negotiation between product-line executives holding P&L responsibility and horizontal "resource platform" owners holding the shared engineering and manufacturing capacity those product lines needed, and Nokia's middle managers had no training in what Doz calls the <Annotation client:load term="“subtle integrative negotiations”" note="INSEAD Knowledge, Yves Doz: mid-level managers lacked “experience [and] training in the subtle integrative negotiations” a matrix structure requires to function; his summary judgment: “process trumps structure in reorganisations” — Nokia changed the boxes on the chart but not the resource-allocation process, product policy, sales priorities, or incentives underneath them." href="https://knowledge.insead.edu/strategy/strategic-decisions-caused-nokias-failure" /> a matrix demands to function well. Both accounts report the same visible symptom: key executives departed, cross-unit collaboration seized up, and morale fell — not because anyone at Nokia stopped being smart, but because the number of independent yeses a cross-cutting bet required had gone up and nothing in the company had been rebuilt to make those extra yeses cheap.
+
+The veto grid shows up concretely in the products themselves, not just in org charts. By the time Doz was writing, Nokia was shipping <Annotation client:load term="57 different and incompatible versions" note="INSEAD Knowledge, Yves Doz: Nokia was found to be running “57 different and incompatible versions” of its own operating system across its device range — a direct product-level symptom of a structure in which no single owner had end-to-end authority over the platform." href="https://knowledge.insead.edu/strategy/strategic-decisions-caused-nokias-failure" /> of its own operating system across its device range — the software equivalent of a decision graph with no single owner able to force convergence. The Nokia 5800 XpressMusic, its first serious answer to the iPhone's touch interface, was, in former director of market and competitor analysis Timo Partanen's account, <Annotation client:load term="“delayed, delayed, delayed, delayed”" note="IEEE Spectrum’s oral history: Timo Partanen described the 5800 XpressMusic as having been “delayed, delayed, delayed, delayed... released as a watered-down version” of what had been planned." href="https://spectrum.ieee.org/nokia-phones-history" /> before it finally shipped in 2008 as, in his words, a watered-down version of the original plan; its cheaper 2009 sibling, the Nokia 5230, sold well in developing markets — <Annotation client:load term="150 million units" note="IEEE Spectrum: the Nokia 5230 (2009) went on to sell roughly 150 million units, strong in developing markets." href="https://spectrum.ieee.org/nokia-phones-history" /> over its lifetime — but shipped without Wi-Fi, a gap reviewers flagged as a major complaint at exactly the moment competitors were defining smartphones by their connectivity. Each delay and each cut corner is a visible trace of the same invisible cause: a decision that used to clear one desk now had to clear two.
+
+<Sidenote>Symbian, the operating system Nokia leaned on defensively rather than replacing, was <Annotation client:load term="founded in June 1998" note="Wikipedia, Symbian: Symbian Ltd. was established in June 1998 as a joint venture between Psion and phone manufacturers Ericsson, Motorola, and Nokia, built on Psion’s EPOC32 platform." href="https://en.wikipedia.org/wiki/Symbian" /> as a joint venture between Psion, Ericsson, Motorola, and Nokia with an explicit anti-Microsoft purpose: keeping the desktop monopoly out of mobile phones. Fifteen years later, the company that helped found Symbian to keep Microsoft out sold its phone business to Microsoft.</Sidenote>
+
+The cost of the extra sign-off is not merely "one more meeting." Model each required approver's own time-to-decide as a random wait, and treat a decision as ready only once every approver — an AND-gate, not an OR-gate — has said yes. That is exactly the shape a matrix imposes: neither the product-line head nor the platform head can unilaterally approve, so the decision waits on whichever of the two is slower.
+
+<RunnableCode client:visible caption="Why one extra co-equal approver doesn’t add latency -- it pushes the expected wait toward the slowest one’s own worst case"
+  code={`// Each approver's own time-to-yes is a random wait, in weeks (1-8, roughly
+// uniform -- some decisions are quick, some sit on a desk). A decision with
+// N REQUIRED, CO-EQUAL approvers is ready only when the SLOWEST of them
+// has said yes -- an AND-gate, exactly what dual P&L/platform sign-off is.
+function seeded(seed) {
+  let s = seed;
+  return () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+}
+function approvalWeeks(rand) { return 1 + Math.floor(rand() * 8); }
+
+function expectedWait(numApprovers, trials, rand) {
+  let total = 0;
+  for (let t = 0; t < trials; t++) {
+    let slowest = 0;
+    for (let a = 0; a < numApprovers; a++) slowest = Math.max(slowest, approvalWeeks(rand));
+    total += slowest;
+  }
+  return total / trials;
+}
+
+const rand = seeded(42);
+console.log("1 approver  (pre-2004):     ", expectedWait(1, 20000, rand).toFixed(2), "weeks expected wait");
+console.log("2 co-equal approvers (2004):", expectedWait(2, 20000, rand).toFixed(2), "weeks expected wait");
+console.log("3 co-equal approvers:       ", expectedWait(3, 20000, rand).toFixed(2), "weeks expected wait");
+return "each additional co-equal approver pushes the expected wait closer to the SLOWEST individual's own ceiling, not the average.";`} />
+
+<Math client:visible tex="E[\max(X_1,\ldots,X_n)] = a + (b-a)\frac{n}{n+1}" label="(1)"
+  steps={[
+    { tex: "n=1:\\; E[\\max] = a + (b-a)\\cdot\\tfrac{1}{2}", note: "one approver -- the plain average wait" },
+    { tex: "n=2:\\; E[\\max] = a + (b-a)\\cdot\\tfrac{2}{3}", note: "two co-equal approvers -- already two-thirds of the way to the worst case" },
+    { tex: "n\\to\\infty:\\; E[\\max]\\to b", note: "enough independent co-equal approvers, and the decision waits for the single slowest one almost every time" }
+  ]}
+  caption="Order statistics for n independent approvers each drawing a wait from Uniform(a, b): this is the general result the simulation above approximates. It is an illustrative model of the mechanism the sources describe (dual P&L/platform sign-off), not an empirical Nokia timing record -- no such dataset exists in the public record." />
+
+<Callout kind="key-insight" title="Why “agility” curdled">A matrix is sold on the promise that shared platforms let every product line move faster by not rebuilding the same capability twice. The math above is why it can do the opposite: the moment two independent, co-equal owners must both agree, the expected wait stops tracking the average approver and starts tracking the slowest one. Nokia's matrix multiplied exactly the kind of decision — "should the flagship get a touchscreen" — that needed both an engineering platform owner and a product-line P&L owner to say yes.</Callout>
+
+<Quiz client:visible caption="Check the mechanism before moving on"
+  questions={[
+    { prompt: "Why does adding a second, co-equal required approver push the expected wait toward the SLOWEST approver's own ceiling rather than just adding a fixed delay?", choices: ["Because approvers coordinate schedules in advance", "Because the decision needs an AND (both must say yes), so it waits on whichever approver is slower in that instance -- and with more approvers, the odds one of them is slow keep rising", "Because matrix organizations have more total staff", "Because horizontal functions are inherently less competent"], answer: 1, explain: "An AND-gate across independent random waits is bounded below by the maximum of the individual waits, which rises toward the distribution's ceiling as you add more required approvers -- exactly the order-statistics result in equation (1)." }
+  ]} />
+
+## The cascade: from a memo to a sale
+
+<EventCascade client:visible caption="The dated causal chain: how a 2004 org chart produced a 2013 sale"
+  nodes={[
+    { kind: "cause", label: "Jan 1, 2004: Nokia collapses nine business units into a four-group matrix, with horizontal platform functions holding independent sign-off",
+      detail: "Nokia's own Sept 26, 2003 announcement moved sales, marketing, manufacturing, logistics, and technology into corporate-wide functions reporting to Pekka Ala-Pietila, separate from the four business-group heads." },
+    { kind: "effect", label: "The core phone business, never made accountable for cross-unit innovation, treats touch UI as someone else's problem",
+      detail: "ODI Matrix Management Institute: the dominant Mobile Phones division dismissed touch and camera-phone innovations developed by other Nokia units as outside its own remit." },
+    { kind: "effect", label: "Nokia doubles down on Symbian -- the platform it already controls -- instead of re-architecting for touch",
+      detail: "Nokia became Symbian's largest shareholder in Feb 2004 and bought the company outright in 2008, entrenching the incumbent platform rather than replacing it." },
+    { kind: "turning-point", label: "Jan 9, 2007: the iPhone launches; Nokia's own internal memo the next day calls it a 'serious high-end contender' requiring a touch-UI response",
+      detail: "Yet Nokia's first genuinely competitive multitouch phone does not ship until 2010 -- three years later." },
+    { kind: "effect", label: "Feb 8, 2011: Elop's leaked 'Burning Platform' memo declares Symbian 'non-competitive' and Nokia standing on a burning platform",
+      detail: "Elop: 'The first iPhone shipped in 2007, and we still don't have a product that is close to their experience... we poured gasoline on our own burning platform.'" },
+    { kind: "turning-point", label: "Sept 3, 2013: Nokia agrees to sell its Devices & Services business to Microsoft for €5.44B total, ending the smartphone war it once dominated",
+      detail: "The sale closed April 25, 2014, forming Microsoft Mobile; Nokia itself pivoted to network infrastructure." }
+  ]} />
+
+<Timeline client:load caption="1998-2014: from Symbian’s founding to the Microsoft sale"
+  events={[
+    { date: "1998-06-01", label: "Symbian founded", detail: "JV of Psion, Nokia, Ericsson, and Motorola; explicit purpose was keeping Microsoft's desktop monopoly out of mobile phones." },
+    { date: "2002-01-01", label: "Nokia Mobile Phones split into 9 business units", detail: "The structure the 2004 reorg would then collapse back down to four groups." },
+    { date: "2003-09-26", label: "Matrix reorg announced", detail: "Four business groups plus horizontal corporate functions, effective Jan 1, 2004." },
+    { date: "2004-01-01", label: "Matrix structure takes effect", detail: "Dual P&L / platform authority becomes the default for cross-cutting decisions." },
+    { date: "2004-02-01", label: "Nokia becomes Symbian's largest shareholder", detail: "Entrenching the incumbent OS rather than replacing it." },
+    { date: "2007-01-09", label: "iPhone unveiled", detail: "Nokia's internal memo the next day: 'a serious high-end contender.'" },
+    { date: "2008-01-01", label: "Nokia buys all of Symbian outright", detail: "Same year Nokia is named the EU's top corporate R&D spender." },
+    { date: "2008-09-01", label: "Android launches (HTC Dream)", detail: "Nokia staff later called Android the bigger disruptor of the two." },
+    { date: "2010-01-01", label: "Nokia ships its first true multitouch phone", detail: "Three years after the iPhone; four years after Nokia's own team saw the tech demoed." },
+    { date: "2010-11-01", label: "Symbian Foundation folds to licensing-only", detail: "Nokia retakes direct stewardship of the OS it once opened up." },
+    { date: "2011-02-08", label: "Elop's 'Burning Platform' memo leaks", detail: "Diagnoses Symbian as non-competitive and Android as having just taken Nokia's smartphone-volume lead." },
+    { date: "2011-02-11", label: "Windows Phone partnership announced", detail: "Nokia abandons Symbian and MeeGo for Microsoft's platform." },
+    { date: "2013-09-03", label: "Sale to Microsoft announced", detail: "€5.44B total: €3.79B for the Devices & Services business plus €1.65B to license Nokia's patents for ten years." },
+    { date: "2014-04-25", label: "Sale completes", detail: "Microsoft Mobile formed; Nokia refocuses on network infrastructure." }
+  ]} />
+
+The final numbers are exact, not rhetorical. Microsoft's own September 3, 2013 announcement <Annotation client:load term="priced the deal at €5.44 billion" note="Microsoft News Center, Sept 3 2013: Microsoft agreed to pay €3.79 billion for substantially all of Nokia’s Devices & Services business, plus €1.65 billion to license Nokia’s patents for ten years -- a total transaction price of €5.44 billion in cash." href="https://news.microsoft.com/source/2013/09/03/microsoft-to-acquire-nokias-devices-services-business-license-nokias-patents-and-mapping-services/" /> — split between the phone business itself and a separate ten-year patent license, not one lump sum for the handset unit alone. Nokia's own follow-up filing confirms the transaction <Annotation client:load term="closed on April 25, 2014" note="Nokia press release, GlobeNewswire, Apr 21 2014: Nokia announced it expected the transaction, originally announced Sept 3 2013, to close on April 25, 2014." href="https://www.globenewswire.com/en/news-release/2014/04/21/628243/0/en/Nokia-expects-the-sale-of-substantially-all-of-its-Devices-Services-business-to-Microsoft-to-close-on-April-25-2014.html" />.
+
+## Two academic autopsies, one diagnosis
+
+The same periodization anchors <Annotation client:load term="Harvard Business School’s own case on the company" note="Alcacer, Khanna & Snively (2014), “The Rise and Fall of Nokia,” HBS Case 714-428: the case frames Nokia’s 1990s-2000s dominance as built on manufacturing, product-development, and global-distribution competencies, and its fall as a failure to adapt those competencies to the smartphone era, ending at the 2013 Microsoft sale." href="https://www.hbs.edu/faculty/Pages/item.aspx?num=46041" /> — 1990s-2000s dominance built on manufacturing, product-development, and distribution strength, a failure to adapt those same competencies to the smartphone era, and a terminus at the 2013 Microsoft sale. The organizational-latency account above is not this piece's invention — it is the explicit argument of a peer-reviewed 2019/2021 *Business History* paper by Juha-Antti Lamberg, Sandra Lubinaitė, Jari Ojala, and Henrikki Tikkanen, built from oral-history interviews with Nokia insiders. Its stated aim is to identify the specific technology and organizational-design choices — the Symbian bet and the matrix reorg chief among them — that were jointly sufficient to force Nokia out of the phone business, and it explicitly sets that argument <Annotation client:load term="against explanations resting on emotion" note="Lamberg, Lubinaite, Ojala & Tikkanen (2021), Business History 63(4): the paper frames its contribution against explanations attributing Nokia’s failure to personality traits like “fear or hubris,” arguing instead for specific, compounding technology and organizational-design choices." href="https://www.tandfonline.com/doi/full/10.1080/00076791.2019.1593964" /> — fear or hubris — that a competing account had put at the center of the story.
+
+That competing account is real, peer-reviewed, and worth taking seriously on its own terms rather than as a straw man. <Annotation client:load term="Timo Vuori (Aalto University) and Quy Huy (INSEAD)" note="Vuori, T. O., & Huy, Q. N. (2016). “Distributed Attention and Shared Emotions in the Innovation Process: How Nokia Lost the Smartphone Battle.” Administrative Science Quarterly, 61(1), 9–51." href="https://journals.sagepub.com/doi/10.1177/0001839215606951" />, writing in *Administrative Science Quarterly* in 2016, interviewed Nokia executives and reconstructed a self-reinforcing <Definition client:visible term="fear cycle" def="a self-reinforcing loop in which anxious executives distort the information flowing both up and down an organization, degrading collective judgment even when individuals are behaving rationally within their own incentives." />: middle managers, positioned to protect the standing of their own newly-bounded units, filtered bad news on its way up, so that reports arrived — as ASQ's own blog, summarizing that same Vuori & Huy paper rather than adding an independent account, put it — <Annotation client:load term="in an embellished way" note="Not a second, independent source: this is Administrative Science Quarterly’s own blog summarizing the same Vuori & Huy (2016) paper cited above. It restates the paper’s finding that middle managers acted as filters between frontline reality and top leadership, softening bad news out of fear -- reports were, in one executive’s words, delivered “in an embellished way.”" href="https://asqblog.com/2016/12/14/vuori-huy-2016/" /> — while top managers, fixated on external threats from Apple, Google, and shareholders, pressured those same middle managers for results without revealing how severe they judged the threat to be. Each side's fear distorted what the other side heard, and the loop repeated, quarter after quarter, entrenching the very misjudgment it was meant to correct.
+
+<StateMachine client:visible caption="Vuori & Huy’s fear cycle: how the loop entrenches itself" start="confident"
+  states={[
+    { id: "confident", label: "TOP MGMT\nCONFIDENT", x: 0, y: 0 },
+    { id: "threat", label: "EXTERNAL THREAT\nPERCEIVED", x: 1, y: 0 },
+    { id: "pressure", label: "TOP PRESSURES\nMIDDLE MGRS", x: 2, y: 0 },
+    { id: "filtered", label: "MIDDLE MGRS\nFILTER BAD NEWS", x: 2, y: 1 },
+    { id: "misjudge", label: "TOP MGMT\nMISJUDGES SEVERITY", x: 1, y: 1 },
+    { id: "reinforce", label: "LOOP\nREINFORCES", x: 0, y: 1 }
+  ]}
+  transitions={[
+    { from: "confident", to: "threat", on: "iPhone, then Android, visibly gain share" },
+    { from: "threat", to: "pressure", on: "top managers push for results without revealing full severity" },
+    { from: "pressure", to: "filtered", on: "middle managers protect their units, soften bad news upward" },
+    { from: "filtered", to: "misjudge", on: "reports arrive incomplete or embellished" },
+    { from: "misjudge", to: "reinforce", on: "under-reaction lets the threat keep growing" },
+    { from: "reinforce", to: "threat", on: "next quarter's numbers force a fresh reassessment" }
+  ]}
+  sequence={["confident>threat", "threat>pressure", "pressure>filtered", "filtered>misjudge", "misjudge>reinforce", "reinforce>threat"]} />
+
+<Detail summary="Go deeper: why two peer-reviewed teams reached different mechanisms from the same company" defaultOpen={false}>
+The two papers used different methods and asked different questions. Vuori and Huy's interviews focused on the emotional texture of the innovation process itself — what executives felt and how that shaped what they said to each other — and located the cause in a psychological dynamic. Lamberg, Lubinaite, Ojala and Tikkanen's oral history focused on the sequence of strategic and structural decisions and located the cause in the choices themselves, arguing those choices are sufficient on their own without invoking emotion as the mechanism. Neither paper disputes the other's facts; they disagree about which layer of description does the explanatory work. For this piece's purposes, the two papers corroborate each other on the claim that actually matters here: Nokia's failure was internal and organizational, not simply a case of Apple and Google building better phones.
+</Detail>
+
+<Pullquote cite="Stephen Elop, internal Nokia memo, Feb 8, 2011" href="https://www.engadget.com/2011-02-08-nokia-ceo-stephen-elop-rallies-troops-in-brutally-honest-burnin.html" kind="quote">
+The first iPhone shipped in 2007, and we still don't have a product that is close to their experience. Android came on the scene just over 2 years ago, and this week they took our leadership position in smartphone volumes. Unbelievable... We poured gasoline on our own burning platform.
+</Pullquote>
+
+Read against the mechanism above, Elop's memo is not a diagnosis of competitive inferiority — it is a CEO discovering, four years after the fact, that his own organization's internal decision graph had cost it four years. Symbian, Elop wrote, had "proven to be non-competitive in leading markets like North America," and Apple's share of the $300-and-up phone segment had gone from 25% in 2008 to <Annotation client:load term="61% by 2010" note="Elop’s memo, quoted verbatim by Engadget: “In 2008, Apple’s market share in the $300+ price range was 25 percent; by 2010 it escalated to 61 percent.”" href="https://www.engadget.com/2011-02-08-nokia-ceo-stephen-elop-rallies-troops-in-brutally-honest-burnin.html" /> 61% by 2010 — while Nokia's own UK brand preference had slipped to 20%, eight points below the year before. Three days later Nokia announced it would abandon both Symbian and its Linux-based MeeGo effort for Microsoft's Windows Phone.
+
+## What actually collapsed — and what didn't
+
+Here is the complication a simple "Nokia died" story misses, and it sharpens the mechanism argument rather than softening it. Nokia's overall handset business did not collapse to zero — it shrank steadily but kept shipping hundreds of millions of phones a year, most of them cheap feature phones sold at volume in emerging markets. What collapsed was specifically the smartphone franchise: a business that held <Annotation client:load term="49.4% of the world smartphone market in 2007, and still 43.7% in 2008" note="Fierce Network, reporting Gartner: Nokia’s full-year smartphone market share was 49.4% in 2007 and 43.7% in 2008 (Q4 figures: 50.9% and 40.8% respectively) — a commanding lead the matrix reorg’s veto grid was too slow to defend once the iPhone and Android arrived." href="https://www.fierce-network.com/wireless/report-nokia-s-smartphone-market-share-dropping" /> — the high-margin, ecosystem-defining business the matrix reorg's veto grid had been too slow to defend.
+
+<SmallMultiples client:visible mark="line" x="year" y="share" facet="series" columns={3} sharedY
+  caption="Three independent measurements of the same collapse: Gartner’s quarterly handset-share estimate, Strategy Analytics’s full-year handset-share estimate, and Gartner’s full-year smartphone-specific share. Different methodologies, same direction."
+  data={[
+    { year: 2010, share: 30.6, series: "Handset share — Gartner (Q1)" },
+    { year: 2011, share: 25.0, series: "Handset share — Gartner (Q1)" },
+    { year: 2012, share: 19.7, series: "Handset share — Gartner (Q1)" },
+    { year: 2013, share: 14.8, series: "Handset share — Gartner (Q1)" },
+    { year: 2012, share: 21.2, series: "Handset share — Strategy Analytics (FY)" },
+    { year: 2013, share: 15.2, series: "Handset share — Strategy Analytics (FY)" },
+    { year: 2007, share: 49.4, series: "Smartphone share — Gartner (FY)" },
+    { year: 2008, share: 43.7, series: "Smartphone share — Gartner (FY)" }
+  ]} />
+
+Meanwhile the volume business barely flinched by comparison. IDC put Nokia's 2007 shipments at 437.1 million handsets; Strategy Analytics put 2012 shipments at 335.6 million and 2013 at 252.4 million — a real decline, but nowhere near the share collapse above implies, because the total global handset market itself nearly doubled over the same stretch, from 1.14 billion units in 2007 to <Annotation client:load term="1.66 billion in 2013" note="Strategy Analytics press release: the global handset market grew from 1.58 billion units in 2012 to 1.66 billion in 2013, while Nokia’s own shipments fell from 335.6 million to 252.4 million." href="https://www.prnewswire.com/news-releases/strategy-analytics-global-mobile-phone-shipments-reach-17-billion-units-in-2013-242305601.html" /> 1.66 billion in 2013.
+
+<Chart client:visible mark="bar" x="year" y="units" height={260}
+  caption="Nokia’s total handset shipments, million units — the volume business declined, but nothing like the share collapse above. Sources: IDC (2007), Strategy Analytics (2012, 2013)."
+  data={[
+    { year: "2007", units: 437.1 },
+    { year: "2012", units: 335.6 },
+    { year: "2013", units: 252.4 }
+  ]} />
+
+By Q1 2013, Gartner ranked Nokia 10th in the world by smartphone volume — down from 8th just the previous quarter — even as Nokia sold 5.1 million Windows Phone Lumia units that same quarter and kept a double-digit share of the *overall* handset market<Annotation client:load term="10th in the world by smartphone volume" note="TechPanda, reporting Gartner: Nokia fell to 10th place in the global smartphone vendor rankings in Q1 2013 (from 8th in Q4 2012); Nokia’s overall handset share was 14.8% in Q1 2013, down from 19.7% a year earlier; Nokia shipped 5.1M Lumia units that quarter." href="https://thetechpanda.com/nokia-slips-to-no-10-in-smartphone-market-gartner/9848/" />. The factory kept running. The war it had been built to win was already over.
+
+<DataTable client:load caption="What broke inside the matrix -- and why Nokia’s leadership accepted each trade for as long as it did"
+  columns={[
+    { key: "mode", label: "Failure mode", type: "string" },
+    { key: "cause", label: "Root cause", type: "string" },
+    { key: "accepted", label: "Why it wasn't fixed sooner", type: "string" }
+  ]}
+  rows={[
+    { mode: "Matrix 'agility' became a veto grid", cause: "Product-line P&L owners and horizontal platform owners each held independent, co-equal sign-off on cross-cutting bets like touch UI", accepted: "The design traded decision speed for cost discipline and shared-platform efficiency -- exactly what Nokia's board wanted after 1990s hypergrowth strained the old structure" },
+    { mode: "Bad news arrived late and softened", cause: "Middle managers, newly boxed into narrower units, filtered upward reports to protect their own unit's standing (Vuori & Huy)", accepted: "No one designed this trade-off deliberately -- it is the unplanned by-product of the matrix, and the whole point of Vuori & Huy's account is that it compounded on its own" },
+    { mode: "Feature-phone volume masked the smartphone loss", cause: "Nokia kept shipping ~250M-plus low-margin handsets a year through 2013 even as its smartphone share cratered", accepted: "The volume business the matrix had been optimized for kept performing well enough to obscure, internally, how completely the high-margin smartphone war had already been lost" },
+    { mode: "R&D spend didn't buy speed", cause: "Money bought engineering headcount and patents, not faster cross-unit approval", accepted: "Leadership treated the constraint as a resourcing problem and kept funding it as one -- the central complaint of the Business History account" },
+    { mode: "The reorg was never undone in time", cause: "Three further reorganizations followed 2004 before the 2013 sale, each layering complexity rather than resolving the core P&L/platform conflict (ODI)", accepted: "Organizational path dependency: once product-line owners and platform owners each had their own constituencies, reversing course meant demoting someone with the power to resist it" }
+  ]} />
+
+## The takeaway
+
+Nokia itself did not disappear — it sold the phone business and rebuilt around network infrastructure, and by the time the smartphone story above ends it was already re-establishing itself as one of the world's top-three 5G equipment suppliers, serving carriers across more than <Annotation client:load term="125 countries" note="IEEE Spectrum: after the Microsoft sale, Nokia refocused on telecom network infrastructure and became a top-three global 5G supplier, serving carriers in more than 125 countries alongside Ericsson and Huawei." href="https://spectrum.ieee.org/nokia-phones-history" /> alongside Ericsson and Huawei. That is the tell. The organization that could not clear a two-signature veto grid fast enough to keep a phone business was, underneath, still a perfectly capable engineering company — it just needed a structure that let it act like one again.
+
+Audit your organization's decision graph the way you'd audit a production system's latency, not its budget. R&D spend, headcount, and even correct foresight are necessary but not sufficient — Nokia had all three and still lost. What it lacked was a way to route a cross-cutting bet through fewer than two independent, co-equal, veto-holding authorities.
+
+If a strategic decision has to clear a product owner and a platform owner and neither can act alone, you have built an AND-gate, and the AND-gate's expected latency tracks your slowest approver's ceiling, not your average approver's competence. Watch specifically for decisions that are genuinely cross-cutting — a new interface paradigm, a new OS, anything that used to belong to one team and now touches a shared platform someone else owns — because those are exactly the decisions a matrix structure makes slowest, and they are exactly the decisions a market shift like the iPhone's arrives as. The fix is not more money and it is not smarter people. It is fewer required yeses on the decisions where speed is the whole game, and a structure that makes it someone's explicit job to hold the timer, not just the budget.
