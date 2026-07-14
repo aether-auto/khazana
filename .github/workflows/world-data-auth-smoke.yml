@@ -1,0 +1,41 @@
+name: world-data-auth-smoke
+
+# Manually dispatched read/write auth smoke test for the private world-data repo.
+# It checks out aether-auto/khazana-world-data with WORLD_DATA_REPO_TOKEN, asserts the
+# registry file exists, and runs a `git push --dry-run` to validate write access.
+# It must NOT mutate either repository and must NEVER print the secret.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out world-data (read-only credentials)
+        uses: actions/checkout@v4
+        with:
+          repository: aether-auto/khazana-world-data
+          token: ${{ secrets.WORLD_DATA_REPO_TOKEN }}
+          path: .world-data
+          ref: main
+          persist-credentials: false
+
+      - name: Assert registry file exists
+        run: |
+          test -f .world-data/data/world-sources.json
+          echo "world-sources.json present"
+
+      - name: Push dry-run (write-access smoke, no mutation)
+        env:
+          WD_TOKEN: ${{ secrets.WORLD_DATA_REPO_TOKEN }}
+        run: |
+          # Ephemeral inline auth header: token lives only for this process, never
+          # persisted to git config and never echoed to the log.
+          AUTH="$(printf 'x-access-token:%s' "$WD_TOKEN" | base64 | tr -d '\n')"
+          git -C .world-data -c http.extraheader="AUTHORIZATION: basic $AUTH" \
+            push --dry-run origin HEAD:main
+          echo "push --dry-run succeeded (no changes pushed)"
