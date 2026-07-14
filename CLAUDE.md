@@ -74,6 +74,18 @@ ds-sports, data-strategy, finance, ideas, diy, 3d-printing, iot, embedded, ai-pr
 
 **v1 Formats:** `chronicle, dispatch, field-notes, teardown, primer, build-log`
 
+**LicenseTier:** `redistribute-raw-ok, derived-only`
+
+**IndicatorField:** `macro, governance, corruption, wellbeing, procurement, fiscal, elections, conflict`
+
+**WorldEventCategory:** `conflict, diplomacy, politics, economy, disaster, society, science-tech`
+
+**EventSeverity:** `low, medium, high, critical`
+
+**ReferenceRater:** `allsides, adfontes, mbfc`
+
+**CadenceLane:** `fast, medium, slow`
+
 ---
 
 ## Model-tiering policy
