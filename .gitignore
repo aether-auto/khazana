@@ -39,3 +39,16 @@ videos/
 Icon\r
 .claude/*.local.md
 docs/cofounder/
+.worktrees/
+graphify-out/
+
+# cofounder:start — cofounder artifacts are local-only by default.
+# Delete a line to start committing that artifact; cofounder never re-adds
+# lines inside this block once it exists.
+.worktrees/
+graphify-out/
+docs/cofounder/
+PROJECT.md
+AGENTS.md
+.claude/cofounder.local.md
+# cofounder:end

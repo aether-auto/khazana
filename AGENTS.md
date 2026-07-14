@@ -116,3 +116,31 @@ Rule of thumb: **free LLM for volume, Sonnet 5 for every format's writing and ve
   Never skip the red step.
 - **No placeholders in committed code.** If a section genuinely awaits founder input (like
   `STYLE.md` example paragraphs), mark it explicitly; everything else must be real content.
+
+<!-- cofounder-skill:start -->
+## Project memory (cofounder skill)
+
+This project is built by the cofounder Claude Code plugin (plan -> spec -> execute). Before
+doing anything else this session:
+1. Read `PROJECT.md` and `docs/cofounder/COFOUNDER_PERSONA.md` -- vision, constraints, voice.
+2. Read the last 15-20 entries of `docs/cofounder/DECISIONS.md`.
+3. Check `docs/cofounder/ROADMAP.md` for the current phase and what's next.
+4. Read the last 40 lines of `docs/cofounder/LEARNINGS.md` (`tail -n 40`, never the whole file).
+
+Full founding specs live in `docs/cofounder/specs/` -- read the relevant one when working on
+that area, rather than assuming; they're deliberately not inlined here to keep this file lean.
+
+If you were dispatched by `cofounder:spec` or `cofounder:execute`'s Haiku forwarder, the prompt
+you received already carries this task's exact style/graph/learned-skill/(for execute)
+serve/browser rules, with every plugin script path already resolved to a real absolute path --
+this file is supplementary orientation, not a replacement for that prompt.
+
+If you're operating in this repo directly instead (a human ran `codex` outside cofounder's own
+automation), the same standing rules apply as to any cofounder builder: caveman-style prose
+(drop articles/filler, keep every technical term/number/path/command exact); before reading
+source blind, locate and run the cofounder plugin's `graph.mjs files/query` against this repo
+(find its install path with `find ~ -maxdepth 6 -path '*cofounder*/scripts/graph.mjs' 2>/dev/null`
+if not already known) instead of reading everything cold; check `learn.mjs relevant` the same
+way before starting, `add` a reusable lesson after finishing; never Playwright/Puppeteer/
+Selenium for browser testing, always `agent-browser`.
+<!-- cofounder-skill:end -->
