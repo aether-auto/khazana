@@ -122,3 +122,15 @@ export type { ForceSide, ForceMetric } from "./lib/force-comparison.js";
 // X wave: generalized reader-controlled model (author formula → live curve + readouts).
 export { default as ParameterPlay } from "./ParameterPlay.js";
 export type { ParameterPlayProps, ParameterPlayParam, ParameterPlayReadout } from "./ParameterPlay.js";
+// ── Atlas Government Structure wave: power-flow diagram ────────────────────────
+export { default as PowerFlow } from "./PowerFlow.js";
+export type { PowerFlowProps } from "./PowerFlow.js";
+export type {
+  PowerFlowInstitution,
+  PowerFlowNode,
+  PowerFlowRoute,
+  PowerFlowColumn,
+  PowerFlowRow,
+  PowerFlowLayout,
+  PowerFlowLayoutOpts,
+} from "./lib/power-flow-layout.js";

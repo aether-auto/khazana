@@ -1,0 +1,289 @@
+/* apps/site/src/components/mdx/PowerFlow.css
+   Government power-flow diagram: institutions as hairline boxes arranged in
+   branch COLUMNS × tier ROWS on the warm ground, directed authority edges as
+   bowed curves, amber for the active institution + its edges. All geometry
+   (viewBox, columns, rows, curves) comes from layoutPowerFlow; this file is the
+   visual voice only. The SVG scales to width:100% so a wide diagram shrinks to
+   fit 360px and never widens the page. */
+
+.pf-panel {
+  padding: var(--s-6) var(--s-5) var(--s-5);
+}
+
+.pf-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* ── branch column headers + tier row labels ─────────────────────────────── */
+.pf-col-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  fill: var(--ink-faint);
+}
+.pf-row-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  fill: var(--ink-faint);
+}
+
+/* ── edges: bowed authority curves ───────────────────────────────────────── */
+.pf-edge-line {
+  stroke: var(--rule-bright);
+  stroke-width: 1.5;
+  transition:
+    stroke var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+/* relation KIND → distinct stroke pattern */
+.pf-edge--appoints .pf-edge-line,
+.pf-edge--elects .pf-edge-line {
+  stroke-dasharray: none;
+}
+.pf-edge--confirms .pf-edge-line,
+.pf-edge--reviews .pf-edge-line {
+  stroke-dasharray: 7 4;
+}
+.pf-edge--vetoes .pf-edge-line,
+.pf-edge--dissolves .pf-edge-line,
+.pf-edge--dismisses .pf-edge-line {
+  stroke-dasharray: 2 4;
+  stroke-linecap: round;
+}
+.pf-edge--confidence .pf-edge-line {
+  stroke-dasharray: 10 3 2 3;
+}
+
+.pf-arrowhead {
+  fill: var(--rule-bright);
+  transition: fill var(--dur-fast) var(--ease-out);
+}
+.pf-arrowhead--lit {
+  fill: var(--accent);
+}
+
+/* ── edge labels: mono, backed so they read over the curve ───────────────── */
+.pf-edge-labelbg {
+  fill: var(--bg-raised);
+  opacity: 0.9;
+}
+.pf-edge-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  fill: var(--ink-label);
+}
+
+/* ── lit edge (an endpoint is hovered/focused) ───────────────────────────── */
+.pf-edge--lit .pf-edge-line {
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--accent) 40%, transparent));
+}
+.pf-edge--lit .pf-edge-label {
+  fill: var(--ink);
+}
+
+/* ── institution nodes: hairline boxes ───────────────────────────────────── */
+.pf-node {
+  cursor: default;
+}
+.pf-node[role="button"] {
+  cursor: pointer;
+}
+.pf-node:focus {
+  outline: none;
+}
+.pf-node-box {
+  fill: var(--bg-inset);
+  stroke: var(--rule-bright);
+  stroke-width: 1.25;
+  transition:
+    stroke var(--dur-fast) var(--ease-out),
+    fill var(--dur-fast) var(--ease-out);
+}
+.pf-node-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  fill: var(--ink-label);
+  transition: fill var(--dur-fast) var(--ease-out);
+}
+
+/* branch tint — a single accent hairline via stroke color, kept subtle */
+.pf-node--executive .pf-node-box { stroke: color-mix(in oklab, var(--accent) 45%, var(--rule-bright)); }
+.pf-node--legislative .pf-node-box { stroke: color-mix(in oklab, var(--editorial) 45%, var(--rule-bright)); }
+.pf-node--judicial .pf-node-box { fill: var(--bg-raised); }
+.pf-node--electoral .pf-node-box { stroke-dasharray: 4 3; }
+
+/* ── dimming: when a node is active, everything else recedes ──────────────── */
+.pf-svg--dimmed .pf-node,
+.pf-svg--dimmed .pf-edge {
+  opacity: 0.3;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.pf-svg--dimmed .pf-node--active,
+.pf-svg--dimmed .pf-edge--lit {
+  opacity: 1;
+}
+
+/* ── active node emphasis ─────────────────────────────────────────────────── */
+.pf-node--active .pf-node-box {
+  stroke: var(--accent);
+  stroke-width: 1.75;
+  filter: drop-shadow(0 0 5px color-mix(in oklab, var(--accent) 40%, transparent));
+}
+.pf-node--active .pf-node-label {
+  fill: var(--ink);
+}
+.pf-node:focus-visible .pf-node-box {
+  stroke: var(--focus);
+  stroke-width: 2;
+}
+
+/* ── on-canvas relation legend ────────────────────────────────────────────── */
+.pf-legend {
+  list-style: none;
+  margin: var(--s-3) 0 0;
+  padding: var(--s-3) 0 0;
+  border-top: var(--hair) solid var(--rule);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+}
+.pf-legend-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-1);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+}
+.pf-legend-swatch {
+  align-self: center;
+  width: 18px;
+  height: 0;
+  border-top: 1.5px solid var(--rule-bright);
+}
+.pf-legend-item--confirms .pf-legend-swatch,
+.pf-legend-item--reviews .pf-legend-swatch { border-top-style: dashed; }
+.pf-legend-item--vetoes .pf-legend-swatch,
+.pf-legend-item--dissolves .pf-legend-swatch,
+.pf-legend-item--dismisses .pf-legend-swatch { border-top-style: dotted; }
+/* confidence uses a dash-dot edge stroke; the swatch is double-ruled so it never
+   reads as the plain-solid appoints/elects swatch. */
+.pf-legend-item--confidence .pf-legend-swatch {
+  border-top-style: double;
+  border-top-width: 4px;
+}
+.pf-legend-name {
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+.pf-legend-gloss {
+  color: var(--ink-faint);
+}
+
+/* ── SSR / no-JS structured fallback ─────────────────────────────────────── */
+.pf-fallback {
+  display: none;
+  padding: var(--s-3) 0 0;
+}
+.pf-fallback-title {
+  font-family: var(--font-mono);
+  font-size: var(--t-md);
+  color: var(--ink);
+  margin: 0 0 var(--s-2);
+}
+.pf-fallback .mdx-label {
+  display: block;
+  margin: var(--s-4) 0 var(--s-1);
+}
+.pf-fallback-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+}
+.pf-fallback-table th,
+.pf-fallback-table td {
+  text-align: left;
+  padding: var(--s-1) var(--s-2) var(--s-1) 0;
+  border-bottom: var(--hair) solid var(--rule);
+  color: var(--ink-dim);
+}
+.pf-fallback-table thead th {
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: var(--t-xs);
+}
+.pf-fallback-facts,
+.pf-fallback-edges,
+.pf-fallback-legend,
+.pf-fallback-sources,
+.pf-fallback-divergence {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+  color: var(--ink-dim);
+}
+.pf-fallback-facts li,
+.pf-fallback-edges li,
+.pf-fallback-legend li,
+.pf-fallback-sources li,
+.pf-fallback-divergence li {
+  padding: var(--s-1) 0;
+}
+.pf-fact-key {
+  color: var(--ink-label);
+}
+.pf-fallback-relation {
+  color: var(--accent);
+}
+.pf-fallback-basis {
+  color: var(--ink-faint);
+}
+.pf-source-link {
+  color: var(--editorial);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── mobile: a wide diagram squeezed into ~320px is an illegible smear. Below
+   this width hide the SVG + on-canvas legend and promote the full structured
+   fallback (same data, every label readable). ── */
+@media (max-width: 640px) {
+  .pf-svg,
+  .pf-legend {
+    display: none;
+  }
+  .pf-fallback {
+    display: block;
+  }
+  .pf-panel {
+    padding: var(--s-4);
+  }
+}
+
+/* ── reduced motion: no transitions; render the end state ─────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .pf-edge-line,
+  .pf-arrowhead,
+  .pf-node-box,
+  .pf-node-label,
+  .pf-svg--dimmed .pf-node,
+  .pf-svg--dimmed .pf-edge {
+    transition: none;
+  }
+  .pf-node--active .pf-node-box,
+  .pf-edge--lit .pf-edge-line {
+    filter: none;
+  }
+}
