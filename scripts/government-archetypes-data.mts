@@ -443,9 +443,9 @@ export function buildGovernmentArchetypes(): GovArchetype[] {
       ],
     },
     {
-      id: "military-junta-provisional",
+      id: "military-junta",
       systemType: "military-junta",
-      label: "Military junta / provisional government",
+      label: "Military junta",
       institutions: [
         { slot: "junta-council", branch: "executive", tier: "national", kind: "head-of-state" },
         { slot: "transitional-legislature", branch: "legislative", tier: "national", kind: "chamber" },
@@ -457,14 +457,39 @@ export function buildGovernmentArchetypes(): GovArchetype[] {
           toSlot: "transitional-legislature",
           relation: "dissolves",
           defaultBasis:
-            "characteristic of a military junta or provisional government's convention that the ruling council may suspend or dissolve the legislature unilaterally",
+            "characteristic of a military junta's convention that the ruling council may suspend or dissolve the legislature unilaterally",
         },
         {
           fromSlot: "junta-council",
           toSlot: "apex-court",
           relation: "appoints",
+          defaultBasis: "characteristic of a military junta's convention that the ruling council appoints the judiciary directly",
+        },
+      ],
+    },
+    {
+      id: "provisional-government",
+      systemType: "provisional",
+      label: "Provisional / transitional government",
+      institutions: [
+        { slot: "caretaker-executive", branch: "executive", tier: "national", kind: "head-of-state" },
+        { slot: "transitional-legislature", branch: "legislative", tier: "national", kind: "chamber" },
+        { slot: "apex-court", branch: "judicial", tier: "national", kind: "apex-court" },
+      ],
+      edges: [
+        {
+          fromSlot: "transitional-legislature",
+          toSlot: "caretaker-executive",
+          relation: "confirms",
           defaultBasis:
-            "characteristic of a military junta or provisional government's convention that the ruling council appoints the judiciary directly",
+            "characteristic of a provisional government's convention that a transitional legislature or council formally confirms the caretaker executive pending a permanent settlement",
+        },
+        {
+          fromSlot: "caretaker-executive",
+          toSlot: "apex-court",
+          relation: "appoints",
+          defaultBasis:
+            "characteristic of a provisional government's convention that the caretaker executive appoints the judiciary on an interim basis",
         },
       ],
     },

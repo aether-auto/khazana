@@ -33,12 +33,17 @@ function libraryOf(archetypes: GovArchetype[]): GovArchetypeLibrary {
 
 const ALL_FAMILY_ARCHETYPES: GovArchetype[] = [
   baseArchetype({ id: "westminster-parliamentary", systemType: "parliamentary" }),
+  baseArchetype({ id: "continental-parliamentary", systemType: "parliamentary" }),
   baseArchetype({ id: "us-presidential", systemType: "presidential" }),
+  baseArchetype({ id: "latin-american-presidential", systemType: "presidential" }),
   baseArchetype({ id: "french-semi-presidential", systemType: "semi-presidential" }),
+  baseArchetype({ id: "russian-semi-presidential", systemType: "semi-presidential" }),
   baseArchetype({ id: "directorial-collegial", systemType: "directorial" }),
   baseArchetype({ id: "constitutional-monarchy", systemType: "constitutional-monarchy" }),
+  baseArchetype({ id: "absolute-monarchy", systemType: "absolute-monarchy" }),
   baseArchetype({ id: "one-party-state", systemType: "one-party" }),
-  baseArchetype({ id: "military-junta-provisional", systemType: "military-junta" }),
+  baseArchetype({ id: "military-junta", systemType: "military-junta" }),
+  baseArchetype({ id: "provisional-government", systemType: "provisional" }),
   baseArchetype({ id: "theocratic", systemType: "other" }),
   baseArchetype({ id: "assembly-elected-president-hybrid", systemType: "other" }),
   baseArchetype({ id: "generic-fallback", systemType: "other" }),
@@ -146,8 +151,19 @@ describe("validateLibrary", () => {
   test("rejects missing family coverage", () => {
     const result = validateLibrary(libraryOf([baseArchetype()]));
     expect(result.ok).toBe(false);
-    expect(result.errors.some((e) => e.includes('no archetype covers the required "presidential" family'))).toBe(true);
-    expect(result.errors.some((e) => e.includes('no archetype covers the required "theocratic" family'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('missing required archetype "us-presidential"'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('missing required archetype "theocratic"'))).toBe(true);
+  });
+
+  test("rejects a required archetype id present with the wrong systemType", () => {
+    const wrongType = ALL_FAMILY_ARCHETYPES.map((a) =>
+      a.id === "theocratic" ? { ...a, systemType: "parliamentary" as const } : a,
+    );
+    const result = validateLibrary(libraryOf(wrongType));
+    expect(result.ok).toBe(false);
+    expect(
+      result.errors.some((e) => e.includes('archetype "theocratic": expected systemType "other" for this required family, got "parliamentary"')),
+    ).toBe(true);
   });
 });
 

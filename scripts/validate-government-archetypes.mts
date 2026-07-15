@@ -22,24 +22,35 @@ import { GovArchetypeLibrarySchema, type GovArchetype, type GovArchetypeLibrary 
 /** A citation-shaped `defaultBasis` (article/section numbers, § marks) is never a generic default — it belongs in `constitutionalBasis.text` with `basisOrigin: "constitution-coded"` on the assembled record, not in the archetype template. */
 const CITATION_LIKE = /\b(art(?:icle)?|sec(?:tion)?)\.?\s*\d+\b|§\s*\d+|\bch(?:apter)?\.?\s*\d+\b/i;
 
-/** The required family coverage (§4.2's ~14 archetypes). `systemType` alone can't
- * distinguish theocratic/hybrid/generic-fallback (all legitimately "other"), so
- * those three match on an id-substring convention instead. */
+/**
+ * The required family coverage — §4.2's named archetype templates, each with its own
+ * distinct slot/edge shape the downstream assembler depends on (a broad `systemType`
+ * bucket check is not enough: e.g. two DIFFERENT presidential templates exist —
+ * US-style and Latin-American-with-electoral-branch — and collapsing them into one
+ * "any presidential archetype present" check would silently accept a library missing
+ * one of them). Every entry below must be satisfied by an EXACT archetype id AND its
+ * `systemType` must match, so a mislabeled or dropped template is caught precisely.
+ */
 interface RequiredFamily {
-  name: string;
-  test: (a: GovArchetype) => boolean;
+  id: string;
+  systemType: GovArchetype["systemType"];
 }
 const REQUIRED_FAMILIES: RequiredFamily[] = [
-  { name: "parliamentary", test: (a) => a.systemType === "parliamentary" },
-  { name: "presidential", test: (a) => a.systemType === "presidential" },
-  { name: "semi-presidential", test: (a) => a.systemType === "semi-presidential" },
-  { name: "directorial", test: (a) => a.systemType === "directorial" },
-  { name: "monarchy", test: (a) => a.systemType === "constitutional-monarchy" || a.systemType === "absolute-monarchy" },
-  { name: "one-party", test: (a) => a.systemType === "one-party" },
-  { name: "junta/provisional", test: (a) => a.systemType === "military-junta" || a.systemType === "provisional" },
-  { name: "theocratic", test: (a) => a.id.toLowerCase().includes("theocra") },
-  { name: "hybrid", test: (a) => a.id.toLowerCase().includes("hybrid") },
-  { name: "generic fallback", test: (a) => a.id.toLowerCase().includes("fallback") || a.id.toLowerCase().includes("generic") },
+  { id: "westminster-parliamentary", systemType: "parliamentary" },
+  { id: "continental-parliamentary", systemType: "parliamentary" },
+  { id: "us-presidential", systemType: "presidential" },
+  { id: "latin-american-presidential", systemType: "presidential" },
+  { id: "french-semi-presidential", systemType: "semi-presidential" },
+  { id: "russian-semi-presidential", systemType: "semi-presidential" },
+  { id: "directorial-collegial", systemType: "directorial" },
+  { id: "constitutional-monarchy", systemType: "constitutional-monarchy" },
+  { id: "absolute-monarchy", systemType: "absolute-monarchy" },
+  { id: "one-party-state", systemType: "one-party" },
+  { id: "military-junta", systemType: "military-junta" },
+  { id: "provisional-government", systemType: "provisional" },
+  { id: "theocratic", systemType: "other" },
+  { id: "assembly-elected-president-hybrid", systemType: "other" },
+  { id: "generic-fallback", systemType: "other" },
 ];
 
 export interface ValidationResult {
@@ -77,8 +88,13 @@ export function validateLibrary(library: GovArchetypeLibrary): ValidationResult 
   }
 
   for (const family of REQUIRED_FAMILIES) {
-    if (!library.archetypes.some(family.test)) {
-      errors.push(`library: no archetype covers the required "${family.name}" family`);
+    const found = library.archetypes.find((a) => a.id === family.id);
+    if (!found) {
+      errors.push(`library: missing required archetype "${family.id}" (systemType "${family.systemType}")`);
+    } else if (found.systemType !== family.systemType) {
+      errors.push(
+        `archetype "${family.id}": expected systemType "${family.systemType}" for this required family, got "${found.systemType}"`,
+      );
     }
   }
 
