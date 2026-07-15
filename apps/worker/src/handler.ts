@@ -23,9 +23,11 @@ const WorldRollupSchema = z.object({
 });
 type WorldRollup = z.infer<typeof WorldRollupSchema>;
 
-/** Sort newest-first by event time and cap at MAX_WORLD_EVENTS. */
+/** Sort newest-first by parsed event time (not lexicographic — ISO strings with
+ *  mixed fractional-second precision don't sort correctly as plain strings)
+ *  and cap at MAX_WORLD_EVENTS. */
 function canonicalizeWorldEvents(events: WorldEvent[]): WorldEvent[] {
-  const sorted = [...events].sort((a, b) => (a.time < b.time ? 1 : a.time > b.time ? -1 : 0));
+  const sorted = [...events].sort((a, b) => Date.parse(b.time) - Date.parse(a.time));
   return sorted.slice(0, MAX_WORLD_EVENTS);
 }
 
