@@ -101,6 +101,15 @@ constitutional-court, election-authority, subnational-executive, subnational-leg
 **SelectionMethod:** `direct-election, indirect-election, hereditary, appointment, ex-officio,
 legislature-elected, mixed, other`
 
+**TheaterStatus:** `proposed, active, dormant, archived`
+
+**GeometryStatus:** `licensed, fallback, link-out-only`
+
+**TheaterMetricKind:** `casualties, displacement, fires, nightlights, media-attention,
+commodity-impact`
+
+**EngagementKind:** `battle, strike, siege, advance, incident`
+
 ---
 
 ## Model-tiering policy

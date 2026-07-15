@@ -3,6 +3,7 @@ export * from "./vocab.js";
 export * from "./world-provenance.js";
 export * from "./world-government.js";
 export * from "./world-indicator.js";
+export * from "./world-theater.js";
 export * from "./world-country-profile.js";
 export * from "./world-outlet.js";
 export * from "./world-event.js";
