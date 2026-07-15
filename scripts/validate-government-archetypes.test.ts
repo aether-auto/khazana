@@ -148,6 +148,13 @@ describe("validateLibrary", () => {
     expect(result.errors.some((e) => e.includes("must read as a generic family convention"))).toBe(true);
   });
 
+  test("rejects a blank archetype id", () => {
+    const bad = baseArchetype({ id: "   " });
+    const result = validateLibrary(libraryOf([...ALL_FAMILY_ARCHETYPES.slice(1), bad]));
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((e) => e.includes("id must be non-empty"))).toBe(true);
+  });
+
   test("rejects missing family coverage", () => {
     const result = validateLibrary(libraryOf([baseArchetype()]));
     expect(result.ok).toBe(false);

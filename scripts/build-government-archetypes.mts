@@ -22,11 +22,20 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { GovArchetypeLibrarySchema } from "../packages/core/src/index.ts";
 import { buildGovernmentArchetypeLibrary } from "./government-archetypes-data.mts";
+import { validateLibrary } from "./validate-government-archetypes.mts";
 
 const repoRoot = fileURLToPath(new URL("../", import.meta.url));
 
+/** Zod-shape-parses AND runs the full semantic validator (unique ids/slots, declared-slot
+ * edges, no self-loops, generic default-basis text, required family coverage) — never
+ * publish (locally OR to the private repo) an artifact that would fail
+ * `validate-government-archetypes.mts` itself. */
 export function serializeLibrary(): string {
   const library = GovArchetypeLibrarySchema.parse(buildGovernmentArchetypeLibrary());
+  const result = validateLibrary(library);
+  if (!result.ok) {
+    throw new Error(`[build-government-archetypes] refusing to publish an invalid library:\n${result.errors.map((e) => `  - ${e}`).join("\n")}`);
+  }
   return JSON.stringify(library, null, 2) + "\n";
 }
 

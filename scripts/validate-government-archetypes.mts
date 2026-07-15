@@ -105,6 +105,9 @@ function validateArchetype(archetype: GovArchetype): string[] {
   const errors: string[] = [];
   const id = archetype.id;
 
+  if (!id.trim()) {
+    errors.push(`archetype "${id}": id must be non-empty — a blank id is unusable as a stable archetypeId reference`);
+  }
   if (!archetype.label.trim()) {
     errors.push(`archetype "${id}": label must be non-empty`);
   }
