@@ -63,7 +63,18 @@ const buildTime = new Date().toISOString();
     {/* SAME access curtain as the Study. Renders nothing when
         PUBLIC_SITE_GATE_HASH is unset; when set, gates every /atlas/* route. */}
     <SiteGate />
+    {/* Signature face-switch transition (two-faces spec §4) — same wiring as the
+        Study shell so a crossing in EITHER direction is choreographed. The
+        `@view-transition` opt-in is render-blocking + inline; the direction-
+        branched choreography lives in styles/face-switch.css. */}
+    <style is:inline>@view-transition { navigation: auto; }</style>
     <ClientRouter />
+    {/* The ONLY JS in the transition: sets the VT `type` in pageswap, echoes it
+        + lands focus in pagereveal, listens for the TimeoutError, and drives the
+        no-VT data-just-crossed fade. Inert unless a face crossing fires. */}
+    <script>
+      import "../lib/face-switch.ts";
+    </script>
     <script is:inline>
       // Gate the reveal hidden-state before paint (JS-on only, reduced-motion
       // opted out), with a load backstop that un-hides everything if the reveal

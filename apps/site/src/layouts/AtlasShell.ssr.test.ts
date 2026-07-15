@@ -96,3 +96,23 @@ describe("AtlasShell.astro bezel face-switch (plain link)", () => {
     );
   });
 });
+
+// AtlasShell must wire the SAME transition as the Study shell so a crossing in
+// EITHER direction is choreographed: the @view-transition opt-in inline in the
+// render-blocking head, and face-switch.ts as a hoisted module script. Behavior
+// is browser-verified per spec §8; here we assert both are present in the head.
+describe("AtlasShell.astro face-switch transition wiring (SSR head)", () => {
+  const head = (html: string) => html.slice(0, html.indexOf("</head>"));
+
+  it("stamps the @view-transition { navigation: auto } opt-in inline in the head", () => {
+    expect(head(rendered.atlasShell)).toMatch(/@view-transition\s*\{\s*navigation:\s*auto;?\s*\}/);
+  });
+
+  it("imports face-switch.ts as a hoisted module script in the head", () => {
+    // The compiled form of `<script>import "../lib/face-switch.ts"` — the only
+    // processed <script> in the Atlas shell's head.
+    expect(head(rendered.atlasShell)).toMatch(
+      /<script type="module" src="[^"]*layouts\/AtlasShell\.astro\?astro&type=script/,
+    );
+  });
+});
