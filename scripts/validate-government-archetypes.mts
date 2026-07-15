@@ -58,8 +58,54 @@ export interface ValidationResult {
   errors: string[];
 }
 
+/** Known keys per shape, checked against the RAW parsed JSON before
+ * `GovArchetypeLibrarySchema.safeParse` — a plain (non-`.strict()`) Zod object schema
+ * silently strips unknown keys, so an unrecognized field (e.g. a hand-edited edge with
+ * a country-specific `article: "Article 75"`) would otherwise vanish before the semantic
+ * checks ever see it and the artifact would wrongly validate OK. */
+const KNOWN_KEYS = {
+  library: new Set(["version", "archetypes"]),
+  archetype: new Set(["id", "systemType", "label", "institutions", "edges"]),
+  institution: new Set(["branch", "tier", "kind", "slot"]),
+  edge: new Set(["fromSlot", "toSlot", "relation", "defaultBasis"]),
+};
+
+function unknownKeyErrors(raw: unknown): string[] {
+  const errors: string[] = [];
+  const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+    typeof v === "object" && v !== null && !Array.isArray(v);
+  const reject = (obj: Record<string, unknown>, known: Set<string>, where: string) => {
+    for (const key of Object.keys(obj)) {
+      if (!known.has(key)) errors.push(`${where}: unrecognized field "${key}" — archetype artifacts allow no extra fields`);
+    }
+  };
+
+  if (!isPlainObject(raw)) return errors;
+  reject(raw, KNOWN_KEYS.library, "library");
+  const archetypes = Array.isArray(raw.archetypes) ? raw.archetypes : [];
+  archetypes.forEach((archetype, i) => {
+    if (!isPlainObject(archetype)) return;
+    const id = typeof archetype.id === "string" && archetype.id.trim() ? archetype.id : `#${i}`;
+    reject(archetype, KNOWN_KEYS.archetype, `archetype "${id}"`);
+    const institutions = Array.isArray(archetype.institutions) ? archetype.institutions : [];
+    for (const institution of institutions) {
+      if (isPlainObject(institution)) reject(institution, KNOWN_KEYS.institution, `archetype "${id}", institution`);
+    }
+    const edges = Array.isArray(archetype.edges) ? archetype.edges : [];
+    for (const edge of edges) {
+      if (isPlainObject(edge)) reject(edge, KNOWN_KEYS.edge, `archetype "${id}", edge`);
+    }
+  });
+  return errors;
+}
+
 /** Structural (schema) + semantic validation of an already-parsed library object. */
 export function validateLibraryObject(raw: unknown): ValidationResult {
+  const keyErrors = unknownKeyErrors(raw);
+  if (keyErrors.length > 0) {
+    return { ok: false, errors: keyErrors };
+  }
+
   const parsed = GovArchetypeLibrarySchema.safeParse(raw);
   if (!parsed.success) {
     return {

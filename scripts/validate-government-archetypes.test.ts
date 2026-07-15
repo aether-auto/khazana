@@ -175,6 +175,29 @@ describe("validateLibrary", () => {
 });
 
 describe("validateLibraryObject", () => {
+  test("rejects an unrecognized field on an edge (e.g. a hand-edited citation)", () => {
+    const raw = {
+      version: 1,
+      archetypes: [
+        {
+          ...ALL_FAMILY_ARCHETYPES[0],
+          edges: [{ ...ALL_FAMILY_ARCHETYPES[0]!.edges[0]!, article: "Article 75" }],
+        },
+        ...ALL_FAMILY_ARCHETYPES.slice(1),
+      ],
+    };
+    const result = validateLibraryObject(raw);
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((e) => e.includes('unrecognized field "article"'))).toBe(true);
+  });
+
+  test("rejects an unrecognized top-level field", () => {
+    const raw = { version: 1, archetypes: ALL_FAMILY_ARCHETYPES, extra: true };
+    const result = validateLibraryObject(raw);
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((e) => e.includes('library: unrecognized field "extra"'))).toBe(true);
+  });
+
   test("surfaces zod schema errors for a structurally invalid payload", () => {
     const result = validateLibraryObject({ version: "not-a-number", archetypes: "not-an-array" });
     expect(result.ok).toBe(false);
