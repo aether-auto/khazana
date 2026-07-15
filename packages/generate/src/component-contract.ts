@@ -62,6 +62,8 @@ export const CONTRACT_COMPONENTS = [
   "ForceComparison",
   // X wave: generalized reader-controlled model.
   "ParameterPlay",
+  // Atlas Government Structure wave: power-flow diagram.
+  "PowerFlow",
 ] as const;
 
 export type ContractComponentName = (typeof CONTRACT_COMPONENTS)[number];
@@ -324,5 +326,10 @@ export const COMPONENT_METADATA: Record<ContractComponentName, ComponentMetadata
     blurb: "N reader sliders bound to an author-supplied formula, live curve + readouts — the generalized reader-controlled model. Reach for it for a NEW tunable relationship a fixed component doesn't cover.",
     props: "params: { key, label, min, max, default, step, unit? }[], expr, xRange, readouts?: { label, expr, unit? }[], caption?",
     kits: ["dispatch", "primer"],
+  },
+  PowerFlow: {
+    blurb: "Government power-flow diagram: institutions in branch columns x tier rows, directed authority edges (appoints/dissolves/reviews/confidence...). Reach for it to show how a state's constitutional authority actually flows.",
+    props: "structure: GovernmentStructure (@khazana/core), caption?, highlightOnHover?",
+    kits: ["theater"],
   },
 };

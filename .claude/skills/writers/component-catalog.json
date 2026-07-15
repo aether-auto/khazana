@@ -504,6 +504,15 @@
         "primer"
       ],
       "usageCount": 3
+    },
+    {
+      "name": "PowerFlow",
+      "blurb": "Government power-flow diagram: institutions in branch columns x tier rows, directed authority edges (appoints/dissolves/reviews/confidence...). Reach for it to show how a state's constitutional authority actually flows.",
+      "props": "structure: GovernmentStructure (@khazana/core), caption?, highlightOnHover?",
+      "kits": [
+        "theater"
+      ],
+      "usageCount": 0
     }
   ]
 }

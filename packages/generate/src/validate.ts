@@ -95,6 +95,8 @@ export const KNOWN_COMPONENTS = [
   "ForceComparison",
   // X wave: generalized reader-controlled model.
   "ParameterPlay",
+  // Atlas Government Structure wave: power-flow diagram.
+  "PowerFlow",
 ] as const;
 
 export interface DraftResult {
