@@ -35,6 +35,9 @@ data/generation/
 # or generated-asset output (e.g. scripts/build-india-states-topojson.mts's
 # real-run path) is a build artifact, not source of truth.
 data/world/
+# Local checkout of the private aether-auto/khazana-world-data repo (docs/world-data-repo.md's
+# `path: .world-data` read/write convention) — never committed to the public khazana repo.
+.world-data/
 # Per-package build/test caches (the committed .cache/transformers model cache above
 # is the deliberate exception, scoped via .cache/ingest/).
 packages/*/.cache/

@@ -1,0 +1,236 @@
+/**
+ * Validates a `GovArchetypeLibrary` JSON file (2026-07-07-atlas-government-structure-design.md
+ * §3.5) beyond what `GovArchetypeLibrarySchema` alone checks: unique archetype IDs
+ * and per-archetype slots, non-empty template contents, edges whose endpoints are
+ * declared slots, no self-loop edges, valid generic default-basis text (never a
+ * country-specific citation), and coverage of the required system-type families
+ * (§4.2's ~14 archetypes).
+ *
+ * Every failure identifies the offending archetype id and, where applicable, the
+ * offending slot or edge — this is what `scripts/validate-government-archetypes.test.ts`
+ * exercises, and what the integration deliverable
+ * (`pnpm exec tsx scripts/validate-government-archetypes.mts <path>`) runs for real
+ * against the committed private-repo artifact.
+ *
+ * Usage (from repo root):
+ *   pnpm exec tsx scripts/validate-government-archetypes.mts <path-to-library.json>
+ */
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { GovArchetypeLibrarySchema, type GovArchetype, type GovArchetypeLibrary } from "../packages/core/src/index.ts";
+
+/** A citation-shaped `defaultBasis` (article/section numbers, § marks) is never a generic default — it belongs in `constitutionalBasis.text` with `basisOrigin: "constitution-coded"` on the assembled record, not in the archetype template. */
+const CITATION_LIKE = /\b(art(?:icle)?|sec(?:tion)?)\.?\s*\d+\b|§\s*\d+|\bch(?:apter)?\.?\s*\d+\b/i;
+
+/**
+ * The required family coverage — §4.2's named archetype templates, each with its own
+ * distinct slot/edge shape the downstream assembler depends on (a broad `systemType`
+ * bucket check is not enough: e.g. two DIFFERENT presidential templates exist —
+ * US-style and Latin-American-with-electoral-branch — and collapsing them into one
+ * "any presidential archetype present" check would silently accept a library missing
+ * one of them). Every entry below must be satisfied by an EXACT archetype id AND its
+ * `systemType` must match, so a mislabeled or dropped template is caught precisely.
+ */
+interface RequiredFamily {
+  id: string;
+  systemType: GovArchetype["systemType"];
+}
+const REQUIRED_FAMILIES: RequiredFamily[] = [
+  { id: "westminster-parliamentary", systemType: "parliamentary" },
+  { id: "continental-parliamentary", systemType: "parliamentary" },
+  { id: "us-presidential", systemType: "presidential" },
+  { id: "latin-american-presidential", systemType: "presidential" },
+  { id: "french-semi-presidential", systemType: "semi-presidential" },
+  { id: "russian-semi-presidential", systemType: "semi-presidential" },
+  { id: "directorial-collegial", systemType: "directorial" },
+  { id: "constitutional-monarchy", systemType: "constitutional-monarchy" },
+  { id: "absolute-monarchy", systemType: "absolute-monarchy" },
+  { id: "one-party-state", systemType: "one-party" },
+  { id: "military-junta", systemType: "military-junta" },
+  { id: "provisional-government", systemType: "provisional" },
+  { id: "theocratic", systemType: "other" },
+  { id: "assembly-elected-president-hybrid", systemType: "other" },
+  { id: "generic-fallback", systemType: "other" },
+];
+
+export interface ValidationResult {
+  ok: boolean;
+  errors: string[];
+}
+
+/** Known keys per shape, checked against the RAW parsed JSON before
+ * `GovArchetypeLibrarySchema.safeParse` — a plain (non-`.strict()`) Zod object schema
+ * silently strips unknown keys, so an unrecognized field (e.g. a hand-edited edge with
+ * a country-specific `article: "Article 75"`) would otherwise vanish before the semantic
+ * checks ever see it and the artifact would wrongly validate OK. */
+const KNOWN_KEYS = {
+  library: new Set(["version", "archetypes"]),
+  archetype: new Set(["id", "systemType", "label", "institutions", "edges"]),
+  institution: new Set(["branch", "tier", "kind", "slot"]),
+  edge: new Set(["fromSlot", "toSlot", "relation", "defaultBasis"]),
+};
+
+function unknownKeyErrors(raw: unknown): string[] {
+  const errors: string[] = [];
+  const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+    typeof v === "object" && v !== null && !Array.isArray(v);
+  const reject = (obj: Record<string, unknown>, known: Set<string>, where: string) => {
+    for (const key of Object.keys(obj)) {
+      if (!known.has(key)) errors.push(`${where}: unrecognized field "${key}" — archetype artifacts allow no extra fields`);
+    }
+  };
+
+  if (!isPlainObject(raw)) return errors;
+  reject(raw, KNOWN_KEYS.library, "library");
+  const archetypes = Array.isArray(raw.archetypes) ? raw.archetypes : [];
+  archetypes.forEach((archetype, i) => {
+    if (!isPlainObject(archetype)) return;
+    const id = typeof archetype.id === "string" && archetype.id.trim() ? archetype.id : `#${i}`;
+    reject(archetype, KNOWN_KEYS.archetype, `archetype "${id}"`);
+    const institutions = Array.isArray(archetype.institutions) ? archetype.institutions : [];
+    for (const institution of institutions) {
+      if (isPlainObject(institution)) reject(institution, KNOWN_KEYS.institution, `archetype "${id}", institution`);
+    }
+    const edges = Array.isArray(archetype.edges) ? archetype.edges : [];
+    for (const edge of edges) {
+      if (isPlainObject(edge)) reject(edge, KNOWN_KEYS.edge, `archetype "${id}", edge`);
+    }
+  });
+  return errors;
+}
+
+/** Structural (schema) + semantic validation of an already-parsed library object. */
+export function validateLibraryObject(raw: unknown): ValidationResult {
+  const keyErrors = unknownKeyErrors(raw);
+  if (keyErrors.length > 0) {
+    return { ok: false, errors: keyErrors };
+  }
+
+  const parsed = GovArchetypeLibrarySchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      errors: parsed.error.issues.map((issue) => `schema: ${issue.path.join(".") || "<root>"}: ${issue.message}`),
+    };
+  }
+  return validateLibrary(parsed.data);
+}
+
+/** Semantic validation of an already-schema-valid library. */
+export function validateLibrary(library: GovArchetypeLibrary): ValidationResult {
+  const errors: string[] = [];
+
+  if (library.archetypes.length === 0) {
+    errors.push("library: archetypes array is empty — non-empty template contents required");
+  }
+
+  const seenIds = new Set<string>();
+  for (const archetype of library.archetypes) {
+    if (seenIds.has(archetype.id)) {
+      errors.push(`archetype "${archetype.id}": duplicate archetype id`);
+    }
+    seenIds.add(archetype.id);
+    errors.push(...validateArchetype(archetype));
+  }
+
+  for (const family of REQUIRED_FAMILIES) {
+    const found = library.archetypes.find((a) => a.id === family.id);
+    if (!found) {
+      errors.push(`library: missing required archetype "${family.id}" (systemType "${family.systemType}")`);
+    } else if (found.systemType !== family.systemType) {
+      errors.push(
+        `archetype "${family.id}": expected systemType "${family.systemType}" for this required family, got "${found.systemType}"`,
+      );
+    }
+  }
+
+  return { ok: errors.length === 0, errors };
+}
+
+function validateArchetype(archetype: GovArchetype): string[] {
+  const errors: string[] = [];
+  const id = archetype.id;
+
+  if (!id.trim()) {
+    errors.push(`archetype "${id}": id must be non-empty — a blank id is unusable as a stable archetypeId reference`);
+  }
+  if (!archetype.label.trim()) {
+    errors.push(`archetype "${id}": label must be non-empty`);
+  }
+  if (archetype.institutions.length === 0) {
+    errors.push(`archetype "${id}": institutions must be non-empty — a template with no slots has no contents`);
+  }
+  if (archetype.edges.length === 0) {
+    errors.push(`archetype "${id}": edges must be non-empty — a template with no power-flow edges has no contents`);
+  }
+
+  const slots = new Set<string>();
+  for (const institution of archetype.institutions) {
+    if (!institution.slot.trim()) {
+      errors.push(`archetype "${id}": institution slot must be non-empty`);
+      continue;
+    }
+    if (slots.has(institution.slot)) {
+      errors.push(`archetype "${id}", slot "${institution.slot}": duplicate slot`);
+    }
+    slots.add(institution.slot);
+  }
+
+  for (const edge of archetype.edges) {
+    const edgeLabel = `${edge.fromSlot} -> ${edge.toSlot}`;
+    if (edge.fromSlot === edge.toSlot) {
+      errors.push(`archetype "${id}", edge "${edgeLabel}": self-loop edges are not allowed`);
+    }
+    if (!slots.has(edge.fromSlot)) {
+      errors.push(`archetype "${id}", edge "${edgeLabel}": fromSlot "${edge.fromSlot}" is not a declared institution slot`);
+    }
+    if (!slots.has(edge.toSlot)) {
+      errors.push(`archetype "${id}", edge "${edgeLabel}": toSlot "${edge.toSlot}" is not a declared institution slot`);
+    }
+    const basis = edge.defaultBasis.trim();
+    if (!basis) {
+      errors.push(`archetype "${id}", edge "${edgeLabel}": defaultBasis must be non-empty`);
+    } else if (CITATION_LIKE.test(basis)) {
+      errors.push(
+        `archetype "${id}", edge "${edgeLabel}": defaultBasis "${edge.defaultBasis}" looks like a country-specific constitutional citation, not a generic archetype default`,
+      );
+    } else if (!/^characteristic of a[n]? /i.test(basis)) {
+      errors.push(
+        `archetype "${id}", edge "${edgeLabel}": defaultBasis "${edge.defaultBasis}" must read as a generic family convention (e.g. "characteristic of a parliamentary system's …"), not a country-specific fact`,
+      );
+    }
+  }
+
+  return errors;
+}
+
+function main(): void {
+  const path = process.argv[2];
+  if (!path) {
+    console.error("usage: pnpm exec tsx scripts/validate-government-archetypes.mts <path-to-library.json>");
+    process.exit(1);
+  }
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(readFileSync(path, "utf8"));
+  } catch (err) {
+    console.error(`[validate-government-archetypes] failed to read/parse ${path}: ${(err as Error).message}`);
+    process.exit(1);
+  }
+
+  const result = validateLibraryObject(raw);
+  if (!result.ok) {
+    console.error(`[validate-government-archetypes] ${path}: ${result.errors.length} error(s)`);
+    for (const error of result.errors) console.error(`  - ${error}`);
+    process.exit(1);
+  }
+
+  const archetypeCount = (raw as GovArchetypeLibrary).archetypes?.length ?? 0;
+  console.log(`[validate-government-archetypes] ${path}: OK (${archetypeCount} archetypes, all families covered)`);
+}
+
+const here = fileURLToPath(import.meta.url);
+if (process.argv[1] === here) {
+  main();
+}
