@@ -1,0 +1,15 @@
+---
+// /atlas/bias — the Bias Lab. STUB ONLY. The real divergence UI (per-source
+// bias plotting against AllSides / Ad Fontes / MBFC reference raters) is Phase
+// A6's job. This route renders AtlasShell chrome + a placeholder for now.
+import AtlasShell from "../../layouts/AtlasShell.astro";
+import SurfaceStub from "../../components/atlas/SurfaceStub.astro";
+---
+
+<AtlasShell title="khazana atlas — bias lab" active="bias" crumbs={["bias"]}>
+  <SurfaceStub
+    heading="Bias Lab"
+    lead="Where every source sits on the bias plane — divergence measured against AllSides, Ad Fontes, and MBFC reference raters."
+    note="Stub — the real divergence UI ships in Phase A6."
+  />
+</AtlasShell>

@@ -190,6 +190,21 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
             </p>
           )
         }
+        {/* The bezel face-switch — a plain link, zero JS, degrades to a link
+            with JS disabled. STUDY is lit; atlas is dim; it crosses to the
+            Atlas root as a full-document load (data-astro-reload). The reload
+            attribute is inert without the signature transition (a separate
+            future task); adding it now means that task needs no markup change. */}
+        <a
+          class="face-switch"
+          href={withBase("/atlas")}
+          data-astro-reload
+          aria-label="Switch to Atlas"
+        >
+          <span class="face-opt is-current">STUDY</span>
+          <span class="face-swap" aria-hidden="true">⟷</span>
+          <span class="face-opt">atlas</span>
+        </a>
         <button
           class="cmdk"
           type="button"
@@ -234,7 +249,7 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
       </span>
     </footer>
 
-    <CommandPalette base={base} client:idle />
+    <CommandPalette base={base} face={face} client:idle />
     <!-- The three quiet navigation affordances (back / scroll-top / section
          tick-rail). Self-contained island that detects sections at runtime, so
          it needs no per-page wiring and lives entirely here in the shell. -->
@@ -458,10 +473,64 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
   .nav {
     display: flex;
     margin-left: var(--s-2);
+    /* nav consumes the free space to its right so the readout + face-switch +
+       ⌘K cluster hard against the right edge on EVERY page (feed pages carry a
+       readout; the rest don't) — one coherent right-cluster behaviour. */
+    margin-right: auto;
+  }
+  /* the bezel face-switch — a plain link, STUDY lit (amber), atlas dim. Mono
+     small-caps segmented control; degrades to a link with JS disabled. */
+  .face-switch {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    border: var(--hair) solid var(--rule);
+    border-radius: var(--r-md);
+    padding: var(--s-2) var(--s-3);
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+  .face-switch:hover {
+    text-decoration: none;
+    border-color: color-mix(in oklab, var(--accent) 45%, var(--rule));
+    background: color-mix(in oklab, var(--accent) 8%, transparent);
+  }
+  .face-switch:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .face-opt {
+    color: var(--ink-faint);
+  }
+  .face-opt.is-current {
+    color: var(--accent);
+    text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 35%, transparent);
+  }
+  .face-swap {
+    color: var(--ink-faint);
+    opacity: 0.7;
+  }
+  /* Compact the switch to just its lit label from the tablet band DOWN: above
+     the 860px wrap breakpoint the wordmark + 6-link NavRail + ⌘K already fill
+     the row, so the full `STUDY ⟷ atlas` control would overflow the 860–960px
+     tablet range. The crossing is still reachable (its label links to /atlas,
+     plus the ⌘K crossing command). */
+  @media (max-width: 960px) {
+    .face-switch .face-opt:not(.is-current),
+    .face-switch .face-swap {
+      display: none;
+    }
   }
   /* live signal readout — tabular mono telemetry in the bezel (art-direction §3) */
   .readout {
-    margin: 0 0 0 auto;
+    margin: 0;
     display: inline-flex;
     align-items: baseline;
     gap: 0.45ch;

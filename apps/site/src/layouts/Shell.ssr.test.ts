@@ -13,7 +13,12 @@ import { beforeAll, describe, expect, it } from "vitest";
 const siteRoot = fileURLToPath(new URL("../../", import.meta.url));
 const harness = fileURLToPath(new URL("../../test/render-shell-faces.mjs", import.meta.url));
 
-let rendered: { studyDefault: string; studyExplicit: string; atlas: string };
+let rendered: {
+  studyDefault: string;
+  studyExplicit: string;
+  atlas: string;
+  atlasShell: string;
+};
 
 beforeAll(() => {
   const out = execFileSync("node", [harness], {
@@ -44,5 +49,20 @@ describe("Shell.astro SSR data-face stamp", () => {
     // The attribute must live on <html> so the CSS delta cascades from the root.
     expect(rendered.atlas).toMatch(/<html[^>]*\bdata-face="atlas"/);
     expect(rendered.studyDefault).toMatch(/<html[^>]*\bdata-face="study"/);
+  });
+});
+
+describe("Shell.astro bezel face-switch (plain link)", () => {
+  it("renders a real anchor crossing to /atlas", () => {
+    expect(rendered.studyDefault).toContain('class="face-switch"');
+    expect(rendered.studyDefault).toContain('href="/atlas"');
+    expect(rendered.studyDefault).toContain('aria-label="Switch to Atlas"');
+  });
+
+  it("carries data-astro-reload so the crossing is a full-document navigation", () => {
+    // Scope the assertion to the face-switch anchor, not just anywhere in the doc.
+    expect(rendered.studyDefault).toMatch(
+      /<a\b[^>]*class="face-switch"[^>]*data-astro-reload|<a\b[^>]*data-astro-reload[^>]*class="face-switch"/,
+    );
   });
 });

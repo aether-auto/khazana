@@ -1,0 +1,58 @@
+---
+// Breadcrumb — Atlas wayfinding in the instrument voice, not the editorial one.
+// Renders a mono trail like `atlas / theaters / red-sea`. The leading `atlas`
+// crumb is always present and links back to the Globe landing; the caller
+// passes only the segments AFTER atlas (e.g. crumbs={["theaters", "red-sea"]}).
+interface Props {
+  /** Path segments after the always-present leading `atlas` crumb. */
+  crumbs?: string[];
+}
+const { crumbs = [] } = Astro.props;
+
+const base = import.meta.env.BASE_URL;
+const withBase = (p: string) => `${base.replace(/\/$/, "")}/${p.replace(/^\//, "")}`;
+---
+
+<nav class="breadcrumb" aria-label="Breadcrumb">
+  <a class="crumb crumb-root" href={withBase("/atlas")}>atlas</a>
+  {
+    crumbs.map((c) => (
+      <>
+        <span class="crumb-sep" aria-hidden="true">/</span>
+        <span class="crumb">{c}</span>
+      </>
+    ))
+  }
+</nav>
+
+<style>
+  .breadcrumb {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.5ch;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.04em;
+    color: var(--ink-faint);
+  }
+  .crumb {
+    color: var(--ink-dim);
+  }
+  .crumb-root {
+    color: var(--ink-faint);
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  .crumb-root:hover {
+    color: var(--info);
+    text-decoration: none;
+  }
+  .crumb-root:focus-visible {
+    outline: 2px solid var(--info);
+    outline-offset: 2px;
+  }
+  .crumb-sep {
+    color: var(--ink-faint);
+    opacity: 0.6;
+  }
+</style>

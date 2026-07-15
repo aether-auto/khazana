@@ -8,8 +8,32 @@ test("buildCommands includes the section nav and every channel", () => {
   for (const section of ["feed", "reads", "workshop", "graph", "sources", "taste"]) {
     expect(labels).toContain(section);
   }
-  // 6 sections + 18 channels
-  expect(cmds).toHaveLength(6 + 18);
+  // 6 sections + 1 crossing command + 18 channels
+  expect(cmds).toHaveLength(6 + 1 + 18);
+});
+
+test("from the Study, the crossing command switches to Atlas", () => {
+  const cross = cmds.find((c) => c.id === "cross:atlas");
+  expect(cross).toBeDefined();
+  expect(cross?.label).toBe("Switch to Atlas");
+  expect(cross?.href).toBe("/khazana/atlas");
+  expect(cross?.kind).toBe("section");
+  // no reverse command leaks in from the Study
+  expect(cmds.find((c) => c.id === "cross:study")).toBeUndefined();
+});
+
+test("from Atlas, the crossing command switches back to the Study", () => {
+  const atlasCmds = buildCommands("/khazana", "atlas");
+  const cross = atlasCmds.find((c) => c.id === "cross:study");
+  expect(cross).toBeDefined();
+  expect(cross?.label).toBe("Switch to the Study");
+  expect(cross?.href).toBe("/khazana/");
+  expect(cross?.kind).toBe("section");
+  expect(atlasCmds.find((c) => c.id === "cross:atlas")).toBeUndefined();
+});
+
+test("defaults to the Study face when no face is passed", () => {
+  expect(buildCommands("/khazana").find((c) => c.id === "cross:atlas")).toBeDefined();
 });
 
 test("section hrefs respect the base path", () => {

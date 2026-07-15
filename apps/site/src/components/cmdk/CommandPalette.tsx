@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { buildCommands, rankCommands, type Command } from "./lib/commands.js";
+import { buildCommands, rankCommands, type Command, type Face } from "./lib/commands.js";
 import { loadPagefind, search, type PagefindApi, type SearchResult } from "../../lib/search.js";
 import "./CommandPalette.css";
 
 interface Props {
   /** Site base path (import.meta.env.BASE_URL from the Shell). */
   base: string;
+  /** Which face the palette is opening from — selects the crossing command. */
+  face?: Face;
 }
 
 type Row =
@@ -14,7 +16,7 @@ type Row =
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input,[tabindex]:not([tabindex="-1"])';
 
-export default function CommandPalette({ base }: Props) {
+export default function CommandPalette({ base, face = "study" }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -27,7 +29,7 @@ export default function CommandPalette({ base }: Props) {
   const apiRef = useRef<PagefindApi | null>(null);
   const listId = useId();
 
-  const commands = useMemo(() => buildCommands(base), [base]);
+  const commands = useMemo(() => buildCommands(base, face), [base, face]);
   const ranked = useMemo(() => rankCommands(commands, query), [commands, query]);
 
   const rows: Row[] = useMemo(

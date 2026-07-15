@@ -19,6 +19,13 @@ import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getViteConfig } from "astro/config";
 
+// Enable the SiteGate for this render so both shells emit their access-curtain
+// markup and the SSR test can assert the gate hook is wired identically in
+// AtlasShell and Shell. A dummy non-empty hash is all `enabled` needs; nothing
+// here is secret (the real hash is itself public — it gates the experience, not
+// the bytes). Set BEFORE getViteConfig so Vite's env resolution picks it up.
+process.env.PUBLIC_SITE_GATE_HASH ??= "0000000000000000000000000000000000000000000000000000000000000000";
+
 const require = createRequire(import.meta.url);
 // Resolve Vite from Astro's own dependency tree so we always use the exact Vite
 // major Astro 5.18 ships with — never a hash-pinned path that drifts on update.
