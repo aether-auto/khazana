@@ -30,6 +30,11 @@ data/taste.json
 # Transient per-run generation artifacts (briefs, per-slug citation ledgers, verify
 # report). The committed output is apps/site/src/content/blog/*.mdx, never these.
 data/generation/
+# World data lives in the private aether-auto/khazana-world-data repo (D2, see
+# docs/world-data-repo.md), never the public khazana repo. Any local checkout
+# or generated-asset output (e.g. scripts/build-india-states-topojson.mts's
+# real-run path) is a build artifact, not source of truth.
+data/world/
 # Per-package build/test caches (the committed .cache/transformers model cache above
 # is the deliberate exception, scoped via .cache/ingest/).
 packages/*/.cache/
