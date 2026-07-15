@@ -30,6 +30,27 @@ export function serializeLibrary(): string {
   return JSON.stringify(library, null, 2) + "\n";
 }
 
+/** Strips a `basic <base64>` credential (and the token it decodes to) out of an error's
+ * message, so a failing authenticated git command never leaks WORLD_DATA_REPO_TOKEN into
+ * CI logs. `execFileSync`'s thrown "Command failed: …" message embeds the full argv,
+ * including the `-c http.extraheader=AUTHORIZATION: basic <token-b64>` we pass below. */
+function scrubTokenFromError(err: unknown, token: string): Error {
+  const raw = err instanceof Error ? err.message : String(err);
+  const tokenB64 = Buffer.from(`x-access-token:${token}`).toString("base64");
+  const scrubbed = raw.split(token).join("[REDACTED]").split(tokenB64).join("[REDACTED]");
+  return new Error(scrubbed);
+}
+
+/** `execFileSync` wrapper for the two auth-header git calls — always scrubs the token
+ * out of any thrown error before it reaches a caller/logger. */
+function runAuthedGit(args: string[], opts: Parameters<typeof execFileSync>[2], token: string): void {
+  try {
+    execFileSync("git", args, opts);
+  } catch (err) {
+    throw scrubTokenFromError(err, token);
+  }
+}
+
 async function main(): Promise<void> {
   const json = serializeLibrary();
 
@@ -54,8 +75,7 @@ async function main(): Promise<void> {
   try {
     const auth = Buffer.from(`x-access-token:${wdToken}`).toString("base64");
     const wdDir = join(workDir, "world-data");
-    execFileSync(
-      "git",
+    runAuthedGit(
       [
         "-c",
         `http.extraheader=AUTHORIZATION: basic ${auth}`,
@@ -65,6 +85,7 @@ async function main(): Promise<void> {
         wdDir,
       ],
       { stdio: "inherit" },
+      wdToken,
     );
     const wdOutDir = join(wdDir, "data", "world");
     mkdirSync(wdOutDir, { recursive: true });
@@ -89,10 +110,10 @@ async function main(): Promise<void> {
       console.log("[build-government-archetypes] nothing to commit (world-data already up to date)");
       return;
     }
-    execFileSync(
-      "git",
+    runAuthedGit(
       ["-c", `http.extraheader=AUTHORIZATION: basic ${auth}`, "push", "origin", "HEAD:main"],
       { cwd: wdDir, stdio: "inherit" },
+      wdToken,
     );
     console.log("[build-government-archetypes] pushed to aether-auto/khazana-world-data");
   } finally {
