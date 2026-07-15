@@ -1,17 +1,13 @@
 import { z } from "zod";
 import { ProvenanceSchema } from "./world-provenance.js";
+import { CountryCodeSchema } from "./world-indicator.js";
 import { GovBranchSchema, GovTierSchema, InstitutionKindSchema, PowerRelationSchema, SelectionMethodSchema, SystemTypeSchema } from "./vocab.js";
 
 /**
  * Atlas Government Structure — the shared contract every country's assembled
  * `GovernmentStructure` record satisfies. See
  * docs/superpowers/specs/2026-07-07-atlas-government-structure-design.md §3.
- *
- * TEMP local copy matching world-indicator.ts CountryCodeSchema (ISO 3166-1 alpha-3) —
- * replace w import once spine-indicator-schemas merges.
  */
-export const CountryCodeSchema = z.string().regex(/^[A-Z]{3}$/, "expected ISO 3166-1 alpha-3");
-export type CountryCode = z.infer<typeof CountryCodeSchema>;
 
 // §3.2 — a node in the power-flow graph: office/body, its branch/tier/kind, and provenance.
 export const InstitutionSchema = z.object({

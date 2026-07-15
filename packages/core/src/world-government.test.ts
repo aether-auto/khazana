@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
+import { CountryCodeSchema } from "./world-indicator.js";
 import {
   ChamberSchema,
-  CountryCodeSchema,
   ElectionSystemSchema,
   ExecutiveBlockSchema,
   FederalTierSchema,
