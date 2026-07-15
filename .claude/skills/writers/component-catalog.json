@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-07T06:08:08.229Z",
+  "generatedAt": "2026-07-15T22:09:50.608Z",
   "components": [
     {
       "name": "Annotation",
@@ -14,7 +14,7 @@
         "theater",
         "field-notes"
       ],
-      "usageCount": 13
+      "usageCount": 32
     },
     {
       "name": "Chart",
@@ -28,7 +28,7 @@
         "build-log",
         "theater"
       ],
-      "usageCount": 10
+      "usageCount": 27
     },
     {
       "name": "Timeline",
@@ -41,7 +41,7 @@
         "primer",
         "theater"
       ],
-      "usageCount": 6
+      "usageCount": 17
     },
     {
       "name": "DataTable",
@@ -56,7 +56,7 @@
         "theater",
         "field-notes"
       ],
-      "usageCount": 6
+      "usageCount": 26
     },
     {
       "name": "Scrolly",
@@ -69,7 +69,7 @@
         "primer",
         "theater"
       ],
-      "usageCount": 4
+      "usageCount": 10
     },
     {
       "name": "ScrollyStep",
@@ -82,7 +82,7 @@
         "primer",
         "theater"
       ],
-      "usageCount": 2
+      "usageCount": 8
     },
     {
       "name": "ScrollyTimeline",
@@ -91,7 +91,7 @@
       "kits": [
         "chronicle"
       ],
-      "usageCount": 1
+      "usageCount": 0
     },
     {
       "name": "RunnableCode",
@@ -103,7 +103,7 @@
         "primer",
         "build-log"
       ],
-      "usageCount": 5
+      "usageCount": 18
     },
     {
       "name": "Map",
@@ -114,7 +114,7 @@
         "dispatch",
         "theater"
       ],
-      "usageCount": 1
+      "usageCount": 2
     },
     {
       "name": "ControlledChart",
@@ -132,7 +132,7 @@
       "kits": [
         "dispatch"
       ],
-      "usageCount": 1
+      "usageCount": 0
     },
     {
       "name": "Model3D",
@@ -156,7 +156,7 @@
         "build-log",
         "theater"
       ],
-      "usageCount": 7
+      "usageCount": 20
     },
     {
       "name": "DrawChart",
@@ -165,7 +165,7 @@
       "kits": [
         "dispatch"
       ],
-      "usageCount": 1
+      "usageCount": 0
     },
     {
       "name": "StatBand",
@@ -180,7 +180,7 @@
         "theater",
         "field-notes"
       ],
-      "usageCount": 13
+      "usageCount": 32
     },
     {
       "name": "Pullquote",
@@ -195,7 +195,7 @@
         "theater",
         "field-notes"
       ],
-      "usageCount": 10
+      "usageCount": 30
     },
     {
       "name": "Figure",
@@ -218,7 +218,7 @@
         "teardown",
         "primer"
       ],
-      "usageCount": 2
+      "usageCount": 16
     },
     {
       "name": "Callout",
@@ -233,7 +233,7 @@
         "theater",
         "field-notes"
       ],
-      "usageCount": 6
+      "usageCount": 29
     },
     {
       "name": "Detail",
@@ -247,7 +247,7 @@
         "build-log",
         "theater"
       ],
-      "usageCount": 6
+      "usageCount": 26
     },
     {
       "name": "Definition",
@@ -260,7 +260,7 @@
         "primer",
         "theater"
       ],
-      "usageCount": 5
+      "usageCount": 24
     },
     {
       "name": "Diagram",
@@ -273,7 +273,7 @@
         "build-log",
         "theater"
       ],
-      "usageCount": 3
+      "usageCount": 17
     },
     {
       "name": "Simulation",
@@ -294,7 +294,7 @@
         "primer",
         "build-log"
       ],
-      "usageCount": 3
+      "usageCount": 15
     },
     {
       "name": "Quiz",
@@ -305,7 +305,7 @@
         "teardown",
         "primer"
       ],
-      "usageCount": 2
+      "usageCount": 16
     },
     {
       "name": "CodeWalkthrough",
@@ -316,7 +316,7 @@
         "primer",
         "build-log"
       ],
-      "usageCount": 1
+      "usageCount": 3
     },
     {
       "name": "AnnotatedFigure",
@@ -326,7 +326,7 @@
         "chronicle",
         "theater"
       ],
-      "usageCount": 0
+      "usageCount": 1
     },
     {
       "name": "SmallMultiples",
@@ -335,7 +335,7 @@
       "kits": [
         "dispatch"
       ],
-      "usageCount": 0
+      "usageCount": 3
     },
     {
       "name": "Distribution",
@@ -344,7 +344,7 @@
       "kits": [
         "dispatch"
       ],
-      "usageCount": 0
+      "usageCount": 1
     },
     {
       "name": "Scatter",
@@ -353,7 +353,7 @@
       "kits": [
         "dispatch"
       ],
-      "usageCount": 0
+      "usageCount": 1
     },
     {
       "name": "Slopegraph",
@@ -362,7 +362,7 @@
       "kits": [
         "dispatch"
       ],
-      "usageCount": 0
+      "usageCount": 1
     },
     {
       "name": "RangePlot",
@@ -393,7 +393,7 @@
         "chronicle",
         "theater"
       ],
-      "usageCount": 0
+      "usageCount": 4
     },
     {
       "name": "EventCascade",
@@ -405,7 +405,7 @@
         "teardown",
         "theater"
       ],
-      "usageCount": 4
+      "usageCount": 17
     },
     {
       "name": "StateMachine",
@@ -415,7 +415,7 @@
         "teardown",
         "primer"
       ],
-      "usageCount": 0
+      "usageCount": 2
     },
     {
       "name": "LayerStack",
@@ -425,7 +425,7 @@
         "teardown",
         "primer"
       ],
-      "usageCount": 0
+      "usageCount": 6
     },
     {
       "name": "Checklist",
@@ -455,7 +455,7 @@
         "dispatch",
         "theater"
       ],
-      "usageCount": 2
+      "usageCount": 6
     },
     {
       "name": "Sankey",
@@ -466,7 +466,7 @@
         "teardown",
         "theater"
       ],
-      "usageCount": 2
+      "usageCount": 4
     },
     {
       "name": "BattleMap",
@@ -475,7 +475,7 @@
       "kits": [
         "theater"
       ],
-      "usageCount": 2
+      "usageCount": 3
     },
     {
       "name": "OrderOfBattle",
@@ -484,7 +484,7 @@
       "kits": [
         "theater"
       ],
-      "usageCount": 2
+      "usageCount": 3
     },
     {
       "name": "ForceComparison",
@@ -493,7 +493,7 @@
       "kits": [
         "theater"
       ],
-      "usageCount": 2
+      "usageCount": 3
     },
     {
       "name": "ParameterPlay",
@@ -503,13 +503,27 @@
         "dispatch",
         "primer"
       ],
-      "usageCount": 3
+      "usageCount": 9
     },
     {
       "name": "PowerFlow",
       "blurb": "Government power-flow diagram: institutions in branch columns x tier rows, directed authority edges (appoints/dissolves/reviews/confidence...). Reach for it to show how a state's constitutional authority actually flows.",
       "props": "structure: GovernmentStructure (@khazana/core), caption?, highlightOnHover?",
       "kits": [
+        "theater"
+      ],
+      "usageCount": 0
+    },
+    {
+      "name": "CrossFaceLink",
+      "blurb": "Inline destination-colored ↗ tell that crosses INTO the other face (Study→Atlas or Atlas→Study) — a plain functional link, full cross-document navigation, quiet atmosphere-crossfade choreography, no client JS.",
+      "props": "destination: \"atlas\" | \"study\", href",
+      "kits": [
+        "chronicle",
+        "dispatch",
+        "teardown",
+        "primer",
+        "build-log",
         "theater"
       ],
       "usageCount": 0

@@ -123,10 +123,21 @@ let pendingQuietType: QuietFaceCrossType | null = null;
  * inside a `<CrossFaceLink>` (any element carrying `data-face-cross-type`),
  * stash its quiet type so the very next `pageswap` on this document can use it
  * instead of the bezel's default `to-atlas`/`to-study`.
+ *
+ * Ignores any click that WON'T actually navigate the current tab — a modifier
+ * click (Cmd/Ctrl/Shift/Alt — new tab/window), a non-primary mouse button, or
+ * a link opening in another target (`target="_blank"`) all leave THIS
+ * document's location unchanged. Stashing the quiet type for one of those
+ * would otherwise leak into whatever the NEXT real same-tab crossing turns
+ * out to be (e.g. the ⌘K command palette assigning `window.location.href`,
+ * or the bezel switch), silently stealing its ceremony.
  */
-function captureCrossFaceLinkClick(event: Event): void {
+function captureCrossFaceLinkClick(event: MouseEvent): void {
+  if (event.defaultPrevented) return;
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
   const target = event.target as Element | null;
-  const anchor = target?.closest?.("a[data-face-cross-type]") ?? null;
+  const anchor = target?.closest?.("a[data-face-cross-type]") as HTMLAnchorElement | null;
+  if (anchor && anchor.target && anchor.target !== "_self") return;
   const attr = anchor?.getAttribute("data-face-cross-type") ?? null;
   pendingQuietType = isQuietFaceCrossType(attr) ? attr : null;
 }
@@ -232,7 +243,7 @@ function markJustCrossed(): void {
 
 /** Install every browser-side listener. Browser-only (guarded at module tail). */
 export function installFaceSwitch(): void {
-  window.addEventListener("click", captureCrossFaceLinkClick, true); // capture phase, before nav
+  window.addEventListener("click", captureCrossFaceLinkClick as EventListener, true); // capture phase, before nav
   window.addEventListener("pageswap", onPageSwap as EventListener);
   window.addEventListener("pagereveal", onPageReveal as EventListener);
   markJustCrossed(); // no-VT whisper fade
