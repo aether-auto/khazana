@@ -4,6 +4,8 @@ export * from "./world-provenance.js";
 export * from "./world-government.js";
 export * from "./world-indicator.js";
 export * from "./world-country-profile.js";
+export * from "./world-outlet.js";
+export * from "./world-event.js";
 export * from "./feed-item.js";
 export * from "./sanitize.js";
 export * from "./citation-ledger.js";
