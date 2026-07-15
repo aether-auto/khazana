@@ -7,6 +7,8 @@ export * from "./world-country-profile.js";
 export * from "./world-outlet.js";
 export * from "./world-bias-lab.js";
 export * from "./world-event.js";
+export * from "./world-contract.js";
+export * from "./world-source.js";
 export * from "./feed-item.js";
 export * from "./sanitize.js";
 export * from "./citation-ledger.js";
