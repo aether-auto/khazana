@@ -20,23 +20,29 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { GovArchetypeLibrarySchema } from "../packages/core/src/index.ts";
 import { buildGovernmentArchetypeLibrary } from "./government-archetypes-data.mts";
-import { validateLibrary } from "./validate-government-archetypes.mts";
+import { validateLibraryObject } from "./validate-government-archetypes.mts";
 
 const repoRoot = fileURLToPath(new URL("../", import.meta.url));
 
-/** Zod-shape-parses AND runs the full semantic validator (unique ids/slots, declared-slot
- * edges, no self-loops, generic default-basis text, required family coverage) — never
- * publish (locally OR to the private repo) an artifact that would fail
- * `validate-government-archetypes.mts` itself. */
+/**
+ * Runs the RAW hand-authored object through the exact same gate the CLI validator
+ * uses (`validateLibraryObject` — unrecognized-field check, then schema, then the
+ * semantic checks: unique ids/slots, declared-slot edges, no self-loops, generic
+ * default-basis text, required family coverage). Deliberately does NOT parse with
+ * `GovArchetypeLibrarySchema` first — a lenient (non-`.strict()`) Zod object schema
+ * strips unknown keys before validation would ever see them, which would let a
+ * future edit to government-archetypes-data.mts silently bypass the unknown-field
+ * guard the CLI validator enforces. Never publish (locally OR to the private repo)
+ * an artifact that would fail `validate-government-archetypes.mts` itself.
+ */
 export function serializeLibrary(): string {
-  const library = GovArchetypeLibrarySchema.parse(buildGovernmentArchetypeLibrary());
-  const result = validateLibrary(library);
+  const raw = buildGovernmentArchetypeLibrary();
+  const result = validateLibraryObject(raw);
   if (!result.ok) {
     throw new Error(`[build-government-archetypes] refusing to publish an invalid library:\n${result.errors.map((e) => `  - ${e}`).join("\n")}`);
   }
-  return JSON.stringify(library, null, 2) + "\n";
+  return JSON.stringify(raw, null, 2) + "\n";
 }
 
 /** Strips a `basic <base64>` credential (and the token it decodes to) out of an error's
