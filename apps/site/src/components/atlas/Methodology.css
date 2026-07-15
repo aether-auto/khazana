@@ -1,0 +1,98 @@
+/* apps/site/src/components/atlas/Methodology.css
+   Shared Atlas provenance panel. Instrument register: quiet, monospace-leaning
+   metadata block, native <details>/<summary> disclosure. Tokens from
+   apps/site/src/styles/tokens.css — no component-local color literals. */
+.mth {
+  border: 1px solid color-mix(in oklab, var(--ink-faint) 35%, transparent);
+  border-radius: 6px;
+  background: var(--bg-inset);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.mth-summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.6rem 0.85rem;
+  font-family: var(--font-mono);
+  color: var(--ink-dim);
+}
+
+.mth-summary::-webkit-details-marker {
+  display: none;
+}
+
+.mth-source-id {
+  color: var(--ink);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.mth-freshness {
+  color: var(--ink-faint);
+  font-size: 0.78rem;
+}
+
+.mth-body {
+  padding: 0 0.85rem 0.85rem;
+  border-top: 1px solid color-mix(in oklab, var(--ink-faint) 20%, transparent);
+}
+
+.mth-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 0.85rem;
+  margin: 0.75rem 0;
+}
+
+.mth-grid dt {
+  color: var(--ink-label);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  align-self: start;
+  padding-top: 0.1rem;
+}
+
+.mth-grid dd {
+  margin: 0;
+  color: var(--ink-dim);
+  word-break: break-word;
+}
+
+.mth-link {
+  color: var(--accent);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.mth-link:hover,
+.mth-link:focus-visible {
+  text-decoration: underline;
+}
+
+.mth-uncertainty {
+  margin: 0.5rem 0 0;
+  color: var(--ink-dim);
+  font-size: 0.82rem;
+}
+
+.mth-uncertainty-kind {
+  color: var(--ink-label);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-right: 0.35rem;
+}
+
+.mth-uncertainty--none {
+  color: var(--ink-faint);
+  font-style: italic;
+}
