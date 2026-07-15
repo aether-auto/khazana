@@ -103,3 +103,28 @@ export const SELECTION_METHODS = [
 ] as const;
 export const SelectionMethodSchema = z.enum(SELECTION_METHODS);
 export type SelectionMethod = z.infer<typeof SelectionMethodSchema>;
+
+// --- Atlas Conflict Theaters vocabularies (2026-07-07-atlas-conflict-theaters-design.md §2-4) ---
+
+// §2 — theater lifecycle status
+export const THEATER_STATUSES = ["proposed", "active", "dormant", "archived"] as const;
+export const TheaterStatusSchema = z.enum(THEATER_STATUSES);
+export type TheaterStatus = z.infer<typeof TheaterStatusSchema>;
+
+// §3 — control-layer geometry posture: licensed primary geometry, lawful fallback
+// geometry, or deliberate link-out-only rendering with no embedded geometry.
+export const GEOMETRY_STATUSES = ["licensed", "fallback", "link-out-only"] as const;
+export const GeometryStatusSchema = z.enum(GEOMETRY_STATUSES);
+export type GeometryStatus = z.infer<typeof GeometryStatusSchema>;
+
+// §4 — theater-scoped metric kinds (front-wide, not country-grain)
+export const THEATER_METRIC_KINDS = [
+  "casualties", "displacement", "fires", "nightlights", "media-attention", "commodity-impact",
+] as const;
+export const TheaterMetricKindSchema = z.enum(THEATER_METRIC_KINDS);
+export type TheaterMetricKind = z.infer<typeof TheaterMetricKindSchema>;
+
+// §4 — discrete engagement kinds
+export const ENGAGEMENT_KINDS = ["battle", "strike", "siege", "advance", "incident"] as const;
+export const EngagementKindSchema = z.enum(ENGAGEMENT_KINDS);
+export type EngagementKind = z.infer<typeof EngagementKindSchema>;

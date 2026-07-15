@@ -13,6 +13,10 @@ import {
   INSTITUTION_KINDS, InstitutionKindSchema,
   POWER_RELATIONS, PowerRelationSchema,
   SELECTION_METHODS, SelectionMethodSchema,
+  THEATER_STATUSES, TheaterStatusSchema,
+  GEOMETRY_STATUSES, GeometryStatusSchema,
+  THEATER_METRIC_KINDS, TheaterMetricKindSchema,
+  ENGAGEMENT_KINDS, EngagementKindSchema,
 } from "./vocab.js";
 
 test("channels include the founder's core topics", () => {
@@ -102,4 +106,28 @@ test("SelectionMethodSchema accepts known and rejects unknown", () => {
   expect(SELECTION_METHODS).toContain("legislature-elected");
   expect(SelectionMethodSchema.parse("hereditary")).toBe("hereditary");
   expect(SelectionMethodSchema.safeParse("lottery").success).toBe(false);
+});
+
+test("TheaterStatusSchema accepts known and rejects unknown", () => {
+  expect(THEATER_STATUSES).toContain("dormant");
+  expect(TheaterStatusSchema.parse("active")).toBe("active");
+  expect(TheaterStatusSchema.safeParse("resolved").success).toBe(false);
+});
+
+test("GeometryStatusSchema accepts known and rejects unknown", () => {
+  expect(GEOMETRY_STATUSES).toContain("link-out-only");
+  expect(GeometryStatusSchema.parse("fallback")).toBe("fallback");
+  expect(GeometryStatusSchema.safeParse("embedded").success).toBe(false);
+});
+
+test("TheaterMetricKindSchema accepts known and rejects unknown", () => {
+  expect(THEATER_METRIC_KINDS).toContain("commodity-impact");
+  expect(TheaterMetricKindSchema.parse("displacement")).toBe("displacement");
+  expect(TheaterMetricKindSchema.safeParse("gdp-drop").success).toBe(false);
+});
+
+test("EngagementKindSchema accepts known and rejects unknown", () => {
+  expect(ENGAGEMENT_KINDS).toContain("siege");
+  expect(EngagementKindSchema.parse("strike")).toBe("strike");
+  expect(EngagementKindSchema.safeParse("ceasefire").success).toBe(false);
 });
