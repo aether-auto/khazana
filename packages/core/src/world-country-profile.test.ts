@@ -19,6 +19,7 @@ const indicator = {
   label: "GDP (current US$)",
   value: 3730000000000,
   unit: "USD",
+  normalizedScore: 82,
   country: "IND",
   period: "2024",
   provenance,
@@ -46,6 +47,11 @@ test("round-trips a fully-populated CountryProfile fixture including nested Subn
   };
   const parsed = CountryProfileSchema.parse(full);
   expect(parsed).toEqual(full);
+});
+
+test("SubnationalProfileSchema rejects an unsupported level grain", () => {
+  const sub = { level: "province", code: "IN-MH", name: "Maharashtra", fields: [indicatorGroup] };
+  expect(() => SubnationalProfileSchema.parse(sub)).toThrow();
 });
 
 test("subnational defaults to [] when the field is omitted entirely", () => {

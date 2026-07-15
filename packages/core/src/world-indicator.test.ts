@@ -20,7 +20,7 @@ test("round-trips a fully-populated Indicator fixture including subnational", ()
     label: "GDP (current US$)",
     value: 3730000000000,
     unit: "USD",
-    normalizedScore: 0.82,
+    normalizedScore: 82,
     country: "IND",
     subnational: { level: "state", code: "IN-MH", name: "Maharashtra" },
     period: "2024",
@@ -30,9 +30,26 @@ test("round-trips a fully-populated Indicator fixture including subnational", ()
   expect(parsed).toEqual(full);
 });
 
-test("round-trips a minimal Indicator fixture without subnational or normalizedScore", () => {
+test("round-trips a minimal Indicator fixture without subnational", () => {
   const minimal = {
     id: "abc124",
+    field: "fiscal" as const,
+    key: "GC.DOD.TOTL.GD.ZS",
+    label: "Central government debt, total (% of GDP)",
+    value: 82.3,
+    unit: "% of GDP",
+    normalizedScore: 61,
+    country: "USA",
+    period: "2024-Q1",
+    provenance: baseProvenance,
+  };
+  const parsed = IndicatorSchema.parse(minimal);
+  expect(parsed).toEqual(minimal);
+});
+
+test("rejects a normalizedScore outside 0-100 and rejects an absent normalizedScore", () => {
+  const base = {
+    id: "abc125",
     field: "fiscal" as const,
     key: "GC.DOD.TOTL.GD.ZS",
     label: "Central government debt, total (% of GDP)",
@@ -42,8 +59,26 @@ test("round-trips a minimal Indicator fixture without subnational or normalizedS
     period: "2024-Q1",
     provenance: baseProvenance,
   };
-  const parsed = IndicatorSchema.parse(minimal);
-  expect(parsed).toEqual(minimal);
+  expect(() => IndicatorSchema.parse({ ...base, normalizedScore: 101 })).toThrow();
+  expect(() => IndicatorSchema.parse({ ...base, normalizedScore: -1 })).toThrow();
+  expect(() => IndicatorSchema.parse(base)).toThrow();
+});
+
+test("rejects an unsupported subnational level grain", () => {
+  const full = {
+    id: "abc126",
+    field: "macro" as const,
+    key: "NY.GDP.MKTP.CD",
+    label: "GDP (current US$)",
+    value: 1,
+    unit: "USD",
+    normalizedScore: 50,
+    country: "IND",
+    subnational: { level: "province", code: "IN-MH", name: "Maharashtra" },
+    period: "2024",
+    provenance: baseProvenance,
+  };
+  expect(() => IndicatorSchema.parse(full)).toThrow();
 });
 
 // --- CountryCodeSchema ---

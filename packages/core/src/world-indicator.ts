@@ -19,7 +19,7 @@ export const PeriodSchema = z
 export type Period = z.infer<typeof PeriodSchema>;
 
 export const SubnationalRefSchema = z.object({
-  level: z.string(),
+  level: z.enum(["state", "district"]),
   code: z.string(),
   name: z.string(),
 });
@@ -32,7 +32,14 @@ export const IndicatorSchema = z.object({
   label: z.string(),
   value: z.number(),
   unit: z.string(),
-  normalizedScore: z.number().min(0).max(1).optional(),
+  /**
+   * Cross-country, cross-time comparable score, 0-100, required on every Indicator so
+   * the Ledger's cross-field views (radar charts, heatmaps mixing 8 fields on one
+   * country) have one common axis to plot. For sources already 0-100 (CPI, Freedom
+   * House), normalizedScore === value. For raw macro/fiscal series, it's khazana's own
+   * percentile rank against the cross-country distribution, computed at build time.
+   */
+  normalizedScore: z.number().min(0).max(100),
   country: CountryCodeSchema,
   subnational: SubnationalRefSchema.optional(),
   period: PeriodSchema,

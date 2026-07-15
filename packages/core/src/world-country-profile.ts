@@ -15,7 +15,7 @@ export const IndicatorGroupSchema = z.object({
 export type IndicatorGroup = z.infer<typeof IndicatorGroupSchema>;
 
 export const SubnationalProfileSchema = z.object({
-  level: z.string(),
+  level: z.enum(["state", "district"]),
   code: z.string(),
   name: z.string(),
   fields: z.array(IndicatorGroupSchema),
