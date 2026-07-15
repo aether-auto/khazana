@@ -66,3 +66,26 @@ describe("Shell.astro bezel face-switch (plain link)", () => {
     );
   });
 });
+
+// The signature cross-face view transition (two-faces spec §4) is wired into the
+// Study shell's render-blocking <head>: the @view-transition opt-in as an inline
+// render-blocking rule, and face-switch.ts as a hoisted module script (the ONLY
+// JS in the transition). We assert both are present in the SSR head; the DOM
+// event behavior itself (pageswap/pagereveal choreography, focus, the no-VT
+// fade) is browser-verified per spec §8, not here.
+describe("Shell.astro face-switch transition wiring (SSR head)", () => {
+  const head = (html: string) => html.slice(0, html.indexOf("</head>"));
+
+  it("stamps the @view-transition { navigation: auto } opt-in inline in the head", () => {
+    expect(head(rendered.studyDefault)).toMatch(/@view-transition\s*\{\s*navigation:\s*auto;?\s*\}/);
+  });
+
+  it("imports face-switch.ts as a hoisted module script in the head", () => {
+    // Astro compiles `<script>import "../lib/face-switch.ts"` into a hoisted
+    // module script sourced from the layout — the only processed <script> in
+    // this shell's head, so this ref IS the face-switch import.
+    expect(head(rendered.studyDefault)).toMatch(
+      /<script type="module" src="[^"]*layouts\/Shell\.astro\?astro&type=script/,
+    );
+  });
+});

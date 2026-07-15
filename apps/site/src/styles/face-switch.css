@@ -1,0 +1,134 @@
+/* ── SIGNATURE FACE-SWITCH TRANSITION (two-faces design spec §4) ─────────────
+   The cross-document view transition between the Study (warm) and Atlas (cold).
+   Imported via global.css so it is render-blocking. This file owns the
+   direction-branched choreography, the single hand-named shared element, the
+   reduced-motion HARD gate, and the no-VT whisper-fade fallback. The
+   `@view-transition { navigation: auto; }` opt-in is ALSO stamped inline in each
+   shell's <head> (render-blocking + SSR-inspectable); declaring it here too is
+   idempotent and keeps the whole mechanism co-located and discoverable for the
+   future `faces-cross-face-moments` task that extends this stylesheet.
+
+   Metaphor (§4): the observatory turning its gaze — warm room outward to the
+   world, and back. `to-atlas` OPENS OUT and cools; `to-study` CONTRACTS and
+   warms. The asymmetry is real: different curve, different origin, per §4.2.
+
+   Snapshot-cost discipline (§4.2/§7): exactly ONE hand-named element crosses
+   (the wordmark, `face-mark`); the chrome re-skin rides the root cross-fade, not
+   a named snapshot of the whole bezel. Only transform / opacity / background-
+   color are animated inside the pseudo-elements. */
+
+@view-transition {
+  navigation: auto;
+}
+
+/* The ONE hand-named shared element — the wordmark holds its position across the
+   crossing as everything around it changes: "same product, different world."
+   The name MUST be static in CSS: a cross-document VT captures the INCOMING
+   wordmark snapshot at first render, before this page's deferred module could
+   set it, so JS-gating the name would break the morph. */
+.wordmark {
+  view-transition-name: face-mark;
+}
+
+/* Zero-cost on non-crossing nav (§7): Astro's ClientRouter drives ordinary
+   same-face SPA navigation (/ → /reads, /atlas → /atlas/bias) through the SAME
+   View Transition API, so a statically-named wordmark would otherwise play a
+   default cross-fade ceremony on EVERY internal nav. Default its pseudo-elements
+   to no animation; only the two typed FACE crossings below re-enable it. The
+   wordmark sits in the identical position in both bezels, so suppressing the
+   group animation never causes a jump. */
+::view-transition-group(face-mark),
+::view-transition-old(face-mark),
+::view-transition-new(face-mark) {
+  animation: none;
+}
+
+/* ── Study → Atlas · "the room opens onto the world" ─────────────────────────
+   Warm ambient floor drains to a point (echo of First Light in reverse), then
+   the colder, wider Atlas ground washes IN FROM THE EDGES inward (expo.out),
+   then settles. Budget ~700ms (§4's DRAMATIC gear). */
+:active-view-transition-type(to-atlas)::view-transition-old(root) {
+  animation: to-atlas-drain 700ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+:active-view-transition-type(to-atlas)::view-transition-new(root) {
+  animation: to-atlas-wash 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+:active-view-transition-type(to-atlas)::view-transition-old(face-mark),
+:active-view-transition-type(to-atlas)::view-transition-new(face-mark) {
+  animation: face-mark-cool 700ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes to-atlas-drain {
+  0% { opacity: 1; transform: scale(1); }
+  17% { opacity: 0.9; transform: scale(0.98); }
+  100% { opacity: 0; transform: scale(0.82); }
+}
+@keyframes to-atlas-wash {
+  0% { opacity: 0; transform: scale(1.06); }
+  17% { opacity: 0.12; }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes face-mark-cool {
+  0% { opacity: 1; }
+  46% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* ── Atlas → Study · "coming home" ───────────────────────────────────────────
+   The inverse and deliberately WARMER: the cold wide world CONTRACTS back toward
+   center, the amber ambient floor RE-IGNITES FROM BELOW (candlelight returns),
+   chrome re-skins cold→warm. Deliberately NOT the reverse-playback of to-atlas —
+   different origin (from below, not edges), different curve, tighter ~640ms. */
+:active-view-transition-type(to-study)::view-transition-old(root) {
+  animation: to-study-contract 640ms cubic-bezier(0.32, 0, 0.67, 0) both;
+}
+:active-view-transition-type(to-study)::view-transition-new(root) {
+  animation: to-study-ignite 640ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+:active-view-transition-type(to-study)::view-transition-old(face-mark),
+:active-view-transition-type(to-study)::view-transition-new(face-mark) {
+  animation: face-mark-warm 640ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes to-study-contract {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+@keyframes to-study-ignite {
+  0% { opacity: 0; transform: translateY(9%); background-color: var(--bg-inset); }
+  40% { opacity: 0.35; }
+  100% { opacity: 1; transform: translateY(0); background-color: transparent; }
+}
+@keyframes face-mark-warm {
+  0% { opacity: 1; }
+  55% { opacity: 0.62; }
+  100% { opacity: 1; }
+}
+
+/* ── The no-VT whisper fade (§4.3 middle tier, ~17% of traffic) ──────────────
+   Engines without cross-document VT just navigate normally; the destination
+   still SSR-stamps its correct atmosphere. face-switch.ts flags the incoming
+   <html data-just-crossed> for ~200ms when arriving from the other face; the
+   body cross-fades its background-color. Pure CSS, no layout motion — vestibular
+   safe. No JS branch beyond setting/clearing the attribute. */
+html[data-just-crossed] body {
+  animation: just-crossed-fade 200ms ease-out both;
+}
+@keyframes just-crossed-fade {
+  from { background-color: var(--bg-raised); }
+  to { background-color: var(--bg); }
+}
+
+/* ── Reduced-motion HARD gate (§4.3, art-direction §6) ───────────────────────
+   Native @view-transition is NOT auto-gated the way ClientRouter was, so this
+   must be explicit. The DOM still swaps instantly to the correct SSR-stamped
+   atmosphere — only the choreography (and the whisper fade) is lost, never the
+   signal. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) {
+    animation: none !important;
+  }
+  html[data-just-crossed] body {
+    animation: none !important;
+  }
+}

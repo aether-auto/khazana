@@ -131,7 +131,20 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
         PUBLIC_SITE_GATE_HASH is unset; when set, its inline critical CSS + JS
         run before body paint so the page never flashes before unlock. */}
     <SiteGate />
+    {/* Signature face-switch transition (two-faces spec §4). The
+        `@view-transition` opt-in is render-blocking + inline here so it is in
+        the served <head> with zero bundling indirection; the direction-branched
+        choreography, shared-element name, reduced-motion gate, and no-VT fade all
+        live in styles/face-switch.css (imported via global.css). */}
+    <style is:inline>@view-transition { navigation: auto; }</style>
     <ClientRouter />
+    {/* The ONLY JS in the transition: sets the cross-document VT `type`
+        (to-atlas / to-study) in pageswap, echoes it + lands focus in pagereveal,
+        listens for the TimeoutError, and drives the no-VT data-just-crossed fade.
+        Inert unless a genuine face crossing fires (spec §7). */}
+    <script>
+      import "../lib/face-switch.ts";
+    </script>
     <script is:inline>
       // Gate the reveal hidden-state ASAP (before paint) so JS-on visitors
       // don't flash the final layout, while no-JS/SSR keeps everything visible.

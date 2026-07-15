@@ -3,6 +3,11 @@
    AHEAD of every component's CSS, so an Atlas page's cold delta wins over the
    warm Study defaults without ever touching the reading-comfort invariants. */
 @import "./atmosphere.css";
+/* Signature face-switch cross-document view transition (two-faces spec §4) —
+   the direction-branched choreography, the one shared element, the reduced-
+   motion HARD gate, and the no-VT whisper fade. Render-blocking; the
+   @view-transition opt-in is also stamped inline in each shell's <head>. */
+@import "./face-switch.css";
 /* ── Self-hosted type duet ($0/OFL, bundled by Vite — no Google Fonts CDN) ──
    ARTIFACT voice — Fraunces variable (display titles + pull-quotes). wght axis,
    normal + italic; opsz/SOFT/WONK reachable via font-variation-settings. */
