@@ -185,9 +185,19 @@ const realLibraryPath = process.env.GOV_ARCHETYPE_LIBRARY_PATH
   ? join(repoRoot, process.env.GOV_ARCHETYPE_LIBRARY_PATH)
   : undefined;
 
-describe.skipIf(!process.env.GOV_ARCHETYPE_LIBRARY_PATH || !existsSync(realLibraryPath!))(
+// Only skip this block when GOV_ARCHETYPE_LIBRARY_PATH is unset entirely (most
+// unit-test runs never set it). If it IS set, the artifact it points at must
+// exist and validate — a missing file must FAIL, never silently skip, or the
+// documented verification command (`GOV_ARCHETYPE_LIBRARY_PATH=... vitest run
+// scripts/validate-government-archetypes.test.ts`) could pass without ever
+// checking the real private-repo deliverable.
+describe.skipIf(!process.env.GOV_ARCHETYPE_LIBRARY_PATH)(
   "the real committed archetype library (GOV_ARCHETYPE_LIBRARY_PATH)",
   () => {
+    test("artifact exists at GOV_ARCHETYPE_LIBRARY_PATH", () => {
+      expect(existsSync(realLibraryPath!)).toBe(true);
+    });
+
     test("validates cleanly", () => {
       const raw = JSON.parse(readFileSync(realLibraryPath!, "utf8"));
       const result = validateLibraryObject(raw);
