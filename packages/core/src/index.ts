@@ -1,6 +1,8 @@
 export const KHAZANA_CORE_VERSION = "0.0.0";
 export * from "./vocab.js";
 export * from "./world-provenance.js";
+export * from "./world-outlet.js";
+export * from "./world-event.js";
 export * from "./feed-item.js";
 export * from "./sanitize.js";
 export * from "./citation-ledger.js";
