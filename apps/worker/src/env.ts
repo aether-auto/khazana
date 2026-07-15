@@ -8,4 +8,5 @@ export interface Env {
   KV: KVLike;
   EXPORT_TOKEN?: string;
   ALLOWED_ORIGIN?: string;
+  WORLD_INGEST_TOKEN?: string;
 }

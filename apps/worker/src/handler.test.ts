@@ -2,7 +2,30 @@ import { describe, expect, test } from "vitest";
 import { handleRequest } from "./handler.js";
 import { createFakeKV } from "./test-kv.js";
 import type { Env } from "./env.js";
-import { eventWeight, gateState, type EngagementEvent } from "@khazana/core";
+import { eventWeight, gateState, type EngagementEvent, type WorldEvent } from "@khazana/core";
+
+function worldEvent(over: Partial<WorldEvent> = {}): WorldEvent {
+  return {
+    id: "evt-1",
+    headline: "Test headline",
+    geo: { lat: 1, lng: 2, country: "XX" },
+    time: "2026-06-23T01:00:00.000Z",
+    category: "conflict",
+    severity: "medium",
+    reportings: [],
+    provenance: {
+      sourceId: "gdelt",
+      sourceUrl: "https://example.com/source",
+      methodUrl: "https://example.com/method",
+      licenseTier: "redistribute-raw-ok",
+      redistribution: true,
+      origin: "referenced",
+      retrievedAt: "2026-06-23T01:05:00.000Z",
+      uncertainty: { kind: "none" },
+    },
+    ...over,
+  };
+}
 
 function makeEnv(over: Partial<Env> = {}): Env {
   return { KV: createFakeKV(), ...over };
@@ -13,7 +36,7 @@ test("OPTIONS preflight returns 204 with CORS headers", async () => {
   const res = await handleRequest(new Request("https://w.dev/event", { method: "OPTIONS" }), env);
   expect(res.status).toBe(204);
   expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://khazana.pages.dev");
-  expect(res.headers.get("Access-Control-Allow-Methods")).toBe("GET, POST, OPTIONS");
+  expect(res.headers.get("Access-Control-Allow-Methods")).toBe("GET, POST, PUT, OPTIONS");
   expect(res.headers.get("Access-Control-Allow-Headers")).toBe("Authorization, Content-Type");
 });
 
@@ -379,5 +402,162 @@ describe("GET /summary", () => {
   test("includes CORS Access-Control-Allow-Origin header on 200", async () => {
     const res = await handleRequest(summaryReq("?deviceId=any"), makeEnv());
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+  });
+});
+
+describe("PUT included in CORS preflight", () => {
+  test("OPTIONS preflight advertises PUT alongside GET/POST", async () => {
+    const res = await handleRequest(
+      new Request("https://w.dev/world/ingest", { method: "OPTIONS" }),
+      makeEnv(),
+    );
+    expect(res.status).toBe(204);
+    expect(res.headers.get("Access-Control-Allow-Methods")).toBe("GET, POST, PUT, OPTIONS");
+  });
+});
+
+describe("GET /world/latest", () => {
+  test("public read requires no Authorization header", async () => {
+    const events = [worldEvent({ id: "a" })];
+    const env = makeEnv({
+      KV: createFakeKV({
+        "world:latest": JSON.stringify({ updatedAt: "2026-06-23T02:00:00.000Z", events }),
+      }),
+    });
+    const res = await handleRequest(new Request("https://w.dev/world/latest"), env);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { updatedAt: string; events: WorldEvent[] };
+    expect(body.updatedAt).toBe("2026-06-23T02:00:00.000Z");
+    expect(body.events).toHaveLength(1);
+    expect(body.events[0]!.id).toBe("a");
+  });
+
+  test("returns events newest-first by time, capped at 2000", async () => {
+    const events: WorldEvent[] = [];
+    for (let i = 0; i < 2005; i++) {
+      const time = new Date(2026, 0, 1, 0, i).toISOString();
+      events.push(worldEvent({ id: `e${i}`, time }));
+    }
+    const env = makeEnv({
+      KV: createFakeKV({
+        "world:latest": JSON.stringify({ updatedAt: "2026-06-23T02:00:00.000Z", events }),
+      }),
+    });
+    const res = await handleRequest(new Request("https://w.dev/world/latest"), env);
+    const body = (await res.json()) as { updatedAt: string; events: WorldEvent[] };
+    expect(body.events).toHaveLength(2000);
+    const times = body.events.map((e) => e.time);
+    expect([...times].sort().reverse()).toEqual(times);
+    // newest of the 2005 generated events (highest minute) must be present
+    expect(body.events[0]!.id).toBe("e2004");
+  });
+
+  test("empty KV yields an empty rollup, not an error", async () => {
+    const res = await handleRequest(new Request("https://w.dev/world/latest"), makeEnv());
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { updatedAt: string; events: WorldEvent[] };
+    expect(body.events).toEqual([]);
+  });
+});
+
+describe("PUT /world/ingest", () => {
+  function ingestReq(body: unknown, token?: string): Request {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token !== undefined) headers.Authorization = `Bearer ${token}`;
+    return new Request("https://w.dev/world/ingest", {
+      method: "PUT",
+      headers,
+      body: typeof body === "string" ? body : JSON.stringify(body),
+    });
+  }
+
+  test("returns 503 before checking credentials when WORLD_INGEST_TOKEN is unconfigured", async () => {
+    const env = makeEnv();
+    const res = await handleRequest(ingestReq({ updatedAt: "x", events: [] }), env);
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: "WORLD_INGEST_TOKEN not configured" });
+  });
+
+  test("returns 401 when Authorization header is missing", async () => {
+    const env = makeEnv({ WORLD_INGEST_TOKEN: "secret" });
+    const res = await handleRequest(
+      new Request("https://w.dev/world/ingest", {
+        method: "PUT",
+        body: JSON.stringify({ updatedAt: "2026-06-23T00:00:00.000Z", events: [] }),
+      }),
+      env,
+    );
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "unauthorized" });
+  });
+
+  test("returns 401 when Authorization token is mismatched", async () => {
+    const env = makeEnv({ WORLD_INGEST_TOKEN: "secret" });
+    const res = await handleRequest(
+      ingestReq({ updatedAt: "2026-06-23T00:00:00.000Z", events: [] }, "wrong"),
+      env,
+    );
+    expect(res.status).toBe(401);
+  });
+
+  test("successful authenticated PUT persists the rollup at world:latest and returns 202", async () => {
+    const kv = createFakeKV();
+    const env = makeEnv({ WORLD_INGEST_TOKEN: "secret", KV: kv });
+    const events = [worldEvent({ id: "a" })];
+    const res = await handleRequest(
+      ingestReq({ updatedAt: "2026-06-23T00:00:00.000Z", events }, "secret"),
+      env,
+    );
+    expect(res.status).toBe(202);
+    expect(await res.json()).toEqual({ ok: true });
+    const stored = JSON.parse(kv.store.get("world:latest")!);
+    expect(stored.updatedAt).toBe("2026-06-23T00:00:00.000Z");
+    expect(stored.events).toHaveLength(1);
+    expect(stored.events[0].id).toBe("a");
+  });
+
+  test("invalid JSON returns 400 and does not overwrite a prior valid value", async () => {
+    const prior = { updatedAt: "2026-06-20T00:00:00.000Z", events: [worldEvent({ id: "prior" })] };
+    const kv = createFakeKV({ "world:latest": JSON.stringify(prior) });
+    const env = makeEnv({ WORLD_INGEST_TOKEN: "secret", KV: kv });
+    const res = await handleRequest(ingestReq("{ not json", "secret"), env);
+    expect(res.status).toBe(400);
+    expect(JSON.parse(kv.store.get("world:latest")!)).toEqual(prior);
+  });
+
+  test("schema-invalid rollup returns 400 and does not overwrite a prior valid value", async () => {
+    const prior = { updatedAt: "2026-06-20T00:00:00.000Z", events: [worldEvent({ id: "prior" })] };
+    const kv = createFakeKV({ "world:latest": JSON.stringify(prior) });
+    const env = makeEnv({ WORLD_INGEST_TOKEN: "secret", KV: kv });
+    const res = await handleRequest(
+      ingestReq({ updatedAt: "2026-06-23T00:00:00.000Z", events: [{ id: "bad" }] }, "secret"),
+      env,
+    );
+    expect(res.status).toBe(400);
+    expect(JSON.parse(kv.store.get("world:latest")!)).toEqual(prior);
+  });
+
+  test("valid PUT canonicalizes newest-first ordering and caps at 2000 before storing", async () => {
+    const kv = createFakeKV();
+    const env = makeEnv({ WORLD_INGEST_TOKEN: "secret", KV: kv });
+    const events: WorldEvent[] = [];
+    for (let i = 0; i < 2005; i++) {
+      const time = new Date(2026, 0, 1, 0, i).toISOString();
+      events.push(worldEvent({ id: `e${i}`, time }));
+    }
+    const res = await handleRequest(
+      ingestReq({ updatedAt: "2026-06-23T00:00:00.000Z", events }, "secret"),
+      env,
+    );
+    expect(res.status).toBe(202);
+    const stored = JSON.parse(kv.store.get("world:latest")!);
+    expect(stored.events).toHaveLength(2000);
+    expect(stored.events[0].id).toBe("e2004");
+  });
+
+  test("existing engagement-event routes still behave the same after world routes are added", async () => {
+    const res = await handleRequest(new Request("https://w.dev/health"), makeEnv());
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
   });
 });
