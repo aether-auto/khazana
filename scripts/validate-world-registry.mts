@@ -72,11 +72,13 @@ export const EXPECTED_LICENSE_TIER: Record<string, WorldSourceEntry["licenseTier
 };
 
 /**
- * §4.2's cron-cadence-tier table, id-by-id. AllSides/Ad Fontes/MBFC are not named in the
- * table's prose (which lists lanes by *dataset*, not by reference-rater) but every other
- * weekly-or-slower source in the registry is `slow`, and there is no other cadence text
- * anywhere in the spec that would place them elsewhere — treated as `slow` here, flagged
- * in this task's `learnings` as an inferred (not spec-literal) mapping.
+ * §4.2's cron-cadence-tier table, id-by-id. AllSides/Ad Fontes/MBFC are not named
+ * individually in the table's prose (which lists the medium row's "outlet corpus scan →
+ * BiasProfile recompute" activity, not the three rater sources by id), but this task's
+ * own `long_description_md` resolves that ambiguity explicitly: the three raters feed
+ * that same medium-lane recompute, so they are `medium`, not `slow` — this is an
+ * inferred-from-task-text (not spec-table-literal) mapping, flagged in this task's
+ * `learnings`.
  */
 export const EXPECTED_CADENCE_LANE: Record<string, WorldSourceEntry["cadenceLane"]> = {
   "gdelt-gkg": "fast",
@@ -85,6 +87,9 @@ export const EXPECTED_CADENCE_LANE: Record<string, WorldSourceEntry["cadenceLane
   ted: "medium",
   ocds: "medium",
   "gem-india": "medium",
+  allsides: "medium",
+  adfontes: "medium",
+  mbfc: "medium",
   "world-bank-wdi": "slow",
   "world-bank-wgi": "slow",
   "imf-sdmx": "slow",
@@ -98,9 +103,6 @@ export const EXPECTED_CADENCE_LANE: Record<string, WorldSourceEntry["cadenceLane
   "rbi-dbie": "slow",
   "lok-dhaba": "slow",
   "open-budgets-india": "slow",
-  allsides: "slow",
-  adfontes: "slow",
-  mbfc: "slow",
 };
 
 /**
