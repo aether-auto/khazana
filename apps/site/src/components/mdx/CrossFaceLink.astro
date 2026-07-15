@@ -19,18 +19,24 @@ export interface CrossFaceLinkProps {
   /** Which face this tell crosses INTO. Colors + types off THIS, never the
    * current face — the tell is destination-colored (spec step 7). */
   destination: CrossFaceDestination;
-  /** Full destination URL/path, e.g. "/atlas/reports/india" or "/reads/some-post". */
+  /** Root-relative destination path (NO deployment base prefix), e.g.
+   * "/atlas/reports/india" or "/reads/some-post" — the component prefixes
+   * `import.meta.env.BASE_URL` itself, same as every other internal link in the
+   * kit (ReadCard.astro, FeedCard.astro, InstrumentRail.astro, ...), so this
+   * still resolves correctly under a GitHub Pages project base path. */
   href: string;
 }
 
 const { destination, href } = Astro.props as CrossFaceLinkProps;
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const resolvedHref = `${base}${href}`;
 const crossType = resolveCrossFaceType(destination);
 const accentRole = crossFaceAccentRole(destination);
 const label = destination === "atlas" ? "See it on the map" : "Read the full piece";
 ---
 
 <a
-  href={href}
+  href={resolvedHref}
   class={`mdx-cross-face mdx-cross-face--${accentRole}`}
   data-astro-reload
   data-face-cross-type={crossType}

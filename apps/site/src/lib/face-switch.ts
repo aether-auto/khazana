@@ -97,6 +97,40 @@ function crossedFrom(referrer: string): FaceTransitionType | null {
   return resolveFaceTransition(refUrl.pathname, location.pathname);
 }
 
+/** Either quiet type an inline `<CrossFaceLink>` (face-cross.ts) can stamp via its
+ * `data-face-cross-type` attribute — kept as a literal union here (not imported
+ * from face-cross.ts) to avoid a circular import, since face-cross.ts itself
+ * imports `isAtlasPath` from this module. */
+type QuietFaceCrossType = "to-atlas-quiet" | "to-study-quiet";
+
+function isQuietFaceCrossType(value: string | null): value is QuietFaceCrossType {
+  return value === "to-atlas-quiet" || value === "to-study-quiet";
+}
+
+// Captured by `captureCrossFaceLinkClick` (click-capture, fires before the
+// browser starts the navigation) and consumed by `onPageSwap` on the SAME
+// outgoing document — a genuine inline `<CrossFaceLink>` click should fire its
+// QUIET ladder (short atmosphere cross-fade + wordmark morph), never the
+// bezel's full ambient-drain/edge-wash ceremony, even though both share the
+// same underlying `resolveFaceTransition` direction. Always cleared as soon as
+// it is read (or superseded by a new click) so a stale value can never leak
+// into an unrelated later navigation (e.g. Back/Forward, a different link).
+let pendingQuietType: QuietFaceCrossType | null = null;
+
+/**
+ * Click-capture listener (registered on `window`, capture phase, so it fires
+ * BEFORE the anchor's default navigation begins): if the click originated
+ * inside a `<CrossFaceLink>` (any element carrying `data-face-cross-type`),
+ * stash its quiet type so the very next `pageswap` on this document can use it
+ * instead of the bezel's default `to-atlas`/`to-study`.
+ */
+function captureCrossFaceLinkClick(event: Event): void {
+  const target = event.target as Element | null;
+  const anchor = target?.closest?.("a[data-face-cross-type]") ?? null;
+  const attr = anchor?.getAttribute("data-face-cross-type") ?? null;
+  pendingQuietType = isQuietFaceCrossType(attr) ? attr : null;
+}
+
 /**
  * Observe the renderable-timeout degrade (spec §4.4): if the transition's `ready`
  * promise rejects with a TimeoutError, the destination silently jump-cut past the
@@ -129,7 +163,15 @@ function onPageSwap(event: PageSwapLikeEvent): void {
   } catch {
     return;
   }
-  const type = resolveFaceTransition(location.pathname, destPath);
+  const baseType = resolveFaceTransition(location.pathname, destPath);
+  // A pending quiet type only ever applies to a GENUINE crossing (baseType
+  // non-null) — this guards against a same-face CrossFaceLink misuse ever
+  // producing ceremony where the beat-budget rule (§7) says there should be
+  // none. Always clear the pending value here so it can never leak into a
+  // later, unrelated navigation on this same document.
+  const type: FaceTransitionType | QuietFaceCrossType | null =
+    pendingQuietType && baseType ? pendingQuietType : baseType;
+  pendingQuietType = null;
   if (!type) {
     // A same-face FULL-document navigation (e.g. a ⌘K jump that assigns
     // window.location, or any same-face data-astro-reload link) would otherwise
@@ -190,6 +232,7 @@ function markJustCrossed(): void {
 
 /** Install every browser-side listener. Browser-only (guarded at module tail). */
 export function installFaceSwitch(): void {
+  window.addEventListener("click", captureCrossFaceLinkClick, true); // capture phase, before nav
   window.addEventListener("pageswap", onPageSwap as EventListener);
   window.addEventListener("pagereveal", onPageReveal as EventListener);
   markJustCrossed(); // no-VT whisper fade
