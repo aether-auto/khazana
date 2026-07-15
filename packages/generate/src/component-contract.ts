@@ -64,6 +64,8 @@ export const CONTRACT_COMPONENTS = [
   "ParameterPlay",
   // Atlas Government Structure wave: power-flow diagram.
   "PowerFlow",
+  // Two Faces wave: inline cross-face citation tell.
+  "CrossFaceLink",
 ] as const;
 
 export type ContractComponentName = (typeof CONTRACT_COMPONENTS)[number];
@@ -331,5 +333,10 @@ export const COMPONENT_METADATA: Record<ContractComponentName, ComponentMetadata
     blurb: "Government power-flow diagram: institutions in branch columns x tier rows, directed authority edges (appoints/dissolves/reviews/confidence...). Reach for it to show how a state's constitutional authority actually flows.",
     props: "structure: GovernmentStructure (@khazana/core), caption?, highlightOnHover?",
     kits: ["theater"],
+  },
+  CrossFaceLink: {
+    blurb: "Inline destination-colored ↗ tell that crosses INTO the other face (Study→Atlas or Atlas→Study) — a plain functional link, full cross-document navigation, quiet atmosphere-crossfade choreography, no client JS.",
+    props: "destination: \"atlas\" | \"study\", href",
+    kits: ["chronicle", "dispatch", "teardown", "primer", "build-log", "theater"],
   },
 };

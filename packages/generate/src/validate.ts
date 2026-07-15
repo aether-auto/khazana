@@ -97,6 +97,8 @@ export const KNOWN_COMPONENTS = [
   "ParameterPlay",
   // Atlas Government Structure wave: power-flow diagram.
   "PowerFlow",
+  // Two Faces wave: inline cross-face citation tell.
+  "CrossFaceLink",
 ] as const;
 
 export interface DraftResult {

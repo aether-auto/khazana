@@ -1,0 +1,42 @@
+/* apps/site/src/components/mdx/CrossFaceLink.css
+   The inline cross-face "tell" — a plain, destination-colored functional link,
+   never a button/box. Tokens only. Destination-colored (never origin-colored):
+   --accent (amber) for a tell pointing INTO the Study, --info (cool slate) for a
+   tell pointing INTO Atlas — legible against either face's chrome (spec step 7). */
+
+.mdx-cross-face {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2em;
+  font-family: var(--font-read);
+  font-size: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: currentColor;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.mdx-cross-face:hover,
+.mdx-cross-face:focus-visible {
+  opacity: 0.82;
+}
+
+/* destination-colored: amber for a tell headed INTO the Study. `!important`
+   deliberate: Article.astro's scoped prose stylesheet ships `.prose[data-astro-
+   cid-*] a { color: var(--accent) }`, whose attribute-selector specificity
+   (0,2,1) otherwise outranks a plain class here — the tell's DESTINATION color
+   must win over the ambient prose-link color regardless of where it's dropped. */
+.mdx-cross-face--accent {
+  color: var(--accent-dim) !important;
+}
+/* destination-colored: cool slate for a tell headed INTO Atlas (same override
+   rationale as --accent above). */
+.mdx-cross-face--info {
+  color: var(--info) !important;
+}
+
+.mdx-cross-face__glyph {
+  display: inline-block;
+  font-size: 0.85em;
+  transform: translateY(-0.05em);
+}

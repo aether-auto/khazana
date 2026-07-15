@@ -38,6 +38,8 @@ export { default as Math } from "./Math.js";
 export type { MathProps, MathStep } from "./Math.js";
 export { default as Callout } from "./Callout.astro";
 export type { CalloutProps } from "./Callout.astro";
+export { default as CrossFaceLink } from "./CrossFaceLink.astro";
+export type { CrossFaceLinkProps } from "./CrossFaceLink.astro";
 export { default as Detail } from "./Detail.astro";
 export type { DetailProps } from "./Detail.astro";
 export { default as Definition } from "./Definition.js";
