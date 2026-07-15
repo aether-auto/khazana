@@ -1,0 +1,284 @@
+---
+title: "The Shot That Wasn't Taken: What Expected Goals Still Gets Wrong"
+format: dispatch
+channels:
+  - ds-sports
+  - data-science
+summary: "Expected goals runs on a logistic regression barely more complex than three inputs — location, angle, body part — yet a 2024 bias study shows the standard model undervalues Lionel Messi's career finishing by 17%, and a 2025 successor shows it still can't see the cross that almost became a shot."
+publishedAt: 2026-07-15T09:00:00.000Z
+sources:
+  - title: "Biases in Expected Goals Models Confound Finishing Ability (Davis & Robberechts, 2024)"
+    url: "https://arxiv.org/abs/2401.09940"
+    tier: high
+    origin: researched
+  - title: "Beyond Expected Goals: A Probabilistic Framework for Shot Occurrences in Soccer (Pipping-Gamón, Feng & Sabin)"
+    url: "https://arxiv.org/html/2512.00203v2"
+    tier: high
+    origin: researched
+  - title: "A Goal Scoring Probability Model for Shots Based on Synchronized Positional and Event Data in Football (Anzer & Bauer, 2021, Frontiers in Sports and Active Living)"
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC8056301/"
+    tier: high
+    origin: researched
+  - title: "Measuring the Effectiveness of Playing Strategies at Soccer (Pollard & Reep, 1997, JRSS Series D 46(4):541-550)"
+    url: "https://www.semanticscholar.org/paper/Measuring-the-effectiveness-of-playing-strategies-Pollard-Reep/0b293955db9746b4c8d43e31b35edccb304c40f0"
+    tier: high
+    origin: researched
+  - title: "The Effect of an Artificial Pitch Surface on Home Team Performance in Football (Soccer) (Barnett & Hilditch, 1993, JRSS Series A 156(1):39-50)"
+    url: "https://ideas.repec.org/a/bla/jorssa/v156y1993i1p39-50.html"
+    tier: high
+    origin: researched
+  - title: "Applications of Logistic Regression to Shots at Goal in Association Football (Ensum, Pollard & Taylor, 2004, Journal of Sports Sciences 22(6):504)"
+    url: "https://sponet.de/Record/3038530"
+    tier: high
+    origin: researched
+  - title: "Expected goals — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Expected_goals"
+    tier: med
+    origin: researched
+  - title: "What Is Expected Goals (xG)? (Opta Analyst)"
+    url: "https://theanalyst.com/articles/what-is-expected-goals-xg"
+    tier: med
+    origin: researched
+  - title: "Soccer Analytics 2024 Review (Jan Van Haaren, KU Leuven)"
+    url: "https://www.janvanhaaren.be/posts/soccer-analytics-review-2024/"
+    tier: med
+    origin: researched
+  - title: "Liverpool's former director of research Ian Graham explains how data helped the Reds win the Premier League title (Sky Sports)"
+    url: "https://www.skysports.com/football/news/11669/13200552/liverpool-s-former-director-of-research-ian-graham-explains-how-data-helped-the-reds-win-the-premier-league-title"
+    tier: med
+    origin: researched
+  - title: "Charles Reep — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Charles_Reep"
+    tier: med
+    origin: researched
+  - title: "Analytics is older than you think: (re)introducing Charles Reep (Goalside Analytics)"
+    url: "https://www.getgoalsideanalytics.com/36315087-analytics-is-older-than-you-think/"
+    tier: low
+    origin: researched
+draft: false
+---
+
+import { Chart, Scrolly, ScrollyStep, DataTable, Annotation, StatBand, Pullquote, Math, Timeline, RangePlot, Slopegraph, Callout, Detail, Definition, Sidenote } from "../../components/mdx";
+
+Here is a number that should not be controversial and somehow is. Lionel Messi took 1,862 open-play shots across the seasons StatsBomb has released as his public “biography” dataset and scored 375 goals from them. A standard expected-goals model — the kind every broadcaster now flashes under a replay — says an average finisher in Messi’s exact shooting positions would have scored about 247 of those. The gap between the two numbers is the whole pitch of expected goals: a single figure, “goals above expectation,” meant to answer whether a player is genuinely clutch or just lucky. In January 2024, two computer scientists at KU Leuven ran that number back through the model that produced it and found it was wrong — not randomly wrong, but *systematically* wrong, in a way that quietly shortchanges the best finishers in the world. Fix the bias, and Messi’s finishing looks 17% better than the standard model ever gave him credit for.
+
+<StatBand client:visible caption="Lionel Messi, 1,862 open-play shots, StatsBomb biography dataset. Goals above expectation (GAX) under three versions of the same underlying data. Source: Davis & Robberechts (2024)."
+  stats={[
+    { value: 375, label: "GOALS SCORED", sub: "1,862 open-play shots", href: "https://arxiv.org/abs/2401.09940" },
+    { value: 127.57, decimals: 2, label: "GAX, STANDARD MODEL", sub: "the number pundits quote", href: "https://arxiv.org/abs/2401.09940" },
+    { value: 149.99, decimals: 2, label: "GAX, BIAS-CORRECTED MODEL", sub: "same shots, recalibrated", href: "https://arxiv.org/abs/2401.09940" },
+    { value: 17, suffix: "%", label: "UNDERESTIMATE", sub: "how much the standard model shortchanges him", href: "https://arxiv.org/abs/2401.09940" }
+  ]} />
+
+Expected goals — xG — has become soccer’s most quoted statistic precisely because it looks so modest: no neural network, no black box, just a probability assigned to every shot based on where it was taken from, at what angle, with which part of the body. That modesty is the whole appeal. It is also, it turns out, the source of the problem. A model built almost entirely out of *where a shot happened* has an obvious blind spot: it can only ever grade the shots that actually happened. Every cross that was almost cut out, every run that arrived a half-step late, every dribble stopped by a last-ditch tackle — the model never sees them, because they never became shots. This is the story of how a hand-fit regression from a 1990s statistics journal became the currency of an industry, and of the two specific, recently quantified ways it still gets the most important question in the sport wrong: who can actually finish, and what does “a chance” even mean.
+
+## How rare is a hot streak, really
+
+Start with the question xG was built to answer: is a player who outscores their cumulative xG actually a better-than-average finisher, or did they just get lucky? Davis and Robberechts tested this directly. They trained a logistic-regression xG model on 43,110 open-play shots from Europe’s Big Five leagues in the 2015/16 season, then simulated tens of thousands of hypothetical players — some with true finishing skill 5%, 10%, 15%, or 25% above average, taking anywhere from 25 to 150 shots a season — and asked a simple question: how often does a player’s actual goal total beat their cumulative xG, purely by chance?
+
+<Chart
+  client:load
+  mark="line"
+  x="shots"
+  y="probability"
+  series="skill"
+  height={320}
+  caption="Probability that a simulated player’s goals exceed cumulative xG in a single season, by shot volume and true finishing skill above average. 10,000 simulations per cell, logistic-regression xG model trained on 43,110 StatsBomb open-play shots (Big Five leagues, 2015/16). Source: Davis & Robberechts (2024), Figure 2 (left panel)."
+  data={[
+    { shots: 25, probability: 46.9, skill: "0% (average)" }, { shots: 50, probability: 47.7, skill: "0% (average)" }, { shots: 75, probability: 47.9, skill: "0% (average)" }, { shots: 100, probability: 47.4, skill: "0% (average)" }, { shots: 125, probability: 48.6, skill: "0% (average)" }, { shots: 150, probability: 48.9, skill: "0% (average)" },
+    { shots: 25, probability: 50.5, skill: "5% better" }, { shots: 50, probability: 52.7, skill: "5% better" }, { shots: 75, probability: 54.0, skill: "5% better" }, { shots: 100, probability: 54.7, skill: "5% better" }, { shots: 125, probability: 56.7, skill: "5% better" }, { shots: 150, probability: 57.0, skill: "5% better" },
+    { shots: 25, probability: 53.7, skill: "10% better" }, { shots: 50, probability: 57.6, skill: "10% better" }, { shots: 75, probability: 59.7, skill: "10% better" }, { shots: 100, probability: 61.5, skill: "10% better" }, { shots: 125, probability: 64.3, skill: "10% better" }, { shots: 150, probability: 65.0, skill: "10% better" },
+    { shots: 25, probability: 56.9, skill: "15% better" }, { shots: 50, probability: 62.0, skill: "15% better" }, { shots: 75, probability: 65.2, skill: "15% better" }, { shots: 100, probability: 67.3, skill: "15% better" }, { shots: 125, probability: 71.0, skill: "15% better" }, { shots: 150, probability: 72.3, skill: "15% better" },
+    { shots: 25, probability: 63.1, skill: "25% better" }, { shots: 50, probability: 70.3, skill: "25% better" }, { shots: 75, probability: 74.8, skill: "25% better" }, { shots: 100, probability: 78.2, skill: "25% better" }, { shots: 125, probability: 82.2, skill: "25% better" }, { shots: 150, probability: 83.7, skill: "25% better" }
+  ]} />
+
+Notice the bottom line first: an *average* finisher — 0% above the mean, by construction — still beats their cumulative xG in a given season roughly 47–49% of the time, almost a coin flip, no skill required. That is not a flaw in the model; it is what a probability distribution does. Even a genuinely elite finisher, <Definition client:visible term="25% better" def="in Davis and Robberechts’s simulation, a finisher whose true chance of scoring on every shot is multiplied by 1.25 relative to what the location- and angle-based model predicts — the upper bound they chose because it matches Messi’s own career overperformance." />, only reaches an 83.7% chance of a single good season at high shot volume — not a certainty, a strong bet. One season of overperforming xG, in other words, tells you almost nothing on its own. That single fact is why “xG merchant” jokes and viral end-of-season charts are mostly noise dressed as signal — and it is the reason the researchers went looking for something more sustained.
+
+## What the model is actually computing
+
+Before going further, it is worth opening the box, because almost nobody who cites an xG figure has actually seen the arithmetic inside it. The architecture has barely changed since <Annotation client:load term="Ensum, Pollard and Taylor (2004)" note="Journal of Sports Sciences 22(6). Fitted a logistic regression to 930 shots and 93 goals from 37 matches at the 2002 World Cup, and reported five statistically significant predictors of a shot's success: distance from goal, angle to goal, whether the shooter was at least 1 metre from the nearest defender, whether the shot followed a cross, and the number of outfield players between shooter and goal." /> fit the first published shot-level model on 930 shots from the 2002 World Cup: take a handful of geometric facts about a shot, run them through a logistic regression, and out comes a number between 0 and 1.
+
+<Math client:visible
+  tex="P(\text{goal}) = \dfrac{1}{1 + e^{-z}}, \quad z = 14.301 - 0.129x + 0.0007y - 0.314\,d + 0.091\,\theta - 1.295\,h - 0.193\,o"
+  label="(1)"
+  numbered
+  steps={[
+    { tex: "x, y", note: "the shot’s pitch coordinates — weak predictors on their own, since distance and angle already summarize position" },
+    { tex: "d = \\text{distance to goal centre (m)}", note: "coefficient −0.314: every extra metre subtracts about a third of a log-odds unit — the single strongest term in the model" },
+    { tex: "\\theta = \\text{angle to goal (rad)}", note: "coefficient +0.091: a wider unobstructed angle on the goalmouth raises the odds of scoring" },
+    { tex: "h = 1 \\text{ if headed}", note: "coefficient −1.295 — on its own, roughly the effect of moving a shot several metres farther from goal" },
+    { tex: "o = 1 \\text{ if neither foot nor head}", note: "coefficient −0.193 — a smaller penalty than heading, but still a shot the model expects to miss more often" }
+  ]}
+  caption="The logistic regression Davis and Robberechts (2024) trained on 43,110 open-play shots from Europe’s Big Five leagues, 2015/16 season (StatsBomb data). AUROC 0.799, Brier score 0.079 — a deliberately classic, three-feature-family model, chosen so the paper’s bias findings could not be blamed on an exotic architecture." />
+
+That is genuinely most of it. Feed the model a shot’s coordinates, its distance and angle to the center of the goal, and whether it was struck with a foot, a head, or something else, and it multiplies each by a fitted weight, sums them, and squashes the result into a probability with a <Definition client:visible term="sigmoid function" def="the S-shaped curve 1 / (1 + e^-z) that converts any real number into a probability between 0 and 1 — the standard link function for logistic regression." />. Every commercial xG model sold today — Opta’s, StatsBomb’s, the ones broadcasters overlay on a replay — is a much richer descendant of exactly this idea: more features (defender positions, goalkeeper location, pass type, player speed), a more expressive model (gradient-boosted trees instead of a linear regression), but the same underlying move. Learn, from history, how often a shot like *this one* went in, and report that rate back as a probability. Opta’s current public model, for comparison, is trained on nearly one million shots across 40 competitions and evaluates more than 20 variables, including where the goalkeeper is standing and how clear the shooter’s sightline to goal is — but it is answering the identical question this three-feature-family regression answers, just with sharper eyes.
+
+## From a notepad and a miner’s helmet to a spreadsheet
+
+It is worth being precise about where this lineage actually starts, because the popular telling gets it wrong in a specific, checkable way. The phrase “expected goals” itself first shows up in academic football research in 1993, in a paper that had nothing to do with shot quality at all — <Annotation client:load term="Barnett and Hilditch" note="'The Effect of an Artificial Pitch Surface on Home Team Performance in Football (Soccer),' JRSS Series A, 156(1), 39–50 (1993). Found teams on artificial pitches scored about 0.15 more goals per home match than an expected-goals baseline predicted." /> used it to measure whether artificial-turf pitches gave home teams an unfair edge.
+
+<Timeline client:load caption="How ‘location, angle, body part’ became soccer’s most quoted statistic — and where the popular telling and the paper trail diverge."
+  events={[
+    { date: "1950-03-01", label: "Charles Reep starts notating matches", detail: "An RAF officer turned accountant begins recording every pass and shot of a Swindon Town match by hand — the origin of football notational analysis, decades before any statistical model." },
+    { date: "1993-01-01", label: "The term “expected goals” enters the literature", detail: "Barnett and Hilditch use it to test artificial-pitch home advantage — not to grade shots." },
+    { date: "1997-01-01", label: "Pollard and Reep publish “yield”", detail: "A logistic-regression-based measure of team-possession effectiveness — probability of scoring minus probability of conceding, from a given pitch zone. A conceptual ancestor of xG, not a per-shot model." },
+    { date: "2004-01-01", label: "The first shot-level logistic regression", detail: "Ensum, Pollard and Taylor fit distance, angle and defender proximity to 930 World Cup shots — the direct technical ancestor of every model since." },
+    { date: "2012-04-01", label: "Opta’s Sam Green names it “xG”", detail: "A public blog post assigning every Premier League shot a probability turns an academic idea into a broadcast statistic." },
+    { date: "2021-01-01", label: "Tracking data enters the model", detail: "Anzer and Bauer fold goalkeeper position, defender counts and player pressure into an xG model trained on 105,627 Bundesliga shots — AUC 0.823, the most accurate published model at the time." },
+    { date: "2024-01-18", label: "The bias is quantified", detail: "Davis and Robberechts show that xG models systematically underrate elite, high-volume finishers because the training data overrepresents them." },
+    { date: "2025-11-28", label: "“Beyond Expected Goals”", detail: "A shot-occurrence model attacks the deeper limitation: xG only ever scores shots that were actually taken." }
+  ]} />
+
+The paper usually credited as xG’s true starting point, <Annotation client:load term="Pollard and Reep’s 1997 study" note="'Measuring the Effectiveness of Playing Strategies at Soccer,' JRSS Series D (The Statistician), 46(4), 541–550 (1997). Defined 'yield': the probability of scoring minus the probability of conceding, from a given team possession — used to compare direct attacks against elaborate build-up play." />, is more nuanced than the “xG’s founding father” shorthand it usually gets. Reep — by then 93 years old, and by most retrospective accounts a man who had been doing this kind of work with a pen, a notepad, and, at night matches, a miner’s headlamp since 1950 — co-wrote it with the statistician Richard Pollard. What the abstract actually describes is “yield”: the probability of a team scoring minus the probability of it conceding, computed for an entire *possession* — a measure Pollard and Reep are reported, in secondary accounts, to have used to argue that direct, few-pass attacks were substantially more productive than elaborate build-up play (some retellings put the ratio as high as three to one, a specific figure this piece could not independently verify against the paper’s own text). That is a claim about *tactics*, not a per-shot probability model of the kind that grades an individual finisher today — and Wikipedia’s current history of expected goals, tellingly, does not mention Pollard and Reep at all. The paper that actually does the thing modern xG does — fit a probability to a shot from its distance, angle, and the positions of nearby defenders — is Pollard’s later collaboration with Ensum and Taylor in 2004, on 930 shots from the 2002 World Cup. Reep supplied the founding instinct and forty years of hand-collected notation; Pollard, in two separate papers seven years apart, supplied the statistics that turned the instinct into two different tools — one for grading a strategy, one for grading a shot. Both matter to the history. Only one of them is the ancestor of the number under today’s broadcast graphics.
+
+## Sustained overperformance is not luck — and even that judgment isn’t applied fairly
+
+A single lucky season, the first chart showed, means almost nothing. So Davis and Robberechts raised the bar: what does it take to beat cumulative xG in at least four out of five consecutive seasons — a run that starts to look like a real signal rather than noise?
+
+<Scrolly client:visible caption="Raising the bar from one good season to a sustained run changes the story completely — and exposes a second problem underneath the first.">
+  <ScrollyStep graphic={
+      <Chart client:visible mark="line" x="shots" y="probability" series="skill" height={320}
+        caption="Probability of beating cumulative xG in at least 4 of 5 consecutive seasons, by shot volume and finishing skill. Source: Davis & Robberechts (2024), Figure 2 (right panel)."
+        data={[
+          { shots: 25, probability: 15.1, skill: "0% (average)" }, { shots: 50, probability: 16.0, skill: "0% (average)" }, { shots: 75, probability: 16.2, skill: "0% (average)" }, { shots: 100, probability: 15.7, skill: "0% (average)" }, { shots: 125, probability: 17.1, skill: "0% (average)" }, { shots: 150, probability: 17.3, skill: "0% (average)" },
+          { shots: 25, probability: 19.4, skill: "5% better" }, { shots: 50, probability: 22.3, skill: "5% better" }, { shots: 75, probability: 24.2, skill: "5% better" }, { shots: 100, probability: 25.1, skill: "5% better" }, { shots: 125, probability: 28.3, skill: "5% better" }, { shots: 150, probability: 28.8, skill: "5% better" },
+          { shots: 25, probability: 23.7, skill: "10% better" }, { shots: 50, probability: 29.6, skill: "10% better" }, { shots: 75, probability: 33.2, skill: "10% better" }, { shots: 100, probability: 36.4, skill: "10% better" }, { shots: 125, probability: 41.6, skill: "10% better" }, { shots: 150, probability: 42.9, skill: "10% better" },
+          { shots: 25, probability: 28.5, skill: "15% better" }, { shots: 50, probability: 37.3, skill: "15% better" }, { shots: 75, probability: 43.1, skill: "15% better" }, { shots: 100, probability: 47.4, skill: "15% better" }, { shots: 125, probability: 54.8, skill: "15% better" }, { shots: 150, probability: 57.6, skill: "15% better" },
+          { shots: 25, probability: 39.2, skill: "25% better" }, { shots: 50, probability: 53.4, skill: "25% better" }, { shots: 75, probability: 62.8, skill: "25% better" }, { shots: 100, probability: 70.0, skill: "25% better" }, { shots: 125, probability: 78.1, skill: "25% better" }, { shots: 150, probability: 81.1, skill: "25% better" }
+        ]} />
+    }>
+    **Step one — volume and skill compound.** A merely-average finisher clears the four-of-five-seasons bar barely 15–17% of the time no matter how many shots they take — luck alone rarely survives that long. But a finisher who is 25% better than average, taking 100 shots a season, clears it 70.0% of the time; drop the skill to 10% better, even at 125 shots a season, and the probability collapses to 41.6%. Sustained overperformance requires *both* volume and skill, in combination — neither alone gets you there.
+  </ScrollyStep>
+  <ScrollyStep graphic={
+      <Chart client:visible mark="bar" x="subgroup" y="area" series="dimension" height={320}
+        caption="Calibration error (area between the model’s predicted-vs-actual curve and perfect calibration) by player subgroup, 2015/16 Premier League. Larger area = the model is a worse fit for that subgroup. Source: Davis & Robberechts (2024), Figure 8."
+        data={[
+          { subgroup: "Low-volume shooters", area: 40.28, dimension: "Shot volume" },
+          { subgroup: "Mid-volume shooters", area: 22.37, dimension: "Shot volume" },
+          { subgroup: "High-volume shooters", area: 41.69, dimension: "Shot volume" },
+          { subgroup: "Defenders", area: 42.90, dimension: "Position" },
+          { subgroup: "Midfielders", area: 24.64, dimension: "Position" },
+          { subgroup: "Attackers", area: 33.91, dimension: "Position" },
+          { subgroup: "Weak teams", area: 64.11, dimension: "Team strength" },
+          { subgroup: "Average teams", area: 29.17, dimension: "Team strength" },
+          { subgroup: "Top-4 (potential UCL winners)", area: 12.18, dimension: "Team strength" }
+        ]} />
+    }>
+    **Step two — but the model isn’t equally honest about everyone.** Split the same shots by who took them, and the calibration falls apart unevenly. Shots by players on weak teams are the worst-modeled group in the entire dataset — a calibration-error area more than five times larger than for players on potential Champions League winners. Defenders and both low- and high-volume shooters are also poorly calibrated; midfielders, attackers, and mid-volume shooters — the largest, most “typical” group in the training data — are fit best. The model isn’t biased at random. It is most accurate for whoever it has seen the most of.
+  </ScrollyStep>
+</Scrolly>
+
+That second step is the hinge the rest of this piece turns on. An xG model is trained to be well-calibrated *on average*, across every shot in its dataset — and the players who take the most shots dominate that average. If the model fits the typical shooter best and the atypical shooter worst, then “goals above expectation” isn’t comparing every player to one neutral baseline. It is comparing every player to a baseline quietly shaped like whoever shoots the most.
+
+## The shots that flatter, and the shots that don’t
+
+Even setting the calibration problem aside, a second, more mundane decision distorts finishing metrics just as badly: which shots count. Cumulative xG is normally summed across *every* shot a player takes in a window — headers, tap-ins, wild 30-yard efforts in stoppage time, shots that clip a defender on the way through. Davis and Robberechts show, with two real Premier League cases, how much that choice matters.
+
+<DataTable client:load caption="What counts as a shot changes who looks like a great finisher. Premier League, 2017/18–2021/22 seasons. Source: Davis & Robberechts (2024)."
+  columns={[
+    { key: "player", label: "Player", type: "string" },
+    { key: "sample", label: "Shot sample", type: "string" },
+    { key: "shots", label: "Shots", type: "number", align: "right" },
+    { key: "result", label: "Result vs. cumulative xG", type: "string" },
+    { key: "verdict", label: "Reads as", type: "string" }
+  ]}
+  rows={[
+    { player: "Paul Pogba (all shots)", sample: "All open-play shots", shots: 242, result: "17 goals vs. 20.85 xG (GAX −3.85)", verdict: "A below-average finisher, overall" },
+    { player: "Paul Pogba (long-range only)", sample: "Long-range shots only (25–35 yards)", shots: "—", result: "Statistically outperforms cumulative xG", verdict: "An excellent long-range shooter — the reputation he actually had" },
+    { player: "Riyad Mahrez (incl. deflections)", sample: "All shots, incl. 17 deflected (5.9%)", shots: 289, result: "GAX +14.61", verdict: "An exceptional finisher" },
+    { player: "Riyad Mahrez (excl. deflections)", sample: "Same shots, deflections excluded", shots: 272, result: "GAX +9.03", verdict: "A good finisher, no longer an outlier" }
+  ]} />
+
+Pogba is the sharper case, because the two readings of the same five seasons of shots point in *opposite* directions. Aggregate everything and Pogba looks like a mediocre finisher who happened to hit some spectacular long-range strikes; isolate just the shots from 25–35 yards and he statistically outperforms his cumulative xG — matching the reputation he actually carried among fans and pundits as one of Europe’s most dangerous long-range shooters. (The paper does not report a shot count for this long-range subset, and cautions that the season-by-season sample within it is too thin on its own to draw firm conclusions about Pogba’s long-range skill.) The aggregate number and the specific skill it was supposed to capture were telling two different stories, and only one of them survived being averaged into a single figure. Mahrez’s case is smaller but cleaner: 17 shots out of 289 were deflected off another player entirely — not his aiming, someone else’s intervention — and including them alone accounts for roughly 38% of his total “goals above expectation” for the period. <Sidenote n={1} href="https://arxiv.org/abs/2401.09940" source="Davis & Robberechts (2024)">Deflected shots make up only about 2.3% of all shots leaguewide — rare enough to ignore in aggregate, common enough to swing an individual player’s headline number.</Sidenote> Neither of these is a flaw in the arithmetic. Distance minus angle minus body part cannot, by construction, know that a shot was deflected or that a player’s reputation rests on one specific kind of chance. The regression is honest about what it was asked to measure; the question of *what to sum it over* was never part of the model at all.
+
+<Pullquote cite="Davis & Robberechts, “Biases in Expected Goals Models Confound Finishing Ability” (2024)" href="https://arxiv.org/abs/2401.09940" kind="quote">
+xG models exhibit a persistent bias that makes the actual and expected goals closer for excellent finishers than it really is.
+</Pullquote>
+
+## Why the model favors its favorites
+
+The Pogba and Mahrez cases are about *which* shots to sum. The deeper finding in the same paper is about something more structural: the training data itself is not neutral. Cumulative xG is supposed to represent what an “average player” would have scored from a given set of chances. But an xG model is trained on the shots that were actually taken in real matches — and real matches are not shot at randomly by average players. They are disproportionately shot at by the players good enough to be taking shots in the first place, including the very elite finishers whose skill the metric is later used to measure.
+
+Davis and Robberechts made this concrete with a direct experiment: start with a baseline model trained without any of Messi’s shots, then progressively add thousands of simulated shots from an above-average finisher into the training set, and watch what happens to Messi’s own goals-above-expectation score, computed on his real, held-out shots. Adding 4,000 simulated shots from a finisher performing 25% above average pulled Messi’s GAX down from 127.6 to 120.8 — a drop of more than 5%, produced entirely by *changing who else was in the training data*, without touching a single one of Messi’s actual shots or goals. The bias runs in one direction: the more the training data is stocked with good finishers, the closer the model’s predictions creep toward what those good finishers actually did — which mechanically shrinks the very gap, between predicted and actual, that the metric uses to detect skill in the first place.
+
+<RangePlot client:visible unit="goals (GAX)"
+  caption="Simulated goals-above-expectation for a finisher 25% better than average, by shot volume — mean ± 1 standard deviation across 10,000 simulations. The mean signal (dot) is real; the spread around it (bar) is often several times larger. Source: Davis & Robberechts (2024), Table 1."
+  data={[
+    { label: "25 shots/season", low: -0.91, mid: 0.60, high: 2.11, n: 10000 },
+    { label: "50 shots/season", low: -0.92, mid: 1.22, high: 3.36, n: 10000 },
+    { label: "75 shots/season", low: -0.80, mid: 1.85, high: 4.50, n: 10000 },
+    { label: "100 shots/season", low: -0.62, mid: 2.38, high: 5.38, n: 10000 },
+    { label: "125 shots/season", low: -0.26, mid: 3.08, high: 6.42, n: 10000 },
+    { label: "150 shots/season", low: -0.03, mid: 3.70, high: 7.43, n: 10000 }
+  ]} />
+
+Sit with how wide those intervals are. Even a genuinely excellent finisher taking 150 shots a season — a Harry Kane- or Erling Haaland-sized workload — has a simulated goals-above-expectation range that runs from roughly zero to more than seven, one standard deviation either side of a mean of 3.70. The signal (the mean climbing steadily as skill and volume rise) is real. But for any *single* player in any *single* season, the noise around that signal is frequently larger than the signal itself — which is exactly why one good year proves so little, and why the researchers built a training-data experiment rather than trusting the headline number.
+
+Their fix borrows a technique from an unrelated field entirely: AI fairness research, where practitioners have spent a decade building tools to check whether a model performs consistently across different demographic subgroups rather than being secretly tuned to whichever group is most common in its training data.
+
+<Detail summary="Go deeper: what “multi-calibration” actually does">
+Instead of training one xG model and treating its output as *the* probability, multi-calibration post-processes the model separately within subgroups — split by shot volume and playing position, giving nine baseline notions of an “average player” (low/mid/high volume × defender/midfielder/attacker). Applied to Messi’s 1,862 shots, this lets the researchers compare him against several different, explicitly-defined versions of average — including the toughest one, the average <em>elite, high-volume attacker</em>, where his cumulative xG would have been 274.3 rather than the standard model’s 247.43. Weighted across all nine subgroups by how many real players fall into each, Messi’s adjusted cumulative xG drops to 225.01 — which is what pushes his GAX from 127.57 up to 149.99, the 17% gap in the opening figure. The technique doesn’t change what happened on the pitch. It changes which “average player” the pitch is being compared against.
+</Detail>
+
+## The shot that wasn’t taken
+
+Every problem so far — the calibration gaps, the training-data overrepresentation, the question of which shots to sum — shares one hidden assumption: that the set of shots a player took is a fair sample of the chances worth judging them on. A newer paper argues that assumption is the deepest flaw of all.
+
+<Pullquote cite="Pipping-Gamón, Feng & Sabin, “Beyond Expected Goals: A Probabilistic Framework for Shot Occurrences in Soccer” (2025)" href="https://arxiv.org/html/2512.00203v2" kind="quote">
+Despite its widespread use, xG remains limited by its foundational assumption: it only evaluates the quality of shots that are actually taken.
+</Pullquote>
+
+The paper’s own examples make the gap vivid: “crosses that are barely intercepted, passes to open attackers that arrive just a moment too late, or dribbles into the box that are stopped by a last-ditch tackle.” None of that ever enters an xG total, because xG is only ever computed *conditional on a shot occurring*. A striker who consistently gets into dangerous positions but is crowded out before pulling the trigger looks, to standard xG, like a striker who simply doesn’t take many shots — indistinguishable from one who is bad at getting into those positions in the first place. Using Gradient Sports tracking data from English Premier League matches across the 2022–2025 seasons, the authors built a companion model, xG+, that estimates two things jointly: the probability a shot happens in the next second of play, and the quality of that shot if it did.
+
+<DataTable client:load caption="xG+ versus standard xG, English Premier League 2022–2025 (Gradient Sports tracking data). Source: Pipping-Gamón, Feng & Sabin (2025)."
+  columns={[
+    { key: "metric", label: "Metric", type: "string" },
+    { key: "standard", label: "Standard xG", type: "string" },
+    { key: "plus", label: "xG+", type: "string" },
+    { key: "note", label: "What it means", type: "string" }
+  ]}
+  rows={[
+    { metric: "Team-level goal-prediction error", standard: "2.90 MSE", plus: "2.84 MSE", note: "Lower is better — a modest but real accuracy gain" },
+    { metric: "Year-to-year correlation of the underlying skill signal", standard: "0.12 (traditional finishing metrics)", plus: "0.63 (shot-creation probability)", note: "Higher = more likely to be a stable, real skill rather than noise" },
+    { metric: "Share of matchdays outperforming a simple sum-of-xG baseline", standard: "—", plus: "61.4% (p = 0.009)", note: "Statistically significant edge at the team level" }
+  ]}
+/>
+
+The 0.63-versus-0.12 comparison is the one worth pausing on. A metric’s year-to-year correlation is a rough proxy for whether it is measuring something durable about a player — a repeatable skill — or something closer to a coin flip that happens to average out. Traditional shot-based finishing metrics correlate at just 0.12 from one season to the next: barely more predictive than chance. The probability that a player creates a shot in the next second of possession — xG+’s core building block — correlates more than five times as strongly. That gap is itself a kind of evidence for the thesis of this piece: a meaningful chunk of what looks like “finishing randomness” in the standard metric may actually be measurement error from ignoring the shots that never happened, not randomness in the players themselves.
+
+## Who actually wins, once you fix the ruler
+
+Put the calibration fix back into the league table and something uncomfortable happens: the ranking of who counts as an elite finisher moves. Davis and Robberechts recomputed goals-above-expectation for every Premier League player who scored at least five goals in 2015/16, once under the standard model and once under the multi-calibrated one.
+
+<Slopegraph client:visible beforeLabel="Standard xG model (GAX)" afterLabel="Multi-calibrated model (GAX)"
+  caption="Goals above expectation, 2015/16 Premier League, players with 5+ goals — standard model vs. bias-corrected model. Source: Davis & Robberechts (2024), Table 3."
+  data={[
+    { label: "Agüero", before: 6.49, after: 6.90 },
+    { label: "Mahrez", before: 6.03, after: 6.35 },
+    { label: "Kane", before: 4.95, after: 5.41 },
+    { label: "Vardy", before: 4.74, after: 5.13 },
+    { label: "Martial", before: 4.64, after: 5.00 },
+    { label: "Firmino", before: 4.49, after: 4.74 },
+    { label: "Iheanacho", before: 4.37, after: 4.31 },
+    { label: "Wijnaldum", before: 4.00, after: 4.07 },
+    { label: "Sturridge", before: 3.83, after: 4.03 },
+    { label: "De Bruyne", before: 3.67, after: 3.75 },
+    { label: "Alli", before: 3.43, after: 3.80 },
+    { label: "Defoe", before: 3.00, after: 3.16 }
+  ]} />
+
+Among the 63 Premier League players who scored at least five goals that season, the ones who beat their xG under the standard model did so by an average of 16.72%; under the multi-calibrated model, the outperformers beat it by an average of 20.00% — the correction consistently *widens* the gap for players who were already good finishers, exactly as the training-data mechanism predicts. It is not a uniform shift: Iheanacho’s corrected figure is barely changed and even ticks down slightly, a reminder that the fix is about which subgroup a player belongs to, not a flat bonus for scoring goals. What the chart does not show — because the underlying paper reports it explicitly and it deserves stating plainly — is that the players’ relative *order* barely moves. The bias inflates or deflates almost everyone’s absolute number in the same direction their subgroup predicts, so pundits arguing about who the best finisher in the league was that season would likely reach the same conclusion either way. What changes is whether the number attached to that conclusion is honest.
+
+## So what
+
+None of this makes expected goals a bad statistic. A model that turns “where was the shot from, and how was it struck” into a single probability is exactly what it claims to be: a huge improvement over raw shot counts or conversion rate, both of which reward volume shooters and speculative attempts with no penalty for taking a worse chance. Broadcasters, and by their own account clubs including Liverpool under former director of research Ian Graham and Opta’s own client base of “betting companies and professional clubs,” lean on it precisely because a probability attached to a specific chance is more honest than a pundit’s gut feeling about whether a player “really should have scored that.” <Sidenote n={2} href="https://www.skysports.com/football/news/11669/13200552/liverpool-s-former-director-of-research-ian-graham-explains-how-data-helped-the-reds-win-the-premier-league-title" source="Sky Sports">How much weight any specific transfer decision puts on xG versus scouting, medical data, or wage-structure fit isn’t something clubs publish — treat “xG drives recruitment” as directionally true and precisely unquantifiable from the outside.</Sidenote> The two findings this piece has walked through are not an argument to throw the number out. They are an argument against treating it as a finished instrument.
+
+The first finding says the ruler is uneven: an xG model trained on real shots is, by construction, best calibrated for the kind of player who took the most of those shots, and worst calibrated for defenders, extreme-volume shooters, and players on weak teams — which means the same “goals above expectation” score means different things depending on who is holding it. The second finding says the ruler is also short: it can only measure shots that happened, so a chance that died as a blocked cross or a crowded-out run leaves no trace in anyone’s total, no matter how many times it happened. Put together, they point at the same underlying lesson, one that would have been legible to Charles Reep with his notepad in 1950 just as much as to a gradient-boosted model in 2026: a statistic is only as honest as the population it was trained on and the events it was allowed to count. Expected goals has spent three decades getting better at the first half of that sentence. The shot that wasn’t taken is where the next thirty years of the argument will be fought.
+
+<Callout kind="note" title="Methodology">
+**Data.** All model coefficients, simulation results, and case-study figures (Pogba, Mahrez, Messi, and the 2015/16 Premier League GAX rankings) are reproduced verbatim from Davis & Robberechts, “Biases in Expected Goals Models Confound Finishing Ability” (arXiv:2401.09940, Jan. 2024), whose baseline xG model was trained on 43,110 StatsBomb open-play shots from Europe’s Big Five leagues, 2015/16 season. The xG+ comparison table is reproduced from Pipping-Gamón, Feng & Sabin, “Beyond Expected Goals” (arXiv:2512.00203, submitted Nov. 2025, revised Jan. 2026), trained on English Premier League tracking data, 2022–2025. The Anzer & Bauer tracking-based model referenced in the timeline (AUC 0.823) is drawn from 105,627 shots across the German Bundesliga and 2. Bundesliga, 2013/14–2019/20 (PMC8056301). Historical dates for 1993, 1997, 2004, and 2021 reflect publication year only, not a specific day; the 2012 date for Sam Green’s OptaPro post is corroborated to the month (April 2012) by two independent secondary sources but not to the exact day.
+
+**What this can’t show.** These are all figures reported by the cited papers, not independently rerun by khazana — we did not retrain any model or re-derive any simulation. The Pollard & Reep (1997) and Ensum, Pollard & Taylor (2004) papers are cited from their published abstracts and consistent third-party summaries; neither paper’s full text was directly accessible during research, so their methodological detail is reported as widely cited rather than block-quoted. Commercial xG models in production today (Opta, StatsBomb, and club-internal systems) are substantially more complex than the three-feature logistic regression shown here — typically gradient-boosted trees with 20+ features including tracking data — and Davis & Robberechts’s own results suggest more expressive models may pick up *more*, not less, of the training-data bias described above, an open question the underlying research flags but does not resolve.
+
+**Where it's contested.** The framing of Pollard & Reep (1997) as expected goals’ direct origin is common in casual retrospectives but is not supported by the paper’s own abstract, which describes a possession-level “yield” measure for comparing tactics, not a per-shot probability model; this piece treats the shot-level lineage as running through Ensum, Pollard & Taylor (2004) instead, and flags the disagreement rather than picking the more flattering origin story.
+</Callout>

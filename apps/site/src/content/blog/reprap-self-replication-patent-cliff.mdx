@@ -1,0 +1,342 @@
+---
+title: "The Machine That Printed Its Own Children: RepRap and the Patent Cliff"
+format: build-log
+channels:
+  - diy
+  - 3d-printing
+  - embedded
+summary: "Adrian Bowyer built a 3D printer engineered to print most of itself in 2004, five years before Stratasys's core FDM patent lapsed — tracing the exact self-replication mechanism, the exact patent-expiry date, and the bill of materials that turned a €30,000 machine into a €350 one."
+publishedAt: 2026-07-15T09:00:00.000Z
+sources:
+  - title: "About — RepRap (project wiki)"
+    url: "https://reprap.org/wiki/About"
+    tier: high
+    origin: researched
+  - title: "Patents — RepRap (project wiki)"
+    url: "https://reprap.org/wiki/Patents"
+    tier: high
+    origin: researched
+  - title: "Glossary — RepRap (project wiki)"
+    url: "https://reprap.org/wiki/Glossary"
+    tier: high
+    origin: researched
+  - title: "Adrian Bowyer, “Wealth Without Money” (RepRap wiki essay, 2004)"
+    url: "https://reprap.org/wiki/Wealth_Without_Money"
+    tier: high
+    origin: researched
+  - title: "Mendel materials procurement — RepRap (project wiki)"
+    url: "https://reprap.org/wiki/Mendel_materials_procurement"
+    tier: high
+    origin: researched
+  - title: "Jones et al., “RepRap – the replicating rapid prototyper”, Robotica 29(1), 2011"
+    url: "https://www.cambridge.org/core/journals/robotica/article/reprap-the-replicating-rapid-prototyper/5979FD7B0C066CBCE43EEAD869E871AA"
+    tier: high
+    origin: researched
+  - title: "US Patent 5,121,329 A — Crump / Stratasys, “Apparatus and method for creating three-dimensional objects”"
+    url: "https://patents.google.com/patent/US5121329A/en"
+    tier: high
+    origin: researched
+  - title: "Stratasys — 10-year anniversary of the Dimension 3D printer"
+    url: "https://investors.stratasys.com/news-events/press-releases/detail/107/stratasys-celebrates-10-year-anniversary-of-industrys"
+    tier: high
+    origin: researched
+  - title: "Stratasys — “Stratasys to Acquire MakerBot” press release (2013)"
+    url: "https://investors.stratasys.com/news-events/press-releases/detail/19/stratasys-to-acquire-makerbot-merging-two-global-3d"
+    tier: high
+    origin: researched
+  - title: "Bushing — RepRap (project wiki)"
+    url: "https://reprap.org/wiki/Bushing"
+    tier: high
+    origin: researched
+  - title: "Prusa Mendel — RepRap (project wiki)"
+    url: "https://reprap.org/wiki/Prusa_Mendel"
+    tier: high
+    origin: researched
+  - title: "RepRap — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/RepRap"
+    tier: med
+    origin: researched
+  - title: "MakerBot — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/MakerBot"
+    tier: med
+    origin: researched
+  - title: "Fused filament fabrication — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Fused_filament_fabrication"
+    tier: med
+    origin: researched
+  - title: "“How 3D printing started: About Rep-rap and open-source with Adrian Bowyer” — Prusa3D blog"
+    url: "https://blog.prusa3d.com/adrian-bowyer_127066/"
+    tier: med
+    origin: researched
+  - title: "TechCrunch — “How expiring patents are ushering in the next generation of 3D printing” (2016)"
+    url: "https://techcrunch.com/2016/05/15/how-expiring-patents-are-ushering-in-the-next-generation-of-3d-printing/"
+    tier: med
+    origin: researched
+  - title: "Gizmodo — “MakerBot Cupcake CNC Delivers DIY 3D Printing for Just $750”"
+    url: "https://gizmodo.com/makerbot-cupcake-cnc-delivers-diy-3d-printing-for-just-5286457"
+    tier: med
+    origin: researched
+  - title: "Hackaday — “CupCake CNC Kit” (16 Mar 2009)"
+    url: "https://hackaday.com/2009/03/16/cupcake-cnc-kit/"
+    tier: med
+    origin: researched
+  - title: "Hackaday — “Getting It Right By Getting It Wrong: RepRap And The Evolution Of 3D Printing” (2016)"
+    url: "https://hackaday.com/2016/03/02/getting-it-right-by-getting-it-wrong-reprap-and-the-evolution-of-3d-printing/"
+    tier: med
+    origin: researched
+  - title: "GeekWire — “Jeff Bezos-backed 3D-printing company MakerBot acquired for $403M” (2013)"
+    url: "https://www.geekwire.com/2013/jeff-bezosbacked-3dprinting-company-makerbot-sells-403m/"
+    tier: med
+    origin: researched
+  - title: "Make: — “A RepRap Family Tree: Tracking the Printers That Started it All” (2015)"
+    url: "https://makezine.com/2015/12/02/a-reprap-family-tree-tracking-the-printers-that-started-it-all"
+    tier: med
+    origin: researched
+  - title: "reprage.com — “Why did RepRap pick FDM and not another 3D printing technique?” (2013)"
+    url: "https://reprage.com/posts/2013-03-02-why-did-reprap-pick-fdm-and-not-another-3d-printing-technique/"
+    tier: low
+    origin: researched
+draft: false
+---
+
+import { DataTable, GanttStrip, Diagram, Stepper, RunnableCode, StatBand, Pullquote, Callout, Sidenote, Checklist, Annotation, Detail } from "../../components/mdx";
+
+At 14:00 UTC on 29 May 2008, at the University of Bath, a 3D printer called Darwin finished printing a part. The part was not a bracket or a toy. It was a piece of Darwin itself — the last of a full set of its own reprapped components — and a few minutes later that set was bolted onto rods and motors to become a second, working machine <Annotation client:load term="a complete copy of all its rapid-prototyped parts" note="RepRap Wikipedia entry, citing the project's own account: on 29 May 2008 Darwin produced “a complete copy of all its rapid-prototyped parts (which represent 48% of all the parts, excluding fasteners)” — “a few minutes after it was assembled” the child machine printed its own first part." />. Forty-eight percent of a RepRap's parts, by that count, were things the machine could print for itself. The other 52% — rods, bearings, motors, screws, a circuit board — had to be bought, the way you'd buy flour for a bread machine.
+
+Seventeen months later, on 30 October 2009, a different clock ran out. Twenty years earlier to the day, S. Scott Crump had filed a patent application for what he called an "apparatus and method for creating three-dimensional objects" — the invention that became fused deposition modeling <Annotation client:load term="filed 30 Oct 1989, expired 30 Oct 2009" note="US Patent 5,121,329 A, S. Scott Crump / Stratasys Inc.: filed 30 October 1989, granted 9 June 1992, and — per the standard 20-year utility-patent term running from the filing date — expired 30 October 2009." />. For two decades, anyone who wanted to build a machine that squirts molten plastic through a moving nozzle, layer by layer, owed Stratasys either a licensing fee or a lawsuit. On 31 October 2009, they didn't.
+
+This is a build log about the machine that was sitting in that gap, fully formed, when the gap opened. It is not a story about "the maker movement" in the abstract. It's about which parts of a RepRap actually print, which don't and why, what it cost, what broke, and how the exact date on a 1989 patent application lines up against the exact date a research group in Bath proved a plastic-squirting robot could build another one of itself.
+
+<StatBand client:visible caption="Four numbers that frame the whole mechanism"
+  stats={[
+    { value: 1989, label: "PATENT FILED", sub: "US 5,121,329, Crump/Stratasys", group: false, href: "https://patents.google.com/patent/US5121329A/en" },
+    { value: 2004, label: "REPRAP BEGINS", sub: "Bowyer's “Wealth Without Money”", group: false, href: "https://reprap.org/wiki/Wealth_Without_Money" },
+    { value: 48, suffix: "%", label: "DARWIN'S SELF-REPLICATION", sub: "of parts, excl. fasteners, 29 May 2008", href: "https://en.wikipedia.org/wiki/RepRap" },
+    { value: 2009, label: "PATENT EXPIRES", sub: "30 October, almost to the week of Mendel's debut", group: false, href: "https://patents.google.com/patent/US5121329A/en" }
+  ]} />
+
+The machine at the center of this is the work of one specific person: Adrian Bowyer, a senior lecturer in mechanical engineering at the University of Bath, working with EPSRC research funding when the project formally launched in 2005, a year after he had already sketched the argument in public <Annotation client:load term="Senior Lecturer in mechanical engineering at the University of Bath" note="Wikipedia, RepRap: Adrian Bowyer, Senior Lecturer in mechanical engineering at the University of Bath, founded RepRap with funding from the Engineering and Physical Sciences Research Council (EPSRC)." />. What he built wasn't presented as a finished consumer product. It was presented, explicitly, as a research question: could a machine be designed so that a meaningful fraction of its own body was something it could manufacture, leaving only the parts that genuinely required industrial precision to be bought? By his own account, later given in an interview, he wasn't confident of the answer — "I had no idea if it was going to work or not," he said, putting the odds at "50/50" <Annotation client:load term="“I had no idea if it was going to work or not”" note="Prusa3D blog interview with Adrian Bowyer: recalling his original expectations for the project, Bowyer gave it “a 50/50 chance” of succeeding, either technically or in gaining traction." />. Darwin, four years later, was the answer.
+
+## The bill of materials — and the word that explains it
+
+Before the mechanism, the parts. The RepRap community has a specific, deliberately loaded term for anything a RepRap needs but cannot print for itself: a <Annotation client:load term="vitamin" note="RepRap Glossary, verbatim: a vitamin is “a non-replicated part… anything that you need to build a RepRap which cannot yet be printed on a RepRap. For example, bolts, motors or bed.”" /> — the machine equivalent of the micronutrients a body can't synthesize and has to eat instead. The project's own current procurement worksheet for a Mendel-class machine (the second-generation RepRap, the one that actually spread) itemizes both halves of that split, priced in the currency the wiki uses, GBP:
+
+<DataTable client:load caption="RepRap Mendel — parts and tools (RepRap's own current materials-procurement worksheet)"
+  columns={[
+    { key: "part", label: "Part", type: "string" },
+    { key: "category", label: "Printed or vitamin?", type: "string" },
+    { key: "qty", label: "Qty / spec", type: "string" },
+    { key: "cost", label: "Cost (£)", type: "number", align: "right" }
+  ]}
+  total="cost"
+  rows={[
+    { part: "RP parts (printed cartesian-robot + extruder components)", category: "printed", qty: "≈ 2 days print time, via RepRap Ltd", cost: 95.00 },
+    { part: "Smooth rod, 8mm", category: "vitamin", qty: "several 1m lengths, BZP or A2 steel", cost: 11.19 },
+    { part: "Bearings (624ZZ ×48, 608ZZ ×2)", category: "vitamin", qty: "50 bearings", cost: 17.95 },
+    { part: "Belt", category: "vitamin", qty: "per assembly sheet", cost: 14.79 },
+    { part: "Stepper motors, NEMA17", category: "vitamin", qty: "4, ≥1400 g·cm holding torque", cost: 40.89 },
+    { part: "Fasteners (nuts, nylocks) + shipping", category: "vitamin", qty: "full kit", cost: 26.58 },
+    { part: "M8 studding (threaded rod)", category: "vitamin", qty: "8 rods, cut to pattern", cost: 6.66 },
+    { part: "Sheet material (thin + printing-bed sheet)", category: "vitamin", qty: "bed ≥42×40cm, ≥4mm", cost: 51.34 },
+    { part: "Electronics (Gen6 PCB kit) + shipping", category: "vitamin", qty: "assembled kit", cost: 123.00 },
+    { part: "Extruder hardware (nozzle, heater block, etc.)", category: "vitamin", qty: "per extruder page", cost: 30.00 }
+  ]} />
+
+The total comes to <Annotation client:load term="£396.45" note="RepRap wiki, Mendel materials procurement — the worksheet's own revised total, dated to its 2018 update. It is a current parts-cost estimate, not a 2009 historical price; it's included here to show the printed-plus-vitamin core has stayed cheap across the design's life, not to date it." />. Only one line in that table — the £95 of RP parts — is something the machine itself made. Everything else, from the £6.66 of threaded rod to the £123 circuit board, was bought exactly the way you'd buy vitamins: because the body (or the printer) cannot synthesize them on its own.
+
+That 48%-to-52% split isn't an embarrassment the project hides. It's the design.
+
+## Why the split falls exactly where it does
+
+<Diagram client:visible caption="What closes the loop and what doesn't"
+  nodes={[
+    { id: "rp", label: "RP parts (printed: brackets, clamps, extruder body)", x: 0, y: 0, kind: "input" },
+    { id: "vit", label: "Vitamins (bought: rods, bearings, motors, PCB, fasteners)", x: 0, y: 2, kind: "input" },
+    { id: "asm", label: "Assembly", x: 1, y: 1, kind: "process" },
+    { id: "child", label: "Working child RepRap", x: 2, y: 1, kind: "output" }
+  ]}
+  edges={[
+    { from: "rp", to: "asm", label: "bolt on", kind: "data" },
+    { from: "vit", to: "asm", label: "bolt on", kind: "data" },
+    { from: "asm", to: "child", label: "power on", kind: "data" },
+    { from: "child", to: "rp", label: "prints the next RP set", kind: "async" }
+  ]}
+/>
+
+Only the top-left node feeds back into itself. That's the entire mechanism, and the choice of which parts sit in which box wasn't arbitrary — it tracks precision and material honestly. A RepRap needs to hold a nozzle to within a fraction of a millimeter over a working volume roughly the size of a shoebox; a stepper motor's magnetic circuit, a bearing's hardened-steel raceway, and a control board's silicon are not things a plastic-extrusion process can approximate at that tolerance, so they stay vitamins. Brackets, clamps, the extruder's carrier body, and belt tensioners, on the other hand, mostly need to be *rigid enough and the right shape* — exactly what FDM is good at — so those became the RP set.
+
+The procurement worksheet's own spec language backs that up, line by line. The four axis motors need to be NEMA17-class steppers rated at <Annotation client:load term="≥1400 g·cm holding torque" note="RepRap wiki, Mendel materials procurement: motor spec calls for “NEMA 17 or NEMA 14” stepper motors with “approximately 1400 g.cm of holding torque or more” — a magnetic-circuit requirement no plastic-extrusion process can meet." /> or better — a magnetic-circuit spec that has no printable analogue at any tolerance. The smooth rod is specified down to the plating: <Annotation client:load term="Bright Zinc Plated (BZP) is better than Bright Mild Steel" note="RepRap wiki, Mendel materials procurement: “BZP is better than Bright Mild Steel (BMS) as BMS will rust unless coated with oil. A2 steel will feel nicer and be straighter, but is more expensive.” — a materials-engineering trade-off the worksheet states explicitly, not a filament property." />, because a printed part simply cannot be a straight, hardened steel bearing surface for a carriage to slide on for years. Every vitamin on the list fails the same test: it needs magnetism, hardness, electrical conduction, or dimensional stability under load that FDM plastic does not have. Every RP part passes a different test: geometric complexity a machinist would charge for, at a tolerance FDM plastic *can* hold.
+
+Even that boundary moved as the design matured, and moved in both directions. Josef Průša's 2010–11 "Prusa Mendel" redesign pushed *more* of the assembly into printed bushings, eliminating the original's 624-series ball bearings altogether in favor of printed sleeves around the smooth rods <Annotation client:load term="the 624 bearings are gone altogether" note="RepRap wiki, Prusa Mendel: the redesign “uses printed bushings instead of regular bearings” and reduces the X/Y-axis bearing count to three 608-series bearings total — “The 624 bearings are gone altogether.” Framed by the page as making the machine simpler to build, print, and repair." /> — a step *toward* self-replication, motivated by wanting a design that was, in the page's own words, easier "to print for your friends." Later designs (Mendel90, MendelMax, Prusa i3's aluminum-frame variants) pushed the boundary the other way, trading printed rigidity for bought aluminum extrusion and linear rail, because the community wanted flatter beds and tighter tolerances more than it wanted a higher self-print fraction <Annotation client:load term="increasingly relied on... purchased components" note="Hackaday retrospective (2016), “Getting It Right By Getting It Wrong”: later designs including MendelMax, Mendel 90, Prusa i3, and delta machines (Rostock, Kossel) “increasingly relied on 'vitamins'” — aluminum extrusion and linear slides — over printed parts, trading self-print fraction for precision." />. Neither move was a failure. Both were the same underlying rule applied honestly: print what plastic does well, buy what it doesn't.
+
+## The mechanism, step by step
+
+<Stepper client:visible mode="reveal" caption="How a RepRap actually reproduces"
+  steps={[
+    { title: "1. The parent prints its own RP set", body: "<p>The parent machine prints the full set of “reprapped” parts for a new machine — brackets, carriages, the extruder body. RepRap's own procurement notes put this at almost exactly two days of print time for a Mendel-class set.</p><p><em>Source: reprap.org/wiki/Mendel_materials_procurement.</em></p>" },
+    { title: "2. The builder buys the vitamins", body: "<p>In parallel, the builder sources everything the printer can't make: smooth rod, bearings, stepper motors, an assembled electronics kit, fasteners, bed material. Per RepRap's glossary, a vitamin is explicitly defined as “anything that you need to build a RepRap which cannot yet be printed on a RepRap.”</p><p><em>Source: reprap.org/wiki/Glossary.</em></p>" },
+    { title: "3. Printed and bought parts are bolted together", body: "<p>The RP set and the vitamins are assembled into a working machine — the same assembly process whether the RP set came from a first-generation machine or a self-replicated one.</p><p><em>Source: reprap.org/wiki/About.</em></p>" },
+    { title: "4. The child prints its own RP set, closing the loop", body: "<p>On 29 May 2008, this step happened “a few minutes after” Darwin's child machine was assembled — it immediately began printing its own first part, which is what made the event self-replication rather than merely reproduction-with-help.</p><p><em>Source: reprap.org/wiki/About, corroborated by the RepRap Wikipedia entry's dated account.</em></p>" }
+  ]}
+/>
+
+That step 4 is the whole claim, and it's worth being precise about what it does and doesn't mean. It does not mean a RepRap can build a RepRap from raw materials and sunlight. It means the loop that *is* automatable — turning feedstock filament into the geometrically complex, low-tolerance third of the machine — closes without a human doing CNC machining or injection molding on your behalf. The other two-thirds still needs a hardware store, a motor supplier, and a PCB fab. Every honest RepRap document says so.
+
+<Pullquote kind="document" cite="Adrian Bowyer, “Wealth Without Money”, RepRap wiki, 2 Feb 2004" href="https://reprap.org/wiki/Wealth_Without_Money">
+The second one will only cost as much as its raw materials and its assembly.
+</Pullquote>
+
+That line is the actual economic argument, stated by the project's founder five years before the patent landscape caught up with it. Bowyer, a mechanical-engineering lecturer at the University of Bath, published the essay in February 2004 <Annotation client:load term="first published 2 Feb 2004" note="RepRap wiki, “Wealth Without Money” — Bowyer's founding essay, dated to its original 2 February 2004 publication, later revised through 2011." />, framing self-replication as a Marxist critique answered without a revolution: give people the means of production directly, machine by machine, exponentially, rather than by seizing anyone's factory. The essay wasn't only about plastic and steel, either — Bowyer also sketched a longer-term ambition for the RP-parts side of the loop to eventually make its own feedstock, proposing that a mature machine could produce its own <Annotation client:load term="polymer feedstock through fermentation from biomass crops" note="RepRap wiki, “Wealth Without Money”: Bowyer's essay envisions machines eventually producing their own polymer feedstock through fermentation from biomass crops — a speculative extension of the self-replication argument beyond the 2004-era mechanism this piece otherwise documents." /> — a speculative extension of the same loop, well beyond anything Darwin or Mendel actually did, but consistent with the essay's underlying logic: push the boundary between "printed" and "vitamin" further every generation, rather than accept it as fixed. In a later interview, Bowyer described the calculation that made him confident the idea would spread even if the machine itself never got much better: <Annotation client:load term="“anything that copies itself grows exponentially”" note="Prusa3D blog interview with Adrian Bowyer (2025): “anything that copies itself grows exponentially. If it didn't die out from lack of interest or technical problems, I knew it would spread.” He also recalled giving the whole project “a 50/50 chance” of working at all." /> — and, by his own account, gave the whole project only even odds of working.
+
+<Detail summary="Go deeper: the exponential-growth math, and why it didn't literally happen">
+Bowyer's 2004 essay ran the arithmetic explicitly: a machine that copies itself once a day would, in principle, produce "a machine for every man, woman, and child on the planet" within about a month of unconstrained doubling. That never happened, and a decade-plus retrospective from Hackaday says so bluntly — "an infinitesimal percentage of RepRap owners print other printers," because a builder's *time* has real value, and by the mid-2010s a printed part often cost barely more in materials than a mass-manufactured equivalent shipped from overseas, without the hours of babysitting <Annotation client:load term="an infinitesimal percentage" note="Hackaday (2016), “Getting It Right By Getting It Wrong”: literal machine-copies-itself exponential growth never materialized at scale — “an infinitesimal percentage of RepRap owners print other printers” — because the economics favor buying once printed parts are cheap enough, and because Bowyer's naive exponential model implies more machines than atoms in the universe within a few years." />. What *did* replicate exponentially was the design itself — the open files, the build guides, the forked variants — not the physical machines one printer-cycle at a time. By 2011, the project's own peer-reviewed account counted roughly <Annotation client:load term="4,500 machines in two and a half years" note="Jones, Haufe, Sells, Iravani, Olliver, Palmer, Bowyer (2011), “RepRap – the replicating rapid prototyper”, Robotica 29(1), 177–191: the paper reports roughly 4,500 machines made and distributed within two and a half years of the project's public release, as its empirical measure of “reproductive success.”" /> distributed — real, but linear-ish growth through community building, not the doubling-every-day curve of the original essay.
+</Detail>
+
+## The other clock: what the patent actually covered, and when it actually lapsed
+
+<GanttStrip client:visible unit="day"
+  caption="Two clocks on the same day-axis, day 0 = the patent's filing date (30 Oct 1989)"
+  tasks={[
+    { label: "Stratasys FDM patent (US 5,121,329)", start: 0, end: 7305, note: "filed 30 Oct 1989 → expired 30 Oct 2009, the full 20-year statutory term" },
+    { label: "Bowyer's essay → Darwin's full self-replication", start: 5208, end: 6786, note: "5,208 to 6,786 days after the patent was filed — a working, self-replicating open design existed 519 days before the patent's own clock ran out" },
+    { label: "MakerBot founded, building on RepRap", start: 7022, end: 7305, note: "founded 20 Jan 2009, 283 days before the patent lapsed — selling a kit the day the door opened" },
+    { label: "Acquisition: Stratasys buys MakerBot", start: 8632, end: 8633, note: "announced 19 Jun 2013 — the patent holder ends up owning the company descended from the design that filled the vacuum its own patent had blocked" }
+  ]}
+/>
+
+Run the two bars against each other and the thesis is arithmetic, not metaphor. Darwin proved full self-replication on day 6,786 of the patent's 7,305-day term — while Stratasys's exclusive right to FDM still had 519 days left to run. RepRap wasn't a reaction to the patent expiring. It was a design that had already finished its own proof of concept and was sitting there, tooled and documented, waiting for the door Stratasys was still legally allowed to keep shut.
+
+Why FDM specifically, and not one of the other rapid-prototyping processes available in 2004? RepRap's own patents page lists the alternatives the project could have chosen instead, several of which were still under active, enforced protection at the time: 3D Systems held stereolithography and a selective-laser-sintering patent listed as <Annotation client:load term="valid until early 2014" note="RepRap wiki, Patents page: US Patent 5,597,520 (3D Systems, SLS) is listed as “valid until early 2014” — an actively enforced patent at the time RepRap was choosing its process, five years after FDM's own patent lapsed." /> — a full five years past FDM's own expiry. FDM also needed no exotic materials or high-power lasers, just a heated nozzle and commodity thermoplastic filament, which is part of why it was buildable from vitamins bought at an ordinary hardware store. One contemporaneous account of the choice states plainly that the RepRap group specifically targeted FFF (its unencumbered rebranding of FDM — Stratasys owns the *acronym* "FDM" as a trademark, not just the process, so the community had to coin an alternative <Annotation client:load term="Fused Filament Fabrication (FFF)" note="RepRap wiki, Patents page: “FDM” is a registered Stratasys trademark, so the community adopted “FFF” — Fused Filament Fabrication — as a legally unconstrained synonym for the same underlying process." />) because <Annotation client:load term="the group knew that the patent was due to expire soon" note="reprage.com (2013), “Why did RepRap pick FDM and not another 3D printing technique?” — a single retrospective account, presented here attributed rather than as an established fact; it is consistent with, but not independently confirmed beyond, the patent's documented 2009 expiry and SLS's documented 2014 expiry on RepRap's own Patents page." />. Take that specific claim as one retrospective's account rather than a verified fact — but the surrounding, better-sourced facts point the same direction: of the plausible desktop-scale AM processes, FDM was both the cheapest to build from commodity parts and the first whose patent wall was coming down. RepRap's own patents page keeps a running table of which additive-manufacturing patents were live and whose they were; cross-referenced here with the FDM patent's own record, the landscape a 2004 hobbyist project actually had to navigate looks like this, not a reconstruction after the fact:
+
+<DataTable client:load caption="The patent landscape RepRap's founders were choosing among (five processes per RepRap's own Patents page; the FDM patent's own dates per its Google Patents record)"
+  columns={[
+    { key: "patent", label: "Patent", type: "string" },
+    { key: "process", label: "Process", type: "string" },
+    { key: "holder", label: "Holder", type: "string" },
+    { key: "status", label: "Status when RepRap began (2004)", type: "string" },
+    { key: "source", label: "Source", type: "string" }
+  ]}
+  rows={[
+    { patent: "US 4,575,330", process: "Stereolithography (SLA)", holder: "3D Systems", status: "in force", source: "reprap.org/wiki/Patents" },
+    { patent: "US 4,863,538", process: "Selective laser sintering (SLS)", holder: "Univ. of Texas", status: "in force", source: "reprap.org/wiki/Patents" },
+    { patent: "US 5,597,589", process: "Apparatus for producing parts by selective sintering", holder: "Univ. of Texas", status: "in force", source: "reprap.org/wiki/Patents" },
+    { patent: "US 5,597,520", process: "Selective laser sintering (SLS)", holder: "3D Systems", status: "in force, listed as valid until early 2014", source: "reprap.org/wiki/Patents" },
+    { patent: "US 5,653,925", process: "FDM-adjacent process patent", holder: "Stratasys", status: "in force", source: "reprap.org/wiki/Patents" },
+    { patent: "US 5,121,329", process: "Fused deposition modeling (FDM)", holder: "Stratasys", status: "in force until 30 Oct 2009 — the nearest exit", source: "Google Patents (patents.google.com)" }
+  ]} />
+
+Read down that "status" column and the choice looks less like an ideological preference for FDM and more like triage: every other desktop-plausible process on the list was locked up for years longer than FDM was. RepRap didn't need to wait for any of these to expire to build and share a working, self-replicating machine under its own GPL license — patents restrict commercial manufacture and sale, not private, non-commercial construction from a published design, which is why Darwin could exist openly in 2008 while the patent clock was still running. What the 2009 expiry specifically unlocked was the ability for someone to build a company around it.
+
+<Callout kind="key-insight" title="The patent didn't create the invention. It released a distribution.">
+Nothing about self-replication required the FDM patent to expire — Darwin had already done it in May 2008, under the patent's shadow, on machines built and shared under GPL regardless of Stratasys's claims. What the expiry released was the *commercial* half of the story: the ability to sell a Crump-style extrusion printer as a business without a licensing fight. RepRap supplied five years of open, field-tested, freely forkable design work exactly at the moment that door opened.
+</Callout>
+
+## What the collapse actually looked like, named and priced
+
+The commonly repeated shorthand for this moment — that FDM printer prices fell "two orders of magnitude" after 2009 — comes from secondary retrospectives, not a published price-index dataset; both TechCrunch's 2016 patent-cliff piece and the Wikipedia entry for fused filament fabrication independently frame it that way <Annotation client:load term="a two-orders-of-magnitude price drop" note="TechCrunch (2016), “How expiring patents are ushering in the next generation of 3D printing”, and Wikipedia's Fused filament fabrication entry both independently describe roughly a $10,000–$20,000-to-under-$1,000 collapse after the 2009 FDM patent expiry — a secondary synthesis, not a primary price-index series, presented here as attributed framing rather than an original claim." />, but neither cites a contemporaneous market survey. What's directly documented, named and priced, is this:
+
+<DataTable client:load caption="Named machines at named prices — the collapse without a fabricated multiplier"
+  columns={[
+    { key: "machine", label: "Machine", type: "string" },
+    { key: "date", label: "Date", type: "string" },
+    { key: "price", label: "Price", type: "string" },
+    { key: "note", label: "What it was", type: "string" }
+  ]}
+  rows={[
+    { machine: "Stratasys Dimension", date: "Feb 2002", price: "$29,900", note: "Stratasys's own first office-grade FDM machine — “about half the cost of the next lowest-price 3D printer” at launch" },
+    { machine: "RepRap (self-replicating open design)", date: "undated, reprap.org", price: "≈ €350 in materials", note: "reprap.org's own general, undated claim of its design's materials cost, vs. the ≈ €30,000 commercial machines that preceded it" },
+    { machine: "MakerBot Cupcake CNC", date: "by 16 Mar 2009", price: "$750 (kit)", note: "the first MakerBot product, founded on RepRap's designs 283 days before the FDM patent lapsed" }
+  ]}
+/>
+
+The Dimension figure is Stratasys's own, from its 10-year-anniversary press release, which frames the $29,900 machine as a deliberate step down from the five- and six-figure industrial systems that came before it:
+
+<Pullquote kind="headline" cite="Scott Crump, Stratasys CEO, 10-year Dimension anniversary release" href="https://investors.stratasys.com/news-events/press-releases/detail/107/stratasys-celebrates-10-year-anniversary-of-industrys">
+Dimension laid the foundation for the 3D printing revolution we're seeing today.
+</Pullquote>
+
+Crump, the same inventor whose 1989 patent application is the other clock on this page, was not talking about RepRap or MakerBot when he said that — but the line reads differently once you know that the company he founded would spend the 2000s selling access to his own invention at falling but still four-figure-and-up prices, right up until the year its exclusivity ran out and a Bath research lab's alternative arrived at three figures. The €350 figure is RepRap's own general framing of what its design was undercutting — reprap.org states it as an undated, standing claim about the project's materials cost, not a dated 2007–2008 price point; the Cupcake figure, by contrast, is dated and corroborated by both a contemporaneous March 2009 Hackaday post and a same-era Gizmodo write-up. None of those three numbers required patent expiry to exist — RepRap's own self-replicating design, and its stated build cost, were already public by 29 May 2008, more than a year before the patent lapsed. What patent expiry changed was who was legally allowed to sell a machine built the same way, at MakerBot's price, without a Stratasys lawyer showing up. MakerBot, founded 20 January 2009 by Bre Pettis, Adam Mayer, and Zach "Hoeken" Smith explicitly to build on RepRap's progress <Annotation client:load term="to build on the early progress of the RepRap Project" note="Wikipedia, MakerBot: founded 20 January 2009 by Bre Pettis, Adam Mayer, and Zach “Hoeken” Smith, explicitly building on the RepRap project's open designs; corroborated by Gizmodo's contemporaneous coverage of the same origin." />, had its first kit for sale within the same calendar year the patent lapsed — and one of its earliest backers, putting in part of a $75,000 seed round, was Adrian Bowyer himself, alongside his wife Christine <Annotation client:load term="seed funding from Jake Lodwick and Adrian Bowyer with his wife Christine" note="Wikipedia, MakerBot: early $75,000 seed funding came from Jake Lodwick and from Adrian Bowyer together with his wife Christine — the RepRap founder personally backing the first company built to commercialize it." />.
+
+<RunnableCode client:visible caption="The two clocks, computed — days from the patent's own filing date to each milestone"
+  code={`// All dates ledger-sourced: patent filing/expiry from US 5,121,329A (Google Patents);
+// RepRap milestones from reprap.org/wiki/About and the RepRap Wikipedia timeline;
+// MakerBot dates from Wikipedia/Gizmodo; acquisition date from Stratasys's own press release.
+function daysBetween(a, b) {
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return Math.round((new Date(b) - new Date(a)) / msPerDay);
+}
+
+const patentFiled = "1989-10-30";
+const patentExpired = "2009-10-30";
+const darwinSelfReplicates = "2008-05-29";
+const makerBotFounded = "2009-01-20";
+
+const patentTermDays = daysBetween(patentFiled, patentExpired);
+const daysToSelfReplication = daysBetween(patentFiled, darwinSelfReplicates);
+const daysToMakerBot = daysBetween(patentFiled, makerBotFounded);
+const headStartDays = patentTermDays - daysToSelfReplication;
+
+console.log("Patent's full 20-year term:", patentTermDays, "days");
+console.log("Days from patent filing to Darwin's full self-replication:", daysToSelfReplication);
+console.log("Days from patent filing to MakerBot's founding:", daysToMakerBot);
+console.log("RepRap's head start before the patent expired:", headStartDays, "days");
+return headStartDays;`} />
+
+Run it and the headline number is 519 — the number of days a proven, self-replicating, GPL-licensed FDM design had already existed before Stratasys's exclusivity ran out. That's not a coincidence worth mythologizing into a conspiracy; RepRap's own materials never claim the timing was engineered to the day. But it is the mechanical reason a "maker movement" could appear to erupt in 2009 as if from nowhere: nowhere is wrong. It had been building in a lab in Bath since February 2004.
+
+## What went wrong — the honest limits of "self-replicating"
+
+Four things did not go the way the founding essay implied they would, and RepRap's own documentation says so without much spin.
+
+**Darwin's own frame jammed, and the fix was a redesign, not a patch.** The original 2007 Darwin used a cube-shaped frame with four separate lead screws, one raising and lowering each corner of the build platform. In practice the four screws rarely turned in perfect sync, and the platform would <Annotation client:load term="tended to bind due to four lead screws" note="Make: magazine, “A RepRap Family Tree” (2015): the cube-shaped Darwin “tended to bind due to four lead screws that raised and lowered each corner of the platform.”" /> — jam, tilt, and ruin a print mid-job. Ed Sells, a student in Bowyer's Bath lab, redesigned the machine into the prism-shaped Mendel that followed in 2009: weight moved onto the base for stability, and the four lead screws were cut down to two, which <Annotation client:load term="greatly reduc[ed] the binding and leveling issues" note="Make: magazine, “A RepRap Family Tree”: Mendel's redesign “greatly reduc[ed] the binding and leveling issues that caused so many jams” in the original Darwin." /> that had plagued the first generation. Mendel, not Darwin, is the design whose bill of materials and self-replication numbers actually spread — the version in the parts table above.
+
+**The printed bushings that were supposed to replace bearings didn't hold up.** Part of pushing the self-print fraction higher meant swapping bought linear bearings for printed sleeves — plastic bushings riding directly on the steel rods. RepRap's own wiki page on the part is blunt about the trade-off: UHMWPE printed bushings run quieter and cost pennies in filament, but they <Annotation client:load term="deform under load and have increased wear and play over time" note="RepRap wiki, Bushing page: UHMWPE printed bushings are quieter and near-free in materials, but “deform under load and have increased wear and play over time compared to linear bearings” — a documented durability trade-off, not a design failure hidden from users." /> compared to a proper linear bearing. The fix wasn't a firmware patch; it was a menu of options left explicitly to the builder — printed bushings if you want quiet and cheap and are willing to re-print as they wear, LM8UU steel-and-ball bearings if you want it to still be true a year later. The project simply told people which was which and let them choose their own trade-off, rather than pretending the printed part was as good as the vitamin it replaced.
+
+**The exponential-growth prediction was, on its own terms, wrong.** Bowyer's 2004 arithmetic — one copy a day, doubling, a machine for everyone on Earth within a month — was never how it played out, and a decade-plus retrospective calls that out directly rather than let the myth stand uncorrected: at that rate there would today be more RepRaps than atoms in the observable universe, and there manifestly are not. What replicated at that speed was the *design*, not the hardware — files, build manuals, forum threads, and forked variants spreading at internet speed while the physical machines spread at the much slower, much more human speed of someone deciding a weekend project was worth £396.45 and two days of print time.
+
+**Making the design more buildable sometimes meant making it less self-printing.** Josef Průša's own redesign, published as "Prusa Mendel" in <Annotation client:load term="2010" note="Make: magazine, “A RepRap Family Tree”: Prusa Simplified Mendel is dated to 2010, followed by Prusa Mendel 2 (2011, adding a heated build plate) and Prusa Mendel i3 (2012), which became RepRap's flagship design." />, went the way you'd expect from someone chasing self-print percentage — fewer bought bearings, more printed bushings, "the purest and simplest 3D printer you can build." But the designs that followed it within a year or two reversed course: MendelMax, from Maker's Tool Works in <Annotation client:load term="2011" note="Make: magazine, “A RepRap Family Tree”: MendelMax (Maker's Tool Works, 2011) substituted aluminum extrusions for smooth rods; MendelMax 2.0 followed in 2013. The Rostock (Johann C. Rocholl, 2012) and Kossel (2012) delta designs likewise added aluminum extrusions, the latter for a 400mm build height." />, substituted aluminum extrusion for smooth steel rod outright, and the delta-style Rostock and Kossel designs that arrived the following year, in 2012, leaned on aluminum extrusion too — trading printed rigidity for bought precision because builders wanted flatter beds and taller frames more than they wanted bragging rights on self-print percentage. Neither generation was wrong. It's the same trade-off Darwin drew in 2008, redrawn with more information each time.
+
+<Detail summary="Go deeper: does relying on more vitamins eventually undo the point of RepRap?">
+It's a live disagreement inside the community, not a settled question. Commenters on the 2016 Hackaday retrospective pushed back on the drift toward aluminum extrusion and linear rail, arguing that <Annotation client:load term="the more you rely on industry parts, the more you lock down certain design aspects" note="Hackaday (2016), “Getting It Right By Getting It Wrong” — comment-thread pushback quoted in the piece: “The more you rely on industry parts, the more you lock down certain design aspects. In a few years you're where you were before RepRap: each considerably new design costs huge investments.” Presented as a documented community debate, not the article's own editorial position." /> — that a design leaning further on bought components each generation risks re-creating the capital barrier RepRap was built to remove. The article's own framing pushes back on that pessimism: a richer vitamin ecosystem, it argues, produces better and cheaper machines without needing every design to be fully printable, and the actual achievement was never physical self-replication at scale — it was the free, forkable spread of the *design itself*, which the RP/vitamin split never threatened.
+</Detail>
+
+## Results — does it work?
+
+Yes, with the scope stated precisely. A RepRap Mendel, built from the parts table above, does print a real fraction of its own next generation — that fraction was measured at 48% for Darwin in 2008 and is claimed at 70% for current designs on RepRap's own about page, and the mechanism (print the RP set, buy the vitamins, assemble, let the child print its own RP set) has run for real, repeatedly, since 29 May 2008. What it does not do is remove the vitamins from the loop, remove the builder's own labor and judgment from the loop, or grow the population of machines at the exponential rate the founding essay predicted. Both the success and the overshoot are documented in the project's own materials, which is the detail that makes this a build log rather than a legend: you can check every number above against a live wiki page, not against nostalgia.
+
+## Does the mechanism still hold up?
+
+<DataTable client:load caption="The self-replication claim, checked against its own sources"
+  columns={[
+    { key: "claim", label: "Claim", type: "string" },
+    { key: "verdict", label: "Holds up?", type: "string" },
+    { key: "detail", label: "Detail", type: "string" }
+  ]}
+  rows={[
+    { claim: "A RepRap can print a large fraction of its own parts", verdict: "Yes, documented", detail: "48% at Darwin's first full replication (2008); RepRap's own current page claims 70% for present designs" },
+    { claim: "The design existed and worked before the FDM patent expired", verdict: "Yes, by 519 days", detail: "self-replication proven 29 May 2008; patent expired 30 Oct 2009" },
+    { claim: "Self-replication would cause exponential machine-count growth", verdict: "No", detail: "≈4,500 machines in 2.5 years (Jones et al. 2011) — real growth, not doubling-every-day" },
+    { claim: "The price collapse was “two orders of magnitude”", verdict: "Plausible, unverified precisely", detail: "named anchors range $29,900 (2002, Dimension) to $750 (2009, Cupcake CNC) — consistent with the shorthand, not independently measured as a series" }
+  ]}
+/>
+
+The mechanism is real and well documented; the mythology built on top of it overshot in exactly the ways a founder's own 2004 essay, read literally, would predict. Both things are true at once, and RepRap's own wiki, glossary, and bushing page make that easy to check rather than easy to romanticize.
+
+## Reproduce this
+
+<Checklist client:visible
+  title="Trace the mechanism yourself, source by source"
+  caption="every claim in this piece, with where to verify it"
+  items={[
+    { label: "Read the patent record directly: US 5,121,329A, filed 30 Oct 1989, expired 30 Oct 2009", href: "https://patents.google.com/patent/US5121329A/en" },
+    { label: "Read Bowyer's original 2004 argument for why self-replication matters economically", href: "https://reprap.org/wiki/Wealth_Without_Money" },
+    { label: "Read RepRap's own account of the 29 May 2008 self-replication event and current 70% figure", href: "https://reprap.org/wiki/About" },
+    { label: "Check the “vitamin” definition against the glossary — the exact line between printed and bought", href: "https://reprap.org/wiki/Glossary" },
+    { label: "Price out a real Mendel-class bill of materials against RepRap's own current worksheet", href: "https://reprap.org/wiki/Mendel_materials_procurement" },
+    { label: "Read the peer-reviewed account of reproductive success (~4,500 machines, 2.5 years)", href: "https://www.cambridge.org/core/journals/robotica/article/reprap-the-replicating-rapid-prototyper/5979FD7B0C066CBCE43EEAD869E871AA" },
+    { label: "Read the honest retrospective on where the exponential-growth prediction broke down", href: "https://hackaday.com/2016/03/02/getting-it-right-by-getting-it-wrong-reprap-and-the-evolution-of-3d-printing/" },
+    { label: "Confirm the MakerBot→Stratasys loop: founded on RepRap in 2009, bought by the patent holder in 2013", href: "https://investors.stratasys.com/news-events/press-releases/detail/19/stratasys-to-acquire-makerbot-merging-two-global-3d" }
+  ]}
+/>
+
+One coda worth sitting with<Sidenote href="https://investors.stratasys.com/news-events/press-releases/detail/19/stratasys-to-acquire-makerbot-merging-two-global-3d" source="Stratasys press release, 2013">Stratasys, the company whose patent RepRap's timing outran, ended up owning MakerBot outright on 19 June 2013 — $403 million upfront, $604 million total.</Sidenote>: the company built five years earlier on the open design that had been ready and waiting for its patent to expire. The $403 million figure is Stratasys's own announced number, and contemporaneous tech-press coverage of the same deal <Annotation client:load term="acquired for $403M" note="GeekWire (2013), covering the same 19 June 2013 announcement independently: “Jeff Bezos-backed 3D-printing company MakerBot acquired for $403M” — corroborating the upfront figure in Stratasys's own press release." /> landed on the identical figure — by that point, MakerBot had sold roughly 22,000 printers, a company built entirely on a five-year-old open design finding its way, by acquisition, back into the hands of the inventor whose patent had once kept that design off the commercial market.
