@@ -49,10 +49,10 @@ export type Indicator = z.infer<typeof IndicatorSchema>;
 
 /**
  * Deterministic id for an Indicator, mirroring feed-item.ts's makeFeedItemId sha1-hash
- * pattern. `subnationalCode` uses an explicit "-" placeholder when absent (not omission)
- * so the id changes both when subnationalCode toggles present-vs-absent and when its
- * value changes -- omission alone could collide with an indicator that has no subnational
- * scope at all.
+ * pattern and matching the canonical hash defined in
+ * docs/cofounder/specs/2026-07-07-world-data-spine-design.md §3.2 exactly: national
+ * indicators (no subnationalCode) hash with an explicit trailing empty component, so
+ * IDs persisted by fixtures/downstream joins agree with the documented helper.
  */
 export function makeIndicatorId(
   sourceId: string,
@@ -62,6 +62,6 @@ export function makeIndicatorId(
   period: string,
   subnationalCode?: string,
 ): string {
-  const parts = [sourceId, field, key, country, period, subnationalCode ?? "-"];
+  const parts = [sourceId, field, key, country, period, subnationalCode ?? ""];
   return createHash("sha1").update(parts.join("::")).digest("hex").slice(0, 16);
 }
