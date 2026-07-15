@@ -1,19 +1,38 @@
+import { z } from "zod";
 import {
   EngagementEventSchema,
   eventWeight,
   gateState,
+  WorldEventSchema,
   type EngagementEvent,
+  type WorldEvent,
 } from "@khazana/core";
 import type { Env } from "./env.js";
 
 const MS_PER_DAY = 86_400_000;
 /** Cap the per-device event payload so the response stays small for static clients. */
 const MAX_SUMMARY_EVENTS = 2000;
+/** Cap the mirrored world-event rollup so the KV value + response stay small. */
+const MAX_WORLD_EVENTS = 2000;
+/** The single, fixed KV key the world-event mirror lives under. No history is kept. */
+const WORLD_LATEST_KEY = "world:latest";
+
+const WorldRollupSchema = z.object({
+  updatedAt: z.string().datetime(),
+  events: z.array(WorldEventSchema),
+});
+type WorldRollup = z.infer<typeof WorldRollupSchema>;
+
+/** Sort newest-first by event time and cap at MAX_WORLD_EVENTS. */
+function canonicalizeWorldEvents(events: WorldEvent[]): WorldEvent[] {
+  const sorted = [...events].sort((a, b) => (a.time < b.time ? 1 : a.time > b.time ? -1 : 0));
+  return sorted.slice(0, MAX_WORLD_EVENTS);
+}
 
 export function cors(env: Env): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": env.ALLOWED_ORIGIN ?? "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Content-Type",
   };
 }
@@ -144,6 +163,68 @@ async function handleSummary(req: Request, env: Env): Promise<Response> {
   );
 }
 
+/**
+ * Public, read-only mirror of the private-repo world-event rollup. Reads the
+ * single fixed `world:latest` key; never lists or exposes anything else.
+ */
+async function handleWorldLatest(env: Env): Promise<Response> {
+  const value = await env.KV.get(WORLD_LATEST_KEY);
+  if (!value) {
+    return json({ updatedAt: new Date(0).toISOString(), events: [] }, 200, env);
+  }
+  let candidate: unknown;
+  try {
+    candidate = JSON.parse(value);
+  } catch {
+    return json({ updatedAt: new Date(0).toISOString(), events: [] }, 200, env);
+  }
+  const parsed = WorldRollupSchema.safeParse(candidate);
+  if (!parsed.success) {
+    return json({ updatedAt: new Date(0).toISOString(), events: [] }, 200, env);
+  }
+  const rollup: WorldRollup = parsed.data;
+  return json(
+    { updatedAt: rollup.updatedAt, events: canonicalizeWorldEvents(rollup.events) },
+    200,
+    env,
+  );
+}
+
+/**
+ * Fast-lane Action-only write path. Never a browser-write endpoint: requires
+ * the exact `WORLD_INGEST_TOKEN` bearer credential, fails secure (503) before
+ * ever comparing credentials (401) if the secret is unconfigured, and leaves
+ * the previously stored rollup untouched on any invalid payload (400).
+ */
+async function handleWorldIngest(req: Request, env: Env): Promise<Response> {
+  if (!env.WORLD_INGEST_TOKEN) {
+    return json({ error: "WORLD_INGEST_TOKEN not configured" }, 503, env);
+  }
+  const auth = req.headers.get("Authorization");
+  if (auth !== `Bearer ${env.WORLD_INGEST_TOKEN}`) {
+    return json({ error: "unauthorized" }, 401, env);
+  }
+
+  let raw: unknown;
+  try {
+    raw = await req.json();
+  } catch {
+    return json({ error: "invalid json" }, 400, env);
+  }
+  const parsed = WorldRollupSchema.safeParse(raw);
+  if (!parsed.success) {
+    return json({ error: "invalid world event rollup" }, 400, env);
+  }
+
+  const rollup = parsed.data;
+  const canonical: WorldRollup = {
+    updatedAt: rollup.updatedAt,
+    events: canonicalizeWorldEvents(rollup.events),
+  };
+  await env.KV.put(WORLD_LATEST_KEY, JSON.stringify(canonical));
+  return json({ ok: true }, 202, env);
+}
+
 export async function handleRequest(req: Request, env: Env): Promise<Response> {
   const { pathname } = new URL(req.url);
   const method = req.method;
@@ -162,6 +243,12 @@ export async function handleRequest(req: Request, env: Env): Promise<Response> {
   }
   if (method === "GET" && pathname === "/summary") {
     return handleSummary(req, env);
+  }
+  if (method === "GET" && pathname === "/world/latest") {
+    return handleWorldLatest(env);
+  }
+  if (method === "PUT" && pathname === "/world/ingest") {
+    return handleWorldIngest(req, env);
   }
   return json({ error: "not found" }, 404, env);
 }

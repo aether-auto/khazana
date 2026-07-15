@@ -16,3 +16,8 @@ ALLOWED_ORIGIN = "https://aether-auto.github.io"
 
 # EXPORT_TOKEN is a secret, NOT a var. Set it with:
 #   pnpm dlx wrangler secret put EXPORT_TOKEN
+
+# WORLD_INGEST_TOKEN is a secret, NOT a var. It authorizes only the
+# world-refresh.yml Action's PUT /world/ingest mirror write — never the
+# browser client. Set it with:
+#   pnpm dlx wrangler secret put WORLD_INGEST_TOKEN
