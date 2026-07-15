@@ -78,10 +78,20 @@ describe("crossCheckAgainstGeoBoundaries", () => {
     expect(result).toEqual({
       missingCodes: [],
       extraCodes: [],
+      duplicateCodes: [],
       countMismatch: false,
       assembledCount: 2,
       referenceCount: 2,
     });
+  });
+
+  test("flags duplicate assembled codes as a mismatch even when the distinct code set matches (never silently masked)", () => {
+    const result = crossCheckAgainstGeoBoundaries(["IN-GA", "IN-GA", "IN-KL"], ["IN-GA", "IN-KL"]);
+    expect(result.duplicateCodes).toEqual(["IN-GA"]);
+    expect(result.missingCodes).toEqual([]);
+    expect(result.extraCodes).toEqual([]);
+    expect(result.countMismatch).toBe(true);
+    expect(result.assembledCount).toBe(3);
   });
 
   test("detects a code present in the reference but missing from the assembled set", () => {

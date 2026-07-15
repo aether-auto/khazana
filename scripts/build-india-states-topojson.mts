@@ -150,6 +150,11 @@ export function buildStatesTopology(features: MappedFeature[], quantization = 1e
 export interface CrossCheckResult {
   missingCodes: string[];
   extraCodes: string[];
+  /** Codes appearing more than once in `assembledCodes` — a duplicate-unit
+   *  bug that a naive Set-size comparison alone would silently mask (two
+   *  features mapping to the same ISO code while the *distinct* code set
+   *  still happens to match the reference exactly). */
+  duplicateCodes: string[];
   countMismatch: boolean;
   assembledCount: number;
   referenceCount: number;
@@ -158,7 +163,10 @@ export interface CrossCheckResult {
 /**
  * Cross-check the assembled ISO code set against a geoBoundaries India ADM1
  * reference code list. Returns a structured mismatch report — never
- * auto-reconciles or silently drops/adds units.
+ * auto-reconciles or silently drops/adds units. `assembledCount` is the raw
+ * (non-deduplicated) input length, so a caller comparing it against the
+ * expected 36 catches duplicate-code bugs the distinct-set comparison alone
+ * would miss.
  */
 export function crossCheckAgainstGeoBoundaries(
   assembledCodes: string[],
@@ -168,11 +176,16 @@ export function crossCheckAgainstGeoBoundaries(
   const referenceSet = new Set(geoBoundariesCodes);
   const missingCodes = [...referenceSet].filter((c) => !assembledSet.has(c)).sort();
   const extraCodes = [...assembledSet].filter((c) => !referenceSet.has(c)).sort();
+  const seen = new Set<string>();
+  const duplicateCodes = [
+    ...new Set(assembledCodes.filter((c) => (seen.has(c) ? true : (seen.add(c), false)))),
+  ].sort();
   return {
     missingCodes,
     extraCodes,
-    countMismatch: assembledSet.size !== referenceSet.size,
-    assembledCount: assembledSet.size,
+    duplicateCodes,
+    countMismatch: assembledSet.size !== referenceSet.size || duplicateCodes.length > 0,
+    assembledCount: assembledCodes.length,
     referenceCount: referenceSet.size,
   };
 }
@@ -308,13 +321,24 @@ async function main(): Promise<void> {
       return;
     }
 
+    // aether-auto/khazana-world-data is PRIVATE — an anonymous clone 404s
+    // before the token is ever applied to the later push. Supply the same
+    // ephemeral inline http.extraheader auth (docs/world-data-repo.md's
+    // writer-checkout convention) to the clone itself, not just the push.
+    const auth = Buffer.from(`x-access-token:${wdToken}`).toString("base64");
     const wdDir = join(workDir, "world-data");
-    execFileSync("git", [
-      "clone",
-      "--depth=1",
-      "https://github.com/aether-auto/khazana-world-data.git",
-      wdDir,
-    ], { stdio: "inherit" });
+    execFileSync(
+      "git",
+      [
+        "-c",
+        `http.extraheader=AUTHORIZATION: basic ${auth}`,
+        "clone",
+        "--depth=1",
+        "https://github.com/aether-auto/khazana-world-data.git",
+        wdDir,
+      ],
+      { stdio: "inherit" },
+    );
     const wdOutDir = join(wdDir, "data", "world", "government", "geo");
     mkdirSync(wdOutDir, { recursive: true });
     writeFileSync(join(wdOutDir, "india-states.topojson.json"), JSON.stringify(topo) + "\n");
@@ -331,7 +355,6 @@ async function main(): Promise<void> {
       console.log("[build-india-states-topojson] nothing to commit (world-data already up to date)");
       return;
     }
-    const auth = Buffer.from(`x-access-token:${wdToken}`).toString("base64");
     execFileSync(
       "git",
       ["-c", `http.extraheader=AUTHORIZATION: basic ${auth}`, "push", "origin", "HEAD:main"],
