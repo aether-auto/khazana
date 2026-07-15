@@ -10,4 +10,13 @@ PORT ?= 4321
 .PHONY: serve
 serve:
 	@echo "khazana site dev server → http://localhost:$(PORT)/"
-	pnpm --filter @khazana/site dev --port $(PORT) --host
+	@set -eu; \
+		pnpm --filter @khazana/site dev --port $(PORT) --host & \
+		server_pid=$$!; \
+		trap 'kill "$$server_pid" 2>/dev/null || true' EXIT INT TERM; \
+		while ! curl --silent --fail "http://localhost:$(PORT)/" >/dev/null 2>&1; do \
+			if ! kill -0 "$$server_pid" 2>/dev/null; then wait "$$server_pid"; fi; \
+			sleep 1; \
+		done; \
+		if [ "$${SERVE_NO_OPEN:-}" != "1" ]; then open "http://localhost:$(PORT)/"; fi; \
+		wait "$$server_pid"

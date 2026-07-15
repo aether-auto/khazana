@@ -1,0 +1,64 @@
+.uncertainty-strip {
+  display: grid;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border: var(--hair) solid var(--rule);
+  background: var(--bg-inset);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+}
+
+.uncertainty-strip__range {
+  display: grid;
+  gap: var(--s-1);
+}
+
+.uncertainty-strip__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.uncertainty-strip__line {
+  stroke: var(--rule-bright);
+  stroke-width: 1.5;
+}
+
+.uncertainty-strip__cap {
+  stroke: var(--ink-faint);
+  stroke-width: 1.25;
+}
+
+.uncertainty-strip__mid {
+  fill: var(--accent);
+  stroke: var(--bg-raised);
+  stroke-width: 1.5;
+}
+
+.uncertainty-strip__values,
+.uncertainty-strip__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: 0;
+  color: var(--ink-dim);
+}
+
+.uncertainty-strip__values span + span::before {
+  margin-right: var(--s-2);
+  color: var(--ink-faint);
+  content: "·";
+}
+
+.uncertainty-strip__badge,
+.uncertainty-strip__none {
+  color: var(--ink);
+}
+
+.uncertainty-strip__sample {
+  color: var(--ink-faint);
+}
+
+.uncertainty-strip__meta a {
+  color: var(--accent);
+}
