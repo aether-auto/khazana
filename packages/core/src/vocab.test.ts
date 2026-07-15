@@ -7,6 +7,12 @@ import {
   EVENT_SEVERITIES, EventSeveritySchema,
   REFERENCE_RATERS, ReferenceRaterSchema,
   CADENCE_LANES, CadenceLaneSchema,
+  SYSTEM_TYPES, SystemTypeSchema,
+  GOV_BRANCHES, GovBranchSchema,
+  GOV_TIERS, GovTierSchema,
+  INSTITUTION_KINDS, InstitutionKindSchema,
+  POWER_RELATIONS, PowerRelationSchema,
+  SELECTION_METHODS, SelectionMethodSchema,
 } from "./vocab.js";
 
 test("channels include the founder's core topics", () => {
@@ -60,4 +66,40 @@ test("CadenceLaneSchema accepts known and rejects unknown", () => {
   expect(CADENCE_LANES).toContain("fast");
   expect(CadenceLaneSchema.parse("slow")).toBe("slow");
   expect(CadenceLaneSchema.safeParse("realtime").success).toBe(false);
+});
+
+test("SystemTypeSchema accepts known and rejects unknown", () => {
+  expect(SYSTEM_TYPES).toContain("semi-presidential");
+  expect(SystemTypeSchema.parse("parliamentary")).toBe("parliamentary");
+  expect(SystemTypeSchema.safeParse("anarcho-syndicalist").success).toBe(false);
+});
+
+test("GovBranchSchema accepts known and rejects unknown", () => {
+  expect(GOV_BRANCHES).toContain("electoral");
+  expect(GovBranchSchema.parse("judicial")).toBe("judicial");
+  expect(GovBranchSchema.safeParse("religious").success).toBe(false);
+});
+
+test("GovTierSchema accepts known and rejects unknown", () => {
+  expect(GOV_TIERS).toContain("national");
+  expect(GovTierSchema.parse("state")).toBe("state");
+  expect(GovTierSchema.safeParse("regional").success).toBe(false);
+});
+
+test("InstitutionKindSchema accepts known and rejects unknown", () => {
+  expect(INSTITUTION_KINDS).toContain("apex-court");
+  expect(InstitutionKindSchema.parse("chamber")).toBe("chamber");
+  expect(InstitutionKindSchema.safeParse("ministry").success).toBe(false);
+});
+
+test("PowerRelationSchema accepts known and rejects unknown", () => {
+  expect(POWER_RELATIONS).toContain("confidence");
+  expect(PowerRelationSchema.parse("appoints")).toBe("appoints");
+  expect(PowerRelationSchema.safeParse("influences").success).toBe(false);
+});
+
+test("SelectionMethodSchema accepts known and rejects unknown", () => {
+  expect(SELECTION_METHODS).toContain("legislature-elected");
+  expect(SelectionMethodSchema.parse("hereditary")).toBe("hereditary");
+  expect(SelectionMethodSchema.safeParse("lottery").success).toBe(false);
 });
