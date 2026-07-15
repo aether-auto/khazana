@@ -1,0 +1,108 @@
+[
+  {
+    "id": "russia-ukraine",
+    "name": "Russia–Ukraine War",
+    "status": "active",
+    "sides": [
+      {
+        "id": "ukraine",
+        "label": "Ukraine",
+        "belligerents": [
+          { "name": "Armed Forces of Ukraine", "country": "UKR", "role": "state" }
+        ]
+      },
+      {
+        "id": "russia",
+        "label": "Russia",
+        "belligerents": [
+          { "name": "Armed Forces of the Russian Federation", "country": "RUS", "role": "state" }
+        ]
+      }
+    ],
+    "bounds": { "north": 52.4, "south": 44.0, "east": 40.3, "west": 22.1 },
+    "startedAt": "2022-02-24T00:00:00.000Z",
+    "endedAt": null,
+    "primaryCountries": ["UKR", "RUS"],
+    "provenance": {
+      "sourceId": "khazana-atlas-curation",
+      "sourceUrl": "https://github.com/aether-auto/khazana/blob/main/docs/superpowers/specs/2026-07-07-atlas-conflict-theaters-design.md#2-theater-registry",
+      "methodUrl": "https://github.com/aether-auto/khazana/blob/main/docs/superpowers/specs/2026-07-07-atlas-conflict-theaters-design.md#12-seed-theaters",
+      "licenseTier": "redistribute-raw-ok",
+      "redistribution": true,
+      "origin": "referenced",
+      "retrievedAt": "2026-07-15T00:00:00.000Z",
+      "uncertainty": { "kind": "none" }
+    }
+  },
+  {
+    "id": "israel-gaza",
+    "name": "Israel–Gaza War",
+    "status": "active",
+    "sides": [
+      {
+        "id": "israel",
+        "label": "Israel",
+        "belligerents": [
+          { "name": "Israel Defense Forces", "country": "ISR", "role": "state" }
+        ]
+      },
+      {
+        "id": "palestinian-factions",
+        "label": "Palestinian armed factions",
+        "belligerents": [
+          { "name": "Hamas", "country": "PSE", "role": "non-state" },
+          { "name": "Palestinian Islamic Jihad", "country": "PSE", "role": "non-state" }
+        ]
+      }
+    ],
+    "bounds": { "north": 33.4, "south": 31.2, "east": 35.9, "west": 34.2 },
+    "startedAt": "2023-10-07T00:00:00.000Z",
+    "endedAt": null,
+    "primaryCountries": ["ISR", "PSE"],
+    "provenance": {
+      "sourceId": "khazana-atlas-curation",
+      "sourceUrl": "https://github.com/aether-auto/khazana/blob/main/docs/superpowers/specs/2026-07-07-atlas-conflict-theaters-design.md#2-theater-registry",
+      "methodUrl": "https://github.com/aether-auto/khazana/blob/main/docs/superpowers/specs/2026-07-07-atlas-conflict-theaters-design.md#12-seed-theaters",
+      "licenseTier": "redistribute-raw-ok",
+      "redistribution": true,
+      "origin": "referenced",
+      "retrievedAt": "2026-07-15T00:00:00.000Z",
+      "uncertainty": { "kind": "none" }
+    }
+  },
+  {
+    "id": "sudan-civil-war",
+    "name": "Sudan Civil War",
+    "status": "active",
+    "sides": [
+      {
+        "id": "saf",
+        "label": "Sudanese Armed Forces",
+        "belligerents": [
+          { "name": "Sudanese Armed Forces", "country": "SDN", "role": "state" }
+        ]
+      },
+      {
+        "id": "rsf",
+        "label": "Rapid Support Forces",
+        "belligerents": [
+          { "name": "Rapid Support Forces", "country": "SDN", "role": "non-state" }
+        ]
+      }
+    ],
+    "bounds": { "north": 22.2, "south": 8.6, "east": 38.6, "west": 21.8 },
+    "startedAt": "2023-04-15T00:00:00.000Z",
+    "endedAt": null,
+    "primaryCountries": ["SDN"],
+    "provenance": {
+      "sourceId": "khazana-atlas-curation",
+      "sourceUrl": "https://github.com/aether-auto/khazana/blob/main/docs/superpowers/specs/2026-07-07-atlas-conflict-theaters-design.md#2-theater-registry",
+      "methodUrl": "https://github.com/aether-auto/khazana/blob/main/docs/superpowers/specs/2026-07-07-atlas-conflict-theaters-design.md#12-seed-theaters",
+      "licenseTier": "redistribute-raw-ok",
+      "redistribution": true,
+      "origin": "referenced",
+      "retrievedAt": "2026-07-15T00:00:00.000Z",
+      "uncertainty": { "kind": "none" }
+    }
+  }
+]
