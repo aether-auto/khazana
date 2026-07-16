@@ -5,3 +5,4 @@ export type {
 } from "./source.js";
 export * from "./registry-io.js";
 export * from "./http.js";
+export * from "./theaters/index.js";

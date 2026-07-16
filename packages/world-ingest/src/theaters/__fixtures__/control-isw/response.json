@@ -1,0 +1,22 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "actor": "Russian-controlled territory"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [37, 48],
+            [38, 48],
+            [38, 49],
+            [37, 48]
+          ]
+        ]
+      }
+    }
+  ]
+}
