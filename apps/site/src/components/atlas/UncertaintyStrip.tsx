@@ -50,7 +50,7 @@ function RangeReadout({ readout }: { readout: Extract<ReturnType<typeof uncertai
         className="uncertainty-strip__svg"
         viewBox={`0 0 ${layout.width} ${layout.height}`}
         role="img"
-        aria-label={`${row.label}: ${formatRangeValue(row.low)} to ${formatRangeValue(row.high)}, mid ${formatRangeValue(row.mid)}`}
+        aria-label={`${row.label}: ${formatRangeValue(row.low)} to ${formatRangeValue(row.high)}, mid ${formatRangeValue(row.mid)}${row.n === undefined ? "" : `, n=${row.n}`}`}
       >
         <line className="uncertainty-strip__line" x1={row.xLow} y1={row.y} x2={row.xHigh} y2={row.y} />
         <line className="uncertainty-strip__cap" x1={row.xLow} y1={row.y - 4} x2={row.xLow} y2={row.y + 4} />
@@ -61,6 +61,7 @@ function RangeReadout({ readout }: { readout: Extract<ReturnType<typeof uncertai
         <span data-uncertainty-low="true">low {formatRangeValue(row.low)}</span>
         <span data-uncertainty-mid="true">mid {formatRangeValue(row.mid)}</span>
         <span data-uncertainty-high="true">high {formatRangeValue(row.high)}</span>
+        {row.n === undefined ? null : <span data-uncertainty-rater-count="true">n={row.n}</span>}
       </p>
     </div>
   );

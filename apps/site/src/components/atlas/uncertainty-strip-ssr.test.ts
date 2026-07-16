@@ -30,7 +30,7 @@ const CASES: ReadonlyArray<{
   },
   {
     name: "rater spread",
-    uncertainty: UncertaintySchema.parse({ kind: "raterSpread", min: 38, max: 63, raterCount: 8 }),
+    uncertainty: UncertaintySchema.parse({ kind: "raterSpread", min: 38, max: 63, raterCount: 3 }),
     expectsRange: true,
     expectedRange: { low: "38", mid: "50", high: "63" },
     score: 50,
@@ -90,6 +90,11 @@ test.each(CASES)("UncertaintyStrip SSR renders $name with the correct static rea
   if (uncertainty.kind === "sampleSize") {
     expect(html).toContain('data-uncertainty-sample-size="true"');
     expect(html).toContain(`n=${uncertainty.n}`);
+  }
+
+  if (uncertainty.kind === "raterSpread") {
+    expect(html).toContain(`>n=${uncertainty.raterCount}<`);
+    expect(html).toMatch(new RegExp(`<svg[^>]+aria-label="[^"]*n=${uncertainty.raterCount}[^"]*"`));
   }
 
   if (uncertainty.kind === "none") {
