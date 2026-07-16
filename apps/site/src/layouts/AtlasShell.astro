@@ -11,6 +11,7 @@ import SiteGate from "../components/SiteGate.astro";
 import SiteNav from "../components/nav/SiteNav.tsx";
 import InstrumentRail from "../components/atlas/InstrumentRail.astro";
 import Breadcrumb from "../components/atlas/Breadcrumb.astro";
+import FaceLandingWarmup from "../components/FaceLandingWarmup.astro";
 import { ClientRouter } from "astro:transitions";
 
 // AtlasShell — the Atlas counterpart to Shell.astro. It SSR-stamps
@@ -75,6 +76,12 @@ const buildTime = new Date().toISOString();
     <script>
       import "../lib/face-switch.ts";
     </script>
+    {/* Moderated cross-face warmup (faces-prerender-polish). Prerenders ONLY
+        the opposite landing (/ from here) via inline Speculation Rules, with
+        a bezel-scoped `<link rel="prefetch">` fallback on engines without
+        Speculation Rules support. Never touches face-switch.ts, the VT
+        choreography, or data-astro-reload semantics. */}
+    <FaceLandingWarmup face="atlas" />
     <script is:inline>
       // Gate the reveal hidden-state before paint (JS-on only, reduced-motion
       // opted out), with a load backstop that un-hides everything if the reveal
@@ -105,6 +112,7 @@ const buildTime = new Date().toISOString();
           class="face-switch"
           href={withBase("/")}
           data-astro-reload
+          data-face-switch
           aria-label="Switch to the Study"
         >
           <span class="face-opt is-current">atlas</span>
