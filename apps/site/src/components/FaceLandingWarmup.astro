@@ -1,0 +1,18 @@
+---
+import {
+  serializeFaceLandingSpeculationRule,
+  type FaceLanding,
+} from "../lib/face-landing-speculation.ts";
+
+interface Props {
+  face: FaceLanding;
+}
+
+const { face } = Astro.props;
+const speculationRules = serializeFaceLandingSpeculationRule(face, import.meta.env.BASE_URL);
+---
+
+<script type="speculationrules" is:inline set:html={speculationRules}></script>
+<script>
+  import "../scripts/face-landing-prefetch.ts";
+</script>

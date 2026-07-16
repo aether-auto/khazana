@@ -19,6 +19,7 @@ import SiteGate from "../components/SiteGate.astro";
 import NavRail from "../components/header/NavRail.tsx";
 import SiteNav from "../components/nav/SiteNav.tsx";
 import FeedFilterBar from "../components/nav/FeedFilterBar.astro";
+import FaceLandingWarmup from "../components/FaceLandingWarmup.astro";
 import { ClientRouter } from "astro:transitions";
 import { CHANNELS } from "@khazana/core";
 
@@ -145,6 +146,12 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
     <script>
       import "../lib/face-switch.ts";
     </script>
+    {/* Moderated cross-face warmup (faces-prerender-polish). Prerenders ONLY
+        the opposite landing (/atlas from here) via inline Speculation Rules,
+        with a bezel-scoped `<link rel="prefetch">` fallback on engines
+        without Speculation Rules support. Never touches face-switch.ts,
+        the VT choreography, or data-astro-reload semantics. */}
+    <FaceLandingWarmup face="study" />
     <script is:inline>
       // Gate the reveal hidden-state ASAP (before paint) so JS-on visitors
       // don't flash the final layout, while no-JS/SSR keeps everything visible.
@@ -212,6 +219,7 @@ const nav: { id: "feed" | "reads" | "workshop" | "graph" | "sources" | "taste"; 
           class="face-switch"
           href={withBase("/atlas")}
           data-astro-reload
+          data-face-switch
           aria-label="Switch to Atlas"
         >
           <span class="face-opt is-current">STUDY</span>
