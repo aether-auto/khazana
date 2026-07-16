@@ -1,0 +1,331 @@
+---
+title: "Why Quantum Cryptography Has to Go to Space: The Loss-Scaling Problem and the Micius Satellite"
+format: primer
+channels:
+  - quantum
+  - geopolitics
+  - tech
+summary: "Fiber loses photons exponentially with distance and a laser pulse can never be perfectly one photon, so in 2017 China's Micius satellite closed the resulting eavesdropping attack with a decoy-state protocol and ran quantum key distribution across 1,200 kilometers at kilohertz rates — roughly twenty orders of magnitude more efficiently than the same distance of fiber could ever manage."
+publishedAt: 2026-07-16T09:00:00.000Z
+sources:
+  - title: "Liao, S.-K. et al. — Satellite-to-ground quantum key distribution, Nature 549, 43–47 (2017)"
+    url: "https://www.nature.com/articles/nature23655"
+    tier: high
+    origin: researched
+  - title: "Liao, S.-K. et al. — Satellite-to-ground quantum key distribution (arXiv preprint)"
+    url: "https://arxiv.org/abs/1707.00542"
+    tier: high
+    origin: researched
+  - title: "Yin, J. et al. — Satellite-based entanglement distribution over 1200 kilometers, Science 356, 1140–1144 (2017)"
+    url: "https://www.science.org/doi/10.1126/science.aan3211"
+    tier: high
+    origin: researched
+  - title: "Yin, J. et al. — Satellite-Based Entanglement Distribution Over 1200 kilometers (arXiv preprint of the Science 356 paper)"
+    url: "https://arxiv.org/abs/1707.01339"
+    tier: high
+    origin: researched
+  - title: "Yin, J. et al. — Entanglement-based secure quantum cryptography over 1,120 kilometres, Nature 582, 501–505 (2020)"
+    url: "https://www.nature.com/articles/s41586-020-2401-y"
+    tier: high
+    origin: researched
+  - title: "Liao, S.-K. et al. — Satellite-Relayed Intercontinental Quantum Network, Phys. Rev. Lett. 120, 030501 (2018)"
+    url: "https://arxiv.org/abs/1801.04418"
+    tier: high
+    origin: researched
+  - title: "Boaron, A. et al. — Secure Quantum Key Distribution over 421 km of Optical Fiber, Phys. Rev. Lett. 121, 190502 (2018)"
+    url: "https://arxiv.org/abs/1807.03222"
+    tier: high
+    origin: researched
+  - title: "Boaron, A. et al. — Secure QKD over 421 km, published version, Phys. Rev. Lett. 121, 190502 (2018)"
+    url: "https://doi.org/10.1103/PhysRevLett.121.190502"
+    tier: high
+    origin: researched
+  - title: "Lo, H.-K., Ma, X. & Chen, K. — Decoy State Quantum Key Distribution, Phys. Rev. Lett. 94, 230504 (2005)"
+    url: "https://arxiv.org/abs/quant-ph/0411004"
+    tier: high
+    origin: researched
+  - title: "Lo, H.-K., Ma, X. & Chen, K. — Decoy State Quantum Key Distribution, published version, Phys. Rev. Lett. 94, 230504 (2005)"
+    url: "https://doi.org/10.1103/PhysRevLett.94.230504"
+    tier: high
+    origin: researched
+  - title: "Hwang, W.-Y. — Quantum Key Distribution with High Loss: Toward Global Secure Communication, Phys. Rev. Lett. 91, 057901 (2003)"
+    url: "https://arxiv.org/abs/quant-ph/0211153"
+    tier: high
+    origin: researched
+  - title: "Hwang, W.-Y. — Quantum Key Distribution with High Loss, published version, Phys. Rev. Lett. 91, 057901 (2003)"
+    url: "https://doi.org/10.1103/PhysRevLett.91.057901"
+    tier: high
+    origin: researched
+  - title: "Wang, X.-B. — Beating the Photon-Number-Splitting Attack in Practical Quantum Cryptography, Phys. Rev. Lett. 94, 230503 (2005)"
+    url: "https://doi.org/10.1103/PhysRevLett.94.230503"
+    tier: high
+    origin: researched
+  - title: "Bennett, C. H. & Brassard, G. — Quantum cryptography: Public key distribution and coin tossing (1984 / 2014 republication)"
+    url: "https://arxiv.org/abs/2003.06557"
+    tier: high
+    origin: researched
+  - title: "Wehner, S., Elkouss, D. & Hanson, R. — Quantum internet: A vision for the road ahead, Science 362, eaam9288 (2018)"
+    url: "https://www.science.org/doi/10.1126/science.aam9288"
+    tier: high
+    origin: researched
+  - title: "China Reaches New Milestone in Space-Based Quantum Communications — Scientific American"
+    url: "https://www.scientificamerican.com/article/china-reaches-new-milestone-in-space-based-quantum-communications/"
+    tier: med
+    origin: researched
+  - title: "Quantum Information Science: From Dream to Reality — Chinese Academy of Sciences"
+    url: "https://english.cas.cn/Special_Reports/rd/2017/202210/t20221019_321843.shtml"
+    tier: med
+    origin: researched
+  - title: "Decoy state — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Decoy_state"
+    tier: med
+    origin: researched
+  - title: "BB84 — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/BB84"
+    tier: med
+    origin: researched
+  - title: "No-cloning theorem — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/No-cloning_theorem"
+    tier: med
+    origin: researched
+  - title: "Quantum Experiments at Space Scale (Micius/QUESS) — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Quantum_Experiments_at_Space_Scale"
+    tier: med
+    origin: researched
+draft: false
+---
+
+import { RunnableCode, Chart, Annotation, StatBand, Pullquote, Math, Stepper, Quiz, ParameterPlay, DataTable, Timeline, Callout, Detail, Definition } from "../../components/mdx";
+
+An encrypted email leaves your laptop, bounces through a dozen routers, gets amplified and retransmitted a hundred times, and arrives in another hemisphere as crisp as the moment it was sent. Distance barely matters. A copper wire, a fiber strand, a repeater every so often to boost the signal back up — keep doing that and a message can cross any distance you like, at any length you like, for a linearly growing cost.
+
+Now try to do the same thing with a single photon carrying a secret that must never be copied, read, or amplified along the way — the whole premise of quantum cryptography. Send it down the best fiber-optic cable on Earth and, past a few hundred kilometers, it is simply gone. Not degraded. Not noisier. Gone, with a probability that swamps anything an engineer can budget around. Why does distance break one kind of secret and not the other? The honest answer has almost nothing to do with codebreaking, and almost everything to do with a single unglamorous number: how fast a channel loses photons per kilometer, and what kind of function that loss actually is.
+
+<StatBand client:visible caption="The same secret, the same distance, two wildly different physics."
+  stats={[
+    { value: 1200, suffix: " km", label: "SATELLITE-TO-GROUND KEY", sub: "kHz-rate, 2017, Micius", href: "https://www.nature.com/articles/nature23655" },
+    { value: 20, label: "ORDERS OF MAGNITUDE", sub: "more efficient than the same-length 0.2 dB/km fiber", group: false, href: "https://arxiv.org/abs/1707.00542" },
+    { value: 1984, label: "THE PROTOCOL", sub: "Bennett & Brassard's BB84", group: false, href: "https://arxiv.org/abs/2003.06557" }
+  ]} />
+
+This is a primer about that number, and about the two separate problems it creates for anyone trying to build a secure quantum channel across a real distance. One problem is cryptographic: a real-world quantum transmitter cannot quite produce the perfect single photons the theory assumes, and that imperfection opens an eavesdropping attack that looks, for a while, like it kills the whole idea. The other problem is purely physical: loss in a channel like fiber does not grow gently with distance, it grows exponentially, and no amount of clever engineering changes that exponent — only the medium the photon travels through can. China's Micius satellite, in August 2017, is the clean worked example of both problems solved at once: a decoy-state protocol that closes the eavesdropping attack, married to a channel — outer space — where the loss law is a different, far kinder function of distance. Understanding why that pairing works is really understanding two separate, durable ideas, and once you have them, "why does quantum communication need satellites" stops being a headline and starts being arithmetic.
+
+## The misconception that makes the whole story feel backwards
+
+Here is the wrong intuition almost everyone starts with: outer space is *further* than a fiber run across a city or a country, and further should mean *more* loss, not less. A photon crossing 1,200 kilometers of near-vacuum, bouncing off mirrors, threading a narrow beam down through churning atmosphere to a rooftop telescope, sounds like it should be harder to preserve than a photon gliding down a few hundred kilometers of glass built and tuned for exactly this job. The satellite route sounds, on its face, like the harder path. It is almost never anyone's first instinct that it could be dramatically, overwhelmingly *easier*.
+
+Before any theory, run the numbers a real fiber actually reports, and put a real satellite figure next to them.
+
+<RunnableCode client:visible caption="A real fiber-loss coefficient, run out to real distances. Then the satellite's own reported total loss at 1,200 km, right beside it."
+  code={`// Fiber loss is quoted in decibels per kilometer -- but the decibel is a LOG
+// scale. A "linear" loss rate in dB/km is therefore an EXPONENTIAL decay in
+// the actual FRACTION of photons that survive the trip.
+const alphaDbPerKm = 0.2; // Liao et al. 2017's own comparison figure for low-loss telecom fiber
+
+function fiberTransmittance(km) {
+  const lossDb = alphaDbPerKm * km;
+  return Math.pow(10, -lossDb / 10); // fraction of photons that make it through
+}
+
+for (const km of [10, 50, 100, 200, 500, 1200]) {
+  const T = fiberTransmittance(km);
+  console.log(km + " km of fiber: " + T.toExponential(2) +
+    " of photons survive (need " + (1 / T).toExponential(2) + " sent in to get ONE out)");
+}
+
+// Micius's own REPORTED total downlink loss at 1200 km: atmospheric absorption
+// and turbulence (3-8 dB) plus pointing error (<3 dB) -> at most about 11 dB,
+// MEASURED -- not a formula whose exponent grows with the total range flown.
+const satelliteLossDb = 11;
+const satelliteT = Math.pow(10, -satelliteLossDb / 10);
+console.log("1200 km satellite downlink (reported): " + satelliteT.toExponential(2) +
+  " of photons survive, at only ~" + satelliteLossDb + " dB total");
+console.log("the SAME 1200 km of fiber needs " + (1 / fiberTransmittance(1200)).toExponential(2) +
+  " photons sent in to get one out");
+return "same distance, two unrelated loss laws";`} />
+
+Run it and the asymmetry is not subtle at the satellite's own maximum range. The fiber number is not "somewhat worse" than the satellite number — it is off by <Annotation client:load term="roughly twenty orders of magnitude" note="Liao, S.-K. et al., “Satellite-to-ground quantum key distribution,” Nature 549, 43–47 (2017): the paper's own headline comparison figure, using 0.2 dB/km as its stated best-commercial-fiber baseline. Reported in both the published Nature version and the arXiv preprint." href="https://www.nature.com/articles/nature23655" />, a gap so large that comparing them in percentages stops being meaningful. That is not a rounding error and it is not an engineering failure of fiber; [0.2 decibels per kilometer](https://arxiv.org/abs/1707.00542) is, in fact, about as good as glass gets — the same figure Liao and colleagues use in [their published comparison](https://www.nature.com/articles/nature23655). It is the signature of two completely different mathematical relationships between loss and distance, and the rest of this primer is about naming those two relationships precisely, showing why a real quantum transmitter cannot dodge the cryptographic trap that comes bundled with one of them, and showing exactly how the 2017 Micius experiment closed both problems in a single, real, measured result.
+
+<Callout kind="key-insight" title="The reframe">
+The question is never "which medium travels the farthest." It is "which medium's loss law is the friendlier function of distance." Fiber's is exponential. Free space, for most of a satellite's path, is not. Once you see that, the rest of the argument falls out of arithmetic, not engineering heroics.
+</Callout>
+
+## Foundation: a secret that breaks when it is merely looked at
+
+Quantum key distribution's whole trick starts with an idea from 1984, when Charles Bennett and Gilles Brassard described what they called a communications channel "on which it is impossible in principle to eavesdrop without a high probability of disturbing the transmission in such a way as to be detected" — <Annotation client:load term="the BB84 protocol" note="Bennett, C. H. & Brassard, G., “Quantum cryptography: Public key distribution and coin tossing,” presented Dec. 10–12, 1984, Bangalore; republished Theoretical Computer Science 560 (2014)." href="https://arxiv.org/abs/2003.06557" /> now the oldest and still the reference protocol for quantum key distribution (QKD). The mechanism is almost embarrassingly simple to state. Alice encodes each bit of a future secret key onto a single <Definition client:visible term="qubit" def="a two-level quantum system — here, a single photon's polarization — that can hold a 0, a 1, or (unlike a classical bit) any quantum superposition of both, until it is measured." />, a single photon's polarization, choosing at random between two incompatible measurement "bases" — think of one basis as horizontal-vs-vertical polarization and the other as the two diagonals, rotated 45 degrees from the first. Bob receives each photon and measures it in a basis he also picks at random, with no way to know in advance which basis Alice used for that particular photon.
+
+Afterward, over an ordinary public channel that anyone can listen to, Alice and Bob announce only which *basis* they each used for every photon — never the bit itself. Wherever their bases happened to match, Bob's result is guaranteed identical to what Alice sent (barring device noise), and that subset becomes the raw key. Wherever the bases mismatched, the result is thrown away as scientifically meaningless.
+
+The security comes from what happens if someone — call her Eve — tries to intercept a photon in transit. She cannot know Alice's basis any better than Bob can, so she has to guess a measurement basis too, and if she guesses wrong she irreversibly disturbs the photon's state before resending it. Quantum mechanics does not let her have it both ways: a photon measured in the wrong basis loses the very information the right basis would have preserved, and no amount of cleverness lets her measure it in **both** bases simultaneously to hedge her bet.
+
+<Detail summary="Go deeper: why Eve cannot just copy the photon and check both bases later">
+The obvious workaround — clone the photon, keep one copy, forward the other, and measure your copy in both bases at leisure once Alice and Bob announce theirs — runs straight into the <Annotation client:load term="no-cloning theorem" note="Wootters, Zurek (1982) and Dieks (1982), independently: no physical process can produce an identical copy of an arbitrary, unknown quantum state. A universal copier would force any two distinct states to be either identical or perfectly distinguishable, which is false for generic quantum states." href="https://en.wikipedia.org/wiki/No-cloning_theorem" />. It is a theorem, not an engineering limitation: no physical process, however exotic, can take an arbitrary *unknown* quantum state and output two independent copies of it. This is precisely why quantum signals cannot use the classical trick of amplifying or repeating a signal mid-channel the way a fiber-optic internet backbone does — an amplifier is, physically, a copier, and an unknown qubit cannot be copied. Every photon that is going to reach Bob has to survive the entire trip as the *original*, not a boosted replica of it. That single fact is the reason loss is a fundamentally harder problem for a quantum channel than for a classical one, and it will resurface at the very end of this primer.
+</Detail>
+
+If Eve intercepts and resends even a modest fraction of the photons, she introduces a detectable bump in what is called the <Definition client:visible term="quantum bit error rate (QBER)" def="the fraction of same-basis bits where Alice's and Bob's values disagree — the tell-tale signature that someone has been measuring photons in transit." />: <Annotation client:load term="a naive intercept-resend attack" note="Because a wrong-basis measurement collapses the state, Bob's subsequent same-basis measurement then agrees with Alice only about 75% of the time instead of 100% — an elevated QBER that accumulates detectably across the sifted key. Wikipedia, “BB84.”" href="https://en.wikipedia.org/wiki/BB84" /> leaves roughly a quarter of Eve's guesses wrong even after basis sifting, a rate no undisturbed channel would show. Alice and Bob simply compare a random sample of their sifted key over the public channel; if the error rate is above what their hardware alone should produce, they throw the whole batch away and try again. No eavesdropping can go undetected forever, in principle. That is the promise BB84 makes, and for thirty years afterward, the entire field's hard problem was making that "in principle" survive contact with real hardware.
+
+<Pullquote cite="Bennett & Brassard, 1984 (republished 2014)" href="https://arxiv.org/abs/2003.06557" kind="quote">
+A communications channel on which it is impossible in principle to eavesdrop without a high probability of disturbing the transmission in such a way as to be detected.
+</Pullquote>
+
+## Where the theory meets a real laser, and cracks
+
+BB84's proof assumes Alice has a source that emits **exactly one photon** per pulse, on demand, every single time. Building that source — a genuine, deterministic single-photon emitter — is still, decades later, a hard experimental problem. What every real early QKD system used instead was an ordinary, heavily attenuated laser: a "weak coherent pulse," dialed down until its *average* photon count per pulse is small. Average is doing a lot of work in that sentence, because a weak coherent pulse's actual photon number on any given trigger is random, following a Poisson distribution around that average. Turn the laser down as far as you like and you can make most pulses empty and most non-empty pulses carry exactly one photon — but you cannot make **every** non-empty pulse carry exactly one. A real, non-trivial fraction of them will always carry two, three, or more.
+
+<RunnableCode client:visible caption="A realistic weak-coherent-pulse laser, and the two-photon tail Eve is waiting for."
+  code={`// A "weak coherent pulse" from an ordinary attenuated laser does NOT emit
+// exactly one photon on cue. Its photon COUNT per pulse is POISSON-distributed
+// around a chosen mean mu (the average photon number per pulse).
+function poissonProb(n, mu) {
+  let factorial = 1;
+  for (let i = 2; i <= n; i++) factorial *= i;
+  return Math.pow(mu, n) * Math.exp(-mu) / factorial;
+}
+
+const mu = 0.1; // a realistic weak-coherent-pulse mean photon number
+const pEmpty = poissonProb(0, mu);
+const pOne = poissonProb(1, mu);
+const pTwoPlus = 1 - pEmpty - pOne;
+const pAny = pOne + pTwoPlus;
+
+console.log("mean photon number mu = " + mu);
+console.log("P(pulse has 0 photons)  = " + (pEmpty * 100).toFixed(2) + "%");
+console.log("P(pulse has 1 photon)   = " + (pOne * 100).toFixed(2) + "%");
+console.log("P(pulse has 2+ photons) = " + (pTwoPlus * 100).toFixed(2) + "%   <- Eve's opening");
+console.log((100 * pTwoPlus / pAny).toFixed(1) + "% of NON-EMPTY pulses actually carry 2+ photons");
+return "the source was never really single-photon";`} />
+
+That two-photon tail is not a rounding error to an eavesdropper — it is an open door. In a <Annotation client:load term="photon-number-splitting (PNS) attack" note="Eve uses a quantum non-demolition measurement to count (without disturbing the polarization of) the photons in each pulse. On any pulse she finds two or more photons in, she siphons one off, stores it, and forwards the rest untouched. She waits until Alice and Bob publicly reveal their bases, then measures her stored photon in the now-known correct basis — with zero disturbance to the photon Bob received, and zero resulting error." href="https://en.wikipedia.org/wiki/Decoy_state" />, Eve does not gamble on a basis guess at all. She waits for a multi-photon pulse, siphons off one of the extra photons with a measurement that does not disturb the photon's polarization, and forwards the rest of the pulse untouched. Bob's photon arrives exactly as Alice sent it — no basis mismatch, no elevated QBER, nothing for Alice and Bob's security check to catch. Only afterward, once the public basis announcement tells Eve which basis to use, does she measure her stashed photon and learn the bit with certainty. Worse, at long distances the *legitimate* single-photon pulses are the ones most likely to be lost to ordinary channel loss, while a spare photon skimmed from a multi-photon pulse survives Eve's controlled beamsplitter perfectly — so the *surviving*, delivered key can end up disproportionately built from exactly the pulses Eve already has a copy of. A protocol proven secure for a perfect single-photon source turns out to be quietly, catastrophically insecure the moment you swap in the laser everyone actually had.
+
+## The fix: lie to the eavesdropper about how bright each pulse is
+
+The fix, when it arrived, did not require better hardware — it required using the *same* imperfect laser more cleverly. In 2003, Won-Young Hwang proposed what became known as the <Annotation client:load term="decoy-state method" note="Hwang, “Quantum Key Distribution with High Loss: Toward Global Secure Communication,” Phys. Rev. Lett. 91, 057901 (2003): randomly replace some signal pulses with decoy pulses of a different, publicly-revealed-after-the-fact mean photon number, and use their measured transmission rates to bound how the real signal pulses must have behaved." href="https://arxiv.org/abs/quant-ph/0211153" /> (preprint [quant-ph/0211153](https://arxiv.org/abs/quant-ph/0211153); published as [Phys. Rev. Lett. 91, 057901](https://doi.org/10.1103/PhysRevLett.91.057901)): alongside the intended "signal" pulses, Alice randomly intersperses extra pulses prepared at a **different** mean photon number — decoys — that are, from Eve's point of view in transit, completely indistinguishable from ordinary signal pulses. Only after the photons have already crossed the channel does Alice publicly reveal which pulses, in hindsight, were decoys. In 2005, <Annotation client:load term="Lo, Ma, and Chen" note="Lo, H.-K., Ma, X. & Chen, K., “Decoy State Quantum Key Distribution,” Phys. Rev. Lett. 94, 230504 (2005): the rigorous security proof for decoy-state QKD, matching or beating the best raw experimental performance then on record while using only standard weak-coherent-pulse laser hardware." href="https://arxiv.org/abs/quant-ph/0411004" /> (preprint [quant-ph/0411004](https://arxiv.org/abs/quant-ph/0411004); published as [Phys. Rev. Lett. 94, 230504](https://doi.org/10.1103/PhysRevLett.94.230504)) supplied the rigorous security proof showing decoy states give "the best of both worlds — unconditional security guaranteed by the fundamental laws of physics" while matching or beating the best raw experimental performance then on record. That same year, Xiang-Bin Wang independently published a closely related decoy-state security proof, <Annotation client:load term="“Beating the Photon-Number-Splitting Attack in Practical Quantum Cryptography”" note="Wang, X.-B., “Beating the Photon-Number-Splitting Attack in Practical Quantum Cryptography,” Phys. Rev. Lett. 94, 230503 (2005): an independent decoy-state security proof published the same year and in the same PRL issue as Lo, Ma & Chen's." href="https://doi.org/10.1103/PhysRevLett.94.230503" />, in the very same PRL issue.
+
+<Stepper client:visible mode="reveal" caption="How lying about pulse brightness closes the door Eve was using"
+  steps={[
+    { title: "1. Alice sends a mix, not a monoculture", body: "<p>Instead of every pulse aiming for the same mean photon number, Alice randomly draws each pulse's intensity from a small menu — a “signal” intensity and one or more “decoy” intensities — with no marker anywhere in the pulse itself revealing which menu item it came from.</p>" },
+    { title: "2. Eve cannot tell signal from decoy in flight", body: "<p>Her photon-number-splitting attack has to commit to a strategy — which photon-number pulses to skim, and how hard — before she knows which pulses were decoys. She is, unavoidably, applying one strategy to two statistically different populations of pulses.</p>" },
+    { title: "3. The reveal turns intensity into a measuring stick", body: "<p>After transmission, Alice announces which pulses were signal and which were decoy. Bob's <em>measured transmission rate</em> (how many photons of each declared intensity actually got through) is exactly the quantity a PNS attack necessarily distorts — because Eve treats multi-photon pulses differently from single-photon ones, and the mix of photon numbers differs between the signal and decoy intensities.</p>" },
+    { title: "4. Statistics catch what error rate alone could not", body: "<p>Alice and Bob compare the signal-pulse and decoy-pulse transmission statistics. An eavesdropping-free channel predicts a specific, calculable relationship between them; a PNS attack necessarily breaks that relationship in a detectable way, letting Alice and Bob put a rigorous statistical bound on exactly how much single-photon key material is safe to keep — closing the loophole using nothing but the same weak coherent laser they already had.</p>" }
+  ]} />
+
+Notice what decoy states do **not** do: they do not give Alice a better laser, and they do not make every pulse single-photon. What they do is convert an invisible, silent attack into one that leaves a statistical fingerprint — Eve is forced to treat two populations of pulses identically because she cannot tell them apart, and that forced sameness is precisely what breaks her strategy once Alice reveals which was which. It is a strictly cleverer use of hardware everyone already owned, which is exactly why it spread through the field so fast after 2003 rather than waiting on a new generation of single-photon sources that, in some labs, still does not fully exist.
+
+<Quiz client:visible caption="check your model of the decoy-state fix"
+  questions={[
+    { prompt: "Why can't Eve simply avoid attacking decoy pulses and only attack signal pulses?", choices: ["Decoy pulses are sent on a separate, unguarded channel", "Decoy and signal pulses are physically indistinguishable in transit — only revealed after the fact", "Decoy pulses contain no information worth stealing"], answer: 1, explain: "The entire point is that Eve cannot tell a decoy pulse from a signal pulse while it is in flight; the label only exists after Alice announces it publicly." },
+    { prompt: "What specifically does a photon-number-splitting attack exploit?", choices: ["A software bug in the key-sifting algorithm", "The fact that weak coherent pulses sometimes carry 2+ photons, not exactly 1", "A weakness in the public announcement channel itself"], answer: 1, explain: "PNS relies on the nonzero probability that a pulse carries more than one photon, letting Eve skim a spare copy without disturbing the one Bob receives." },
+    { prompt: "Do decoy states eliminate multi-photon pulses from the laser?", choices: ["Yes, they filter out all multi-photon pulses before transmission", "No — they let Alice and Bob statistically detect and bound any attack exploiting those pulses", "No, they only work with true single-photon sources"], answer: 1, explain: "The laser's Poisson statistics are unchanged. Decoy states don't remove the multi-photon tail; they make an attacker's exploitation of it statistically visible." }
+  ]} />
+
+## Now the physics problem: what loss law are you actually fighting?
+
+Decoy states solve the *cryptographic* trap. They say nothing at all about the *second*, entirely separate problem: however secure your protocol, you still need enough surviving photons at the far end to build a key at a usable rate, and that number is governed by the channel's loss law, not by any protocol cleverness. This is where the "why space" argument actually lives, and it rests on one piece of arithmetic that is easy to state and easy to underestimate.
+
+Optical engineers measure fiber loss in decibels per kilometer, and the decibel is a **logarithmic** unit: 10 dB of loss is a factor of ten in power, 20 dB is a factor of one hundred, 30 dB a factor of one thousand. A fixed number of decibels lost per kilometer, therefore, does not mean a fixed *fraction* of photons lost per kilometer — it means the same fraction *of whatever remains* is lost in every additional kilometer, which is exactly the definition of exponential decay.
+
+<Math client:visible tex="T(L) = 10^{-\alpha L / 10}"
+  label="(1)"
+  caption="The fiber transmittance law. alpha is the fiber's attenuation coefficient in dB/km (about 0.2 for the best commercial telecom fiber); L is distance in km; T is the fraction of photons that survive."
+  steps={[
+    { tex: "\\alpha", note: "a fixed physical property of the glass — roughly constant regardless of how far you've already gone" },
+    { tex: "\\alpha L", note: "total loss in decibels grows LINEARLY with distance — twice the fiber run, twice the dB lost. This is the part that looks tame." },
+    { tex: "T = 10^{-\\alpha L/10}", note: "but the transmitted FRACTION is 10 raised to a linearly-growing negative exponent — the textbook definition of exponential decay. Linear in dB is exponential in real photons." }
+  ]} />
+
+That gap between "linear in dB" and "exponential in photons" is not a quirk of notation — it is the entire reason fiber-based QKD hits a wall. Plot the total decibels lost against distance and you get an entirely unremarkable straight line, climbing at a fixed 0.2 dB for every kilometer added.
+
+<Chart client:visible mark="line" x="km" y="lossDb" height={320}
+  caption="Total fiber loss in decibels vs. distance, at 0.2 dB/km — a perfectly calm straight line. The catastrophe is hiding inside the unit: see equation (1) for why a straight line here is an exponential collapse in actual photons."
+  data={[
+    { km: 0, lossDb: 0 }, { km: 100, lossDb: 20 }, { km: 200, lossDb: 40 },
+    { km: 300, lossDb: 60 }, { km: 400, lossDb: 80 }, { km: 500, lossDb: 100 },
+    { km: 600, lossDb: 120 }, { km: 700, lossDb: 140 }, { km: 800, lossDb: 160 },
+    { km: 900, lossDb: 180 }, { km: 1000, lossDb: 200 }, { km: 1100, lossDb: 220 },
+    { km: 1200, lossDb: 240 }
+  ]} />
+
+That chart is deliberately unremarkable — it is the "innocent-looking" view every fiber spec sheet gives you. Run those same distances back through equation (1), the way the very first sandbox in this primer already did, and 240 dB of "calm, linear" loss at 1,200 km turns out to mean roughly one photon surviving out of every 10²⁴ sent — a number with no everyday analogy, because nothing in ordinary experience loses things at that rate. This is why "just build a longer wire and add more power" does not work as an answer: past a certain distance, doubling your input power (3 dB) buys you almost nothing against a loss budget measured in the hundreds of decibels, and doubling it again costs real money and heat for a channel that is already delivering vanishingly close to nothing.
+
+<ParameterPlay client:visible
+  params={[
+    { key: "alpha", label: "fiber attenuation (dB per km)", min: 0.15, max: 0.4, default: 0.2, step: 0.01 }
+  ]}
+  expr="10^(-alpha*x/10)"
+  xRange={[0, 1200]}
+  xLabel="distance (km)"
+  yLabel="fraction of photons transmitted"
+  readouts={[
+    { label: "photons you must send at 1,200 km to get ONE out", expr: "10^(alpha*1200/10)", unit: "" },
+    { label: "distance at which 99.9% of photons are already lost (30 dB)", expr: "30/alpha", unit: " km" }
+  ]}
+  caption="Slide the attenuation coefficient across the real range of commercial fiber quality. The curve always collapses to indistinguishable-from-zero well under 1,200 km — better glass moves the cliff a little further out; it never removes the cliff." />
+
+Notice what tuning alpha does and does not do. A better fiber — lower loss per kilometer — genuinely helps, and it is exactly how the current fiber-QKD distance record was set: in 2018, using ultra-low-loss fiber and superconducting single-photon detectors, <Annotation client:load term="Alberto Boaron and colleagues" note="Boaron, A. et al., “Secure Quantum Key Distribution over 421 km of Optical Fiber,” Phys. Rev. Lett. 121, 190502 (2018): a 2.5 GHz three-state time-bin decoy-state system reaching a record 421 km, with 6.5 bits/s of secret key measured at 405 km." href="https://arxiv.org/abs/1807.03222" /> distributed a secure key across a record 421 kilometers of optical fiber, reporting 6.5 bits per second of secret key specifically at 405 kilometers, near that record distance — the same two figures reported in [the published PRL paper](https://doi.org/10.1103/PhysRevLett.121.190502). That is real, hard-won engineering progress — and it is still an exponential function of distance with a slightly gentler exponent, not a different function. No realistic improvement to alpha turns equation (1) into something other than exponential decay, because the equation's shape is fixed by what a decibel *means*, not by how good your glass is.
+
+<Callout kind="note" title="Why you can't just amplify your way out of this, either">
+A classical fiber-optic internet backbone beats exponential loss with repeaters every few dozen kilometers, each one detecting the incoming signal and re-emitting a fresh, full-strength copy. That trick is unavailable here: a repeater is a copier, the signal is a single unknown qubit, and the no-cloning theorem from earlier in this primer forbids exactly that copy. Beating fiber's loss law for a genuinely quantum signal needs either a fundamentally different kind of repeater — a quantum repeater, which stores and "swaps" entanglement rather than cloning a photon, and remains a hard, largely unsolved engineering problem — or a channel whose loss law was never exponential to begin with.
+</Callout>
+
+## The other loss law: what a satellite pass actually costs
+
+The satellite carrying out this experiment was not a hypothetical. <Annotation client:load term="Micius" note="Also known by its program name QUESS (Quantum Experiments at Space Scale): launched 16 August 2016 Beijing time (15 August, 17:40 UTC) into a sun-synchronous low-Earth orbit between roughly 488 and 584 km altitude, at 97.4° inclination, carrying entangled-photon sources, single-photon detectors, and a beam-steering system built for exactly this kind of downlink." href="https://en.wikipedia.org/wiki/Quantum_Experiments_at_Space_Scale" /> is a purpose-built Chinese satellite, named for the ancient philosopher Mozi, that reached orbit in August 2016 carrying photon sources and detectors designed for one job: proving that a satellite could be the backbone of a space-ground quantum network. Within a year, its research team — led by Pan Jianwei — had completed all three of the mission's headline experiments (entanglement distribution, satellite-to-ground key distribution, and ground-to-satellite teleportation) a full year ahead of schedule, and in <Annotation client:load term="September 2017" note="Chinese Academy of Sciences retrospective: the Beijing–Shanghai fiber backbone, a terrestrial trusted-relay quantum network, entered formal operation in September 2017 and was combined with Micius to form the prototype of a hybrid space-ground wide-area quantum communication network." href="https://english.cas.cn/Special_Reports/rd/2017/202210/t20221019_321843.shtml" /> combined the satellite with a new terrestrial fiber backbone between Beijing and Shanghai to form the first prototype of a hybrid space-ground quantum network. Only weeks before that milestone, in June 2017, the same satellite had already delivered a separate result worth keeping distinct from the key-distribution headline: <Annotation client:load term="entangled photon pairs" note="Yin, J. et al., “Satellite-based entanglement distribution over 1200 kilometers,” Science 356, 1140–1144 (2017): entangled photon pairs sent via two satellite downlinks to ground stations 1,203 km apart (Delingha and Lijiang), violating a Bell inequality, at a link efficiency the paper reports as roughly 12 orders of magnitude above the same distance of best commercial fiber (0.16 dB/km) — a distinct experiment, and a distinct multiplier, from the QKD paper's own 20-orders-of-magnitude, 0.2 dB/km comparison." href="https://www.science.org/doi/10.1126/science.aan3211" /> sent via two of Micius's downlinks to ground stations 1,203 kilometers apart had already violated a Bell inequality — no secret key yet, but proof that entanglement itself could survive the trip. That 0.16 dB/km fiber baseline is Yin and colleagues' own reported comparison figure, confirmed in both [the published Science paper](https://www.science.org/doi/10.1126/science.aan3211) and [its arXiv preprint](https://arxiv.org/abs/1707.01339).
+
+Free space is that other channel, and the reason its loss law behaves so differently is almost entirely about *where* the loss happens rather than a magic exemption from physics. A photon leaving Micius travels the overwhelming majority of its path through near-total vacuum, which absorbs essentially nothing. The loss it does suffer is concentrated in two comparatively short, largely distance-*independent* slices of the journey: a narrow beam spreading slightly as it travels (diffraction), and a final plunge through the bottom ten or so kilometers of Earth's atmosphere, near the ground station, where turbulence and absorption actually live. Stretch the satellite's slant range from a near-overhead pass out toward the horizon and you add thousands of kilometers of essentially lossless vacuum in between — you are not adding thousands of kilometers' worth of *new* absorbing medium the way a longer fiber run does.
+
+[Liao and colleagues' 2017 quantum-key-distribution paper](https://www.nature.com/articles/nature23655) reports exactly this budget at the satellite's most demanding geometry — the same figure appears in [their arXiv preprint](https://arxiv.org/abs/1707.00542): at 1,200 kilometers of slant range, atmospheric absorption and turbulence cost 3 to 8 decibels, and pointing error — keeping a narrow beam locked on a moving ground telescope — costs under 3 decibels more. Add the two worst cases together and the total published loss tops out around 11 decibels, which by equation (1)'s logic is about an eighth of the light surviving — not a fantasy, a genuinely lossy link, but nowhere near the same universe as fiber's 240 decibels over the identical distance. That gap is where "roughly twenty orders of magnitude more efficient than the same-length fiber," the paper's own headline comparison figure, actually comes from.
+
+<DataTable client:load caption="Real QKD and quantum-network results, same order of magnitude in distance, wildly different physics and trust models"
+  columns={[
+    { key: "system", label: "System", type: "string" },
+    { key: "distance", label: "Distance (km)", type: "number", align: "right" },
+    { key: "rate", label: "Key rate", type: "string" },
+    { key: "year", label: "Year (published)", type: "number", align: "right" },
+    { key: "trust", label: "Trust model", type: "string" }
+  ]}
+  rows={[
+    { system: "Fiber, record decoy-state QKD (Boaron et al.)", distance: 421, rate: "6.5 bps measured at 405 km", year: 2018, trust: "direct link, no relay" },
+    { system: "Micius satellite-to-ground QKD (Liao et al.)", distance: 1200, rate: "~kHz", year: 2017, trust: "trusted satellite relay" },
+    { system: "Micius intercontinental relay, Beijing–Vienna call (Liao et al.)", distance: 7600, rate: "~kHz per satellite pass", year: 2018, trust: "trusted satellite relay" },
+    { system: "Micius entanglement-based QKD, no relay trust (Yin et al.)", distance: 1120, rate: "0.12 bps", year: 2020, trust: "no trusted relay (entanglement)" }
+  ]} />
+
+That last row is worth pausing on, because it closes a real gap in the story. The <Annotation client:load term="intercontinental relay" note="Liao, S.-K. et al., “Satellite-Relayed Intercontinental Quantum Network,” Phys. Rev. Lett. 120, 030501 (2018): decoy-state QKD between Micius and ground stations at Xinglong and Nanshan (China) plus Graz (Austria), producing a secure key between locations 7,600 km apart on Earth." href="https://arxiv.org/abs/1801.04418" /> that produced the Beijing–Vienna call worked by having Micius generate a secret key with each ground station separately and then combine them — which means the satellite itself, and whoever controls it, sees both keys and could in principle read the traffic it is relaying. Scientific American's coverage of the follow-up work put the vulnerability plainly:
+
+<Pullquote cite="Scientific American, “China Reaches New Milestone in Space-Based Quantum Communications”" href="https://www.scientificamerican.com/article/china-reaches-new-milestone-in-space-based-quantum-communications/" kind="quote">
+Micius itself was the weak point: The satellite “knew” the sequences of photons, or keys, for each location, as well as a combined key for decryption.
+</Pullquote>
+
+It is a real weak point, and it is *not* a cryptographic flaw in decoy-state QKD — it is a trust assumption bolted onto the network architecture, the space-based analog of a "trusted node" on a terrestrial relay chain. Yin and colleagues <Annotation client:load term="closed exactly that gap in 2020" note="Yin, J. et al., “Entanglement-based secure quantum cryptography over 1,120 kilometres,” Nature 582, 501–505 (2020): entangled pairs distributed via two bidirectional Micius downlinks to ground stations at Delingha and Nanshan, yielding a finite secret-key rate of 0.12 bits/s with no trusted relay required." href="https://www.nature.com/articles/s41586-020-2401-y" />, distributing entangled photon pairs from Micius to two ground stations 1,120 kilometers apart and generating a secure key directly between them via entanglement, at a finite rate of 0.12 bits per second, in a way that provably does not require trusting the satellite at all. The distance dropped from 1,200 to 1,120 kilometers and the rate fell by roughly four orders of magnitude — entanglement-based security without a trusted relay is measurably harder — but the vulnerability the 2017 architecture carried is gone.
+
+<Timeline client:load caption="From an idea about disturbance to a satellite closing the trust gap"
+  events={[
+    { date: "1984-12-10", label: "BB84 proposed", detail: "Bennett & Brassard describe a channel where eavesdropping is detectable in principle, at a conference in Bangalore." },
+    { date: "2016-08-16", label: "Micius launches", detail: "China's QUESS satellite reaches a 488-584 km sun-synchronous orbit, purpose-built for space-based quantum experiments — a decade after Hwang's 2003 decoy-state proposal and Lo, Ma & Chen's 2005 security proof had already made ground-based decoy-state QKD practical." },
+    { date: "2017-06-16", label: "1,200 km entanglement, no key yet", detail: "Yin et al. distribute entangled photon pairs to two ground stations 1,203 km apart, violating a Bell inequality via satellite downlinks." },
+    { date: "2017-08-10", label: "Satellite-to-ground QKD published", detail: "Liao et al. report kHz-rate decoy-state key distribution over up to 1,200 km, and ground-to-satellite quantum teleportation." },
+    { date: "2017-09-29", label: "The Beijing–Vienna quantum call", detail: "A 75-minute video conference, encrypted with Micius-relayed keys, becomes the first intercontinental quantum-secured call — via a trusted satellite relay." },
+    { date: "2020-06-25", label: "Trust gap closed", detail: "Yin et al. run entanglement-based QKD over 1,120 km with no need to trust the satellite itself — at a much lower, but honestly reported, key rate." }
+  ]} />
+
+## Why this forces the argument all the way to "quantum internet"
+
+Put the two halves of this primer back together and the shape of the whole field's roadmap stops looking like a matter of taste. A "quantum internet" — a network that can move genuinely quantum information, not just classical bits, between arbitrary distant nodes — inherits both problems at once. It needs a cryptographic layer robust to the fact that no real photon source, or memory, or detector is perfect (decoy states are one instance of a much larger discipline of proving security against realistic devices). And underneath that, it needs *some* channel whose loss law it can actually beat over continental distances. A 2018 review by <Annotation client:load term="Stephanie Wehner, David Elkouss, and Ronald Hanson" note="Wehner, S., Elkouss, D. & Hanson, R., “Quantum internet: A vision for the road ahead,” Science 362, eaam9288 (2018): a staged roadmap toward a global quantum internet, built around the same exponential fiber-loss constraint this primer derives, and quantum repeaters as the proposed terrestrial answer." href="https://www.science.org/doi/10.1126/science.aam9288" /> states the fiber half of that requirement about as bluntly as a peer-reviewed paper gets:
+
+<Pullquote cite="Wehner, Elkouss & Hanson, Science 362, eaam9288 (2018)" href="https://www.science.org/doi/10.1126/science.aam9288" kind="quote">
+The transmissivity of fiber optical channels scales exponentially with distance.
+</Pullquote>
+
+Their proposed terrestrial fix is the quantum repeater — a device that stores photonic quantum states in quantum memories and "swaps" entanglement between adjacent shorter hops rather than ever cloning or amplifying a signal photon — precisely because no-cloning forbids the classical alternative. It is a real research program, and as of the record-setting fiber results in this primer, still years from matching what a satellite already did in 2017.
+
+<Callout kind="key-insight" title="The synthesis">
+Every terrestrial fix for quantum communication's range problem — better fiber, a one-decoy protocol refinement, an eventual quantum repeater — is still fighting the same exponential inside equation (1). A satellite link does not fight that exponential at all; it mostly avoids it, by routing the signal through a medium where the loss is concentrated at the two ends, not spread continuously along the whole path. That is not a preference for spectacle over engineering. It is choosing the denominator you can actually win against.
+</Callout>
+
+None of this makes fiber obsolete, and it does not make trusted-relay satellite links as good as a mature entanglement-based network — the 1,120-kilometer, no-trust result above runs at a small fraction of the trusted-relay rate, for exactly the reason you would now expect: removing the trust assumption removes a shortcut, and shortcuts were doing real work. What the Micius results settle, cleanly and with real published numbers rather than a hunch, is *why* the "quantum internet" conversation keeps returning to space at all: not fashion, not national prestige, but a channel whose photon-loss law is, for most of its length, a different and far more forgiving function of distance than any wire humanity has ever built.
+
+## Where this leaves you
+
+The two ideas in this primer are independent and both necessary. First: any quantum key-distribution scheme built on a real, imperfect photon source has to defeat the photon-number-splitting attack that imperfection opens up, and decoy states do exactly that — not by improving the laser, but by making an eavesdropper's forced blindness to which pulse is which show up as a statistical fingerprint. Second, and separately: even a perfectly secure protocol still needs enough surviving photons to build a key, and that is governed by a loss law fixed by the *medium*, not the protocol — exponential for fiber, because the decibel is a logarithmic unit and loss accrues continuously along the whole path; far gentler for free space, because a satellite link concentrates its loss into two short slices at the ends and spends the rest of the distance in near-total vacuum. Micius, in August 2017, is simply the moment both ideas were demonstrated together, at kilohertz rates, across 1,200 kilometers, roughly twenty orders of magnitude ahead of what the same distance of the best fiber on Earth could return.
+
+The next time someone tells you quantum cryptography is "unbreakable," the more interesting question isn't whether an eavesdropper can crack the math — decoy states already answer that. It's whether the channel between two parties loses its signal exponentially or gently with distance, because that number, not the cleverness of the code, is what actually decides how far a quantum secret can travel at all.
