@@ -1,0 +1,17 @@
+{
+  "name": "@khazana/world-ingest",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@khazana/core": "workspace:*",
+    "@khazana/ingest": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0"
+  }
+}
