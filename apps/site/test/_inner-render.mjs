@@ -7,6 +7,7 @@ import { experimental_AstroContainer as AstroContainer } from "astro/container";
 import reactRenderer from "@astrojs/react/server.js";
 import Shell from "../src/layouts/Shell.astro";
 import AtlasShell from "../src/layouts/AtlasShell.astro";
+import CrossFaceLink from "../src/components/mdx/CrossFaceLink.astro";
 export async function renderFaces() {
   const render = async (Component, props) => {
     const container = await AstroContainer.create();
@@ -26,5 +27,16 @@ export async function renderFaces() {
       active: "browser",
       crumbs: ["browser"],
     }),
+  };
+}
+
+// Renders the inline `<CrossFaceLink>` tell (faces-cross-face-moments plan) in
+// both directions via the same Container-in-Vite-SSR-runtime harness.
+export async function renderCrossFaceLinks() {
+  const container = await AstroContainer.create();
+  const render = (props) => container.renderToString(CrossFaceLink, { props });
+  return {
+    toAtlas: await render({ destination: "atlas", href: "/atlas/reports/india" }),
+    toStudy: await render({ destination: "study", href: "/reads/some-post" }),
   };
 }

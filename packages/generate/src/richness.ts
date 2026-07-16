@@ -26,6 +26,7 @@ export const NON_ISLAND_COMPONENTS = [
   "Definition",
   "Pullquote",
   "StatBand",
+  "CrossFaceLink",
 ] as const;
 
 const NON_ISLAND_SET = new Set<string>(NON_ISLAND_COMPONENTS);

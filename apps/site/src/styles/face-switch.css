@@ -105,6 +105,56 @@
   100% { opacity: 1; }
 }
 
+/* ── Inline cross-face "tells" · the QUIET ladder (faces-cross-face-moments) ─
+   `<CrossFaceLink>` (apps/site/src/components/mdx/CrossFaceLink.astro) fires
+   these when a Read or Atlas stub page carries an inline citation across faces.
+   Deliberately NOT the bezel's full ambient-drain/edge-wash ceremony — a short
+   ~450ms atmosphere cross-fade + the same wordmark morph, nothing more. The
+   keyframes below are NEW and UNIQUE (`to-atlas-quiet-fade` /
+   `to-study-quiet-fade`), never a reuse of `to-atlas-drain` / `to-atlas-wash` /
+   `to-study-contract` / `to-study-ignite` — those are the bezel's DRAMATIC-gear
+   keyframes and must stay textually distinct so the two ladders can never be
+   accidentally merged. */
+:active-view-transition-type(to-atlas-quiet)::view-transition-old(root) {
+  animation: to-atlas-quiet-fade-out 450ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+:active-view-transition-type(to-atlas-quiet)::view-transition-new(root) {
+  animation: to-atlas-quiet-fade-in 450ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+:active-view-transition-type(to-atlas-quiet)::view-transition-old(face-mark),
+:active-view-transition-type(to-atlas-quiet)::view-transition-new(face-mark) {
+  animation: face-mark-cool 450ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes to-atlas-quiet-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes to-atlas-quiet-fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+:active-view-transition-type(to-study-quiet)::view-transition-old(root) {
+  animation: to-study-quiet-fade-out 450ms cubic-bezier(0.32, 0, 0.67, 0) both;
+}
+:active-view-transition-type(to-study-quiet)::view-transition-new(root) {
+  animation: to-study-quiet-fade-in 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+:active-view-transition-type(to-study-quiet)::view-transition-old(face-mark),
+:active-view-transition-type(to-study-quiet)::view-transition-new(face-mark) {
+  animation: face-mark-warm 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes to-study-quiet-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes to-study-quiet-fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
 /* ── The no-VT whisper fade (§4.3 middle tier, ~17% of traffic) ──────────────
    Engines without cross-document VT just navigate normally; the destination
    still SSR-stamps its correct atmosphere. face-switch.ts flags the incoming

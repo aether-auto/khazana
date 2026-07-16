@@ -1,0 +1,46 @@
+---
+// apps/site/src/components/mdx/CrossFaceLink.astro
+//
+// The INLINE cross-face "tell" (faces-cross-face-moments plan): a plain,
+// destination-colored `<a>` with the ↗ glyph, dropped into a Study Read's prose
+// (or an Atlas page's citation) that points at the OTHER face. Static Astro
+// component — no island, like Callout.astro / Figure.astro — so it needs zero
+// client JS and degrades trivially with JS off. `data-astro-reload` forces a
+// FULL cross-document navigation (not Astro's SPA ClientRouter), and the
+// `data-face-cross-type` attribute names the QUIET crossing type
+// (`to-atlas-quiet` / `to-study-quiet`) that face-switch.css's ladder keys off
+// via `:active-view-transition-type()` — a real crossing, but the short
+// atmosphere-cross-fade + wordmark-morph variant, never the bezel's full
+// ambient-drain/edge-wash ceremony.
+import "./CrossFaceLink.css";
+import { crossFaceAccentRole, resolveCrossFaceType, type CrossFaceDestination } from "../../lib/face-cross.ts";
+
+export interface CrossFaceLinkProps {
+  /** Which face this tell crosses INTO. Colors + types off THIS, never the
+   * current face — the tell is destination-colored (spec step 7). */
+  destination: CrossFaceDestination;
+  /** Root-relative destination path (NO deployment base prefix), e.g.
+   * "/atlas/reports/india" or "/reads/some-post" — the component prefixes
+   * `import.meta.env.BASE_URL` itself, same as every other internal link in the
+   * kit (ReadCard.astro, FeedCard.astro, InstrumentRail.astro, ...), so this
+   * still resolves correctly under a GitHub Pages project base path. */
+  href: string;
+}
+
+const { destination, href } = Astro.props as CrossFaceLinkProps;
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const resolvedHref = `${base}${href}`;
+const crossType = resolveCrossFaceType(destination);
+const accentRole = crossFaceAccentRole(destination);
+const label = destination === "atlas" ? "See it on the map" : "Read the full piece";
+---
+
+<a
+  href={resolvedHref}
+  class={`mdx-cross-face mdx-cross-face--${accentRole}`}
+  data-astro-reload
+  data-face-cross-type={crossType}
+>
+  <slot>{label}</slot>
+  <span class="mdx-cross-face__glyph" aria-hidden="true">&#8599;</span>
+</a>
