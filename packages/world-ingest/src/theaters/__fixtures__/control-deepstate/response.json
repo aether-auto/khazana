@@ -1,0 +1,25 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "zone": "occupied",
+        "side": "Russian-controlled territory"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [36, 47],
+              [37, 47],
+              [37, 48],
+              [36, 47]
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
