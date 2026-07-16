@@ -8,6 +8,8 @@ export * from "./control-isw.js";
 export * from "./control-resolver.js";
 export * from "./control-wikipedia.js";
 export * from "./geometry-registry.js";
+export * from "./membership.js";
+export * from "./theater-rollup.js";
 
 /** Full registry for explicit orchestration only; exporting this performs no fetches. */
 export const allControlGeometrySources: readonly ControlGeometrySource[] = [

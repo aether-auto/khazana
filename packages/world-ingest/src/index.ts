@@ -6,3 +6,4 @@ export type {
 export * from "./registry-io.js";
 export * from "./http.js";
 export * from "./theaters/index.js";
+export * from "./lanes/fast.js";

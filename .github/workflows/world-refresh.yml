@@ -1,0 +1,101 @@
+name: world-refresh
+
+# World Data Spine refresh cadence lanes. The medium lane regenerates the theater
+# active.json rollup from the hand-curated registry on every run and commits it to
+# the private world-data repo, so the Globe always reads a deterministic projection
+# of the active-status theaters. Fast/slow lanes land with their sibling tasks.
+#
+# Requires the WORLD_DATA_REPO_TOKEN secret (fine-grained PAT, Contents R/W on
+# aether-auto/khazana-world-data). Until that is provisioned the job skips cleanly
+# via the token guard rather than failing every 6h cron.
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # medium lane — every 6 hours
+    - cron: "0 */6 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: world-refresh-medium
+  cancel-in-progress: false
+
+jobs:
+  medium-lane:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Guard on world-data token
+        id: guard
+        env:
+          WD_TOKEN: ${{ secrets.WORLD_DATA_REPO_TOKEN }}
+        run: |
+          if [ -z "$WD_TOKEN" ]; then
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+            echo "WORLD_DATA_REPO_TOKEN not provisioned — skipping medium lane"
+          else
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out khazana
+        if: steps.guard.outputs.has_token == 'true'
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Check out world-data (private)
+        if: steps.guard.outputs.has_token == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: aether-auto/khazana-world-data
+          token: ${{ secrets.WORLD_DATA_REPO_TOKEN }}
+          path: .world-data
+          ref: main
+          persist-credentials: false
+
+      - name: Set up pnpm
+        if: steps.guard.outputs.has_token == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node
+        if: steps.guard.outputs.has_token == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install deps
+        if: steps.guard.outputs.has_token == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Regenerate theater active.json rollup
+        if: steps.guard.outputs.has_token == 'true'
+        run: |
+          # Absolute paths: the pnpm --filter script runs with packages/world-ingest
+          # as its cwd, so relative .world-data/... would resolve under the package.
+          pnpm --filter @khazana/world-ingest run build-active \
+            "${{ github.workspace }}/.world-data/data/world/theaters/registry.json" \
+            "${{ github.workspace }}/.world-data/data/world/theaters/active.json"
+
+      - name: Commit active.json if changed
+        if: steps.guard.outputs.has_token == 'true'
+        env:
+          WD_TOKEN: ${{ secrets.WORLD_DATA_REPO_TOKEN }}
+        run: |
+          cd .world-data
+          git add data/world/theaters/active.json
+          # --cached picks up both modifications AND first-run untracked additions.
+          if git diff --cached --quiet -- data/world/theaters/active.json; then
+            echo "active.json unchanged — nothing to commit"
+            exit 0
+          fi
+          git config user.name "khazana-bot"
+          git config user.email "bot@khazana.local"
+          git commit -m "world-refresh: regenerate theater active.json rollup"
+          # Ephemeral inline auth header: token never persisted to git config or logged.
+          AUTH="$(printf 'x-access-token:%s' "$WD_TOKEN" | base64 | tr -d '\n')"
+          git -c http.extraheader="AUTHORIZATION: basic $AUTH" push origin HEAD:main
+          echo "active.json committed and pushed"
