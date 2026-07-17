@@ -1,0 +1,297 @@
+---
+title: "111 Citations, One 1898 Case: Inside the 2026 Birthright Citizenship Ruling"
+format: dispatch
+channels:
+  - politics
+  - history
+summary: "On June 30, 2026 the Supreme Court cited United States v. Wong Kim Ark (1898) at least 111 times to reach two opposite verdicts on Trump's birthright-citizenship order — and Justice Jackson's 20-page concurrence turned the disagreement into a direct, sourced rebuke of Justice Thomas, the Court's other Black justice."
+publishedAt: 2026-07-17T09:00:00.000Z
+sources:
+  - title: "Trump v. Barbara, 609 U.S. ___ (2026), No. 25-365 — full slip opinion"
+    url: "https://www.supremecourt.gov/opinions/25pdf/25-365_4hdj.pdf"
+    tier: high
+    origin: researched
+  - title: "United States v. Wong Kim Ark, 169 U.S. 649 (1898) — full text (LII/Cornell)"
+    url: "https://www.law.cornell.edu/supremecourt/text/169/649"
+    tier: high
+    origin: researched
+  - title: "Executive Order 14160, Protecting the Meaning and Value of American Citizenship, 90 Fed. Reg. 8449"
+    url: "https://www.federalregister.gov/documents/2025/01/29/2025-02007/protecting-the-meaning-and-value-of-american-citizenship"
+    tier: high
+    origin: researched
+  - title: "Opinion of Attorney General Edward Bates on Citizenship (Nov. 29, 1862), 10 Op. Atty. Gen. 382"
+    url: "https://en.wikisource.org/wiki/Opinion_of_Attorney_General_Bates_on_Citizenship"
+    tier: high
+    origin: researched
+  - title: "Breaking down the birthright-citizenship decision — SCOTUSblog"
+    url: "https://www.scotusblog.com/2026/06/breaking-down-the-birthright-citizenship-decision/"
+    tier: med
+    origin: researched
+  - title: "Supreme Court strikes down Trump's order ending birthright citizenship — SCOTUSblog"
+    url: "https://www.scotusblog.com/2026/06/supreme-court-strikes-down-trumps-order-ending-birthright-citizenship/"
+    tier: med
+    origin: researched
+  - title: "Supreme Court upholds birthright citizenship on constitutional grounds — NPR"
+    url: "https://www.npr.org/2026/06/30/nx-s1-5839358/birthright-citizenship-decision-scotus-trump"
+    tier: med
+    origin: researched
+  - title: "Supreme Court strikes down Trump's birthright citizenship executive order in landmark decision — National Constitution Center"
+    url: "https://constitutioncenter.org/blog/supreme-court-strikes-down-trumps-birthright-citizenship-executive-order-in-landmark-decision"
+    tier: med
+    origin: researched
+  - title: "Justice Jackson scolds Trump, Clarence Thomas in ruling against claim birthright citizenship was only for 'babies of slaves' — TheGrio"
+    url: "https://thegrio.com/2026/06/30/justice-ketanji-brown-jackson-scolds-trump-clarence-thomas-birthright-citizenship/"
+    tier: med
+    origin: researched
+  - title: "Supreme Court rejects Trump limits on birthright citizenship — PBS NewsHour"
+    url: "https://www.pbs.org/newshour/politics/supreme-court-rejects-trump-limits-on-birthright-citizenship"
+    tier: med
+    origin: researched
+  - title: "US Supreme Court rules against Trump order to end birthright citizenship — Al Jazeera"
+    url: "https://www.aljazeera.com/news/2026/6/30/us-supreme-court-rules-against-trump-order-to-end-birthright-citizenship"
+    tier: med
+    origin: researched
+  - title: "Inside the Supreme Court's Birthright Citizenship Decision — Legal Aggregate, Stanford Law School"
+    url: "https://law.stanford.edu/2026/07/07/inside-the-supreme-courts-birthright-citizenship-decision/"
+    tier: med
+    origin: researched
+  - title: "Trump v. Barbara — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Trump_v._Barbara"
+    tier: med
+    origin: researched
+  - title: "Justice Jackson's birthright citizenship opinion includes Black Americans in the story of the nation's search for equality — The Conversation"
+    url: "https://theconversation.com/justice-jacksons-birthright-citizenship-opinion-includes-black-americans-in-the-story-of-the-nations-search-for-equality-286930"
+    tier: med
+    origin: curated
+  - title: "Indian Citizenship Act — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Indian_Citizenship_Act"
+    tier: med
+    origin: researched
+draft: false
+---
+
+import { Chart, DataTable, Annotation, StatBand, Pullquote, Timeline, Diagram, EventCascade, GanttStrip, Slopegraph, Callout, Detail, Definition } from "../../components/mdx";
+
+On June 30, 2026, six justices of the Supreme Court struck down Donald Trump's executive order ending birthright citizenship. Three dissented. That much made every headline. What the headlines mostly skipped is a stranger fact: both the six and the three built their arguments on the same 128-year-old case, and neither side thinks the other read it correctly. Chief Justice Roberts cited it 16 times. Justice Clarence Thomas cited it 49. Combined across all six opinions, the justices invoked *United States v. Wong Kim Ark* — a Chinese-American cook's citizenship fight decided in 1898 — at least 111 separate times, more than any other precedent in the case, including the Constitution's own ratification debates.
+
+<Chart client:load mark="bar" x="opinion" y="words" height={320}
+  caption="Length of each authored opinion in Trump v. Barbara, 609 U.S. ___ (2026). Total authored text: 61,127 words. Source: word counts computed directly from the official slip opinion (body text and footnotes, headers and pagination stripped); cross-checked against SCOTUSblog's independent estimate, which yields the same relative proportions (see Methodology)."
+  data={[
+    { opinion: "Gorsuch (dissent)", words: 877 },
+    { opinion: "Kavanaugh (concur/dissent)", words: 2801 },
+    { opinion: "Jackson (concurrence)", words: 6726 },
+    { opinion: "Roberts (majority)", words: 8434 },
+    { opinion: "Alito (dissent)", words: 12432 },
+    { opinion: "Thomas (dissent)", words: 29857 }
+  ]} />
+
+Read the bars left to right and the shape of the fight becomes visible before a word of the argument does. Chief Justice Roberts's majority opinion — the one that actually decides the case — runs 8,434 words, <Annotation client:load term="13.8% of the total" note="8,434 / 61,127 authored words = 13.8%, computed directly from the slip opinion text. SCOTUSblog's independent estimate (7,801 / 56,618) yields the identical 13.8% — the two counts diverge on absolute totals but agree exactly on relative emphasis." />. Justice Ketanji Brown Jackson's concurrence, written to join that majority in full and then pick a separate fight with Justice Thomas, is almost as long: 6,726 words. And Thomas's dissent is not really a dissent in the ordinary sense — at 29,857 words it is <Annotation client:load term="longer than the majority, Jackson's concurrence, and Kavanaugh's opinion combined" note="29,857 vs. 8,434 + 6,726 + 2,801 = 17,961. Thomas's dissent alone is 48.8% of all authored opinion text. Word counts computed directly from the slip opinion." />, nearly four times the length of the opinion it is disagreeing with. The three dissents together — Thomas, Alito, Gorsuch — run to 70.6% of everything the Court wrote. The Court decided the case in 8,434 words and spent more than six times that arguing about the decision.
+
+<StatBand client:visible caption="The shape of Trump v. Barbara, decided June 30, 2026. Sources: SCOTUS slip opinion; SCOTUSblog opinion analysis."
+  stats={[
+    { value: 6, suffix: "–3", label: "VOTE TO STRIKE THE ORDER", sub: "outcome vote", href: "https://www.supremecourt.gov/opinions/25pdf/25-365_4hdj.pdf" },
+    { value: 5, suffix: "–4", label: "VOTE ON THE 14TH AMENDMENT", sub: "constitutional question", href: "https://en.wikipedia.org/wiki/Trump_v._Barbara" },
+    { value: 111, label: "COMBINED WONG KIM ARK CITATIONS", sub: "across all six opinions, counted directly from the slip opinion", href: "https://www.supremecourt.gov/opinions/25pdf/25-365_4hdj.pdf" },
+    { value: 160, suffix: " YRS", label: "SINCE THE CIVIL RIGHTS ACT OF 1866", group: false, href: "https://www.supremecourt.gov/opinions/25pdf/25-365_4hdj.pdf" }
+  ]} />
+
+Those two vote counts are not the same number, and the gap between them is the whole story. Six justices voted to block Executive Order 14160. But only five of them — Roberts, joined by Sotomayor, Kagan, Barrett, and Jackson — agreed that the Fourteenth Amendment *requires* birthright citizenship for children of parents who are undocumented or here temporarily. The sixth vote, Justice Brett Kavanaugh's, came from a different argument entirely: he thinks the order is illegal under a 1940s citizenship statute, and said so while explicitly disagreeing with the majority's constitutional holding. Which means the real fight inside the Court was 5–4, not 6–3 — and every one of the nine justices anchored their argument, for or against, in the same nineteenth-century case.
+
+## Four exceptions, a closed set, for 128 years
+
+To understand why *Wong Kim Ark* carries that much weight, you have to know what it actually held — because the 2026 dissents and the 2026 majority describe it so differently that a reader encountering only one side would not recognize the same case.
+
+Wong Kim Ark was <Annotation client:load term="born in San Francisco in 1873" note="United States v. Wong Kim Ark, 169 U.S. 649, 652 (1898): born “at No. 751 Sacramento street, in the city and county of San Francisco,” to parents who were “subjects of the Emperor of China” and “domiciled residents of the United States.”" />, the son of Chinese immigrant parents who ran a business in the city and never held U.S. citizenship themselves — Chinese immigrants were categorically barred from naturalizing under federal law at the time. He left the country twice to visit China, in 1890 and again in 1894, and was readmitted without incident the first time. Returning from the second trip in August 1895, a customs collector refused to let him land, on the sole ground that he was not, in the government's view, a citizen. The <Definition client:visible term="jus soli" def="Latin for “right of the soil” — citizenship determined by where a person is born, as opposed to jus sanguinis (“right of blood”), where citizenship follows the parents’ nationality." /> question that had seemed settled for decades was suddenly live again, and it went to the Supreme Court.
+
+The Court, in a 6–2 opinion by Justice Horace Gray, sided with Wong Kim Ark and against the government. Its holding was built entirely on English common law, which the Court found had crossed the Atlantic intact: a child born in a sovereign's territory owed that sovereign natural allegiance, and was a citizen at birth, regardless of the parents' status — with a small, named set of exceptions. Watch how tightly the Court drew that set, because the entire 2026 argument turns on whether it can be redrawn.
+
+<Detail summary="Go deeper: the text the Court actually wrote, not the paraphrase">
+Justice Gray held that the Fourteenth Amendment was “declaratory” of “the fundamental rule of citizenship by birth” that prevailed at common law — not a new rule, but a constitutional restatement of the old one. 169 U.S. at 688. The exceptions were the same narrow set English law had always recognized: children born to foreign ambassadors or ministers, children born to “alien enemies” during a hostile military occupation, children born to parents with diplomatic immunity, and — a genuinely American addition — members of quasi-sovereign Indian tribes, who owed allegiance to their own “alien nations” rather than the United States. 169 U.S. at 675, 681–683, 693.
+</Detail>
+
+Four exceptions. Not five, not an open-ended list — four, tied to sovereign status, not to how long a parent intended to stay. Chief Justice Melville Fuller dissented, joined by Justice John Marshall Harlan (the same Harlan who a year and a half earlier had written the lone dissent in *Plessy v. Ferguson*). Fuller's argument was that the common law rule made no exception for children born during a parent's "mere temporary or accidental sojourn," and that something *should* turn on it — that citizenship should track not just birth and allegiance but domicile, a parent's settled legal home.
+
+<Pullquote cite="Chief Justice Melville Fuller, dissenting in United States v. Wong Kim Ark, 169 U.S. 649, 718 (1898)" href="https://www.law.cornell.edu/supremecourt/text/169/649" kind="document">
+[The English common law] recognized no exception in the instance of birth during the mere temporary or accidental sojourn of the parents.
+</Pullquote>
+
+Fuller meant that as a criticism of the common law rule, not an endorsement — he thought the American Fourteenth Amendment *should* have departed from England and made domicile matter. He lost, 6–2. For 128 years, that loss stood as the losing argument in American law. In 2025, it became a presidential order.
+
+## The domicile detour, from a rejected 1880s theory to a 2025 order
+
+The path from Fuller's dissent to <Annotation client:load term="Executive Order 14160" note="Executive Order 14160, “Protecting the Meaning and Value of American Citizenship,” signed Jan. 20, 2025, published Jan. 29, 2025 at 90 Fed. Reg. 8449–8450: directs agencies to deny citizenship documents to a child born in the U.S. when the mother was unlawfully present (regardless of the father's status) or lawfully but temporarily present and the father was not a citizen or lawful permanent resident, effective 30 days after signing." /> is not a straight line, and reconstructing it is where the 2026 majority opinion does its most careful work — because the government's argument was not that *Wong Kim Ark* was wrongly decided. It was that the case has been misread for over a century.
+
+<EventCascade client:visible caption="How a losing 1898 argument became a 2025 executive order — and how the 2026 Court dismantled it. Source: Trump v. Barbara slip opinion, majority Part IV, Kavanaugh opinion Part I."
+  nodes={[
+    { kind: "cause", label: "1880s: a new “domicile” theory of the Citizenship Clause appears in legal treatises",
+      detail: "Francis Wharton’s Conflict of Laws (2d ed. 1881) argues that a foreign parent must be “domiciled in the United States” before a U.S.-born child is “internationally subject to the jurisdiction” the Fourteenth Amendment requires — a reading with no textual anchor in the Amendment’s language of birth and jurisdiction." },
+    { kind: "effect", label: "1885: the State Department applies it for the first time",
+      detail: "Secretary of State Thomas Bayard denies a citizenship claim because the applicant’s parents were domiciled abroad — breaking with roughly two decades of executive practice that had treated the Citizenship Clause as “simply an affirmance of the common law,” per an 1871 State Department memo the 2026 majority quotes directly." },
+    { kind: "effect", label: "1898: Wong Kim Ark rejects the domicile theory outright",
+      detail: "The Supreme Court holds the Amendment “declaratory” of common-law jus soli, with exactly four exceptions, none of them domicile-based. The domicile argument survives only in Fuller’s two-vote dissent." },
+    { kind: "turning-point", label: "2025: the rejected theory returns as Executive Order 14160",
+      detail: "Signed January 20, 2025, the order directs federal agencies to deny citizenship documents to children born to parents who are undocumented or here on a temporary basis — reviving, 127 years later, the argument that lost 6–2 in Wong Kim Ark." },
+    { kind: "turning-point", label: "2026: the majority calls it “not the law”",
+      detail: "Roberts writes that the domicile reading “commanded only a dissent in 1898, and neither time nor circumstance has changed the fact that it is not the law.” Trump v. Barbara, slip op. at 26." }
+  ]} />
+
+The government's brief in 2026 did not ask the Court to overturn *Wong Kim Ark* — it asked the Court to read the case narrowly, as resting on the specific fact that Wong Kim Ark's own parents happened to be domiciled in San Francisco, and to treat everything the 1898 Court said about *undomiciled* parents as beside the point. Roberts rejected that reading directly: the 1898 opinion "exhaustively canvassed the text and history of the Citizenship Clause" and "at no point did the Court identify any evidence in the historical record that the ratifiers of the Fourteenth Amendment thought themselves to be imposing a domicile limitation." The four exceptions, in other words, were meant as a *closed set* — and a domicile carve-out would be a fifth exception the ratifying Congress never wrote.
+
+This is where the 111 combined citations to *Wong Kim Ark* stop being a single number and start being a genuine disagreement about what the case is *for*. Both sides treat it as the load-bearing precedent. They disagree, with equal confidence, about which half of the 1898 opinion is the holding and which half is dicta.
+
+<DataTable client:load caption="How many times each opinion in Trump v. Barbara (2026) names each of five precedent cases central to the fight — counted directly from the official slip opinion text (full and short-form case-name mentions, footnotes included). This independent count matches SCOTUSblog's published tally exactly in 22 of 30 cells; the 8 cells that differ (all undercounts in the SCOTUSblog analysis) are corrected here — see Methodology. Source: slip opinion, cross-checked against SCOTUSblog opinion analysis."
+  columns={[
+    { key: "case", label: "Precedent", type: "string" },
+    { key: "roberts", label: "Roberts (maj.)", type: "number", align: "right" },
+    { key: "jackson", label: "Jackson (conc.)", type: "number", align: "right" },
+    { key: "kavanaugh", label: "Kavanaugh", type: "number", align: "right" },
+    { key: "thomas", label: "Thomas (diss.)", type: "number", align: "right" },
+    { key: "alito", label: "Alito (diss.)", type: "number", align: "right" },
+    { key: "gorsuch", label: "Gorsuch (diss.)", type: "number", align: "right" }
+  ]}
+  rows={[
+    { case: "Wong Kim Ark (1898)", roberts: 16, jackson: 2, kavanaugh: 17, thomas: 49, alito: 24, gorsuch: 3 },
+    { case: "Lynch v. Clarke (1844)", roberts: 13, jackson: 0, kavanaugh: 0, thomas: 25, alito: 4, gorsuch: 0 },
+    { case: "Dred Scott v. Sandford (1857)", roberts: 8, jackson: 5, kavanaugh: 0, thomas: 31, alito: 1, gorsuch: 0 },
+    { case: "Elk v. Wilkins (1884)", roberts: 4, jackson: 0, kavanaugh: 1, thomas: 14, alito: 6, gorsuch: 0 },
+    { case: "Plessy v. Ferguson (1896)", roberts: 0, jackson: 3, kavanaugh: 0, thomas: 10, alito: 0, gorsuch: 1 }
+  ]} />
+
+Two things jump out of that table. First, Thomas's dissent doesn't skip the cases the majority relies on — it out-cites the majority on its own precedent, 49 references to *Wong Kim Ark* against Roberts's 16, and 25 references to the New York chancery case *Lynch v. Clarke* against Roberts's 13. Thomas is not ignoring the majority's authorities; he is trying to out-argue Roberts using Roberts's own sources, reading the same sentences toward the opposite conclusion. Second, *Dred Scott* — the case the Fourteenth Amendment was written to overrule — is invoked across four of the six opinions, not just two, but the volume tells its own story: Thomas's dissent cites it 31 times, more than the other five opinions combined (a further 14 references: 8 in Roberts's majority, 5 in Jackson's concurrence, 1 in Alito's dissent), and for a very different reason than the majority does, which is exactly the fight the next section is about.
+
+<Slopegraph client:visible beforeLabel="Cited by the side upholding birthright citizenship" afterLabel="Cited by the dissents"
+  caption="The same five precedents, weighted very differently by the two sides of the case. Combined citation counts, Roberts + Jackson + Kavanaugh vs. Thomas + Alito + Gorsuch."
+  data={[
+    { label: "Wong Kim Ark (1898)", before: 35, after: 76 },
+    { label: "Lynch v. Clarke (1844)", before: 13, after: 29 },
+    { label: "Dred Scott (1857)", before: 13, after: 32 },
+    { label: "Elk v. Wilkins (1884)", before: 5, after: 20 },
+    { label: "Plessy v. Ferguson (1896)", before: 3, after: 11 }
+  ]} />
+
+The slope tells you where the real argument is happening. Every precedent in this table skews toward the dissents, but not by the same margin. *Wong Kim Ark* itself is the closest to balanced — 35 combined references from the majority side to 76 from the dissents, a ratio of roughly one to two. *Plessy* is the most lopsided of all: three references from the majority side — all in Jackson's concurrence — against eleven from the dissents, ten of them in Thomas's dissent alone (almost entirely quoting Justice Harlan's *Plessy* dissent as authority for what the Fourteenth Amendment was written to secure, while separately citing the *Plessy* majority opinion itself as the example of the Court failing that promise) and one in Gorsuch's. And on *Elk v. Wilkins*, an 1884 case about a Native American man denied citizenship despite being born on U.S. soil, the majority engages only briefly — four mentions, mostly confined to a single footnote distinguishing it from *Wong Kim Ark* — against 14 in Thomas's dissent and 6 in Alito's, because Thomas and Alito need *Elk* to establish that birth alone has never been sufficient for citizenship under American law, and the majority's answer is that *Elk* turned on tribal sovereignty, one of the four *Wong Kim Ark* exceptions, not on domicile.
+
+## The middle position nobody expected
+
+Not every justice on the six-vote side of the outcome agrees that *Wong Kim Ark*'s four exceptions are permanently fixed. Kavanaugh, writing only for himself, rejects a premise Roberts and Thomas — despite disagreeing about nearly everything else — actually share: that the four exceptions the 1898 Court recognized are a "closed set," frozen as of 1868, with no room for Congress or the Court to recognize new ones as circumstances change.
+
+<Pullquote cite="Justice Brett Kavanaugh, concurring in the judgment and dissenting in part, Trump v. Barbara, slip op. at 5" href="https://www.supremecourt.gov/opinions/25pdf/25-365_4hdj.pdf" kind="quote">
+Considering the four exceptions as a permanently frozen or closed set as of the Fourteenth Amendment's ratification in 1868 … is inconsistent with the Court's longstanding approach to constitutional interpretation in a variety of areas.
+</Pullquote>
+
+Kavanaugh's analogy is deliberately mundane: courts apply the Fourth Amendment to car searches and the First Amendment to the internet without treating 1791 or 1868 as a hard stop on what counts as a "search" or "speech." He would let Congress recognize new statutory exceptions to birthright citizenship — provided they are "relevantly similar" to the four *Wong Kim Ark* already named — while still ruling, in this case, that Trump's executive order isn't one of them, because <Annotation client:load term="only Congress, not the president unilaterally, gets to draw a new exception" note="Kavanaugh, concurring in the judgment and dissenting in part, slip op. at 1, 10: the order “does not violate the Fourteenth Amendment” but does “contravene” 8 U.S.C. §1401(a), and “Congress could—consistent with the Fourteenth Amendment—amend §1401(a)” to add new exceptions; “Congress has not yet done so.”" />. It is a genuinely third position in a case that most coverage flattened into six-versus-three: Kavanaugh agrees with the dissenters that the four exceptions aren't necessarily forever, and agrees with the majority that this particular order still loses — just on narrower, statutory ground that leaves the door open for a future Congress, not a future president, to try again.
+
+## Feudal or emancipatory?
+
+Before Jackson ever turns to Thomas directly, Roberts's own majority opinion has to answer a historical framing argument the dissents make repeatedly: that the common-law rule of birthright citizenship is a "feudal" relic — a "medieval" holdover from an era when a child born on a lord's land owed that lord lifelong servitude in exchange for protection, a doctrine, the dissents argue, no Reconstruction Congress bent on expanding freedom would knowingly have written into a constitutional amendment.
+
+Roberts's answer inverts the framing entirely. The tie between birth and citizenship, he writes, had stopped being a "duty" imposed on subjects centuries before 1868 and become a "right" claimed by them — the foundation of what eighteenth-century Englishmen called their "ancient liberties." Colonists invoked that same birthright when they demanded the "rights of Englishmen" in the run-up to the Revolution. Abolitionists arguing against *Dred Scott* praised the identical rule not as feudal bondage but, in one contemporary's phrase, as "an ordinance of Heaven."
+
+<Pullquote cite="Chief Justice John Roberts, delivering the opinion of the Court, Trump v. Barbara, slip op. at 26" href="https://www.supremecourt.gov/opinions/25pdf/25-365_4hdj.pdf" kind="document">
+Where the dissents see feudalism, the Framers of the Fourteenth Amendment saw emancipation.
+</Pullquote>
+
+It is a small rhetorical move carrying a large amount of historical weight, and it matters for the rest of the opinion because it sets up exactly the move Jackson makes at much greater length in her own concurrence: reading the common-law rule not as an accident the framers were stuck with, but as the deliberate vehicle they chose because it was already the most sweeping form of citizenship the law recognized. Roberts closes the majority with a line that could serve as either opinion's thesis — <Annotation client:load term="“the right to have rights”" note="Roberts, delivering the opinion of the Court, slip op. at 26: “Citizenship, then and now, was the right to have rights—to freely participate in our political community.”" />, extended, he writes, to "every free-born person in this land." Jackson spends twenty pages making the same argument about the other half of the historical record the majority didn't have room for.
+
+## The 160 years between two rulings
+
+Strip away the 2026 case-specific argument and what's left is a much older fight, one the Court's own majority opinion traces back further than *Wong Kim Ark* — all the way to the doctrine that made birthright citizenship necessary to invent in the first place.
+
+<Timeline client:load caption="The Citizenship Clause's throughline, 1857–2026. Sources: SCOTUS slip opinions (1898, 2026); Wikisource (Bates opinion); Wikipedia (Indian Citizenship Act)."
+  events={[
+    { date: "1857-03-06", label: "Dred Scott v. Sandford", detail: "Chief Justice Taney holds that descendants of slaves “were not intended to be included” as citizens — blood, not soil, decides the question. 19 How. at 404." },
+    { date: "1862-11-29", label: "AG Bates's citizenship opinion", detail: "Lincoln's Attorney General writes that “every person born in the country is, at the moment of birth, prima facie a citizen … without any reference to race or color.” 10 Op. Atty. Gen. 382, 394." },
+    { date: "1866-04-09", label: "Civil Rights Act of 1866", detail: "Congress grants citizenship to “all persons born in the United States and not subject to any foreign power” — an attempt to legislate Dred Scott out of existence." },
+    { date: "1868-07-09", label: "14th Amendment ratified", detail: "The Citizenship Clause writes the Civil Rights Act's rule into the Constitution itself, out of ordinary legislative reach." },
+    { date: "1898-03-28", label: "United States v. Wong Kim Ark", detail: "The Court holds the Clause “declaratory” of common-law birthright citizenship, 6–2, rejecting a domicile requirement. Fuller and Harlan dissent." },
+    { date: "1924-06-02", label: "Indian Citizenship Act", detail: "Congress extends citizenship to Native Americans born in the U.S. by statute — closing, by legislation, the one Wong Kim Ark exception the Amendment itself did not reach." },
+    { date: "2025-01-20", label: "Executive Order 14160 signed", detail: "Directs federal agencies to deny citizenship to children born to parents unlawfully or temporarily present, reviving the domicile theory Wong Kim Ark rejected." },
+    { date: "2026-06-30", label: "Trump v. Barbara decided", detail: "6–3 to block the order; 5–4 that the 14th Amendment itself requires birthright citizenship for these children." }
+  ]} />
+
+Notice what the 2026 majority does with that timeline: it does not start its own opinion in 1898. It starts in 1857, with *Dred Scott*, because Roberts's argument is that the Citizenship Clause cannot be read apart from the decision it was written to kill. <Annotation client:load term="“What the Civil Rights Act began, the Fourteenth Amendment would finish.”" note="Trump v. Barbara, slip op. at 9 (majority opinion): “What the Civil Rights Act began, the Fourteenth Amendment would finish. Like the Act, the Fourteenth Amendment was intended to repudiate Dred Scott.”" /> Frederick Douglass, writing in the years right after *Dred Scott*, is quoted directly in the majority opinion making the same claim about birth and citizenship that Wong Kim Ark's lawyers would make forty years later and that Roberts's majority makes in 2026.
+
+<Pullquote cite="Frederick Douglass, in 2 Life and Writings of Frederick Douglass 259, quoted in Trump v. Barbara, slip op. at 7 (majority opinion)" href="https://www.supremecourt.gov/opinions/25pdf/25-365_4hdj.pdf" kind="quote">
+By birth, we are American citizens.
+</Pullquote>
+
+That is the throughline the thesis of this piece is built on: the same four words — born, soil, allegiance, jurisdiction — get fought over by Taney in 1857, Bates in 1862, Gray and Fuller in 1898, and nine justices in 2026, because the Fourteenth Amendment's text never changed and the argument about what it *meant* never fully stopped. What changed in 2026 was who was making which argument, and that is the part the case coverage mostly missed in favor of the vote count.
+
+## Two Black justices, two Americas
+
+The 2026 opinions split cleanly along the vote — six to three — but the sharpest disagreement in the case doesn't run along that line. It runs between two justices who voted the *same* way on the outcome: Ketanji Brown Jackson, who joined Roberts's majority in full and then wrote a 20-page concurrence <Annotation client:load term="almost as long as the majority itself" note="Jackson's concurrence: 6,726 words. Roberts's majority: 8,434 words. Word counts computed directly from the slip opinion." /> to argue with a dissent she didn't have to answer, and Clarence Thomas, the Court's other Black justice, whose 29,857-word dissent is the one she is answering.
+
+<Diagram client:visible caption="How the vote split — and why the constitutional question (5–4) isn't the same as the outcome vote (6–3). Source: Trump v. Barbara slip opinion."
+  nodes={[
+    { id: "eo", label: "EO 14160 (Jan 2025)", x: 0, y: 1.5, kind: "input" },
+    { id: "cert", label: "Cert before judgment (Dec 2025)", x: 1, y: 1.5, kind: "process" },
+    { id: "roberts", label: "Roberts + Sotomayor, Kagan, Barrett, Jackson: 14th Amdt. requires birthright citizenship", x: 2, y: 0, kind: "decision" },
+    { id: "kavanaugh", label: "Kavanaugh: 14th Amdt. does NOT require it, but a 1940 statute does", x: 2, y: 1, kind: "decision" },
+    { id: "thomasgorsuch", label: "Thomas + Gorsuch: neither the Amdt. nor the statute bars the order", x: 2, y: 2.2, kind: "decision" },
+    { id: "alito", label: "Alito: neither bars the order", x: 2, y: 3, kind: "decision" },
+    { id: "block", label: "Order blocked, 6–3", x: 3, y: 0.5, kind: "output" },
+    { id: "uphold", label: "Would have upheld the order", x: 3, y: 2.6, kind: "output" }
+  ]}
+  edges={[
+    { from: "eo", to: "cert", kind: "data" },
+    { from: "cert", to: "roberts", kind: "control" },
+    { from: "cert", to: "kavanaugh", kind: "control" },
+    { from: "cert", to: "thomasgorsuch", kind: "control" },
+    { from: "cert", to: "alito", kind: "control" },
+    { from: "roberts", to: "block", kind: "control" },
+    { from: "kavanaugh", to: "block", kind: "control" },
+    { from: "thomasgorsuch", to: "uphold", kind: "control" },
+    { from: "alito", to: "uphold", kind: "control" }
+  ]} />
+
+Jackson's concurrence is not aimed at Kavanaugh, whose statutory route she does not even engage. It is aimed entirely at Thomas, and the specific target is Thomas's account of *why* freed slaves got citizenship in 1868. Thomas's dissent argues that the Citizenship Clause was written for a narrow purpose — to secure citizenship for people who, in his words, had "no other homeland" and "owed no allegiance to any foreign power."
+
+<Pullquote cite="Justice Clarence Thomas, dissenting in Trump v. Barbara, slip op. at 1–2" href="https://www.supremecourt.gov/opinions/25pdf/25-365_4hdj.pdf" kind="quote">
+Blacks were entitled to citizenship because they were Americans. They had no other homeland, owed no allegiance to any foreign power, and were subject to no other authority.
+</Pullquote>
+
+From that premise, Thomas argues that citizenship at common law always required something more than birth alone — domicile, settled allegiance — and that the children of undocumented or temporary immigrants simply don't meet the standard the framers of the Fourteenth Amendment actually had in mind, because that standard was built around the freedmen's situation, not a general rule for anyone born on American soil.
+
+Jackson's response is not a disagreement about facts so much as a disagreement about what those facts add up to. She does not dispute that the Amendment's <Annotation client:load term="“pervading purpose”" note="Jackson, concurring, slip op. at 1–2, quoting Thomas's dissent at 90, both invoking the well-established formulation that the 14th Amendment was “enacted … with the one pervading purpose of securing equal citizenship for the freed slaves.”" /> was securing citizenship for freed Black Americans — she calls that "common ground." What she rejects is Thomas treating that purpose as a *ceiling* rather than a floor: that because the Amendment's motivating case was slavery, its text must be read no more broadly than slavery required.
+
+<Pullquote cite="Justice Ketanji Brown Jackson, concurring in Trump v. Barbara, slip op. at 1" href="https://www.supremecourt.gov/opinions/25pdf/25-365_4hdj.pdf" kind="quote">
+Even worse, JUSTICE THOMAS's telling elides the entire point of the Second Founding: The Reconstruction Amendments were an anticaste, antisubordination reset for the Nation, not a mere spot treatment for the dark stain of slavery.
+</Pullquote>
+
+To make that case, Jackson spends the bulk of her concurrence not on legal doctrine but on history Thomas's dissent leaves out: the free Black organizers who pushed for the Fourteenth Amendment through what she documents as <Annotation client:load term="more than 600 local and national conventions" note="Jackson, concurring, slip op. at 6–7, citing the Colored Conventions Project's convention records, coloredconventions.org/about-records/, archived at perma.cc/3ZD2-3WHS." /> held in the decades before ratification, where delegates described themselves not as a special protected class but as citizens by birth, full stop. She points to the 1866 Senate debates over the Civil Rights Act, where the bill's own sponsor, Senator Lyman Trumbull, <Annotation client:load term="volunteered that it would make citizens of “the children of Chinese and Gypsies born in this country”" note="Trump v. Barbara, slip op. at 9 (majority opinion), quoting Cong. Globe, 39th Cong., 1st Sess., at 498, 1757 (Sen. Trumbull): “[E]ven the infant child of a foreigner born in this land is a citizen” under the bill. Jackson's concurrence, slip op. at 14, separately quotes Trumbull answering “Undoubtedly” when asked whether native-born Romani children would be citizens under the same bill." /> — a debate both the majority opinion and Jackson's concurrence quote, and which Jackson uses to argue that the Reconstruction Congress knew exactly how broad the language it was writing would sweep, and wrote it that way on purpose.
+
+<Detail summary="Go deeper: the irony Jackson closes on">
+Jackson's concurrence ends by turning Thomas's own framing back on him. Thomas's dissent repeatedly invokes Dred Scott as the decision the Fourteenth Amendment was written to bury. Jackson's rejoinder: “the ultimate irony is that for all the talk about the detestable Dred Scott decision, the Government and the principal dissent propose a return to its core tenet. Their bottom line is that, for certain people, being born on American soil will not suffice to confer citizenship.” Slip op. at 20 (Jackson, J., concurring). It is the sharpest line in either opinion, and it is aimed at a colleague who cited Dred Scott 31 times to make the opposite point.
+</Detail>
+
+News coverage after the ruling repeatedly framed this as a clash between "the Court's two Black justices," and that framing is accurate as far as it goes — Jackson's concurrence explicitly notes that she and Thomas "disagree about when and how" the Fourteenth Amendment's promise has been broken, citing a list of cases from *Plessy* through 2023's affirmative-action ruling. But the more precise disagreement is methodological: both justices claim to be reading the same 1866 debates and the same ratification history. Thomas reads a narrow, purpose-bound clause; Jackson reads a universalist one that happens to have been born from a narrow purpose. Neither is accusing the other of inventing history. They are accusing each other of mis-weighing it — which is exactly the same fight Fuller and Gray had in 1898, and Taney and Curtis had in 1857.
+
+## The 526-day sprint inside the 160-year argument
+
+One more contrast is worth making explicit, because it is easy to lose inside a piece built around a century and a half of precedent: the *history* behind this case took generations to accumulate, but the *case itself* moved through the courts fast — fast enough that a sitting president attended oral argument, a first.
+
+<GanttStrip client:visible unit="day" caption="From executive order to final judgment: 526 days. Source: Trump v. Barbara slip opinion; Wikipedia procedural history."
+  tasks={[
+    { label: "EO 14160 in effect, unchallenged", start: 0, end: 171, note: "Jan 20 – Jul 10, 2025" },
+    { label: "D.N.H. nationwide injunction blocks enforcement", start: 171, end: 319, note: "Jul 10 – Dec 5, 2025 (Judge Laplante, class-wide relief)" },
+    { label: "Certiorari before judgment pending", start: 319, end: 436, note: "Dec 5, 2025 – Apr 1, 2026, skipping the circuit court entirely" },
+    { label: "Argued to decided", start: 436, end: 526, note: "Apr 1 – Jun 30, 2026, 90 days from argument to opinion" }
+  ]} />
+
+The Court reached for its rarely-used certiorari-before-judgment procedure — deciding the case without waiting for the First Circuit to rule at all — on the theory that a nationwide question about who is a citizen at birth was too urgent to leave unresolved while lower courts worked through it on the ordinary schedule. That is a genuinely unusual posture for the Court to take, and it means the fastest-moving part of this story, ironically, is the one least connected to the history the opinions spend most of their pages on.
+
+The case did not begin as an abstract dispute about 1868. It began in a New Hampshire courtroom with a named plaintiff identified in the docket only as <Annotation client:load term="“Barbara,” a Honduran citizen" note="Barbara v. Trump, No. 25-cv-00244 (D.N.H.): the representative plaintiff is described in filings as a Honduran citizen who “fears for her and her family's safety”; Judge Joseph Laplante granted a class-wide preliminary injunction on July 10, 2025, certifying a nationwide class of “born and unborn babies who would be deprived of their citizenship” under the order." /> who told the court she feared for her family's safety if the order took effect before her case could be heard. Judge Laplante's response — a nationwide class covering every child who would lose citizenship under the order, born or not yet born — is the reason this became one case instead of dozens of scattered suits, and the reason it was positioned to reach the Supreme Court in a single, fast, consolidated posture rather than fracturing across circuits with contradictory rulings.
+
+## So what
+
+Here is the part the vote count obscures: this was not really a 6–3 case, and treating it as one flattens the more useful lesson inside it. It was a case where nine justices agreed on almost nothing about method — how much weight 1880s State Department memos deserve, whether Reconstruction-era debates about Chinese and Romani children settle the question of undocumented immigrants a century and a half later, whether *Wong Kim Ark*'s four exceptions are a closed set or a starting point — and split five distinct ways as a result: a five-justice constitutional majority, a sixth vote on entirely separate statutory grounds, and three dissenting theories (Thomas joined by Gorsuch, plus Alito separately) that agree on the outcome but not, in every particular, on the reasoning.
+
+What holds the case together, and what makes it worth reading as one argument rather than six, is that every opinion is reasoning from the same four sentences: the common-law rule Gray found "declaratory" in 1898, and the Citizenship Clause it declared. Thomas's 49 citations to *Wong Kim Ark* and Roberts's 16 are not two different debates. They are one 128-year-old debate about how to read four exceptions, still unresolved enough in 2026 that it took 61,127 words and three separate dissenting theories to fight it out again. Kavanaugh's own opinion ends by noting that Congress could still legislate new exceptions to birthright citizenship if it wanted to — meaning the *constitutional* question is settled by this ruling, 5–4, but the *policy* fight Executive Order 14160 tried to win by fiat is explicitly left open to an ordinary vote in Congress, the branch that wrote the Civil Rights Act of 1866 that started all of this. The argument about who is born American has outlasted three constitutional amendments, two world wars, and every president from Andrew Johnson to Donald Trump. Nothing about June 30, 2026 suggests it is the last word — only the latest one grounded in the same 1898 case both sides still can't agree on.
+
+<Callout kind="note" title="Methodology">
+<strong>Primary sources.</strong> All direct quotations from the 2026 decision (majority, Jackson concurrence, Kavanaugh opinion, Thomas dissent) are taken from the official slip opinion, Trump v. Barbara, 609 U.S. ___ (2026), No. 25-365, published by the Supreme Court at supremecourt.gov/opinions/25pdf/25-365_4hdj.pdf and cross-checked page-by-page against the internal pagination cited in the opinions themselves (e.g., “slip op. at 26”). The 1898 case text and its four-exception holding are drawn directly from United States v. Wong Kim Ark, 169 U.S. 649 (1898), via Cornell's Legal Information Institute. Attorney General Bates's 1862 opinion is quoted from the Wikisource transcription of 10 Op. Atty. Gen. 382, which matches the excerpts the 2026 slip opinion itself quotes.
+<br /><br />
+<strong>Word counts and citation tallies.</strong> Per-opinion word counts and the case-citation matrix (Wong Kim Ark, Dred Scott, Lynch v. Clarke, Elk v. Wilkins, Plessy v. Ferguson) were computed directly from the official slip opinion text by this piece, not taken on SCOTUSblog's word alone. Word counts were derived from a full extraction of each opinion's body text and footnotes, with running headers, case captions, and page numbers stripped. Citation counts were derived from an exhaustive count of every textual mention of each case's name (full or short form — e.g., both “Wong Kim Ark” and the bare reporter cite “169 U. S.” immediately adjacent to it count as one reference; a bare reporter pin cite standing alone, without the case name nearby, also counts) in each of the six opinions. This direct count matches SCOTUSblog's independently published tally exactly in 22 of the 30 citation-matrix cells. The 8 cells that differ are corrected here against the primary text: SCOTUSblog's analysis undercounted Jackson's concurrence's references to Wong Kim Ark (the concurrence quotes the majority's Wong Kim Ark citations twice, near slip op. at 16, not zero times), Roberts's majority's references to Dred Scott (8, not 0 — the majority discusses Dred Scott at length in its own historical framing; see “Feudal or emancipatory?” above) and to Elk v. Wilkins (4, not 0, mostly in footnote 5), Thomas's dissent's references to Plessy v. Ferguson (10, not 0, mostly quoting Justice Harlan's Plessy dissent as authority), Alito's dissent's references to Lynch v. Clarke (4, not 0), to Dred Scott (1, not 0), and to Elk v. Wilkins (6, not 0), and Kavanaugh's opinion's reference to Elk v. Wilkins (1, not 0). Word counts computed this way run about 8–11% higher than SCOTUSblog's per-opinion figures across every single opinion — most likely because this count treats footnote text as part of the opinion, where SCOTUSblog's methodology may not — but the relative proportions match almost exactly (Roberts's majority is 13.8% of the total under both this count and SCOTUSblog's), so the two independently-derived counts corroborate each other on relative emphasis even where they diverge on absolute totals. Treat the exact tallies as a close, directly-sourced count of textual case-name mentions rather than a forensically exact legal-citation index (which would require a harder judgment call about what counts as a distinct “citation” versus a repeated reference within one continuous discussion).
+<br /><br />
+<strong>What this piece does not resolve.</strong> It does not adjudicate whether Thomas's or Jackson's reading of the 1866–1868 legislative history is more persuasive as constitutional theory — legal historians are divided, and both opinions cite extensive, non-overlapping primary sources (convention records on Jackson's side; State Department correspondence and international-law treatises on Thomas's) that a dispatch of this length cannot independently verify claim-by-claim. The Kavanaugh statutory question — whether Congress could legislate new exceptions to 8 U.S.C. §1401(a) — is noted as raised in his opinion but not analyzed further here, since Congress had taken no action on it as of this piece's July 2026 publication date.
+</Callout>

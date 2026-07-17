@@ -1,0 +1,281 @@
+---
+title: "The Depth Budget: How the Antikythera Mechanism Packed Seven Planets Into 25 Millimeters of Bronze"
+format: primer
+channels:
+  - science
+  - history
+summary: "A 2,000-year-old Greek gear-calculator needed seven independent, highly accurate planetary rhythms to fit inside a bronze plate barely two centimeters deep — the 2021 reconstruction that finally solved it succeeded by choosing period ratios for their shared prime factors, not just their accuracy, so one physical gear could serve two planets at once."
+publishedAt: 2026-07-17T09:00:00.000Z
+sources:
+  - title: "Freeth, T., Higgon, D., Dacanalis, A., MacDonald, L., Georgakopoulou, M. & Wojcik, A. (2021). A Model of the Cosmos in the ancient Greek Antikythera Mechanism. Scientific Reports 11, 5821."
+    url: "https://www.nature.com/articles/s41598-021-84310-w"
+    tier: high
+    origin: researched
+  - title: "Freeth, T. et al. (2006). Decoding the ancient Greek astronomical calculator known as the Antikythera Mechanism. Nature 444, 587–591."
+    url: "https://www.nature.com/articles/nature05357"
+    tier: high
+    origin: researched
+  - title: "Voulgaris, A., Mouratidis, C., Vossinakis, A. & Roumeliotis, M. (2024). Is there something missing from the Antikythera Mechanism? arXiv:2407.15858."
+    url: "https://arxiv.org/abs/2407.15858"
+    tier: high
+    origin: researched
+  - title: "Experts recreate a mechanical Cosmos for the world's first computer — UCL press release (Mar 2021)"
+    url: "https://www.ucl.ac.uk/news/2021/mar/experts-recreate-mechanical-cosmos-worlds-first-computer"
+    tier: med
+    origin: researched
+  - title: "Freeth, T. An Ancient Greek Astronomical Calculation Machine Reveals New Secrets — Scientific American (Jan 2022)"
+    url: "https://www.scientificamerican.com/article/an-ancient-greek-astronomical-calculation-machine-reveals-new-secrets/"
+    tier: med
+    origin: researched
+  - title: "McGreevy, N. Scientists May Have Discovered How the Ancient Greeks' 'First Computer' Tracked the Cosmos — Smithsonian Magazine (Mar 17, 2021)"
+    url: "https://www.smithsonianmag.com/smart-news/new-research-illuminates-how-antikythera-mechanism-first-computer-may-have-functioned-180977257/"
+    tier: med
+    origin: researched
+  - title: "The Antikythera Mechanism: an ancient Greek machine rewriting the history of technology — The Past"
+    url: "https://the-past.com/feature/the-antikythera-mechanism-an-ancient-greek-machine-rewriting-the-history-of-technology/"
+    tier: med
+    origin: researched
+  - title: "Antikythera mechanism — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Antikythera_mechanism"
+    tier: med
+    origin: researched
+  - title: "Continued fraction — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Continued_fraction"
+    tier: med
+    origin: researched
+  - title: "Gear — Wikipedia"
+    url: "https://en.wikipedia.org/wiki/Gear"
+    tier: med
+    origin: researched
+draft: false
+---
+
+import { RunnableCode, Annotation, StatBand, Pullquote, Callout, Detail, Definition, Math, DataTable, LayerStack, Quiz, Sidenote } from "../../components/mdx";
+
+Take any machine that has to turn one input shaft into several independent output rates, each one a specific, non-negotiable ratio. A car gearbox does this with five or six ratios and has the whole engine bay to work with. A wristwatch does it with three or four and has a few millimeters. Now suppose you need *seven* independent ratios, each accurate to a fraction of a percent, and the space you are allowed is not a few millimeters — it is the thickness of two stacked coins. Every ratio wants its own gears. Gears want teeth. Teeth want room. Where does the room come from?
+
+This is not a hypothetical. It is the exact problem faced — and, on the evidence, solved — by whoever built the <Annotation client:load term="Antikythera Mechanism" note="A Greek geared bronze astronomical calculator recovered from a shipwreck off the island of Antikythera; survives as 82 fragments including 30 corroded bronze gearwheels. Freeth et al. (2021), Scientific Reports 11:5821, abstract." /> more than two thousand years ago, and then re-solved, in 2021, by a team of engineers at University College London who had to reverse it out of corroded scrap. The mechanism they were reconstructing is a hand-cranked bronze box that modeled the Sun, the Moon, and all five planets known to antiquity as they moved against the zodiac. To do that convincingly it needed seven separate gear trains, each turning at its own rate, and it had to fit them into a plate of bronze you could hold between two fingers. For a century after its discovery, every serious attempt to explain how ran into the same wall: there was not enough room for the gears the astronomy demanded. This primer is about the wall, and about the number-theory trick — invisible unless you go looking for it in the arithmetic — that got around it.
+
+Sponge divers hauled the corroded lump out of a shipwreck near the island of Antikythera in [1901](https://en.wikipedia.org/wiki/Antikythera_mechanism), later dated to roughly the mid-first century BC; it sat unremarked among the wreck's other bronze and marble treasures until <Annotation client:load term="Valerios Stais" note="Greek archaeologist who, in 1902, noticed a gear embedded in the corroded lump recovered the previous year and recognized it as a mechanical device rather than a shapeless bronze fragment. Wikipedia, 'Antikythera mechanism.'" /> noticed a gear wheel embedded in it and realized what it actually was. Nobody has ever found anything else like it from antiquity — no simpler version, no cruder prototype — which is part of why reconstructing it has taken over a century.
+
+<StatBand client:visible caption="A machine the size of a shoebox, doing the geometry of a solar system."
+  stats={[
+    { value: 1901, label: "YEAR DISCOVERED", sub: "shipwreck off Antikythera, Greece", group: false, href: "https://www.nature.com/articles/s41598-021-84310-w" },
+    { value: 15.0, suffix: " mm", label: "INNER DEPTH BUDGET", sub: "Main Drive Wheel to the Strap — four gear trains", href: "https://www.nature.com/articles/s41598-021-84310-w" },
+    { value: 9.7, suffix: " mm", label: "OUTER DEPTH BUDGET", sub: "the Strap to the Circular Plate — three more", href: "https://www.nature.com/articles/s41598-021-84310-w" },
+    { value: 2021, label: "YEAR IT WAS SOLVED", sub: "120 years after the wreck was found", group: false, href: "https://www.nature.com/articles/s41598-021-84310-w" }
+  ]} />
+
+## The misconception: that accuracy is the only thing you're solving for
+
+Here is the assumption almost everyone makes when they first hear this story, and it is the assumption that stalled the field for a hundred years. The device needs to model, say, Venus's cycle against the Sun. Astronomers — Babylonian, then Greek — had already measured that cycle to remarkable precision. So the job looks purely observational: measure the sky accurately enough, then simply *build* whatever the sky says. Accuracy in, mechanism out. If a design failed, the obvious diagnosis was that someone hadn't measured carefully enough, or hadn't engraved the right number.
+
+That diagnosis is wrong, and the wreckage of the twentieth century's reconstruction attempts is the proof. Derek de Solla Price's landmark 1974 X-ray study, <Annotation client:load term="Gears from the Greeks" note="Price's 1974 monograph, the first rigorous X-ray-based study of the mechanism's gearing, established the basic understanding of its lunar functions but attempted no reconstruction of a planetary display." />, cracked the lunar side of the machine but made no attempt at the planets at all. Michael Wright built the first mechanism that actually turned and displayed all five planets, in 2002 — a genuine engineering feat — but his design used physical pointers on dials, which introduced a real optical problem: <Annotation client:load term="parallax" note="Wright's planetary pointers, mounted at different depths on concentric dials, would appear to point at different zodiac positions depending on the viewing angle — a real mechanical defect the inscriptional evidence does not describe. Freeth et al. (2021), Scientific Reports 11:5821." />, where pointers mounted at different depths visibly disagree with each other depending on your viewing angle, a flaw the mechanism's own engraved instructions never mention. Later teams — Tony Freeth working with Alexander Jones in 2012, and independently Christián Carman, Alan Thorndike, and James Evans — simplified the gearing to avoid Wright's problems, but their designs were "limited to basic periods for the planets," in the 2021 team's own words: they used the crude, rough period ratios, because the *accurate* ones would not fit. None of these designs, the 2021 paper concludes flatly, are "at all compatible with all the currently known data."
+
+The reason is not that anyone measured badly. It is that a second, entirely separate constraint was quietly vetoing the astronomy: **not every accurate ratio can be built out of gears.**
+
+<RunnableCode client:visible caption="Three candidate period ratios for Venus. Predict which ones a Bronze Age workshop could actually cut in metal, then run it."
+  code={`// A "period relation" here is a pair (synodic cycles, years): Venus makes
+// this many conjunctions with the Sun in this many years. Ancient astronomers
+// had several candidate pairs on the table for Venus:
+const candidates = {
+  "(5, 8) - the old rule of thumb":        { syn: 5,   years: 8    },
+  "(720, 1151) - the accurate Babylonian value": { syn: 720, years: 1151 },
+  "(289, 462) - the value the Mechanism actually used": { syn: 289, years: 462  },
+};
+
+function primeFactors(n) {
+  const factors = [];
+  let d = 2;
+  while (d * d <= n) {
+    while (n % d === 0) { factors.push(d); n /= d; }
+    d++;
+  }
+  if (n > 1) factors.push(n);
+  return factors;
+}
+
+// A hand-cut bronze gear needs a modest, physically buildable number of
+// teeth. The 2021 reconstruction argues the ceiling was under 100 teeth
+// per gear - so a ratio is only "mechanizable" if EVERY prime factor of
+// both numbers is smaller than that.
+const TOOTH_CEILING = 100;
+
+for (const [label, { syn, years }] of Object.entries(candidates)) {
+  const sf = primeFactors(syn);
+  const yf = primeFactors(years);
+  const worst = Math.max(...sf, ...yf);
+  const verdict = worst < TOOTH_CEILING ? "mechanizable" : "NEEDS A " + worst + "-TOOTH GEAR";
+  console.log(label);
+  console.log("  synodic " + syn + " = " + sf.join(" x "));
+  console.log("  years   " + years + " = " + yf.join(" x "));
+  console.log("  largest prime factor: " + worst + "  ->  " + verdict);
+  console.log("");
+}
+return "one of these three cannot be built, no matter how good your bronze is";`} />
+
+Run it and the wall becomes a number: 1151. It is prime — it has no factors at all besides 1 and itself — which means there is no way to build it as a chain of smaller, meshing gear stages the way you can with a composite number. There is exactly one way to gear a prime ratio directly: cut a single gear with that many teeth. A 1,151-tooth bronze gear, hand-filed with 2nd-century-BC tools, is not a real option. So the accurate Babylonian value for Venus — the one closest to the truth — was mechanically radioactive. The only ratio anyone *could* build directly, (5, 8), was known even in antiquity to be badly wrong.
+
+<Callout kind="key-insight" title="The move that breaks the wrong model">
+The bottleneck was never "how precisely can you observe the sky." It was "which of the numbers the sky gives you can survive being turned into gear teeth." Those are different questions, and for a hundred years, reconstructions kept answering only the first one.
+</Callout>
+
+## Foundation: what a period relation and a gear train actually are
+
+To see why this matters, it helps to be precise about the two objects in play. A planet's <Definition client:visible term="synodic period" def="the time between successive identical alignments of a planet relative to the Sun as seen from Earth — for example, one conjunction to the next. It is what an observer on Earth actually sees repeat." /> is what an ancient observer could actually watch happen — the planet lining up with the Sun again. Because a year and a synodic period are almost never simple multiples of one another, ancient astronomers described the relationship as a **period relation**: a pair of whole numbers, (synodic cycles, years), such that after that many years, the cycle has repeated almost exactly that many times. Babylonian astronomy had been refining these pairs for centuries by direct observation, and Greek astronomers — working from theories like <Annotation client:load term="Apollonius of Perga's" note="Apollonius (3rd–2nd century BC) developed deferent-and-epicycle models to explain planetary retrograde motion as the sum of two uniform circular motions. Freeth et al. (2021), Scientific Reports 11:5821, 'Period relations and ancient Greek theories.'" /> deferent-and-epicycle geometry — inherited and refined them further.
+
+A **gear train** is simply how you turn one of those ratios into rotating metal. Two meshing gears with `p` and `q` teeth turn at a ratio of `q:p` — spin the small one `q` times and the big one turns `p` times. Stack several such pairs end to end (a "compound train") and their ratios multiply, so you can build almost any rational number *if* you're willing to factor it into a chain of smaller stages. A <Definition client:visible term="epicyclic gear train" def="a gear train in which one or more gear axes themselves orbit around a central axis, rather than staying fixed - the design family behind car differentials, aircraft engine reduction gears, and this device's planetary mechanisms." /> mounts a whole miniature gear train on an arm that itself revolves, which is how a single mechanism can add together two different rotation rates — exactly what modeling an epicycle requires.
+
+There is a second, more mundane reason gear designers — ancient and modern — favor compact, well-chosen tooth counts over large ones, and it has nothing to do with depth. When two meshing gears share a tooth count with a common factor greater than one, the same handful of tooth pairs keep re-meeting each other on every rotation, concentrating wear on exactly those teeth; <Annotation client:load term="coprime tooth counts" note="Meshing gears whose tooth counts share no common factor spread contact evenly across every tooth over many rotations, since the same pair meets only rarely; shared-factor tooth counts concentrate wear on a repeating subset. Wikipedia, 'Gear.'" /> spread contact evenly across the whole gear face instead. A workshop hand-filing every tooth in bronze had every reason to want small, well-behaved numbers even before the question of whether a gear physically fits ever comes up.
+
+But there is a hard floor under all of it: **you cannot build a factor that doesn't exist.** If the number you need has a large prime buried in it — like 1151 — no amount of clever staging helps, because a prime number cannot be decomposed into smaller integer factors at all. The 2021 team states the resulting design rule explicitly, and it is the single most important sentence in the paper for understanding everything that follows:
+
+<Pullquote cite="Freeth, Higgon, Dacanalis, MacDonald, Georgakopoulou & Wojcik (2021), Scientific Reports 11:5821" href="https://www.nature.com/articles/s41598-021-84310-w" kind="document">
+To fit the geometry of the epicyclic system, mechanisms must have gears with &lt;100 teeth: period relations must have prime factors &lt;100.
+</Pullquote>
+
+That single inequality is the entire engineering constraint the ancient designer — and the 2021 team trying to reverse-engineer him — had to satisfy. Accuracy tells you which number the sky wants. Factorizability tells you which numbers a workshop can actually cut. For Venus, for a hundred years, no number satisfied both.
+
+## Concept 2: how you find an accurate number that also happens to factor nicely
+
+Here is where the puzzle turns from archaeology into arithmetic. If the accurate Babylonian ratio is unmechanizable and the mechanizable one is inaccurate, is there a *third* number — accurate **and** factorizable — sitting between them? Ancient Greek mathematicians had a real technique for narrowing in on exactly that kind of target, described in a dialogue of Plato and named, after its subject, the <Annotation client:load term="Parmenides Proposition" note="Named for the philosopher Parmenides of Elea (6th–5th century BC), described in a Platonic dialogue; a method for combining a rational under-estimate and over-estimate of a target ratio into an improved estimate. Freeth et al. (2021), Scientific Reports 11:5821, citing Fowler (1987), 'The Mathematics of Plato's Academy.'" />. The rule is almost embarrassingly simple:
+
+<Math client:visible tex="\frac{p}{q} < \theta < \frac{r}{s} \quad\Longrightarrow\quad \frac{p}{q} < \frac{p+r}{q+s} < \frac{r}{s}"
+  label="(1)"
+  caption="The Parmenides Proposition: add the two numerators, add the two denominators, and the result — the mediant — is a new estimate strictly between the old under- and over-estimate, and provably closer to the truth than whichever bound it replaces."
+  steps={[
+    { tex: "p/q < \\theta < r/s", note: "start from a rational under-estimate p/q and over-estimate r/s bracketing the true ratio θ" },
+    { tex: "(p+r)/(q+s)", note: "the mediant: literally add the two numerators and the two denominators together" },
+    { tex: "\\text{replace whichever bound it beats, repeat}", note: "each round tightens the bracket around θ - and, crucially, generates entirely new candidate numbers to test for factorizability" }
+  ]} />
+
+This is a genuinely ancient algorithm, not a modern import — and it is mathematically the same family of idea underlying the <Annotation client:load term="continued fraction" note="A representation of a real number as a nested sequence of fractions; its successive convergents are provably the best possible rational approximations at each level of denominator size. The mediant/Parmenides process is closely related to how continued-fraction convergents are generated. Wikipedia, 'Continued fraction.'" /> machinery that later number theory formalized for finding the *best* rational approximation to any target value. The 2021 team's insight was to run it, by hand, on the two numbers Venus already had.
+
+<RunnableCode client:visible caption="Combine the crude (5, 8) with the accurate (720, 1151) using the Parmenides rule. Predict which weighting collapses to a small number, then run it."
+  code={`function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+
+const under = { syn: 5,   years: 8    }; // crude, but definitely mechanizable
+const over  = { syn: 720, years: 1151 }; // accurate, but 1151 is prime
+
+// Weight the accurate seed by increasing whole numbers against the crude
+// one - (under + a x over) - and reduce each candidate to lowest terms.
+for (let a = 1; a <= 4; a++) {
+  const syn = under.syn + a * over.syn;
+  const years = under.years + a * over.years;
+  const g = gcd(syn, years);
+  console.log("a=" + a + ":  (" + syn + ", " + years + ")  reduces to  (" + (syn / g) + ", " + (years / g) + ")   [divided by " + g + "]");
+}
+return "one of these four reduces to exactly the number hidden in a 2016 inscription";`} />
+
+At `a = 2` the arithmetic collapses beautifully: `(5, 8) + 2 x (720, 1151) = (1445, 2310)`, and 1445 and 2310 share a common factor of 5 — divide it out and you land on **(289, 462)**. That is not a made-up demonstration number. It is, digit for digit, the period relation the 2021 team argues the Mechanism's designer actually built — and, remarkably, it is also the exact pair of numbers that turned up independently in 2016, when new X-ray CT scans of the corroded <Annotation client:load term="Front Cover Inscription" note="Engraved text on the mechanism's front cover listing the synodic cycles of each planet; largely illegible until 2016 X-ray CT scanning recovered new numerals, including 462 for Venus and 442 for Saturn. Freeth et al. (2021), Scientific Reports 11:5821, 'Discovering cycles in the Antikythera Mechanism.'" /> finally resolved two numerals nobody had been able to read before: 462 for Venus, and 442 for Saturn.
+
+<Detail summary="Go deeper: the same trick, run on Saturn">
+The 2021 paper runs an equivalent combination for Saturn, starting from different Babylonian seed ratios: `-1 x (29, 30) + 8 x (57, 59) = (427, 442)`, which checks out arithmetically (`-29 + 456 = 427`; `-30 + 472 = 442`) and can also be reached as `3 x (57, 59) + (256, 265) = (427, 442)`. Both routes land on the same pair, 427 and 442 — which is, again, exactly the number the 2016 CT scan found engraved on the mechanism's Saturn section. Two independent astronomical traditions, run through the same combinatorial rule, converging on numbers a corroded 2,000-year-old inscription had already fixed.
+</Detail>
+
+The fact that pure arithmetic on known Babylonian numbers reproduces an inscription nobody could read until an X-ray scanner recovered it is the strongest kind of evidence a reconstruction can offer: the theory predicts a specific number, and the physical artifact independently confirms it.
+
+## Concept 3: the aha — sharing a factor means sharing a gear
+
+Getting an accurate, factorizable number for Venus and Saturn was necessary, but the 2021 team argues it was not sufficient. There is a third criterion, one that only becomes visible once you look at all five planets side by side rather than one at a time — and it is the actual answer to how seven gear trains fit into 25 millimeters.
+
+<DataTable client:load caption="The period relations the 2021 reconstruction proposes for all five planets, factored. Two prime factors — 17 and 7 — recur across different planets."
+  columns={[
+    { key: "planet", label: "Planet", type: "string" },
+    { key: "syn", label: "Synodic cycles", type: "number", align: "right" },
+    { key: "years", label: "Years", type: "number", align: "right" },
+    { key: "synFactors", label: "Synodic cycles, factored", type: "string" },
+    { key: "yearFactors", label: "Years, factored", type: "string" },
+    { key: "shared", label: "Shares prime with", type: "string" }
+  ]}
+  rows={[
+    { planet: "Mercury", syn: 1513, years: 480, synFactors: "17 x 89", yearFactors: "2^5 x 3 x 5", shared: "Venus (17)" },
+    { planet: "Venus", syn: 289, years: 462, synFactors: "17^2", yearFactors: "2 x 3 x 7 x 11", shared: "Mercury (17)" },
+    { planet: "Mars", syn: 133, years: 284, synFactors: "7 x 19", yearFactors: "2^2 x 71", shared: "Jupiter, Saturn (7)" },
+    { planet: "Jupiter", syn: 315, years: 344, synFactors: "3^2 x 5 x 7", yearFactors: "2^3 x 43", shared: "Mars, Saturn (7)" },
+    { planet: "Saturn", syn: 427, years: 442, synFactors: "7 x 61", yearFactors: "2 x 13 x 17", shared: "Mars, Jupiter (7)" }
+  ]} />
+
+Look down the "synodic cycles, factored" column. Mercury's count, 1513, factors as 17 x 89. Venus's count, 289, is 17 squared. Both numbers — for two entirely different planets, moving at wildly different speeds — carry the same prime factor, 17. Independently, Saturn's 427 is 7 x 61, Mars's 133 is 7 x 19, and Jupiter's 315 contains a 7 as well. Three more planets, one more shared prime. This is not a coincidence the 2021 team stumbled on afterward — it is a criterion they argue the original designer deliberately selected for, alongside accuracy and factorizability:
+
+<Pullquote cite="Freeth, Higgon, Dacanalis, MacDonald, Georgakopoulou & Wojcik (2021), Scientific Reports 11:5821" href="https://www.nature.com/articles/s41598-021-84310-w" kind="document">
+Period relations that generate economical gear trains, using shared gears, calculating synodic cycles with shared prime factors 7 (Supplementary Discussions S3, S6).
+</Pullquote>
+
+Here is why a shared prime factor is not just a mathematical curiosity but a physical shortcut. When two gear trains both need a stage built around the number 17, that stage does not have to be built twice. It can be **one single physical gear**, positioned where both trains can reach it — cutting the total part count for two planets roughly in half. The 2021 reconstruction actually builds this. Mercury and Venus each run off one identical, shared **51-tooth gear** at the root of their trains. Separately, Mars, Jupiter, Saturn, and the mechanism's "true Sun" all draw from one identical, shared **56-tooth gear**.
+
+<DataTable client:load caption="The actual gear trains from the 2021 reconstruction. Every superior-planet train and the true Sun begin with the identical shared 56-tooth gear; both inferior-planet trains begin with the identical shared 51-tooth gear."
+  columns={[
+    { key: "planet", label: "Planet", type: "string" },
+    { key: "design", label: "Design", type: "string" },
+    { key: "shared", label: "Shared fixed gear", type: "number", align: "right" },
+    { key: "gearCount", label: "Gears in train", type: "number", align: "right" },
+    { key: "train", label: "Full gear train (tooth counts)", type: "string" }
+  ]}
+  rows={[
+    { planet: "Mercury", design: "5-gear, inferior planet", shared: 51, gearCount: 5, train: "51 - 72 - 89 - 40 - 20 (+ follower)" },
+    { planet: "Venus", design: "5-gear, inferior planet", shared: 51, gearCount: 5, train: "51 - 44 - 34 - 26 - 63 (+ follower)" },
+    { planet: "Mars", design: "7-gear, superior planet", shared: 56, gearCount: 7, train: "56 - 64 - 38 - 40 - 71 - 80 - 80" },
+    { planet: "Jupiter", design: "7-gear, superior planet", shared: 56, gearCount: 7, train: "56 - 64 - 45 - 40 - 43 - 65 - 65" },
+    { planet: "Saturn", design: "7-gear, superior planet", shared: 56, gearCount: 7, train: "56 - 52 - 61 - 40 - 68 - 86 - 86" },
+    { planet: "true Sun", design: "3-gear", shared: 56, gearCount: 3, train: "56 - 52 - 56 (+ follower)" }
+  ]} />
+
+Every single one of those tooth counts is under 100, exactly as the earlier constraint demanded. The inferior planets (Mercury, Venus — the ones that never stray far from the Sun in the sky) get compact 5-gear trains; the superior planets (Mars, Jupiter, Saturn, plus the true Sun's own correction) get 7-gear trains, because modeling their motion honestly needs a more elaborate pin-and-slot mechanism to reproduce the way their apparent speed changes across an orbit<Sidenote>The Mechanism's lunar-node display — the hypothetical "Dragon Hand" that tracked eclipse conditions — got the same treatment: the exact draconic ratio needed a huge prime denominator (223), so the team substituted a slightly less precise ratio, -5/93, whose 18.6-year period is still astronomically excellent and, crucially, buildable as a 4-gear train.</Sidenote>. And this is where the shared 51-tooth and 56-tooth gears earn their keep: instead of eleven or more separate root gears for seven mechanisms, the design needs only two, physically reused.
+
+<LayerStack client:visible
+  caption="How six planetary mechanisms and the true Sun fit inside the Mechanism's two depth budgets."
+  layers={[
+    { label: "b1 — Main Drive Wheel", note: "Turned by hand once a year; every downstream gear train takes its motion from here.", detail: "The single mechanical input to the whole Cosmos display." },
+    { label: "Mean Sun, Nodes, Venus, Mercury — 15.0 mm, nine layers", note: "Four independent gear trains threaded through nine closely-packed layers between b1 and the Strap. Mercury and Venus share one fixed 51-tooth gear here.", detail: "Freeth et al. (2021), 'Mechanisms between b1 and the strap.'" },
+    { label: "The Strap", note: "A load-bearing bronze bridge, tilted 11 degrees — exactly the angle needed to clear the epicyclic gears of Mercury and Venus.", detail: "Confirmed against physical pillar geometry in surviving Fragment A." },
+    { label: "True Sun, Mars, Jupiter, Saturn — 9.7 mm", note: "The three superior planets and the true Sun mechanism share one fixed 56-tooth gear, packed into the gap between the Strap and the Circular Plate.", detail: "Freeth et al. (2021), 'Mechanisms between the strap and the CP.'" },
+    { label: "CP — Circular Plate", note: "Carries the seven planetary output tubes and the Sun and Moon pointers that actually move across the finished dial face.", detail: "The visible face of the Cosmos display." }
+  ]} />
+
+Add it up and the 2021 team's full model comes to **69 gears**: 35 attested by surviving physical evidence in the fragments behind the Main Drive Wheel — the lunar and calendar mechanisms decoded back in 2005–2008 — and 34 newly proposed gears completing the front Cosmos display, all fitted inside those same two depth budgets, 15.0 and 9.7 millimeters.
+
+There is a second depth trick layered on top of the shared gears, and it is also the direct explanation for why Wright's 2002 pointer-based model ran into parallax in the first place. Instead of seven separate pointer arms sweeping over one shared dial — each arm needing its own clearance so it doesn't collide with the others, and each one sitting at a slightly different height above the face — the 2021 model routes every planet's output through one of nine <Annotation client:load term="nested output tubes" note="Concentric hollow tubes, one inside another, all riding the same central axis, each carrying one planet's rotation independently out to the dial face. Freeth et al. (2021), Scientific Reports 11:5821, 'Mechanisms between the strap and the CP.'" />, all sharing a single axis. A tube costs almost no extra depth to add: the next one just needs to be a fraction of a millimeter wider than the one it nests inside. A pointer, by contrast, needs real lateral and vertical clearance, and because it sits at its own height above the dial, it produces exactly the viewing-angle disagreement — parallax — that undermined Wright's design. The paper states the trade-off directly: a ring-and-tube output system "eliminates the severe parallax inherent in a pointer system" and "coincides far better with the description of the output display in the BCI" — the Back Cover Inscription, the mechanism's own engraved user manual. Depth isn't only about how many gears you can stack — it's also about how cheaply you can add one more independent output once the gears exist, and tubes are dramatically cheaper than pointers.
+
+The clearest confirmation that this wasn't guesswork sits in a single surviving part. Fragment D — an unassigned scrap of disk, gear, and plate riveted together — has a gear whose tooth count can be reliably counted directly off the bronze, because all but three of its teeth physically survive: **63 teeth**. The 2021 team's model needed a 63-tooth gear exactly here, in Venus's train, and for a specific numerical reason — 63 factors as 3² x 7, and Venus's year-count, 462, factors as 2 x 3 x 7 x 11, so 63 shares the primes 3 and 7 with the very period relation the arithmetic had already predicted. A number derived purely from reasoning about factorizability and economy landed on the identical tooth count somebody could independently count on a corroded 2,000-year-old disk.
+
+<Callout kind="key-insight" title="Physical evidence and number theory agreeing is not a coincidence">
+David Higgon, one of the paper's authors, put it directly in UCL's [press release announcing the reconstruction](https://www.ucl.ac.uk/news/2021/mar/experts-recreate-mechanical-cosmos-worlds-first-computer): "After considerable struggle, we managed to match the evidence in Fragments A and D to a mechanism for Venus, which exactly models its 462-year planetary period relation, with the 63-tooth gear playing a crucial role." The gear count wasn't chosen to fit the theory — it was counted off real bronze, and it fit anyway.
+</Callout>
+
+<Detail summary="Go deeper: two mystery parts that turned out to have exactly one job each">
+The Main Drive Wheel, b1, has four spokes, and the 2021 team argues each one serves precisely one function: mean Sun, lunar nodes, Venus, and Mercury. Two physical features on those spokes had no accepted explanation before this reconstruction. One spoke carries a small pierced bearing block whose purpose was a genuine mystery; the team's answer is that it routes a simplified "mean Sun" signal past the fixed gears blocking the center of the wheel, solving an otherwise awkward problem — the Moon-phase mechanism at the back of the device needs the Sun's position fed to it, but the ring-output hierarchy already spends a separate gear train calculating the *true* Sun as its own output, and there was no spare room to calculate the Sun's position twice. A second, more prominent bearing on another spoke turns out to be exactly what a four-gear epicyclic train for the lunar nodes needs to physically fit — in the team's words, "no other use has previously been found for this bearing." Two features nobody could explain turned out to be exactly the features a genuinely tight, fully-accounted-for depth budget would force a designer to add.
+</Detail>
+
+An <Annotation client:load term="Age of the Moon" note="A scale reading the Moon's age in days since New Moon, read off by the Moon pointer on the finished dial. Freeth et al. (2021), Scientific Reports 11:5821, 'Cosmos display.'" /> display on the finished face carries an even older echo. The 2021 team notes that it directly matches Cicero's first-century-BC description of an earlier device attributed to Archimedes — proof that whoever built the Antikythera Mechanism was working inside an established Greek tradition of geared astronomical models, not inventing the idea from nothing:
+
+<Pullquote cite="Cicero, De Re Publica, quoted in Freeth et al. (2021), Scientific Reports 11:5821" href="https://www.nature.com/articles/s41598-021-84310-w" kind="quote">
+It was actually true that the moon was always as many revolutions behind the sun on the bronze contrivance as would agree with the number of days it was behind it in the sky.
+</Pullquote>
+
+<Quiz client:visible caption="check your understanding of the shared-gear trick"
+  questions={[
+    { prompt: "Why couldn't the accurate Babylonian ratio (720, 1151) be geared directly for Venus?", choices: ["A 1,151-tooth gear would be too heavy for the frame", "1151 is a prime number, so it cannot be split into a chain of smaller meshing stages", "Bronze wasn't strong enough to hold that many teeth"], answer: 1, explain: "Any composite (non-prime) number can be built as a compound gear train of smaller factors. A prime like 1151 has no factors smaller than itself, so the only direct option is one impossibly large gear." },
+    { prompt: "What does it mean that Mercury and Venus ‘share the prime factor 17’?", choices: ["Both take 17 years to complete a cycle", "Both mechanisms' gear trains can be built starting from one identical physical 51-tooth gear", "Both planets use exactly 17 gears each"], answer: 1, explain: "A shared prime factor in the period relations means a gear built around that factor can physically serve both gear trains at once - that's the 51-tooth gear shared by Mercury and Venus." },
+    { prompt: "Beyond accuracy and factorizability, what third criterion did the 2021 team argue the ancient designer used?", choices: ["Symmetry of the dial face", "Economy - choosing numbers whose shared prime factors let gears be reused across planets", "Minimizing the total weight of bronze"], answer: 1, explain: "The paper states the criterion explicitly: period relations that generate economical gear trains, using shared gears, calculating synodic cycles with shared prime factors 7 (Supplementary Discussions S3, S6)." }
+  ]} />
+
+## An honest complication: this is a best-fit model, not a certainty
+
+None of this should be read as "solved, case closed." The 2021 authors are unusually direct about the limits of what corroded, incomplete bronze can prove. Tony Freeth, the paper's lead author, said as much when describing the work the following year:
+
+<Pullquote cite="Tony Freeth, Scientific American (2022)" href="https://www.scientificamerican.com/article/an-ancient-greek-astronomical-calculation-machine-reveals-new-secrets/" kind="quote">
+The UCL Antikythera Research Team is not certain that our reconstruction is entirely correct because of the huge loss of evidence.
+</Pullquote>
+
+Co-author Adam Wojcik singled out the specific part of the design he trusts least: the concentric, nested hollow tubes the model needs at its core to carry seven independent outputs to the dial face, which would have demanded lathe-like precision a Hellenistic workshop may or may not have had. <Annotation client:load term="&ldquo;my faith in Greek tech falters&rdquo;" note="Adam Wojcik, quoted in Smithsonian Magazine (McGreevy, Mar 2021): the concentric tubes at the core of the planetarium are where his faith in the plausibility of the reconstruction is most tested." />
+
+<Detail summary="Go deeper: a live scholarly disagreement about what the front of the Mechanism even was">
+Not every specialist accepts that the front of the Mechanism displayed all five planets at all. A 2024 paper by Aristeidis Voulgaris and colleagues argues that two indicator dials are missing from every existing reconstruction, including the 2021 model, and proposes instead that the Mechanism was fundamentally a luni-solar calendar calculator rather than a planetarium — a genuinely different reading of what the device was for, not just how its gears were arranged. This is the normal state of a field working from 82 fragments and a third of the original object: the 2021 team's model is the reconstruction that currently fits the most physical and inscriptional evidence at once, not a recovered original.
+</Detail>
+
+Read that way, the honest claim of the 2021 paper is narrower and more interesting than "we solved the Antikythera Mechanism." It is: *given the physical constraints the surviving bronze actually imposes, here is a design that satisfies all of them simultaneously, and no earlier design does.* The prime-factor trick doesn't prove the ancient designer thought about it as number theory in the modern sense — it proves that whatever numbers the designer chose, they behave, mathematically, exactly as if someone had gone looking for shared factors on purpose. Given how precisely those numbers also predicted a corroded gear's tooth count before anyone could see it, that seems like a very deliberate accident to have made twice.
+
+## Where this leaves you
+
+Strip away the bronze and the Greek and what's left is a general design principle that shows up anywhere a fixed piece of hardware has to serve several exact, unrelated ratios at once: the moment two of your targets happen to share a common factor, that factor is a shared part waiting to be found, and hunting for it — via the same combine-and-reduce arithmetic the Parmenides Proposition describes, which modern number theory generalized into continued fractions and best-rational-approximation theory — can be the difference between a design that fits your space budget and one that provably cannot. It is a mechanical-engineering problem that turns out to be a number-theory problem in disguise, and the fact that it was solved once already, in bronze, by hand, twenty-one centuries before anyone had a word for "prime factorization," is the part worth sitting with. The next time a design brief hands you several ratios and a tight enclosure, the Antikythera question is the right one to ask first: which of these numbers secretly agree with each other, and what could you build once instead of twice?
