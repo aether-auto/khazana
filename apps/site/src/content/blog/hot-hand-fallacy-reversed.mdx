@@ -1,0 +1,336 @@
+---
+title: "The Hot Hand Fallacy: Undone by a Biased Coin Flip"
+format: primer
+channels:
+  - ds-sports
+  - data-science
+summary: "For 33 years the proof that the hot hand in basketball is a cognitive illusion rested on one estimator — until Miller and Sanjurjo (2018) showed that same estimator is mathematically guaranteed to undercount streaks in any finite sequence, and correcting it reverses the verdict entirely."
+publishedAt: 2026-07-17T09:00:00.000Z
+sources:
+  - title: "Miller, J.B. & Sanjurjo, A. (2018). \"Surprised by the Hot Hand Fallacy? A Truth in the Law of Small Numbers.\" Econometrica, 86(6), 2019–2047."
+    url: "https://arxiv.org/abs/1902.01265"
+    tier: high
+    origin: researched
+  - title: "Gilovich, T., Vallone, R., & Tversky, A. (1985). \"The Hot Hand in Basketball: On the Misperception of Random Sequences.\" Cognitive Psychology, 17(3), 295–314."
+    url: "https://doi.org/10.1016/0010-0285(85)90010-6"
+    tier: high
+    origin: researched
+  - title: "Simonsohn, U. (2020). \"The Hot-Hand Artifact for Dummies & Behavioral Scientists.\" Data Colada #88."
+    url: "https://datacolada.org/88"
+    tier: med
+    origin: researched
+  - title: "\"Hot hand\" — Wikipedia."
+    url: "https://en.wikipedia.org/wiki/Hot_hand"
+    tier: med
+    origin: researched
+  - title: "\"Hot-hand fallacy\" — Wikipedia."
+    url: "https://en.wikipedia.org/wiki/Hot-hand_fallacy"
+    tier: med
+    origin: researched
+draft: false
+---
+
+import { StatBand, RunnableCode, DataTable, Math, Chart, Quiz, Pullquote, Callout, Stepper, Annotation, Detail } from "../../components/mdx";
+
+Flip a fair coin one hundred times. Every time you see a heads, write down the result of the very next flip. When you finish, what fraction of the flips you wrote down should be heads?
+
+Every instinct says one half. The coin has no memory — each flip is an independent fifty-fifty event, so the flip after a heads is exactly as likely to be heads as the flip after a tails, or the flip after nothing at all. That instinct is one of the most reliable things a person can know about probability. It is also wrong, in a way that is not a trick, not a rounding error, and not about a weighted coin. For *any* finite sequence of independent coin flips, the expected proportion of heads on the flips that immediately follow a heads is strictly less than one half. The gap is small at first glance and, in the exact setting a landmark 1985 psychology study used, large enough to flip the study's conclusion on its head.
+
+<StatBand client:visible caption="A 33-year scientific consensus, undone by a single structural fact about finite sequences."
+  stats={[
+    { value: 1985, label: "ORIGINAL VERDICT", sub: "Gilovich, Vallone & Tversky", group: false, href: "https://doi.org/10.1016/0010-0285(85)90010-6" },
+    { value: 33, label: "YEARS THE CONSENSUS HELD", group: false },
+    { value: 13, prefix: "+", suffix: "PP", label: "HOT HAND EFFECT, CORRECTED", sub: "vs +3pp originally measured", href: "https://arxiv.org/abs/1902.01265" }
+  ]} />
+
+This is the story of the <Annotation client:load term="hot hand" note="The claim that a player's probability of hitting a shot is higher after recent hits than after recent misses — 'momentum' in athletic performance." /> in basketball: the most cited proof in behavioral science that people see patterns where none exist, and the 2018 Econometrica paper that found a silent bug in the arithmetic itself — a bug you can reproduce by hand with three coin flips. No new shooting data was collected to overturn the original conclusion. Nobody re-ran the experiment. The entire reversal came from re-deriving what the *original numbers* should have looked like all along.
+
+## The misconception that made the original study possible
+
+Here is the assumption everyone brings to this problem, including the researchers who built their careers proving people wrong about it: if a process really is memoryless — a fair coin, or a "streaky" belief about a player who is in fact a fixed, consistent shooter — then isolating the outcomes that happen to follow a streak and averaging them should recover the *same* underlying probability as the process as a whole. Nothing about conditioning on the past should move the average, because the past has no causal grip on the future. It feels less like an assumption and more like the *definition* of independence.
+
+That feeling is precisely what a 2018 paper by economists Joshua Miller and Adam Sanjurjo set out to dismantle. They open with a researcher they call Jack, who takes a coin from his pocket and flips it a hundred times, writing down the outcome of every flip that comes right after a heads<Annotation client:load term="Jack the researcher" note="Miller & Sanjurjo's own illustrative device, opening their 2018 Econometrica paper: a researcher flips a fair coin 100 times and records only the flips that immediately follow a heads." />. Jack expects the proportion of heads on his written-down list to land at one half. For a fair coin, Miller and Sanjurjo prove, Jack is wrong — the expected proportion is *smaller*. Don't take that on faith. Run it.
+
+<RunnableCode client:visible caption="Jack's experiment, run thousands of times. Predict the average before you hit run — then try k = 1 to see the effect shrink."
+  code={`function flip() { return Math.random() < 0.5 ? 1 : 0; } // 1 = heads
+
+// Jack's rule: flip n times, but only WRITE DOWN a flip if it comes
+// right after a run of k consecutive heads.
+function jackExperiment(n, k) {
+  const seq = [];
+  for (let i = 0; i < n; i++) seq.push(flip());
+  let run = 0, eligible = 0, headsWritten = 0;
+  for (let i = 0; i < n; i++) {
+    if (run >= k) {
+      eligible++;
+      if (seq[i] === 1) headsWritten++;
+    }
+    run = seq[i] === 1 ? run + 1 : 0;
+  }
+  return eligible > 0 ? headsWritten / eligible : null;
+}
+
+const n = 100;
+const k = 3;   // <-- edit me: try k = 1, then k = 3, then k = 5
+const TRIALS = 4000;
+
+let sum = 0, count = 0;
+for (let t = 0; t < TRIALS; t++) {
+  const p = jackExperiment(n, k);
+  if (p !== null) { sum += p; count++; }
+}
+
+console.log("Jack flips a FAIR coin " + n + " times, over " + TRIALS + " separate runs.");
+console.log("Each time, he only writes down flips right after a streak of " + k + " heads.");
+console.log("Average proportion of heads on his written-down list: " + (sum / count).toFixed(4));
+console.log("A memoryless coin 'should' give exactly 0.5000.");
+return "k=" + k + ", " + count + " valid runs, avg = " + (sum / count).toFixed(4);`} />
+
+At `k = 3` the simulation should settle around 0.45–0.47 — a coin with zero memory, behaving as though it has a slight grudge against itself. Drop `k` down to 1 and the effect nearly vanishes into the noise; the deficit is still there, just smaller. Nothing about the coin changed. What changed is the *rule you used to decide which flips to look at.*
+
+<Callout kind="key-insight" title="The bug is in the selection rule, not the coin">
+Conditioning on "the flip right after a streak" in one *finite* sequence is a different act than asking "what is the coin's true probability." The first is a question about a fixed, exhaustible resource — a hundred flips, no more — and Miller and Sanjurjo's whole paper is about what happens when you ration a fixed resource this way.
+</Callout>
+
+## The exact case you can count on your fingers
+
+Trust builds fastest from a case small enough to check completely, so shrink Jack's experiment from a hundred flips to three. There are exactly eight possible outcomes of three fair coin flips, each equally likely, and for six of the eight there is at least one flip that comes right after a heads.
+
+<Stepper client:visible mode="reveal" caption="Why three flips already show the bias"
+  steps={[
+    { title: "The rule", body: "<p>Look at every flip that comes immediately after a heads. Record whether it is itself a heads. If a sequence has no such flip &mdash; the coin never showed a heads with another flip left to follow it &mdash; it contributes nothing.</p>" },
+    { title: "Two sequences drop out", body: "<p>TTT has no heads at all. TTH has a heads, but it is the very last flip &mdash; nothing follows it to record. Both are excluded from the average, leaving six equally likely sequences.</p>" },
+    { title: "The six survivors disagree", body: "<p>THT, HTT, and HTH each record a single miss (proportion 0). THH and HHH each record every recorded flip as a hit (proportion 1). HHT records one hit and one miss (proportion 1/2).</p>" },
+    { title: "Average the six proportions equally", body: "<p>(0 + 0 + 0 + 1 + 1 + 1/2) / 6 = 5/12 &asymp; 0.417 &mdash; not 1/2. Every sequence is equally likely, so every sequence's proportion counts equally, regardless of how many flips it happened to contribute.</p>" }
+  ]} />
+
+<DataTable client:load caption="All eight three-flip sequences and the proportion of heads on flips that follow a heads. (Reproduces Miller & Sanjurjo 2018, Table 1.)"
+  columns={[
+    { key: "seq", label: "Sequence", type: "string" },
+    { key: "prop", label: "Proportion of heads on flips after a heads", type: "string" }
+  ]}
+  rows={[
+    { seq: "TTT", prop: "— (no heads at all)" },
+    { seq: "TTH", prop: "— (heads is the last flip)" },
+    { seq: "THT", prop: "0" },
+    { seq: "HTT", prop: "0" },
+    { seq: "THH", prop: "1" },
+    { seq: "HTH", prop: "0" },
+    { seq: "HHT", prop: "1/2" },
+    { seq: "HHH", prop: "1" }
+  ]} />
+
+Verify it yourself rather than trust the table:
+
+<RunnableCode client:visible caption="Exhaustive, exact enumeration of all 8 three-flip sequences — no randomness, no sampling."
+  code={`function proportionAfterHeads(seq) {
+  let heads = 0, eligible = 0;
+  for (let i = 1; i < seq.length; i++) {
+    if (seq[i - 1] === 1) {           // previous flip was heads
+      eligible++;
+      if (seq[i] === 1) heads++;
+    }
+  }
+  return eligible > 0 ? heads / eligible : null;
+}
+
+const all = [];
+for (let a = 0; a <= 1; a++)
+  for (let b = 0; b <= 1; b++)
+    for (let c = 0; c <= 1; c++)
+      all.push([a, b, c]);
+
+let sum = 0, count = 0;
+for (const seq of all) {
+  const label = seq.map(function (x) { return x === 1 ? "H" : "T"; }).join("");
+  const p = proportionAfterHeads(seq);
+  if (p === null) {
+    console.log(label + ":  (no eligible flip)");
+  } else {
+    console.log(label + ":  " + p.toFixed(3));
+    sum += p; count++;
+  }
+}
+console.log("Expectation over the " + count + " sequences with an eligible flip: " + (sum / count).toFixed(4) + " (= 5/12)");
+return sum / count;`} />
+
+Notice what actually did the damage. Every one of the eight sequences was equally likely — that part was never in question. What broke the symmetry is that sequences get **one vote each in the average, no matter how many eligible flips they contributed.** `HHH` contributed two eligible flips (both heads) and gets one vote. `THT` contributed one eligible flip (a miss) and *also* gets one vote. A sequence that ends its streak in a miss is, structurally, cheaper to produce than one that keeps extending it — and because votes are counted per sequence rather than per flip, the cheaper, streak-ending, low-scoring sequences end up overrepresented in the average<Annotation client:load term="equal weight per sequence" note="Miller & Sanjurjo, footnote 5: the conditional expectation weights each sequence's proportion equally, independent of how many eligible flips that sequence happened to contain. Weighting by the number of recorded flips instead — pooling many sequences from the same coin — produces a smaller bias that vanishes as more sequences accumulate." />.
+
+## The general rule, and why it bites harder the longer the streak
+
+Miller and Sanjurjo do not stop at n = 3. They prove the result for *any* finite sequence, any success probability, and any streak length.
+
+<Math client:visible tex="\mathbb{E}\!\left[\hat P_k(X) \;\middle|\; I_k(X) \neq \varnothing\right] \;<\; p"
+  label="(1)"
+  numbered
+  caption="Theorem 1 (Miller & Sanjurjo, 2018): for any finite i.i.d. sequence of Bernoulli trials with success probability p, the naive proportion of successes on trials immediately following a streak of k successes is a biased estimator of p, strictly below p, for every valid k from 1 to n − 2."
+  steps={[
+    { tex: "\\hat P_k(X) = \\frac{1}{|I_k(X)|}\\sum_{i \\in I_k(X)} X_i", note: "the naive estimator: the fraction of heads among exactly the trials that immediately follow a run of k heads" },
+    { tex: "P(X_t = 1 \\mid \\tau = t) \\;\\propto\\; P(\\tau = t \\mid X_t = 1) \\times p", note: "Bayes' rule on which trial gets drawn into the average — the likelihood ratio is where the bias hides" },
+    { tex: "P(\\tau = t \\mid X_t = 0) \\;>\\; P(\\tau = t \\mid X_t = 1) \\quad \\text{for } t < n", note: "a miss right after the streak also excludes the next k trials from ever qualifying, shrinking the pool — so this trial gets drawn from more often when it is a miss" }
+  ]} />
+
+The proof's own intuition, stated plainly: when the flip right after a streak happens to be a *miss*, that miss also breaks the streak, which means the next k trials can never again qualify as "right after a streak of k." A run-ending miss shrinks the pool of future eligible trials. A run-continuing hit does not. That asymmetry is small at any one trial, but the theorem shows it never washes out — it only shrinks, slowly, as the sequence gets longer, and it gets *worse* the longer the streak length k you condition on.
+
+<Detail summary="Go deeper: the bias splits into two separate effects">
+Miller and Sanjurjo show the downward bias decomposes into two distinct factors. The first is an ordinary <Annotation client:load term="sampling-without-replacement" note="A finite sequence has a fixed, exhaustible number of successes to draw on — once used, they cannot recur, the same structural effect behind finite-sample bias in autoregressive coefficient estimation (the 'Hurwicz bias')." /> effect: a finite sequence has only so many successes to go around, and using some of them to build a streak leaves fewer available elsewhere. The second, stronger factor is what they call streak overlap — the same run of successes can be counted as the tail end of more than one streak-length window, and that overlapping structure amplifies the first effect. The combined bias is closely related to a known finite-sample bias in autocorrelation and autoregressive-coefficient estimators, and — in the k = 1 case — to Berkson's paradox, the classic statistical trap where conditioning on a joint event distorts an apparent relationship between two otherwise independent variables.
+</Detail>
+
+Try it yourself across sequence lengths and streak lengths — this brute-forces every possible sequence exactly, no sampling noise:
+
+<RunnableCode client:visible caption="Exact check across ALL 2^n sequences. Keep n under ~20 (it is genuinely exhaustive, not sampled)."
+  code={`function biasCheck(n, k) {
+  const total = Math.pow(2, n);
+  let sumProp = 0, count = 0;
+  for (let mask = 0; mask < total; mask++) {
+    const seq = [];
+    for (let i = 0; i < n; i++) seq.push((mask >> i) & 1);
+    let run = 0, eligible = 0, heads = 0;
+    for (let i = 0; i < n; i++) {
+      if (run >= k) { eligible++; if (seq[i] === 1) heads++; }
+      run = seq[i] === 1 ? run + 1 : 0;
+    }
+    if (eligible > 0) { sumProp += heads / eligible; count++; }
+  }
+  return sumProp / count;
+}
+
+const n = 14;  // <-- edit me: keep n <= 20 for speed (2^20 is already a million)
+const k = 3;   // <-- edit me: try k = 1, 2, 3, 5
+
+console.log("Checking all " + Math.pow(2, n) + " possible sequences of " + n + " flips...");
+console.log("Expected proportion of heads after a streak of " + k + ": " + biasCheck(n, k).toFixed(4));
+console.log("A memoryless coin 'should' give exactly 0.5000, every single time.");
+return biasCheck(n, k);`} />
+
+<Chart client:visible mark="line" x="n" y="phat" series="k" height={360}
+  caption="Exact expected value of the naive estimator vs. sequence length n, for a true coin with p = 0.5 (own exact computation via dynamic programming over the full sequence distribution — not simulated). The bias shrinks as n grows, but grows sharply with streak length k, matching the shape of Miller & Sanjurjo's Theorem 1 / Figure 1 (Econometrica 86(6))."
+  data={[
+    { n: 3, phat: 0.417, k: "k = 1" }, { n: 4, phat: 0.405, k: "k = 1" }, { n: 5, phat: 0.408, k: "k = 1" }, { n: 6, phat: 0.416, k: "k = 1" }, { n: 8, phat: 0.433, k: "k = 1" }, { n: 10, phat: 0.445, k: "k = 1" }, { n: 12, phat: 0.455, k: "k = 1" }, { n: 15, phat: 0.464, k: "k = 1" }, { n: 20, phat: 0.474, k: "k = 1" }, { n: 25, phat: 0.479, k: "k = 1" }, { n: 30, phat: 0.483, k: "k = 1" }, { n: 40, phat: 0.487, k: "k = 1" }, { n: 50, phat: 0.490, k: "k = 1" }, { n: 60, phat: 0.492, k: "k = 1" }, { n: 80, phat: 0.494, k: "k = 1" }, { n: 100, phat: 0.495, k: "k = 1" },
+    { n: 3, phat: 0.500, k: "k = 2" }, { n: 4, phat: 0.417, k: "k = 2" }, { n: 5, phat: 0.385, k: "k = 2" }, { n: 6, phat: 0.375, k: "k = 2" }, { n: 8, phat: 0.370, k: "k = 2" }, { n: 10, phat: 0.375, k: "k = 2" }, { n: 12, phat: 0.383, k: "k = 2" }, { n: 15, phat: 0.395, k: "k = 2" }, { n: 20, phat: 0.415, k: "k = 2" }, { n: 25, phat: 0.431, k: "k = 2" }, { n: 30, phat: 0.443, k: "k = 2" }, { n: 40, phat: 0.458, k: "k = 2" }, { n: 50, phat: 0.467, k: "k = 2" }, { n: 60, phat: 0.473, k: "k = 2" }, { n: 80, phat: 0.480, k: "k = 2" }, { n: 100, phat: 0.484, k: "k = 2" },
+    { n: 4, phat: 0.500, k: "k = 3" }, { n: 5, phat: 0.417, k: "k = 3" }, { n: 6, phat: 0.385, k: "k = 3" }, { n: 8, phat: 0.360, k: "k = 3" }, { n: 10, phat: 0.353, k: "k = 3" }, { n: 12, phat: 0.351, k: "k = 3" }, { n: 15, phat: 0.353, k: "k = 3" }, { n: 20, phat: 0.361, k: "k = 3" }, { n: 25, phat: 0.372, k: "k = 3" }, { n: 30, phat: 0.382, k: "k = 3" }, { n: 40, phat: 0.402, k: "k = 3" }, { n: 50, phat: 0.418, k: "k = 3" }, { n: 60, phat: 0.431, k: "k = 3" }, { n: 80, phat: 0.449, k: "k = 3" }, { n: 100, phat: 0.460, k: "k = 3" },
+    { n: 3, phat: 0.5, k: "true p (no bias)" }, { n: 100, phat: 0.5, k: "true p (no bias)" }
+  ]} />
+
+Read the k = 3 curve carefully, because it is the one that matters later: at n = 100 — exactly the sample size the original basketball study used per player — a perfectly consistent 50% shooter's own streak-of-three statistic sits around 0.46, not 0.50. That four-point gap is not noise. It is the theorem, instantiated at the exact sample size a famous study built its entire argument on.
+
+Miller and Sanjurjo make the stakes viscerally concrete with a wager. Imagine a $5 lottery ticket built on four coin flips: record a flip only if it follows a heads; if the recorded proportion of heads comes out above one half, the ticket pays $10; below one half, it pays nothing; exactly one half, or no eligible flip at all, and you reflip. Naive intuition says a fair game like this must have an expected value of $5 — heads and tails are symmetric, so the payoffs should be too.
+
+<Pullquote cite="Miller & Sanjurjo (2018), p. 5, footnote 13" href="https://arxiv.org/abs/1902.01265" kind="document">
+A simple example is to sell the following lottery ticket for $5. A fair coin will be flipped 4 times… While, intuitively, it seems that the expected value of the lottery must be $5, it is instead $4.
+</Pullquote>
+
+<RunnableCode client:visible caption="Simulate the $5 lottery ticket, thousands of times. Watch the expected payout land near $4, not $5."
+  code={`function fourFlipLottery() {
+  const seq = [];
+  for (let i = 0; i < 4; i++) seq.push(Math.random() < 0.5 ? 1 : 0);
+  let heads = 0, eligible = 0;
+  for (let i = 1; i < 4; i++) {
+    if (seq[i - 1] === 1) {
+      eligible++;
+      if (seq[i] === 1) heads++;
+    }
+  }
+  if (eligible === 0) return null;           // reflip
+  const prop = heads / eligible;
+  if (prop > 0.5) return 10;
+  if (prop < 0.5) return 0;
+  return null;                                // exact tie -> reflip
+}
+
+const TRIALS = 200000;
+let total = 0, count = 0;
+for (let t = 0; t < TRIALS; t++) {
+  const payout = fourFlipLottery();
+  if (payout !== null) { total += payout; count++; }
+}
+console.log("Ticket price: $5. Naive intuition: expected payout should also be $5.");
+console.log("Simulated expected payout over " + count + " resolved draws: $" + (total / count).toFixed(2));
+return "$" + (total / count).toFixed(2);`} />
+
+A ticket that looks actuarially fair is quietly rigged against the buyer by nothing more than how the payout is defined — the same mechanism, wearing a casino's clothes. Now aim it at the question that made this paper matter.
+
+## The reversal: what this does to the actual basketball data
+
+In 1985, Thomas Gilovich, Robert Vallone, and Amos Tversky published <Annotation client:load term="the hot hand in basketball" note="Gilovich, Vallone & Tversky (1985), Cognitive Psychology 17(3), 295–314 — the canonical study in the hot hand fallacy literature." />, testing the near-universal belief among players, coaches, and fans that a shooter who has just made several shots is more likely to make the next one. They analyzed three datasets: field-goal sequences from nine Philadelphia 76ers across 48 home games, free-throw sequences from nine Boston Celtics, and — their central, most-cited evidence — a controlled experiment with 26 Cornell University varsity players (14 men, 12 women), each taking 100 shots from a distance calibrated so a typical player would make around half of them, changing position between every shot to strip out any shot-selection or defensive advantage a real game would offer<Annotation client:load term="Cornell controlled shooting experiment" note="26 Cornell varsity players, 100 shots each, from a distance set so each player would make roughly 50% — designed by GVT specifically to eliminate shot-selection and defensive-pressure confounds present in real-game data." />.
+
+Their headline test compared each player's shooting percentage right after a streak of three hits against right after a streak of three misses.
+
+<Pullquote cite="Gilovich, Vallone & Tversky (1985), pp. 312–313, as quoted in Miller & Sanjurjo (2018)" href="https://doi.org/10.1016/0010-0285(85)90010-6" kind="quote">
+Basketball shooting is analogous to coin tossing, "adequately described by a simple binomial model," and belief in the hot hand is "erroneous" — "a powerful and widely shared cognitive illusion."
+</Pullquote>
+
+Averaged across the Cornell players, the hit rate right after three hits was 49%; right after three misses, 45% — a raw gap of three percentage points, and a paired t-test found that gap statistically indistinguishable from zero (p = .49). No hot hand. The finding became one of psychology's most durable results, cited for decades — including in Daniel Kahneman's *Thinking, Fast and Slow* and Richard Thaler and Cass Sunstein's *Nudge* — as a textbook case of a "massive and widespread cognitive illusion."
+
+Here is the entire, real dataset Gilovich, Vallone, and Tversky collected, as Miller and Sanjurjo reproduce it directly from the original study — this is not a stylized example, it is the shots those 26 players actually took.
+
+<DataTable client:load caption="The Cornell controlled shooting experiment, all 25 players with at least one qualifying streak (Miller & Sanjurjo 2018, Table 2, reproducing GVT 1985, Table 4). One female player took 0 hit-streak-of-3 shots and is excluded."
+  columns={[
+    { key: "player", label: "Player", type: "string" },
+    { key: "shots", label: "Shots", type: "number", align: "right" },
+    { key: "phit", label: "P(hit) overall %", type: "number", align: "right" },
+    { key: "phit3", label: "P(hit | 3 hits) %", type: "number", align: "right" },
+    { key: "pmiss3", label: "P(hit | 3 misses) %", type: "number", align: "right" },
+    { key: "raw", label: "Raw diff (pp)", type: "number", align: "right" },
+    { key: "adj", label: "Bias-adjusted diff (pp)", type: "number", align: "right" }
+  ]}
+  rows={[
+    { player: "M1", shots: 100, phit: 54, phit3: 50, pmiss3: 44, raw: 6, adj: 14 },
+    { player: "M2", shots: 100, phit: 35, phit3: 0, pmiss3: 43, raw: -43, adj: -33 },
+    { player: "M3", shots: 100, phit: 60, phit3: 60, pmiss3: 67, raw: -7, adj: 2 },
+    { player: "M4", shots: 90, phit: 40, phit3: 33, pmiss3: 47, raw: -13, adj: -3 },
+    { player: "M5", shots: 100, phit: 42, phit3: 33, pmiss3: 75, raw: -42, adj: -33 },
+    { player: "M6", shots: 100, phit: 57, phit3: 65, pmiss3: 25, raw: 40, adj: 48 },
+    { player: "M7", shots: 75, phit: 56, phit3: 65, pmiss3: 29, raw: 36, adj: 47 },
+    { player: "M8", shots: 50, phit: 50, phit3: 57, pmiss3: 50, raw: 7, adj: 24 },
+    { player: "M9", shots: 100, phit: 54, phit3: 83, pmiss3: 35, raw: 48, adj: 56 },
+    { player: "M10", shots: 100, phit: 60, phit3: 57, pmiss3: 57, raw: 0, adj: 9 },
+    { player: "M11", shots: 100, phit: 58, phit3: 62, pmiss3: 57, raw: 5, adj: 14 },
+    { player: "M12", shots: 100, phit: 44, phit3: 43, pmiss3: 41, raw: 2, adj: 10 },
+    { player: "M13", shots: 100, phit: 61, phit3: 50, pmiss3: 40, raw: 10, adj: 19 },
+    { player: "M14", shots: 100, phit: 59, phit3: 60, pmiss3: 50, raw: 10, adj: 19 },
+    { player: "F1", shots: 100, phit: 48, phit3: 33, pmiss3: 67, raw: -33, adj: -25 },
+    { player: "F2", shots: 100, phit: 34, phit3: 40, pmiss3: 43, raw: -3, adj: 7 },
+    { player: "F3", shots: 100, phit: 39, phit3: 50, pmiss3: 36, raw: 14, adj: 23 },
+    { player: "F4", shots: 100, phit: 32, phit3: 33, pmiss3: 27, raw: 7, adj: 17 },
+    { player: "F5", shots: 100, phit: 36, phit3: 20, pmiss3: 22, raw: -2, adj: 8 },
+    { player: "F6", shots: 100, phit: 46, phit3: 29, pmiss3: 54, raw: -26, adj: -18 },
+    { player: "F7", shots: 100, phit: 41, phit3: 62, pmiss3: 32, raw: 30, adj: 39 },
+    { player: "F8", shots: 100, phit: 53, phit3: 73, pmiss3: 67, raw: 7, adj: 15 },
+    { player: "F9", shots: 100, phit: 45, phit3: 50, pmiss3: 46, raw: 4, adj: 12 },
+    { player: "F10", shots: 100, phit: 46, phit3: 71, pmiss3: 32, raw: 40, adj: 48 },
+    { player: "F11", shots: 100, phit: 53, phit3: 39, pmiss3: 50, raw: -12, adj: -4 }
+  ]} />
+
+The average across all 25 players: 47% overall shooting, 49% after three hits, 45% after three misses — a raw gap of +3 percentage points, exactly the number that produced GVT's null result. Now apply the correction. GVT's headline statistic is not the single-sided proportion charted above but the *difference* between two of them: hit rate after three hits, minus hit rate after three misses. Conditioning on a streak of *misses* biases that side upward by symmetry, for exactly the same combinatorial reason the streak-of-hits side biases downward — so the two distortions stack. Under GVT's own design target — 100 shots, a 50% shooter, streaks of three — Miller and Sanjurjo compute that this two-sided difference statistic is itself expected to sit at roughly −8 percentage points *even for a genuinely consistent, non-streaky shooter*, about double the four-point, single-sided gap the chart shows. The measuring stick GVT used has an eight-point thumb on the scale before a single real player's data enters the picture.
+
+Miller and Sanjurjo redo the analysis properly: for each player, they compute the exact bias predicted by that player's own observed shooting percentage and their own exact number of shots and streaks, then subtract it out.
+
+<Pullquote cite="Miller & Sanjurjo (2018), p. 4" href="https://arxiv.org/abs/1902.01265" kind="quote">
+The hot hand fallacy itself can be viewed as a fallacy.
+</Pullquote>
+
+With that correction applied, the average difference goes from +3 percentage points to +13 percentage points (p < .01, standard error 4.7pp). Nineteen of the twenty-five players now point in the hot-hand direction — itself statistically significant by a binomial test (p < .01) — and five players individually clear conventional significance, a rate that is again itself unlikely by chance across 25 independent tests (p < .01). To put +13 percentage points in perspective: in the 2015–16 NBA season, the entire gap between the league's median three-point shooter and its single best three-point shooter was 12 percentage points. This is not a rounding correction. It is a real, substantively large effect that was sitting in the same public dataset for over three decades, hidden by an estimator with a structural downward lean.
+
+<Quiz client:visible caption="check your understanding of the reversal"
+  questions={[
+    { prompt: "A fair coin is flipped 100 times. You only record flips that immediately follow a streak of three heads. What should the average recorded proportion of heads be?", choices: ["Exactly 50%, because the coin has no memory", "Below 50%, purely because the sequence is finite", "Above 50%, because heads attract heads"], answer: 1, explain: "Independence guarantees each flip is 50/50 on its own, but conditioning on a finite sequence's own streaks introduces a downward selection bias — Theorem 1 in Miller & Sanjurjo (2018)." },
+    { prompt: "In the exact 3-flip enumeration, what is the expected proportion of heads on flips following at least one heads?", choices: ["1/2", "5/12", "2/3"], answer: 1, explain: "5/12 ≈ 0.417, averaged equally across the six sequences that have at least one eligible flip — Miller & Sanjurjo's own worked example, Table 1." },
+    { prompt: "After the bias correction, GVT's Cornell shooting data showed a hit-streak advantage of roughly how many percentage points?", answer: 13, kind: "numeric", explain: "Corrected from a raw, statistically insignificant +3pp to a highly significant +13pp (p < .01) — a reversal of the original conclusion, not a refinement of it." }
+  ]} />
+
+## The reversal was not a one-off
+
+If the fix only worked on GVT's own numbers, it would be a curiosity. It is not. Miller and Sanjurjo re-run the same correction on every other controlled shooting dataset they can locate, and the same pattern holds everywhere the same biased statistic had been used. A close replication of GVT's design with Olympic-level shooters (Avugos et al., 2013, 40 shots per player instead of 100) showed a raw difference of −2 percentage points; bias-corrected, it becomes roughly +18 points. Koehler and Conley's widely cited study of the NBA three-point contest — once described as "an ideal setting in which to study the hot hand" — found nothing; a larger, 28-year, 33-player reanalysis using the corrected statistic finds an average bias-adjusted difference of +8 percentage points (p < .01), with eight of the 33 players individually significant. Two further controlled studies with fewer shooters but far more shots each — 540 and over 900 shots per player — show bias-adjusted differences of +7 and +4 percentage points once corrected. Every controlled or semi-controlled shooting dataset the authors could find moves the same direction once the same bug is removed.
+
+GVT's 1985 paper was never only about shooting percentages. Alongside the Cornell experiment, they surveyed 100 basketball fans at Cornell and Stanford on their beliefs about streak shooting, and ran an incentivized betting task in which Cornell players wagered on their own teammates' upcoming shots. Belief in the hot hand, GVT reported, was near universal — and, paired with a shooting record that showed no such effect and a betting task in which players failed to predict upcoming makes and misses, that gap between belief and reality became the paper's second pillar of evidence for a "widely shared cognitive illusion." Miller and Sanjurjo revisit both pieces. The fan and player survey, they argue, is actually **consistent** with the corrected shooting evidence once you stop assuming the shooting data showed nothing — believers were not hallucinating a pattern that never existed. And the betting task itself, they show, was considerably underpowered: GVT ran a separate statistical test for each individual bettor rather than pooling the wagers into one better-powered test, discarding most of the statistical leverage the incentivized design was supposed to buy. Neither the belief survey nor the betting data, in other words, was ever the clean second confirmation it was long taken to be.
+
+<Callout kind="note" title="What this does — and does not — settle">
+Miller and Sanjurjo are careful about what follows from the correction. It does not mean every fan's or player's belief about the hot hand is well-calibrated — people may still over- or under-estimate a real effect once it exists, and a hot hand can also go undetected or underestimated. What the correction overturns is narrower and more consequential: the specific, headline empirical claim that there is no streak effect in basketball shooting at all does not survive contact with an unbiased estimator.
+</Callout>
+
+## Where this leaves you
+
+The mechanism here has nothing to do with basketball. It is a fact about what happens whenever you select observations from a finite sequence using a rule defined *by that same sequence's own history* — a streak, a run, a "how many times in a row." Miller and Sanjurjo trace the identical structural bias into finite-sample estimation of autoregressive coefficients (the Hurwicz bias), into Berkson's paradox, and — in their companion work — into the gambler's fallacy, the mirror-image belief that a streak makes a *reversal* overdue. The same family of researchers who study hot-hand beliefs in basketball note that the same conditional-probability logic has been applied, uncorrected, to claims about momentum in financial markets, sports wagering, and casino gambling.
+
+The genuinely humbling part of this story is not that a niche statistic was wrong. It is that a purely mechanical, three-line combinatorial fact — provable with three coin flips and a hand calculator — sat undetected for 33 years inside one of behavioral science's most frequently cited results, unnoticed by a field built specifically around noticing when human intuition about randomness goes wrong. The next time you condition on a streak in a fixed, finite record — a hitting streak, a winning streak, a "run of bad luck" in any dataset with a beginning and an end — ask the question this paper forces onto the table: biased toward what, and by how much, before a single "real" effect gets to speak for itself?
