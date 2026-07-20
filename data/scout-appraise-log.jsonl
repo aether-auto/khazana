@@ -1,1 +1,2 @@
 {"ts":"2026-07-16T06:10:30.347Z","candidates":0,"approved":0,"queued":0,"rejected":0,"notes":"no candidate-brief.md present at run time"}
+{"ts":"2026-07-20T06:09:26.221Z","candidates":0,"approved":0,"queued":0,"rejected":0,"notes":"no candidate-brief.md present at run time; scout-discover.yml has been failing at pnpm install --frozen-lockfile on every run since 2026-07-16 due to a corrupted pnpm-lock.yaml (world-ingest importer pins @types/node@26.0.0 / tsx@4.22.4 with no matching snapshot entries), so discovery never produced a brief"}
