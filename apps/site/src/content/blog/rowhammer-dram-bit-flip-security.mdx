@@ -1,0 +1,341 @@
+---
+title: "Rowhammer: The DRAM Bug That Physics Won't Let Engineers Fix"
+format: teardown
+channels:
+  - tech
+  - embedded
+summary: "In 2014 researchers showed that reading one DRAM row several hundred thousand times a second flips bits in rows you never addressed — and a decade of in-DRAM defenses (Target Row Refresh) has been broken again and again because the cause is capacitor physics, not code."
+publishedAt: 2026-07-20T09:00:00.000Z
+sources:
+  - title: "Flipping Bits in Memory Without Accessing Them: An Experimental Study of DRAM Disturbance Errors (Kim et al., ISCA 2014)"
+    url: "https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf"
+    tier: high
+    origin: researched
+  - title: "RowHammer: A Retrospective (Mutlu & Kim, IEEE TCAD 2019/2020)"
+    url: "https://arxiv.org/abs/1904.09724"
+    tier: high
+    origin: researched
+  - title: "Retrospective: Flipping Bits in Memory Without Accessing Them (Mutlu, ISCA 50th Anniversary Commemorative Issue, 2023)"
+    url: "https://arxiv.org/abs/2306.16093"
+    tier: high
+    origin: researched
+  - title: "TRRespass: Exploiting the Many Sides of Target Row Refresh (Frigo et al., IEEE S&P 2020)"
+    url: "https://arxiv.org/abs/2004.01807"
+    tier: high
+    origin: researched
+  - title: "BLACKSMITH: Scalable Rowhammering in the Frequency Domain (Jattke et al., IEEE S&P 2022)"
+    url: "https://comsec.ethz.ch/wp-content/files/blacksmith_sp22.pdf"
+    tier: high
+    origin: researched
+  - title: "Introducing Half-Double: New hammering technique for DRAM Rowhammer bug (Google Online Security Blog, May 2021)"
+    url: "https://security.googleblog.com/2021/05/introducing-half-double-new-hammering.html"
+    tier: high
+    origin: researched
+  - title: "Exploiting the DRAM rowhammer bug to gain kernel privileges (Google Project Zero, March 2015)"
+    url: "https://projectzero.google/2015/03/exploiting-dram-rowhammer-bug-to-gain.html"
+    tier: high
+    origin: researched
+  - title: "Phoenix: Rowhammer Attacks on DDR5 with Self-Correcting Synchronization (ETH Zurich COMSEC / Google, IEEE S&P 2026, CVE-2025-6202)"
+    url: "https://comsec.ethz.ch/research/dram/phoenix/"
+    tier: high
+    origin: researched
+  - title: "Phoenix RowHammer Attack Bypasses Advanced DDR5 Memory Protections in 109 Seconds (The Hacker News, Sept 2025)"
+    url: "https://thehackernews.com/2025/09/phoenix-rowhammer-attack-bypasses.html"
+    tier: med
+    origin: researched
+  - title: "The Memory Wall: Past, Present, and Future of DRAM (SemiAnalysis)"
+    url: "https://newsletter.semianalysis.com/p/the-memory-wall"
+    tier: med
+    origin: researched
+  - title: "Row hammer (Wikipedia)"
+    url: "https://en.wikipedia.org/wiki/Row_hammer"
+    tier: med
+    origin: researched
+draft: false
+---
+
+import { RunnableCode, Chart, Annotation, StatBand, Diagram, Math, EventCascade, DataTable, StateMachine, Timeline, Quiz, Callout, Pullquote, Sidenote, Definition } from "../../components/mdx";
+
+You never send an address to this row. You never write to it, never read it, never touch it in any way a programmer thinks of as "accessing memory." And yet, if you hammer the row *next* to it — read the same address several hundred thousand times a second — bits in that untouched row start flipping. Zeros become ones. No error, no exception, no log line. Just wrong data sitting where correct data used to be.
+
+That is <Definition client:visible term="Rowhammer" def="a DRAM disturbance error: repeatedly activating one row of memory cells corrupts data in physically adjacent rows, without ever addressing those rows directly." />, and it is not a bug in any program. It was discovered in 2014 by a team from Carnegie Mellon and Intel Labs, who showed that <Annotation client:load term="110 of 129 tested DRAM modules" note="Kim et al. (2014), §1: 'Among 129 DRAM modules we analyzed (comprising 972 DRAM chips), we discovered disturbance errors in 110 modules (836 chips).' That is roughly 85% — the 2023 retrospective rounds it to 'more than 80%.'" href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" /> — from three major manufacturers — would silently corrupt memory if you hammered them the right way. Twelve years and thousands of engineering hours later, the problem is not fixed. It has gotten worse. Every hardware defense the industry has shipped since — refresh-rate bumps, in-DRAM Target Row Refresh, on-die error correction — has been broken by a follow-up paper, usually within a year or two of being trusted as "the fix." This teardown is about why: not because the fixes were sloppy, but because the thing being fixed is a law of physics, and the industry's whole business model depends on making that physics worse every generation.
+
+<StatBand client:visible caption="The scale of a problem that hasn't shrunk in a decade"
+  stats={[
+    { value: 85, suffix: "%", label: "DRAM MODULES VULNERABLE", sub: "3 vendors, Kim et al. 2014", href: "https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" },
+    { value: 139, suffix: "K", label: "ROW ACTIVATIONS TO FLIP A BIT", sub: "the most fragile module tested, 2014", href: "https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" },
+    { value: 40, suffix: "/40", label: "DDR4 DIMMS BLACKSMITH BROKE", sub: "every module tested, 2022", href: "https://comsec.ethz.ch/wp-content/files/blacksmith_sp22.pdf", group: false },
+    { value: 109, suffix: " SEC", label: "TO ROOT ON DDR5", sub: "Phoenix, Sept. 2025", href: "https://comsec.ethz.ch/research/dram/phoenix/" }
+  ]} />
+
+## The naive fix, and why it can't be the whole story
+
+Here is the intuition every engineer reaches for first: DRAM already has a maintenance operation that rewrites every cell on a schedule. It's called <Definition client:visible term="refresh" def="the periodic operation, mandated by the DRAM standard, that reads and rewrites every row's charge before it decays enough to lose the stored bit." />, and every row in the chip gets refreshed at least once every <Annotation client:load term="64 milliseconds" note="Kim et al. (2014), §2: the JEDEC-standard refresh interval for the DRAM tested. Every row must be refreshed at least once every 64ms or a healthy cell's charge decays past readability." href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" />. So the naive model is simple: a cell stores a bit as charge on a capacitor, charge leaks slowly, and refresh restores it well before it's lost. If that model were complete, Rowhammer wouldn't exist — leakage is slow, refresh is frequent, the two never come close to conflicting.
+
+<RunnableCode client:visible caption="A healthy cell under normal refresh — edit healthyDecayConstant and watch the margin shrink"
+  code={`// A DRAM cell stores its bit as charge on a tiny capacitor. Charge decays
+// roughly exponentially between refreshes. A healthy cell's retention time
+// (the time to decay past readability) is far longer than the refresh window.
+function chargeFractionRemaining(msSinceRefresh, decayConstantMs) {
+  return Math.exp(-msSinceRefresh / decayConstantMs);
+}
+
+const REFRESH_INTERVAL_MS = 64;   // JEDEC standard refresh interval (Kim et al. 2014, §2)
+const READ_THRESHOLD = 0.5;       // below this fraction, the sense amp can't tell 1 from 0
+
+// A healthy cell's retention time is on the order of seconds -- call it 1000ms
+// as an illustrative, order-of-magnitude stand-in (real retention varies by cell).
+const healthyDecayConstant = 1000;
+const remaining = chargeFractionRemaining(REFRESH_INTERVAL_MS, healthyDecayConstant);
+
+console.log("charge remaining right before the next refresh:", remaining.toFixed(3));
+return remaining > READ_THRESHOLD ? "reads correctly, comfortable margin" : "already lost";`} />
+
+Run it and the margin is enormous — a healthy cell arrives at its refresh appointment having lost almost nothing. That comfort is exactly what makes Rowhammer surprising: the naive model treats leakage as a fixed, slow background rate. What Kim and her co-authors found is that leakage is not fixed. Something you do to *other* rows can accelerate it, on demand, in a nearby row — fast enough to beat the 64ms clock outright.
+
+## The actual mechanism: a wordline is a wire, and wires couple
+
+<Diagram client:visible caption="A DRAM bank, three rows tall. Hammering the middle row disturbs both neighbors — no read or write ever touches them."
+  nodes={[
+    { id: "driver", label: "Row decoder\n(wordline driver)", x: 0, y: 1, kind: "control" },
+    { id: "victimA", label: "Row N−1\n(victim, never addressed)", x: 1, y: 0, kind: "store" },
+    { id: "aggressor", label: "Row N\n(hammered ~500K×/sec)", x: 1, y: 1, kind: "input" },
+    { id: "victimB", label: "Row N+1\n(victim, never addressed)", x: 1, y: 2, kind: "store" },
+    { id: "sense", label: "Sense amplifiers\n(read out Row N)", x: 2, y: 1, kind: "output" }
+  ]}
+  edges={[
+    { from: "driver", to: "aggressor", label: "ACTIVATE / PRECHARGE, repeated", kind: "control" },
+    { from: "aggressor", to: "victimA", label: "wordline coupling → accelerated leakage", kind: "async" },
+    { from: "aggressor", to: "victimB", label: "wordline coupling → accelerated leakage", kind: "async" },
+    { from: "aggressor", to: "sense", label: "legitimate read", kind: "data" }
+  ]} />
+
+DRAM is a two-dimensional grid of cells, and every cell in a row shares one wire: the <Definition client:visible term="wordline" def="the shared wire that, when raised to a high voltage, connects every cell in one DRAM row to its bitline so the row can be read or written — this is what it means to 'activate' a row." />. A cell itself is nothing more than one capacitor plus one access-transistor: <Annotation client:load term="a fully charged capacitor is a stored 1, a fully discharged one is a stored 0" note="Kim et al. (2014), §2.2: 'DRAM comprises a two-dimensional array of DRAM cells, each of which consists of a capacitor and an access-transistor. Depending on whether its capacitor is fully charged or fully discharged, a cell is in either the charged state or the discharged state.'" href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" />. Reading row N means raising row N's wordline, which switches on every access-transistor in that row at once and drains the row's stored charge into the <Definition client:visible term="sense amplifiers" def="the circuitry that reads out a row's charge into a row-buffer — a read that destroys the row's data in place, which is why every read is immediately followed by a write-back before the row can close." /> — a read that destroys the data in place, which is exactly why an ACTIVATE is always paired with closing the row again (a <Definition client:visible term="PRECHARGE" def="the DRAM command that closes an open row, writing its sensed charge back into the cells before the row-buffer is cleared for the next access." />) before anything else can happen to that bank. Opening and closing the same row as fast as the DRAM standard allows is itself bounded by a hardware timing constraint — the <Annotation client:load term="row cycle time, tRC, typically 50 nanoseconds" note="Kim et al. (2014), §2.3: 'the timing constraint defined between a pair of ACTIVATEs to the same row (in the same bank) is referred to as tRC (row cycle time), whose typical value is 50 nanoseconds. When trying to open and close the same row as quickly as possible, tRC becomes the bottleneck.'" href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" /> — which is what puts a floor on how fast anyone, attacker or not, can hammer a single row.
+
+Kim et al. traced the disturbance itself to that same open/close cycle: <Annotation client:load term="repeated toggling of a DRAM row's wordline stresses inter-cell coupling effects that accelerate charge leakage from nearby rows" note="Kim et al. (2014), Abstract: 'We identify the root cause of disturbance errors as the repeated toggling of a DRAM row's wordline, which stresses inter-cell coupling effects that accelerate charge leakage from nearby rows.'" href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" />, and the paper is specific about *how* a wordline can disturb its neighbors, laying out three candidate physical channels rather than one: <Annotation client:load term="electromagnetic coupling that partially enables an adjacent row's access-transistors" note="Kim et al. (2014), §3: wordline voltage fluctuations 'partially enable the adjacent row of access-transistors for a short amount of time and facilitate the leakage of charge' via electromagnetic coupling." href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" />, conductive <Annotation client:load term="bridges" note="Kim et al. (2014), §3: 'bridges are a well-known class of DRAM faults in which conductive channels are formed between unrelated wires and/or capacitors' — one eDRAM study found wordline toggling accelerates charge flow between bridged cells." href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" /> formed between adjacent structures during fabrication, and <Annotation client:load term="hot-carrier injection" note="Kim et al. (2014), §3: 'toggling a wordline for hundreds of hours can permanently damage it by hot-carrier injection. If some of the hot-carriers are injected into the neighboring rows, this could modify the amount of charge in their cells or alter the characteristic of their access-transistors to increase their leakiness.'" href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" /> from the switching itself, which can permanently increase a neighboring transistor's leakiness. None of these require a design flaw a QA engineer could have caught — they are what happens, to varying degrees, whenever wires carrying fast-switching signals sit close enough together to couple.
+
+The paper's proof-of-concept attack code makes the causal story concrete, and it doubles as a control experiment. <Definition client:visible term="Code 1a" def="Kim et al.'s minimal hammering loop: alternately read two DRAM addresses, X and Y, evicting each from cache (clflush) after every read so the CPU cache can never shortcut the access — every iteration forces a real DRAM row activation." /> alternately reads two addresses chosen to land in different rows of the same bank, flushing each from the CPU cache immediately after reading it so the read can never be served from cache and must reach DRAM every time. Run for <Annotation client:load term="millions of iterations" note="Kim et al. (2014), §4: 'For the address-pair (X, Y), we then executed Code 1a for millions of iterations.'" href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" />, it reliably produced bit flips on real Intel and AMD machines with no elevated privileges at all. The control, <Definition client:visible term="Code 1b" def="Kim et al.'s control experiment: identical to Code 1a but reading only a single address, so the row never closes and reopens — it induced zero disturbance errors, isolating the cause to repeated row activation, not column reads." />, reads only a single address the same number of times — and produced <Annotation client:load term="zero disturbance errors" note="Kim et al. (2014), §4: 'Code 1b did not induce any disturbance errors as we expected... disturbance errors are caused by the repeated opening/closing of a row, not by column reads.'" href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" />, because a single open row never has to close and reopen. That contrast is the whole causal claim in miniature: the danger isn't reading memory, it's the *row cycling* that a two-address hammering loop forces.
+
+<RunnableCode client:visible caption="Code 1a vs. Code 1b, as pseudocode you can trace — only the two-address version forces repeated row cycling"
+  code={`// Code 1a: alternately read X and Y (different rows, same bank), evicting
+// each from cache after every read so DRAM must be re-activated every time.
+function hammerTwoAddresses(iterations) {
+  let rowCycles = 0;
+  for (let i = 0; i < iterations; i++) {
+    activateRow("X");   // ACTIVATE — row X's wordline goes high
+    // clflush(X) forces the NEXT read of X to miss cache and hit DRAM again
+    activateRow("Y");   // PRECHARGE X, then ACTIVATE row Y
+    // clflush(Y) does the same for Y
+    rowCycles += 2;     // every iteration is two full open/close cycles
+  }
+  return rowCycles;
+}
+
+// Code 1b: read only ONE address, over and over. After the first read, the
+// row is already open -- there is nothing left to activate.
+function hammerOneAddress(iterations) {
+  let rowCycles = 0;
+  activateRow("X");             // opened once
+  for (let i = 0; i < iterations; i++) {
+    // subsequent reads hit the already-open row's buffer -- no new ACTIVATE
+  }
+  return rowCycles;             // stays at 0: the row never re-cycles
+}
+
+function activateRow(addr) { /* models one ACTIVATE command */ }
+
+console.log("Code 1a row cycles over 5 iterations:", hammerTwoAddresses(5));
+console.log("Code 1b row cycles over 5 iterations:", hammerOneAddress(5));
+return "Only repeated ACTIVATE/PRECHARGE -- not repeated reads -- disturbs a neighbor";`} />
+
+The paper's own data on *where* the damage lands is what later research would spend a decade complicating. Overwhelmingly, a hammered row's errors show up in exactly <Annotation client:load term="its two immediate physical neighbors" note="Kim et al. (2014), §6.3: disturbance errors from an aggressor row 'are predominantly localized to two other rows' — its immediate physical neighbors — attributed to wordline voltage fluctuations placing 'the greatest electrical stress on the immediately neighboring rows.'" href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" />, the two rows directly above and below it — which is the simple picture in the diagram above. But the 2014 data already had loose threads: a small number of victim cells turned out to be <Annotation client:load term="disturbed by two different aggressor rows on either side" note="Kim et al. (2014), §6.3, 'Double Aggressor Rows': in the first bank of three modules, 83, 2, and 0 victim cells respectively were disturbed by either of two neighboring aggressor rows — e.g., a cell that errored when row 1463 OR row 1465 was hammered." href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" />, and a handful of "echoes" showed up in rows that weren't adjacent neighbors at all. Kim et al. flagged this honestly as noise from remapped spare rows rather than claim it away — but seven years later, Half-Double turned that same loose thread into a working attack technique, showing the coupling really does reach past a row's immediate neighbor once the geometry shrinks enough.
+
+<EventCascade client:visible caption="From 'read the same address' to 'a bit somewhere else is wrong'"
+  nodes={[
+    { kind: "cause", label: "A row's wordline is switched on and off hundreds of thousands of times a second",
+      detail: "Kim et al. built a user-level program that issues loads to the same DRAM address while flushing the cache line between reads — no privileges required, just fast, repeated activation of one row." },
+    { kind: "effect", label: "Voltage swings on that wordline couple electrically into neighboring rows",
+      detail: "Three physical channels, per Kim et al. §3: electromagnetic coupling into neighboring wordlines, conductive bridges between adjacent structures formed during fabrication, and hot-carrier injection from the switching itself." },
+    { kind: "effect", label: "Capacitors in the disturbed neighbor rows leak charge faster than their normal rate",
+      detail: "The cell isn't touched, read, or written — its access transistor is never opened by an authorized command. The charge simply drains faster because of what's happening one wire over." },
+    { kind: "turning-point", label: "If the accelerated leakage outruns the 64ms refresh window, the charge crosses the read threshold and the bit flips",
+      detail: "Kim et al. measured the threshold directly: as few as 139,000 activations of the aggressor row are enough to flip a bit in the most fragile module tested, within one refresh interval." }
+  ]} />
+
+The race is the whole story. Refresh is a clock: every 64ms, every row gets its charge restored, no matter what. Hammering is a rate: how fast you can erode a neighbor's charge by toggling the row next to it. Kim et al.'s central experimental result is that, on real 2012–2013-era DRAM, that rate can be made to win. It took as few as <Annotation client:load term="139,000 row activations" note="Kim et al. (2014), §6.2: the paper measures a threshold number of activations (N_th) — the minimum needed to induce an error within one 64ms refresh interval. For the three modules studied (first bank only): 139K, 155K, and 284K." href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" /> to flip a bit in the most fragile module they tested, and DRAM at the time could sustain an activation roughly every <Annotation client:load term="55 nanoseconds" note="Kim et al. (2014), §6.2, Fig. 5: the shortest activation interval (AI) the paper tested. At RI=64ms, the theoretical maximum number of activations in one refresh window is 64ms / 55ns ≈ 1.14 million." href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" /> — meaning a single 64ms refresh window has room for over a million activations, ten times more than the threshold needed to flip a bit.
+
+<Math client:visible tex="AI \le \frac{RI}{N_{th}}" label="(1)" numbered
+  steps={[
+    { tex: "RI = 64\\text{ ms}", note: "the fixed refresh interval every row is guaranteed — the defender's clock" },
+    { tex: "N_{th} \\approx 139{,}000\\text{–}284{,}000", note: "the measured threshold activation count, varies by module (Kim et al., §6.2)" },
+    { tex: "AI \\le \\frac{64\\text{ ms}}{139{,}000} \\approx 460\\text{ ns}", note: "the activation interval an attacker must hit to win the race, for the most fragile module" }
+  ]}
+  caption="A back-of-envelope boundary for the most fragile module tested: Kim et al.'s Fig. 5 independently reports errors vanishing once the activation interval widens past ~500ns — close to this simple threshold, even though the real relationship (Fig. 4–5) isn't a hard cutoff." />
+
+Run the same race as a toy simulation and the shape of the result matches the paper's real numbers, even though the decay model here is illustrative rather than a device-physics model:
+
+<RunnableCode client:visible caption="Hammering vs. refresh, as a race — the real inputs (139K activations, 55ns each) are Kim et al.'s; the decay curve itself is an illustrative toy model, not measured silicon"
+  code={`// Illustrative model only: each hammer to the aggressor row erodes the
+// neighbor's effective retention a little (disturbPerActivation is a made-up
+// small constant, not a measured value). The REAL, cited inputs are the
+// activation count and interval from Kim et al. (2014), §6.2.
+function simulateRace(activations, msPerActivation, healthyDecayConstantMs, disturbPerActivation) {
+  let decayConstant = healthyDecayConstantMs;
+  let elapsedMs = 0;
+  for (let i = 0; i < activations; i++) {
+    decayConstant *= (1 - disturbPerActivation); // retention erodes with each hammer
+    elapsedMs += msPerActivation;
+  }
+  const remaining = Math.exp(-elapsedMs / decayConstant);
+  return { elapsedMs, remaining };
+}
+
+const ACTIVATIONS = 139000;      // Kim et al.'s measured threshold, most fragile module
+const MS_PER_ACTIVATION = 55e-6; // 55ns, their shortest tested activation interval
+const REFRESH_INTERVAL_MS = 64;  // the defender's clock
+
+const race = simulateRace(ACTIVATIONS, MS_PER_ACTIVATION, 1000, 0.00006);
+console.log("elapsed time hammering:", race.elapsedMs.toFixed(2), "ms  (refresh window is", REFRESH_INTERVAL_MS, "ms)");
+console.log("charge remaining when the refresh clock finally arrives:", race.remaining.toFixed(4));
+return race.remaining < 0.5 ? "hammering wins the race -- bit flips before refresh" : "refresh wins";`} />
+
+Run it: the hammering finishes in a fraction of the 64ms window, and the neighbor's simulated charge is nowhere near enough to survive to the next refresh. That's the entire vulnerability in one race condition — not a logic error, not a missing bounds check, a **timing relationship between two physical processes that the DRAM standard never guaranteed would stay in the defender's favor.**
+
+<Callout kind="key-insight" title="This is not a software bug">
+Every "how do we patch this" instinct assumes a mistake somewhere in code. Rowhammer has no such mistake to find. Kim et al.'s own framing, in the paper's abstract, states the physics plainly: <Annotation client:load term="as DRAM process technology scales down to smaller dimensions, it becomes more difficult to prevent DRAM cells from electrically interacting with each other" note="Kim et al. (2014), Abstract, first two sentences." href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" />. Smaller cells were the *goal* of a decade of manufacturing progress — more bits per wafer, lower cost per gigabyte. Rowhammer is the bill for that progress arriving as a security vulnerability instead of a performance one.
+</Callout>
+
+Kim et al. explicitly stopped short of weaponizing their own finding, writing that they'd leave a full exploit "for future work" while noting a malicious program could plausibly use it to breach memory protection. Google's Project Zero closed that gap less than a year later, and the two exploits they built are the reason Rowhammer stopped being a reliability curiosity and became a security emergency: a <Annotation client:load term="Native Client sandbox escape and a Linux kernel privilege-escalation exploit, built entirely from Rowhammer bit flips" note="Google Project Zero (March 2015): demonstrated two working privilege-escalation exploits — a Native Client sandbox escape and a kernel privilege escalation on x86-64 Linux run as an unprivileged process — using only Rowhammer-induced bit flips, with no software vulnerability involved. On one machine, hammering flipped 25+ bits in a single row." href="https://projectzero.google/2015/03/exploiting-dram-rowhammer-bug-to-gain.html" />. The kernel exploit worked by hammering until a bit flip landed inside a page-table entry the attacker's own unprivileged process could reach — turning "a bit in some row I don't own changed" into "I now have read-write access to all of physical memory." No buffer overflow, no logic bug, no privileged API misuse. Just enough hammering, aimed carefully enough, at ordinary DRAM.
+
+## Why shrinking the cell is the whole cause
+
+This is the trade a chip cannot escape, not an accident a better team could have designed around. A DRAM cell stores one bit as charge on a capacitor next to one access transistor — one of the most aggressively miniaturized structures in any chip. Modern cell capacitors hold on the order of <Annotation client:load term="6–7 femtofarads" note="SemiAnalysis, 'The Memory Wall': modern DRAM cell capacitance is 'on the order of 6-7 fF' with capacitors 'shrunk to nanoscopic width with extreme aspect ratios' — roughly 1,000nm tall but only tens of nm in diameter." href="https://newsletter.semianalysis.com/p/the-memory-wall" /> of charge — enough for roughly <Annotation client:load term="40,000 electrons" note="SemiAnalysis, 'The Memory Wall': a freshly-written modern DRAM cell holds 'about 40,000 electrons.'" href="https://newsletter.semianalysis.com/p/the-memory-wall" /> when freshly written. That number keeps shrinking every generation, because a smaller capacitor is exactly what higher density requires: more cells per wafer means each cell must be physically smaller, which means less charge, which means a smaller margin between "clearly a 1" and "clearly a 0" — and cells packed closer together, sharing more wire per unit of chip area. The general version of that trade is well enough established to be a textbook summary at this point: <Annotation client:load term="increased DRAM density means physically smaller cells with less charge, lower noise margins, and more electromagnetic interaction between neighbors" note="Wikipedia, 'Row hammer': 'Increased densities of DRAM integrated circuits have led to physically smaller memory cells containing less charge, resulting in lower operational noise margins, increased rates of electromagnetic interactions between memory cells.'" href="https://en.wikipedia.org/wiki/Row_hammer" /> — the same causal chain Kim et al. described in 2014, independently restated by every serious summary of the problem since.
+
+That closeness is the actual mechanism. It isn't a side effect of scaling; it is what scaling *is*. Google's engineers made this explicit when they discovered <Definition client:visible term="Half-Double" def="a 2021 Google discovery that Rowhammer's disturbance effect can reach beyond immediately adjacent rows — hammering row A heavily plus row B lightly can flip bits in row C, two rows away." />, a variant where hammering isn't confined to the row directly next door:
+
+<Pullquote cite="Google Online Security Blog, “Introducing Half-Double,” May 2021" href="https://security.googleblog.com/2021/05/introducing-half-double-new-hammering.html" kind="document">
+The electrical coupling responsible for Rowhammer is a property of distance, effectively becoming stronger and longer-ranged as cell geometries shrink down.
+</Pullquote>
+
+Read that sentence as an engineering forecast rather than a one-off finding: it says the *range* of the disturbance effect grows as a direct function of how small the manufacturing node gets. Given rows A, B, and C in sequence, <Annotation client:load term="hammering A heavily plus a handful of accesses to B flips bits in C, two rows away" note="Google, ‘Introducing Half-Double’ (2021): ‘Given three consecutive rows A, B, and C, we're able to use accesses to A to hammer C, using B as a middle row that “transports” the Rowhammer effect... accesses to B have a non-linear gating effect, in which they appear to “transport” the Rowhammer effect of A onto C.’" href="https://security.googleblog.com/2021/05/introducing-half-double-new-hammering.html" />. Nothing in the original 2014 model predicted disturbance could skip a row; the 2021 finding is the same underlying physics, just measured on a smaller node where the coupling reaches farther than anyone assumed it could. Every future process shrink is, by this logic, a small step toward disturbance effects reaching further and needing less energy to trigger — which is exactly what later research on DDR4 found: TRRespass measured a threshold of just <Annotation client:load term="45,000 row activations" note="TRRespass (Frigo et al., IEEE S&P 2020), Introduction: 'we observe bit flips with as few as 45K DRAM row activations, showing that DDR4 and LPDDR4(X) chips are more vulnerable to RowHammer than their DDR3 predecessors, which can tolerate much higher row activation counts (e.g., ~139K).'" href="https://arxiv.org/abs/2004.01807" /> to induce a bit flip on DDR4 — three times fewer activations than the DDR3 chips Kim et al. tested in 2014, on the very generation of chip that shipped *with* an in-DRAM defense turned on.
+
+## Why there was never a purely software fix
+
+Kim et al. didn't stop at diagnosis. Section 8 of the paper works through seven candidate fixes, in order of how practical each one is — and the pattern across all seven is that not one of them is something an operating system or application could deploy on its own:
+
+<DataTable client:load caption="Kim et al.'s seven candidate fixes (2014) — every one requires the chip, the memory controller, or the manufacturing process"
+  columns={[
+    { key: "fix", label: "Candidate fix", type: "string" },
+    { key: "layer", label: "Where it must live", type: "string" },
+    { key: "limitation", label: "Why it fell short", type: "string" }
+  ]}
+  rows={[
+    { fix: "Better chip-level isolation", layer: "Manufacturing / circuit design", limitation: "Helps, but the paper warns it 'may get worse in the future as cells become smaller and more vulnerable' — scaling keeps eroding the fix." },
+    { fix: "ECC error correction", layer: "Extra DRAM chips (hardware), 12.5% capacity overhead", limitation: "Standard ECC can't correct the multi-bit errors Rowhammer produces, and consumer DRAM rarely ships with ECC at all." },
+    { fix: "Refresh every row more often", layer: "Memory controller / DRAM timing", limitation: "Eliminating all observed errors needs the refresh interval cut from 64ms to 8.2ms — a 7.8× increase in refresh traffic, which the paper calls too costly for performance and energy." },
+    { fix: "Manufacturer retires bad cells pre-sale", layer: "Manufacturing test floor", limitation: "An exhaustive search for every victim cell can take days; if too many cells are vulnerable, there aren't enough spare cells to remap them to." },
+    { fix: "End-user retires or re-tests bad cells", layer: "System firmware / field testing", limitation: "Falls apart when every row in a module is a potential victim — which the paper's own data shows is common." },
+    { fix: "Detect 'hot' rows and refresh their neighbors", layer: "Memory controller (needs per-row counters)", limitation: "A real counter per row is too expensive at millions of rows; cheaper approximations (Bloom filters, Morris counters) introduce hash collisions that flood the system with false refreshes." },
+    { fix: "PARA — probabilistic adjacent-row refresh", layer: "Memory controller (the paper's own proposal)", limitation: "Not a limitation so much as the trade the paper accepts: statistical, not absolute, protection — in exchange for near-zero overhead." }
+  ]} />
+
+Every row in that table sits below the operating system: chip design, DRAM timing, memory-controller logic, factory test equipment. That's not a coincidence — it's a consequence of where the vulnerability physically lives. An OS can decide *which* addresses to place where in physical memory, and later software mitigations did exactly that (isolating untrusted processes from physically adjacent rows). But no kernel patch can make a capacitor leak charge more slowly. The fix Kim et al. actually shipped, <Definition client:visible term="PARA" def="Probabilistic Adjacent Row Activation — every time a row is closed, the memory controller flips a biased coin and, on a hit, refreshes one of its physical neighbors." /> (probabilistic adjacent row activation), is a small state machine that lives inside the memory controller, not a line of application code:
+
+<StateMachine client:visible
+  caption="PARA: what the memory controller does every time a row closes"
+  start="closed"
+  states={[
+    { id: "closed", label: "ROW CLOSED", x: 0, y: 0 },
+    { id: "open", label: "ROW OPEN\n(being read/written)", x: 1, y: 0 },
+    { id: "decision", label: "PRECHARGE\n(flip a biased coin)", x: 2, y: 0 },
+    { id: "refresh", label: "REFRESH A\nNEIGHBOR ROW", x: 2, y: 1 }
+  ]}
+  transitions={[
+    { from: "closed", to: "open", on: "ACTIVATE" },
+    { from: "open", to: "decision", on: "PRECHARGE" },
+    { from: "decision", to: "refresh", on: "coin lands heads, p ≈ 0.001–0.005" },
+    { from: "decision", to: "closed", on: "coin lands tails" },
+    { from: "refresh", to: "closed", on: "neighbor refreshed" }
+  ]}
+  sequence={["closed>open", "open>decision", "decision>refresh", "refresh>closed"]} />
+
+PARA is elegant because it needs no memory of which rows have been hammered — no counters, no history, just a coin flip on every row close. Kim et al. worked the probability math directly: with the coin biased at <Annotation client:load term="p = 0.001" note="Kim et al. (2014), §8.2, Table 7: with p=0.001 and N_th=100K, the probability of an uncorrected error within one year of sustained adversarial hammering is 9.4×10⁻¹⁴ — negligible." href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" /> and a realistic activation threshold of 100K, the odds of an adjacent row going a full year without being refreshed by chance are about 1 in 10 trillion. And the performance cost of flipping that coin on every single row close, measured across 29 real workloads, was a <Annotation client:load term="0.197% average slowdown" note="Kim et al. (2014), §8.2: 'Averaged across all 29 benchmarks, there was only a 0.197% degradation in instruction throughput,' with the single worst benchmark at 0.745%." href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" /> — nearly free. PARA is why, for a few years, the industry believed the problem was contained: not eliminated, but priced down to statistical irrelevance at negligible cost.
+
+<Sidenote>DRAM vendors didn't widely deploy PARA exactly as published. What they shipped instead, starting with DDR4, was a proprietary, undocumented family of in-silicon defenses collectively branded Target Row Refresh (TRR) — different per vendor, never fully disclosed, and, as the next section shows, not nearly as statistically airtight as PARA's coin flip.</Sidenote>
+
+## The decade of breaking "the fix"
+
+<Timeline client:load caption="From diagnosis to a still-open arms race, 2014–2025"
+  events={[
+    { date: "2014-06-14", label: "Kim et al. publish Rowhammer", detail: "ISCA 2014: 110 of 129 DRAM modules (85%) from three vendors flip bits after as few as 139K row activations. All seven fixes considered require hardware or manufacturing changes." },
+    { date: "2015-03-09", label: "Google Project Zero weaponizes it", detail: "Two working exploits — a Native Client sandbox escape and a Linux kernel privilege escalation — built entirely from Rowhammer-induced bit flips, with no software vulnerability involved." },
+    { date: "2020-04-03", label: "TRRespass cracks Target Row Refresh", detail: "13 of 42 tested DDR4 modules, across all three major vendors, still flip bits despite in-DRAM TRR — reached by hammering up to 19 rows at once (“many-sided” Rowhammer)." },
+    { date: "2021-05-25", label: "Half-Double shows the coupling has range", detail: "Google: hammering row A heavily plus row B lightly flips bits in row C, two rows away. The coupling that causes Rowhammer gets stronger and longer-ranged as cells shrink." },
+    { date: "2022-05-23", label: "Blacksmith breaks every DIMM tested", detail: "Non-uniform, frequency-based hammering patterns trigger bit flips on all 40 of 40 recently purchased DDR4 DIMMs — 2.6× more devices and 87× more bit flips than the prior state of the art." },
+    { date: "2025-09-16", label: "Phoenix roots DDR5 in 109 seconds", detail: "ETH Zurich and Google find DDR5's TRR skips certain refresh intervals entirely. All 15 SK Hynix DIMMs tested (built 2021–2024) are vulnerable; CVE-2025-6202." }
+  ]} />
+
+Read that timeline as a pattern rather than a list: every deployed defense bought a few years of confidence, and every time, a new paper found the specific blind spot the defense left open. TRRespass's own authors frame the pattern directly — before their paper, the working assumption in industry was that the newest DDR4, protected by TRR, had solved the problem for good:
+
+<Pullquote cite="Frigo et al., “TRRespass” (IEEE S&P 2020), §1" href="https://arxiv.org/abs/2004.01807" kind="document">
+Is RowHammer a solved problem? The leading DRAM vendors have already answered this question with a resounding "yes," advertising the latest generation DDR4 systems as RowHammer-free... Our results are worrisome, showing that RowHammer is not only still unsolved, but also that the vulnerability is widespread even in latest off-the-shelf DRAM chips.
+</Pullquote>
+
+TRR turned out not to be one defense but, in the TRRespass team's words, <Annotation client:load term="a series of different solutions coalesced under one umbrella term" note="TRRespass (2020), Abstract: 'what is advertised as a single mitigation mechanism is actually a series of different solutions coalesced under the umbrella term Target Row Refresh,' operating 'entirely inside DRAM chips' and undisclosed by vendors." href="https://arxiv.org/abs/2004.01807" /> — proprietary, undocumented, different per vendor, and reverse-engineered from the outside rather than published. Every published Rowhammer attack up to that point had hammered its aggressor rows uniformly — the same row, over and over, at a constant rate — which is precisely the pattern TRR's built-in counters were tuned to catch. Two years later, Blacksmith's authors made the underlying design flaw explicit: TRR's designers had implicitly assumed attackers would keep hammering the same way after the defense shipped.
+
+<Chart client:visible mark="bar" x="attack" y="share_bypassed" height={300}
+  caption="Share of tested DIMMs each successive attack could still flip bits on, despite the DRAM's built-in Target Row Refresh"
+  data={[
+    { attack: "TRRespass\n(2020, DDR4)", share_bypassed: 31 },
+    { attack: "Blacksmith\n(2022, DDR4)", share_bypassed: 100 },
+    { attack: "Phoenix\n(2025, DDR5)", share_bypassed: 100 }
+  ]} />
+
+That climb from 31% to 100% is not a story of researchers trying harder. It's a story of TRR's own blind spots being systematically mapped, generation after generation. Blacksmith's insight was to stop hammering uniformly and instead randomize the *frequency, phase, and amplitude* of accesses across multiple aggressor rows simultaneously — patterns designed explicitly to avoid tripping the counters TRR uses to detect an attack in progress. The result, in the authors' own words, was blunt:
+
+<Pullquote cite="Jattke et al., “Blacksmith” (IEEE S&P 2022), §I" href="https://comsec.ethz.ch/wp-content/files/blacksmith_sp22.pdf" kind="document">
+We conclude that after almost a decade of research and deployed in-DRAM mitigations, we are perhaps in a worse situation than when Rowhammer was first discovered.
+</Pullquote>
+
+<DataTable client:load caption="The Rowhammer arms race, attack by attack"
+  columns={[
+    { key: "attack", label: "Attack / defense", type: "string" },
+    { key: "year", label: "Year", type: "string" },
+    { key: "venue", label: "Venue", type: "string" },
+    { key: "target", label: "Tested / bypassed", type: "string" },
+    { key: "technique", label: "Key technique", type: "string" }
+  ]}
+  rows={[
+    { attack: "Kim et al. (original discovery)", year: "2014", venue: "ISCA", target: "129 modules / 110 vulnerable", technique: "Hammer one row hundreds of thousands of times per refresh interval" },
+    { attack: "TRRespass", year: "2020", venue: "IEEE S&P", target: "42 DDR4 / 13 vulnerable", technique: "Many-sided hammering across up to 19 aggressor rows to evade TRR's counters" },
+    { attack: "Half-Double", year: "2021", venue: "Google disclosure", target: "Demonstrated on current DDR4", technique: "Heavy hammering of row A plus light hammering of row B flips bits two rows away, in row C" },
+    { attack: "Blacksmith", year: "2022", venue: "IEEE S&P", target: "40 DDR4 / 40 vulnerable", technique: "Non-uniform frequency/phase/amplitude patterns across multiple aggressors at once" },
+    { attack: "Phoenix", year: "2025", venue: "IEEE S&P 2026 (disclosed Sept. 2025)", target: "15 DDR5 / 15 vulnerable", technique: "Self-correcting synchronization exploits refresh intervals DDR5's TRR never samples" }
+  ]} />
+
+Phoenix, the most recent break, illustrates how little margin is left even on the newest memory standard. DDR5 shipped with more sophisticated, better-tested TRR logic than DDR4 ever had — and the researchers still found that the defense simply <Annotation client:load term="doesn't sample certain refresh intervals" note="ETH Zurich COMSEC, Phoenix project page: the mitigation 'does not sample certain refresh intervals,' creating exploitable gaps; the researchers state deployed mitigations 'protect against existing attacks but have not been designed in a principled way that would completely stop Rowhammer.'" href="https://comsec.ethz.ch/research/dram/phoenix/" />, leaving a window an attacker can walk through if the hammering pattern is timed precisely enough — which is what their "self-correcting synchronization" technique does, resynchronizing itself automatically across the thousands of refresh cycles the full attack pattern spans. The practical result, confirmed independently by security press coverage of the disclosure, was root access on a default-configured PC in well under two minutes:
+
+<Annotation client:load term="privilege escalation in as little as 109 seconds" note="The Hacker News (Sept. 2025), reporting on the Phoenix disclosure: 'privilege escalation exploit running in default settings on a PC in as little as 109 seconds.'" href="https://thehackernews.com/2025/09/phoenix-rowhammer-attack-bypasses.html" />, <Annotation client:load term="averaging 5 minutes and 19 seconds for the reproduced sudo-binary root exploit — which worked on only about a third of the vulnerable DIMMs" note="ETH Zurich COMSEC, Phoenix project page: 'the average time to exploitation is just 5 minutes and 19 seconds,' for the reproduced privilege-escalation attacks, of which the sudo-binary route to root succeeded on '33% of vulnerable DIMMs.'" href="https://comsec.ethz.ch/research/dram/phoenix/" />. And the researchers were explicit that this isn't a problem hardware error correction quietly absorbs: on-die ECC, now standard on DDR5, <Annotation client:load term="does not stop RowHammer" note="Reported by The Hacker News (Sept. 2025), quoting the Phoenix researchers directly: ‘on-die ECC does not stop RowHammer, and RowHammer end-to-end attacks are still possible with DDR5,’ demonstrating that advanced protections remain ineffective against sophisticated variants." href="https://thehackernews.com/2025/09/phoenix-rowhammer-attack-bypasses.html" />.
+
+## What breaks, and the trade-off nobody escapes
+
+Every mitigation discussed so far shares one shape: it buys statistical safety at a real, measurable cost, and it can be defeated by an access pattern its designers didn't anticipate. Widen that out and three trade-offs recur across the whole decade:
+
+**Refresh-rate mitigations trade performance for safety, permanently.** The blunt, always-available fix — refresh every row far more often than the standard requires — is the one every major vendor actually shipped first. Apple's own 2015 security advisory credited "original research by Kim et al." when it announced higher refresh rates as an immediate mitigation; Kim et al.'s own numbers show why nobody wanted that as the *permanent* answer: eliminating every observed error required cutting the refresh interval from 64ms to 8.2ms, a <Annotation client:load term="7.8× increase in the fraction of time spent refreshing rather than serving requests" note="Kim et al. (2014), §8.1: 'Today's modules already spend 1.4–4.5% of their time just performing refreshes... This number would increase to 11.0–35.0% if the refresh interval is shortened to 8.2ms.'" href="https://users.ece.cmu.edu/~yoonguk/papers/kim-isca14.pdf" /> — a real, ongoing tax on every DRAM access, forever, on every affected system.
+
+**In-DRAM defenses trade transparency for a false sense of closure.** TRR's biggest weakness wasn't a specific technical flaw so much as its opacity: because vendors never disclosed how TRR actually worked, outside researchers had to reverse-engineer it from scratch before they could even evaluate whether it held up — and once they did, it usually didn't. "Security by obscurity," as the TRRespass authors called it directly, meant the industry spent years treating an unaudited black box as a solved problem.
+
+**Scaling itself keeps moving the goalposts.** This is the trade with no available fix at any layer. Kim et al. warned about it in 2014, calling scaled-down cells "more vulnerable" as far back as their first paper. The 2023 retrospective confirms the warning held: a 2020 revisit of the problem across <Annotation client:load term="1,580 DRAM chips of three different types" note="Mutlu (2023 retrospective): 'Our ISCA'20 work revisited RowHammer, comprehensively analyzed 1580 DRAM chips of three different types from at least two generations, showing that RowHammer has gotten much worse with technology scaling & existing solutions are not effective at future vulnerability levels.'" href="https://arxiv.org/abs/2306.16093" /> found the problem had "gotten much worse with technology scaling," and that "existing solutions are not effective at future vulnerability levels." Every fix designed for today's cell geometry is a fix scoped to a target that keeps shrinking underneath it.
+
+<Quiz client:visible caption="Check the crux before you leave"
+  questions={[
+    { prompt: "Why does shrinking a DRAM cell for higher density make Rowhammer worse, according to Google's Half-Double finding?", choices: ["Smaller cells run at a higher voltage", "The electrical coupling between neighboring cells grows stronger and reaches farther as cell geometries shrink", "Smaller cells are refreshed less often by the memory controller", "Smaller cells need less charge, so leakage stops mattering"], answer: 1, explain: "Google's own framing: 'the electrical coupling responsible for Rowhammer is a property of distance, effectively becoming stronger and longer-ranged as cell geometries shrink down.' Half-Double showed the effect can even skip a row." },
+    { prompt: "Kim et al. (2014) considered seven candidate fixes for Rowhammer. What do all seven have in common?", choices: ["They all require replacing DRAM with SRAM", "Every one operates at the chip, memory-controller, or manufacturing level — none is a pure software patch", "They only work below room temperature", "They remove the need for refresh entirely"], answer: 1, explain: "From better chip isolation to PARA's coin-flip refresh, every candidate lives below the operating system — because the vulnerability itself lives in the physical capacitor and wordline, not in any code." },
+    { prompt: "Why did Target Row Refresh (TRR), advertised as the definitive DDR4-era fix, keep getting broken?", choices: ["It was disabled by default on most shipped systems", "Real TRR implementations watch for specific hammering patterns and refresh timing; new patterns (many-sided, frequency-randomized, self-correcting) exploit the gaps between what TRR actually samples", "DRAM manufacturers never actually shipped it", "It only ever worked on server-grade ECC memory"], answer: 1, explain: "TRRespass found TRR was several different undisclosed vendor schemes, not one mechanism; Blacksmith found it assumed uniform hammering; Phoenix found DDR5's TRR skips specific refresh intervals outright. Each break exploited a real, specific gap." }
+  ]} />
+
+## The practical takeaway
+
+If you build or operate systems on commodity DRAM, treat Rowhammer as a permanent property of the hardware you're running on, not a patchable bug you're waiting on a vendor to close out. The mitigations that exist — higher refresh rates, in-DRAM TRR, memory isolation between trust domains, ECC where it's available — each reduce risk and each cost something, and none of them, on the public record, has held for more than a few years against dedicated research. If your threat model includes an attacker who can run unprivileged code on the same physical DRAM as sensitive data — a shared cloud host, a browser sandbox, a multi-tenant device — Rowhammer belongs in that model, not as a theoretical curiosity but as a technique with a working, public, sub-two-minute root exploit as of 2025.
+
+The deeper lesson generalizes past DRAM. Kim and Mutlu's own retrospective points at where it goes next: the same charge-leakage physics that makes DRAM vulnerable is a property of <Annotation client:load term="charge-based memory generally" note="Mutlu & Kim (2019/2020 retrospective), §IV: 'both technologies [DRAM and NAND flash] are becoming much more vulnerable to cell-to-cell interference effects... Emerging memory technologies... are likely to exhibit similar and perhaps even more exacerbated reliability issues,' with the authors explicitly warning these reliability problems 'may surface as security problems as well, as in the case of RowHammer.'" href="https://arxiv.org/abs/1904.09724" /> — NAND flash, and the newer technologies (phase-change memory, STT-MRAM, memristors) being scaled to replace it. Every time an industry buys density by shrinking the physical distance between stored bits, it is, whether anyone frames it that way or not, buying a little more coupling between neighbors along with it. Rowhammer is what that trade looks like when someone finally goes looking for it.
