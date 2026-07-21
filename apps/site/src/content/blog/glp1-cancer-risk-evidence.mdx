@@ -1,0 +1,310 @@
+---
+title: "It Depends Which Cancer: Reading the GLP-1 Cancer Evidence Like an Epidemiologist"
+format: primer
+channels:
+  - science
+  - data-science
+summary: "Tens of millions of people now take a GLP-1 drug, and the honest cancer-risk answer is not yes or no — colorectal cancer looks protective, pancreatic and breast and kidney signals are flat, and thyroid cancer carries a real, replicated, still-uncertain excess that its own finders cannot pin on the drug."
+publishedAt: 2026-07-21T09:00:00.000Z
+sources:
+  - title: "GLP-1 receptor agonists and cancer: current clinical evidence and translational opportunities for preclinical research (Valencia-Rincón et al., J Clin Invest, Nov 2025)"
+    url: "https://www.jci.org/articles/view/194743"
+    tier: high
+    origin: researched
+  - title: "Risk for Cancer With Glucagon-Like Peptide-1 Receptor Agonists and Dual Agonists: A Systematic Review and Meta-analysis (Ko et al., Annals of Internal Medicine, Dec 2025)"
+    url: "https://scholar.rochesterregional.org/rrhpubs/3273/"
+    tier: high
+    origin: researched
+  - title: "GLP-1 receptor agonists and the risk for cancer: A meta-analysis of randomized controlled trials (Silverii et al., Diabetes, Obesity and Metabolism, 2025)"
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC12232360/"
+    tier: high
+    origin: researched
+  - title: "Risk of thyroid cancer related to glucagon-like peptide-1 receptor agonists: A systematic review with meta-analysis of harms of randomized controlled trials (Duchemin et al., Diabetes, Obesity and Metabolism, 2025)"
+    url: "https://pubmed.ncbi.nlm.nih.gov/40468864/"
+    tier: high
+    origin: researched
+  - title: "Assessment of thyroid cancer risk associated with glucagon-like peptide 1 receptor agonist use (Vilsbøll et al., Diabetes, Obesity and Metabolism, 2026)"
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC12803555/"
+    tier: high
+    origin: researched
+  - title: "Association between GLP-1 receptor agonists as a class and colorectal cancer risk: a meta-analysis of retrospective cohort studies (Zhong, Wu & Khan, BMC Gastroenterology, 2025)"
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC12372225/"
+    tier: high
+    origin: researched
+  - title: "Association Between GLP-1 RA Use and Risk of Colorectal Cancer: A Systematic Review and Meta-Analysis"
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC11839483/"
+    tier: high
+    origin: researched
+  - title: "Glucagon-like peptide-1 receptor agonists and pancreatic cancer risk: target trial emulation using real-world data"
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC11884861/"
+    tier: high
+    origin: researched
+  - title: "Cancer of the Thyroid — SEER Cancer Stat Facts (National Cancer Institute)"
+    url: "https://seer.cancer.gov/statfacts/html/thyro.html"
+    tier: high
+    origin: researched
+  - title: "In U.S., GLP-1 Usage Reaches New High (Gallup, May–June 2026 poll)"
+    url: "https://news.gallup.com/poll/712157/glp-usage-reaches-new-high.aspx"
+    tier: high
+    origin: researched
+  - title: "GLP-1 Receptor Agonists and Cancer Risk in Adults With Obesity (JAMA Oncology, Oct 2025; OneFlorida+ EHR network)"
+    url: "https://pubmed.ncbi.nlm.nih.gov/40839273/"
+    tier: high
+    origin: researched
+  - title: "Can Ozempic prevent cancer? A doctor explains why the headlines are easy to misread"
+    url: "https://theconversation.com/can-ozempic-prevent-cancer-a-doctor-explains-why-the-headlines-are-easy-to-misread-285206"
+    tier: med
+    origin: curated
+  - title: "Study Finds GLP-1RAs May Lower Risk of Obesity-Related Cancers vs DPP-4 Inhibitors in Adults With Diabetes and Obesity (The ASCO Post, reporting Mavromatis et al., ASCO 2025 Annual Meeting, Abstract 10507 — presented, not yet peer-reviewed)"
+    url: "https://ascopost.com/issues/june-10-2025/study-finds-glp-1ras-may-lower-risk-of-obesity-related-cancers-vs-dpp-4-inhibitors-in-adults-with-diabetes-and-obesity/"
+    tier: med
+    origin: researched
+  - title: "ASCO 2025: GLP-1 receptor agonists may slightly reduce risk of fourteen obesity-related cancers for people with diabetes (ecancer, reporting Mavromatis et al., ASCO 2025 Annual Meeting, Abstract 10507 — presented, not yet peer-reviewed)"
+    url: "https://ecancer.org/en/news/26542-asco-2025-glp-1-receptor-agonists-may-slightly-reduce-risk-of-fourteen-obesity-related-cancers-for-people-with-diabetes"
+    tier: med
+    origin: researched
+  - title: "GLP-1 Receptor Agonists and the Risk of Thyroid Cancer (Bezin et al., Diabetes Care 46(2):384-390, 2023; French SNDS nested case-control, n=2,562 cases / 45,184 controls, DOI 10.2337/dc22-1148)"
+    url: "https://diabetesjournals.org/care/article/46/2/384/147888/GLP-1-Receptor-Agonists-and-the-Risk-of-Thyroid"
+    tier: high
+    origin: researched
+draft: false
+---
+
+import { RunnableCode, Annotation, Callout, Detail, Definition, Pullquote, StatBand, Stepper, Quiz, DataTable, Diagram, RangePlot, Sidenote } from "../../components/mdx";
+
+A drug used by tens of millions of people gets a new safety flag: a peer-reviewed meta-analysis reports a statistically significant excess of a specific cancer. What do you actually know at that moment? Not as much as the headline implies, and not as little as a skeptic wants to believe — the honest answer sits in an uncomfortable middle, and getting to it requires reading the paper the way an epidemiologist does rather than the way a headline writer does. This is a skill, not a hot take, and it transfers to every drug-safety story you will ever read, not just the one below.
+
+The case in front of us is real and current: GLP-1 receptor agonists — semaglutide (Ozempic, Wegovy), tirzepatide (Mounjaro, Zepbound), liraglutide (Victoza, Saxenda) and their relatives — are now used by roughly <Annotation client:load term="11% of US adults" note="Gallup poll, May 28–June 5 2026: 11% of US adults are current GLP-1 users, up from 3% in 2024; 15% report having used one for weight loss at some point." /> as of mid-2026, a scale that turns any cancer signal, real or spurious, into a public-health question that matters to tens of millions of households. This primer is not about whether to take a GLP-1 drug. It is about the machinery you need to read the *evidence* about GLP-1 drugs and cancer — and the same machinery reads every other drug-safety story you will meet afterward.
+
+<StatBand client:visible caption="The same drug class, three different cancer-risk verdicts — that is the whole story."
+  stats={[
+    { value: 1.62, prefix: "RR ", label: "THYROID CANCER, ONE META-ANALYSIS", sub: "Duchemin et al. 2025, 95% CI 1.08–2.44", group: false, href: "https://pubmed.ncbi.nlm.nih.gov/40468864/" },
+    { value: 0.57, prefix: "RR ", label: "COLORECTAL CANCER, VS INSULIN", sub: "cohort meta-analysis, 95% CI 0.32–0.81", group: false, href: "https://pmc.ncbi.nlm.nih.gov/articles/PMC11839483/" },
+    { value: 0.84, prefix: "OR ", label: "PANCREATIC CANCER, LARGEST RCT META-ANALYSIS", sub: "95% CI 0.53–1.35 — crosses null", group: false, href: "https://scholar.rochesterregional.org/rrhpubs/3273/" }
+  ]} />
+
+## The misconception that ruins every one of these headlines
+
+Almost every reader treats a reported relative risk the same way: *the number is the danger.* "62% higher risk of thyroid cancer" reads like a near-doubling of your personal odds, especially when it comes with a "statistically significant" stamp and a 95% confidence interval that (barely) excludes 1.0. That reading is the single most common error in lay epidemiology, and it survives contact with peer review because relative risk and absolute risk are genuinely different quantities that happen to share the word "risk."
+
+Run the numbers before you decide how scared to be. Thyroid cancer is <Annotation client:load term="rare" note="13.7 new thyroid cancer cases per 100,000 people per year, 2020–2024 US population data. SEER Cancer Stat Facts, National Cancer Institute." /> in the general population — about 13.7 new cases per 100,000 people per year. A relative risk of 1.62 sounds dramatic; converted into the same units as the base rate, it is a much smaller number than the headline implies, and the gap between those two framings is exactly where a scary-sounding but clinically tiny signal hides.
+
+<RunnableCode client:visible caption="Predict the absolute gap first, then run it. Change baseRate and rr to match any other cancer/study pair in this primer."
+  code={`// Thyroid cancer background rate: 13.7 cases per 100,000 people per year (SEER, 2020-2024).
+const baseRatePer100k = 13.7;
+const rr = 1.62;              // Duchemin et al. 2025 meta-analysis, 95% CI 1.08-2.44
+const population = 100000;    // one year, one 100,000-person cohort
+
+const untreatedCases = baseRatePer100k;
+const treatedCases = baseRatePer100k * rr;
+const excessCases = treatedCases - untreatedCases;
+
+console.log("Untreated cohort: " + untreatedCases.toFixed(1) + " cases per 100,000 per year");
+console.log("GLP-1 cohort (RR " + rr + "): " + treatedCases.toFixed(1) + " cases per 100,000 per year");
+console.log("Absolute excess: " + excessCases.toFixed(1) + " extra cases per 100,000 per year");
+console.log("Framed as relative risk: +" + Math.round((rr - 1) * 100) + "%");
+console.log("Framed as absolute risk: +" + (excessCases / 1000).toFixed(4) + " percentage points");
+
+return "same data, two framings, very different gut reactions";`} />
+
+Both framings are true at once. "A 62% higher relative risk" and "8.5 extra cases per 100,000 people per year" describe the identical result, and neither one is more "correct" — but only the second tells you anything about how worried an individual patient should be. This primer's companion piece on <a href="/blog/hazard-ratios-not-risks">what a hazard ratio actually measures</a> goes deeper on the rate-versus-risk distinction generally; here the point is narrower and just as important: **a small absolute gap can still be a real, replicated, worth-investigating signal** — smallness in absolute terms does not mean the finding is fake, and "it's a small number" is not a rebuttal on its own. The right question is never "is this scary." It is "is this real, and if so, why."
+
+<Callout kind="key-insight" title="The move this primer teaches">
+Convert every relative risk to an absolute one before reacting to it — then, separately and just as carefully, ask whether the number is even real. Those are two different jobs, and skipping either one is how headlines mislead honest readers.
+</Callout>
+
+## Foundation: what a GLP-1 drug actually touches, and why cancer is even a plausible question
+
+<Definition client:visible term="GLP-1" def="glucagon-like peptide-1, a gut hormone released after eating that triggers insulin secretion, slows stomach emptying, and signals fullness to the brain. GLP-1 drugs are synthetic analogs engineered to activate the same receptor for hours instead of minutes." /> is not, on its own, a cancer drug or a cancer risk — it is a hormone your body already makes. The reason cancer is even a reasonable question to ask is that the receptor it binds, GLP-1R, sits on far more tissue than the pancreas.
+
+<Diagram client:visible caption="Where GLP-1 receptor signaling goes, and the two competing downstream paths toward cancer risk — indirect (via metabolism) and direct (via immune cells and specific tissues)."
+  nodes={[
+    { id: "glp1", label: "GLP-1 (drug or endogenous hormone)", x: 0, y: 1, kind: "input" },
+    { id: "receptor", label: "GLP-1 receptor (GLP-1R)", x: 1, y: 1, kind: "process" },
+    { id: "panc", label: "Pancreatic islet cells", x: 2, y: 0, kind: "store" },
+    { id: "cns", label: "CNS — hypothalamus, brainstem", x: 2, y: 1, kind: "store" },
+    { id: "periph", label: "GI tract, liver, kidney, heart", x: 2, y: 2, kind: "store" },
+    { id: "weightloss", label: "Weight loss + lower insulin resistance", x: 3, y: 0, kind: "process" },
+    { id: "directstim", label: "Direct receptor stimulation of specific tissues", x: 3, y: 1, kind: "decision" },
+    { id: "immune", label: "Immune modulation: M1 macrophages, more CD8+ T-cells, fewer Tregs", x: 3, y: 2, kind: "process" },
+    { id: "mitogen", label: "Less insulin-driven mitogenic signaling", x: 4, y: 0, kind: "process" },
+    { id: "tumor", label: "Net effect on tumor growth", x: 5, y: 1, kind: "output" }
+  ]}
+  edges={[
+    { from: "glp1", to: "receptor", kind: "data" },
+    { from: "receptor", to: "panc", kind: "data" },
+    { from: "receptor", to: "cns", kind: "data" },
+    { from: "receptor", to: "periph", kind: "data" },
+    { from: "cns", to: "weightloss", kind: "data" },
+    { from: "weightloss", to: "mitogen", kind: "control", label: "reduces" },
+    { from: "mitogen", to: "tumor", kind: "control", label: "lowers pressure" },
+    { from: "receptor", to: "directstim", kind: "data" },
+    { from: "directstim", to: "tumor", kind: "async", label: "proliferative in rodent models; human relevance disputed" },
+    { from: "receptor", to: "immune", kind: "data" },
+    { from: "immune", to: "tumor", kind: "control", label: "suppresses, weight-independent" }
+  ]} />
+
+Follow the diagram left to right and the whole debate becomes legible. GLP-1 receptors are expressed not just in the pancreas but in the <Annotation client:load term="lung, stomach, intestine, liver, kidney, heart, blood vessels, and CNS regions including the hypothalamus and brainstem" note="Valencia-Rincón et al., J Clin Invest 2025 — GLP-1R tissue distribution reviewed from clinical and preclinical literature." />, which is exactly why a single hormone receptor can plausibly touch a dozen different cancer types through completely different mechanisms. Two of those mechanisms point toward *lower* cancer risk. Weight loss and reduced insulin resistance cut the mitogenic (growth-promoting) effect of chronically elevated insulin — a real, independently documented driver of endometrial, pancreatic, and breast cancer risk. Separately, and weight-loss-independent, GLP-1 receptor agonists appear to shift immune cells toward an antitumor posture — more M1-polarized macrophages, more tumor-infiltrating CD8+ T cells, fewer regulatory T cells — in preclinical models, even in lean mice that never had weight to lose. A third path, direct receptor stimulation of specific tissues, is where the *original* alarm came from: first-generation agonists drove parafollicular C-cell proliferation in rodent thyroid tissue, which is why GLP-1 drugs still carry a thyroid-tumor warning on the label. Whether that rodent finding translates to human thyroid cancer risk is precisely the contested question this primer is built around.
+
+<Callout kind="note" title="The drug matters, not just the class">
+These three paths do not weigh the same for every molecule. Liraglutide and exenatide (first-generation) are the agents tied to the original rodent C-cell and 2011 pancreatic-cancer alarms. Semaglutide showed tumor-*suppressive* effects in murine thyroid cancer models via the immune-modulation path. Tirzepatide (a dual GLP-1/GIP agonist) and retatrutide (an investigational triple GLP-1/GIP/glucagon agonist) show the strongest preclinical tumor suppression yet, in endometrial, breast, and pancreatic models — via Valencia-Rincón et al., J Clin Invest 2025.
+</Callout>
+
+<DataTable client:load caption="Drug, generation, and what the cancer signal actually looks like — the class label hides real differences"
+  columns={[
+    { key: "drug", label: "Drug / molecule", type: "string" },
+    { key: "cls", label: "Class", type: "string" },
+    { key: "thyroid", label: "Thyroid signal", type: "string" },
+    { key: "pancreatic", label: "Pancreatic signal", type: "string" }
+  ]}
+  rows={[
+    { drug: "Liraglutide, exenatide", cls: "First-generation GLP-1 RA", thyroid: "Drove rodent C-cell hyperplasia and the original FDA boxed warning; human RCT meta-analyses found no significant excess for liraglutide specifically.", pancreatic: "Exenatide prompted a 2011 FDA pancreatic-cancer safety review after FAERS reports." },
+    { drug: "Semaglutide", cls: "Second-generation GLP-1 RA", thyroid: "Included in the pooled 93-trial dataset showing no clear excess vs placebo; tumor-suppressive in murine thyroid xenografts via macrophage repolarization.", pancreatic: "No consistent increased risk across meta-analyses; several real-world cohorts show reduced incidence instead." },
+    { drug: "Tirzepatide", cls: "Dual GLP-1/GIP receptor agonist", thyroid: "Not yet separately powered for cancer endpoints in the major meta-analyses.", pancreatic: "Suppressed tumor mass in mouse endometrial and breast xenograft models; human cancer-specific outcome data still thin." },
+    { drug: "Retatrutide", cls: "Triple GLP-1/GIP/glucagon agonist (investigational)", thyroid: "No clinical cancer data yet.", pancreatic: "Greatest preclinical pancreatic tumor suppression among tested agonists, with increased tumor-infiltrating immune activity." }
+  ]} />
+
+That table is the first hard evidence that "GLP-1 drugs and cancer" is not one question. It is at minimum a four-by-many grid — drug, mechanism, cancer type, and (as the next section shows) study design — and collapsing that grid into a single headline number necessarily throws away the information that would let you interpret it correctly.
+
+## The design of the study moves the number as much as the drug does
+
+Here is the part almost no headline mentions: the *same* drug class, studied for the *same* cancer, in overlapping time periods, can produce opposite verdicts depending on how the comparison is built. This is not a metaphor — it happened inside a single published paper.
+
+A 2025 meta-analysis pooling seven retrospective cohort studies (5,066,681 patients) on GLP-1 receptor agonists and colorectal cancer reported a pooled cohort-level relative risk of <Annotation client:load term="RR 2.31 (95% CI 1.82–2.93)" note="Zhong, Wu & Khan, BMC Gastroenterology 2025 — pooled analysis across 7 retrospective cohort studies, I² = 36%." /> — a harmful, statistically significant signal. The very same paper, pooling the *incidence* comparisons from the same underlying studies against other drugs, reported an odds ratio of <Annotation client:load term="OR 1.73 (95% CI 0.21–14.18, p = 0.61)" note="Zhong, Wu & Khan, BMC Gastroenterology 2025 — incidence-based pooling, I² = 100%, statistically null." /> — completely null, with a confidence interval so wide (0.21 to 14.18) it is nearly uninformative, and heterogeneity (I² = 100%) meaning the individual studies did not even roughly agree with each other. One paper. Two ways of aggregating overlapping data. A "significant, harmful" headline and a "no effect" footnote, both defensible readings of the identical literature.
+
+That is not a fluke of one bad paper — it is what happens whenever retrospective, claims-database studies compare a drug against a *choice* of comparator, because the comparator's own patients are not a neutral background. A patient started on insulin is, on average, sicker and further into diabetes progression than one started on a GLP-1 drug; a patient on metformin might be closer in health status. If the comparator arm's *true* background cancer rate differs from the treatment arm's for reasons that have nothing to do with the drug — a phenomenon called confounding by indication — the apparent relative risk shifts even when the drug does nothing at all. Watch it happen in code, holding the GLP-1 arm's true rate completely fixed and changing only which comparator the study happened to choose:
+
+<RunnableCode client:visible caption="The GLP-1 arm's true cancer rate never changes below. Only the comparator arm's background health does. Watch the computed RR swing anyway."
+  code={`// The GLP-1 arm's TRUE colorectal cancer rate is fixed the whole time.
+const glp1TrueRate = 40; // cases per 100,000 per year — never changes
+
+// Three plausible comparator populations, each with a DIFFERENT background
+// rate for reasons that have nothing to do with GLP-1 drugs at all:
+// insulin users are typically sicker/longer-diabetic (higher background risk),
+// SGLT2-inhibitor users are often healthier at initiation,
+// and a "healthy user" comparator (e.g. lifestyle-only) skews healthier still.
+const comparators = {
+  "insulin (sicker population)":        70,
+  "SGLT2 inhibitor (healthier population)": 48,
+  "healthy-user baseline":               35,
+};
+
+for (const [name, comparatorRate] of Object.entries(comparators)) {
+  const rr = glp1TrueRate / comparatorRate;
+  console.log(name + ": comparator rate = " + comparatorRate +
+              "/100k -> computed RR = " + rr.toFixed(2) +
+              (rr < 1 ? "  (looks PROTECTIVE)" : "  (looks HARMFUL)"));
+}
+
+return "same drug, same true rate, three different verdicts";`} />
+
+Run it and the GLP-1 arm never moved — only the comparator did — and the study's verdict flipped from "harmful" to "protective" purely as an artifact of which other drug's users happened to populate the reference group. This is exactly why the colorectal-cancer literature looks protective against insulin (RR 0.57), still protective but less dramatically against SGLT2 inhibitors (RR 0.77) and thiazolidinediones (RR 0.82), and genuinely muddled when a different paper's pooling strategy collapses those distinct comparisons into one number. Randomized trials sidestep this specific problem by assignment, not by belief — which is exactly why the next section separates every effect size in this primer by study design, not just by cancer type.
+
+<Detail summary="Go deeper: why retrospective cohorts can't just adjust the confounding away">
+Statistical adjustment (propensity matching, multivariable regression) only controls for confounders the researchers measured and included. Confounding by indication is dangerous specifically because the reasons a physician chooses one diabetes drug over another — perceived frailty, other comorbidities, insurance formulary, how advanced the diabetes is — are often not fully captured in claims data, so residual confounding survives even careful adjustment. The target-trial-emulation design used in some of the pancreatic-cancer and ASCO 2025 studies below is a partial fix: it defines eligibility, treatment assignment, and follow-up as if it were a randomized trial, then applies the same propensity-matching logic — better than naive cohort comparison, but still not randomization.
+</Detail>
+
+## Put it all on one chart, by cancer type, drug, and design
+
+This is the payoff. Below is every effect size gathered for this primer, cancer type by cancer type, study design by study design — a forest plot in the classical epidemiological sense. Read the dot as the point estimate and the line as the 95% confidence interval; anything whose line crosses 1.0 is statistically indistinguishable from "no effect," no matter how the number is described in a headline.
+
+<RangePlot client:visible caption="Every cancer-type effect size in this primer, in one place. 1.0 = no difference. Lines that cross 1.0 are not statistically distinguishable from null. n = pooled participants where reported."
+  data={[
+    { label: "Thyroid — Duchemin 2025 (independent RCT meta-analysis)", low: 1.08, mid: 1.62, high: 2.44, n: 84156 },
+    { label: "Thyroid — Silverii 2025 (independent RCT meta-analysis)", low: 1.05, mid: 1.55, high: 2.27, n: 87465 },
+    { label: "Thyroid — Bezin 2023 (independent French national claims cohort, 1-3yr use)", low: 1.27, mid: 1.58, high: 1.95, n: 47746 },
+    { label: "Thyroid — Ko/Annals of Int. Med. 2025 (largest RCT meta-analysis)", low: 0.82, mid: 1.37, high: 2.31, n: 94245 },
+    { label: "Thyroid — Vilsbøll 2026 vs placebo (Novo Nordisk-authored)", low: 0.99, mid: 1.70, high: 3.03, n: 101732 },
+    { label: "Colorectal — vs insulin (cohort meta-analysis)", low: 0.32, mid: 0.57, high: 0.81, n: 2047256 },
+    { label: "Colorectal — vs SGLT2 inhibitors (cohort meta-analysis)", low: 0.59, mid: 0.77, high: 0.95, n: 2047256 },
+    { label: "Colorectal — vs thiazolidinediones (cohort meta-analysis)", low: 0.68, mid: 0.82, high: 0.96, n: 2047256 },
+    { label: "Colorectal — pooled cohort RR, separate meta-analysis (I² = 36%)", low: 1.82, mid: 2.31, high: 2.93, n: 5066681 },
+    { label: "Colorectal — same paper, incidence-based OR (null, I² = 100%)", low: 0.21, mid: 1.73, high: 14.18, n: 5066681 },
+    { label: "Pancreatic — Ko/Annals of Int. Med. 2025", low: 0.53, mid: 0.84, high: 1.35, n: 94245 },
+    { label: "Pancreatic — vs insulin, target-trial emulation", low: 0.33, mid: 0.42, high: 0.53, n: 1636056 },
+    { label: "Breast — Ko/Annals of Int. Med. 2025", low: 0.60, mid: 0.95, high: 1.49, n: 94245 },
+    { label: "Kidney — Ko/Annals of Int. Med. 2025 (RCT meta-analysis)", low: 0.78, mid: 1.12, high: 1.60, n: 94245 },
+    { label: "Kidney — OneFlorida+ real-world cohort, JAMA Oncology 2025", low: 0.99, mid: 1.38, high: 1.93, n: 86632 },
+    { label: "Overall obesity-related cancer — OneFlorida+ vs nonusers", low: 0.76, mid: 0.83, high: 0.91, n: 86632 }
+  ]} />
+
+Five things jump out, and each is a distinct lesson.
+
+**Colorectal cancer looks protective, but the protection is comparator-dependent.** Every clean comparison against a specific drug class — insulin, SGLT2 inhibitors, thiazolidinediones — lands below 1.0 with a confidence interval that does not cross it. The moment a paper pools across mismatched comparators and switches metrics mid-analysis, the picture dissolves into the contradiction shown above. A 2025 target-trial-emulation study presented at the ASCO Annual Meeting (170,030 adults with diabetes and obesity, propensity-matched against DPP-4 inhibitors) adds an independent, differently-designed data point pointing the same protective direction: <Annotation client:load term="16% fewer colon cancer cases and 28% fewer rectal cancer cases" note="Mavromatis et al., presented at the 2025 ASCO Annual Meeting, Abstract 10507 — reported in ecancer's meeting coverage: 'There were 16% fewer colon cancer cases and 28% fewer rectal cancer cases in the group prescribed GLP-1 receptor agonists.' Presented data, not yet peer-reviewed." /> than the comparator arm, alongside an overall obesity-related-cancer hazard ratio of <Annotation client:load term="HR 0.93 (95% CI 0.88–0.98, p = .005)" note="Mavromatis et al., presented at the 2025 ASCO Annual Meeting, Abstract 10507 — not yet peer-reviewed. Target-trial emulation, 170,030 adults, 43 US health systems, 2013-2023, GLP-1RA vs DPP-4 inhibitor, mean follow-up 3.8-3.9 years." /> and an all-cause mortality hazard ratio of 0.92 (95% CI 0.87–0.97, p = .001) — with the benefit concentrated in women (8% lower cancer risk, 20% lower mortality) and no significant effect detected in men. <Sidenote>That data is presented, not yet peer-reviewed — real, but earlier in the evidence pipeline than a published meta-analysis, and worth re-checking once it clears review.</Sidenote>
+
+**Pancreatic and breast cancer show no reliable signal in either direction.** The largest single meta-analysis of randomized trials — 48 RCTs, 94,245 participants, led by Albert Ko's group at Harvard T.H. Chan School of Public Health — found both squarely straddling 1.0, and its authors rated the certainty of "little or no effect" as *moderate*, not high, given how few actual cancer events even a dataset that size accumulates over a median 70-week follow-up. A separate real-world target-trial-emulation study (1,636,056 patients with type 2 diabetes, the TriNetX federated health-record network) found pancreatic cancer incidence *lower* with GLP-1 drugs across six different comparator classes (hazard ratios from 0.42 to 0.82) — consistent in direction with "not harmful," even as its own authors caution that "causal inferences cannot be made" from an observational design.
+
+**Kidney cancer is the boundary case that tests whether you actually learned the checklist.** Ko's RCT meta-analysis puts it flat at null, OR 1.12 (95% CI 0.78–1.60). But a separate real-world cohort — the OneFlorida+ electronic-health-record network, 43,317 GLP-1RA users matched against 43,315 nonusers with obesity — reported <Annotation client:load term="HR 1.38 (95% CI 0.99–1.93, p = .04)" note="Bracha et al., JAMA Oncology, October 2025 — OneFlorida+ multicenter EHR network, n=86,632. The paper's own text calls this finding “marginally nonsignificant” despite p = .04, because the 95% CI's lower bound sits at 0.99." /> for kidney cancer — a p-value under the conventional 0.05 threshold, sitting right next to a confidence interval whose lower bound is 0.99, a hair below the null line. The paper's own authors call this "marginally nonsignificant," which is the correct call: when the p-value and the confidence-interval boundary nearly disagree like this, trust the interval, not the p-value alone, because the interval tells you the plausible range of true effects while the p-value collapses that whole range into a single yes/no threshold. The same OneFlorida+ study, on the *overall* obesity-related-cancer question, found a real, unambiguous benefit — HR 0.83 (95% CI 0.76–0.91, p = .002) — an independent real-world corroboration, using a different comparator (nonusers rather than DPP-4 inhibitors), of the same protective direction the ASCO 2025 data found for the drug class as a whole.
+
+**Thyroid cancer is the one place three independent teams — different data, different countries, different authors, no shared funding — landed on the same statistically significant direction.** Duchemin and colleagues (84,156 trial participants, pooled RCTs) found RR 1.62 (95% CI 1.08–2.44); Silverii and colleagues (87,465 participants with thyroid-cancer events across 28 trials) found OR 1.55 (95% CI 1.05–2.27). Neither is a trial-based RCT re-analysis of the other — but a third team, working from an entirely different kind of evidence, reaches the same direction from real-world claims data rather than pooled trials: <Annotation client:load term="Bezin and colleagues (French SNDS national health-insurance database, 2,562 thyroid-cancer cases matched to 45,184 controls)" note="Bezin et al., Diabetes Care 2023;46(2):384-390 — nested case-control analysis, French national health insurance system (SNDS), type 2 diabetes patients on second-line antidiabetic drugs, 2006-2018." /> found <Annotation client:load term="adjusted HR 1.58 (95% CI 1.27–1.95)" note="Bezin et al. 2023 — GLP-1 receptor agonist use for 1-3 years vs. no use, adjusted for available confounders; medullary thyroid cancer specifically: HR 1.78, 95% CI 1.04-3.05. A subsequent published Comment/Response exchange in the same journal raised the concern that obesity itself (higher among thyroid-cancer cases, 11.8% vs 8.4% of controls) was not included as a covariate in the Cox model — a caveat, not a retraction." /> for 1–3 years of GLP-1 receptor agonist use. Neither confidence interval comes close to the alarm-bell language a "62% increase" implies on its own, and none of the three teams claims to have proven causation — but three independently conducted studies, using three different designs (trial meta-analysis, trial meta-analysis, national claims cohort), landing in the same direction, on the same rare outcome, is a real corroborated signal, not noise.
+
+**And the largest single analysis, plus the one written by the drug's own manufacturer, both found the thyroid signal statistically indistinguishable from nothing.** Ko's 48-trial meta-analysis put thyroid cancer at OR 1.37 (95% CI 0.82–2.31) — crossing 1.0. Vilsbøll and colleagues, whose 2026 paper pooled 93 trials (101,732 participants) plus real-world claims data, reported HR 1.70 (95% CI 0.99–3.03) versus placebo and HR 1.83 (95% CI 0.70–6.71) versus active comparators — both crossing 1.0 — and concluded "the totality of data analysed did not suggest an association."
+
+<Pullquote cite="Vilsbøll et al., Diabetes, Obesity and Metabolism, 2026" href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12803555/" kind="quote">
+The totality of data analysed did not suggest an association between liraglutide or semaglutide use and thyroid cancer risk in adults.
+</Pullquote>
+
+That conclusion deserves one more layer of scrutiny before you accept or dismiss it, and it is the layer a headline never gives you: six of the paper's nine authors are Novo Nordisk employees and shareholders — the manufacturer of liraglutide (Victoza, Saxenda) and semaglutide (Ozempic, Wegovy). <Annotation client:load term="Financial conflict, disclosed" note="Vilsbøll et al. 2026 conflict-of-interest statement: “Michael Stellfeld, Sune Dandanell, Jens-Peter David, Ceyda T. P. Kristiansen, Søren Rasmussen, and Fiona L. Roberts are employees of, and shareholders in, Novo Nordisk.”" /> That does not make the paper's math wrong — the underlying trial data is real, and their own numbers do cross the null line — but a paper funded and staffed by the company whose drug is being cleared deserves independent replication before its "no association" conclusion gets to be the final word, exactly the same scrutiny you would apply to Duchemin and Silverii's academic teams, who declared no competing interests. Symmetric skepticism, not selective skepticism, is the actual discipline here.
+
+Vilsbøll and colleagues offer their own explanation for why a numeric excess shows up even in their data without being real: detection bias. Patients newly started on any closely-monitored drug get more medical attention, including more thyroid ultrasonography, in the months right after starting it — and 58% of the thyroid-cancer cases identified in their cardiovascular-outcome trials were diagnosed within the first year of treatment, exactly the window where "look harder, find more" would produce a spurious early spike with no true change in tumor biology.
+
+<RunnableCode client:visible caption="A purely artefactual signal: nobody's cancer risk changes, but the SCREENED group gets checked twice as often."
+  code={`// Ground truth: both groups have the IDENTICAL true thyroid cancer rate.
+// Thyroid nodules are common and mostly benign/subclinical — many exist
+// without ever being found unless someone looks with an ultrasound.
+const trueRatePer100k = 13.7;      // SEER background rate
+const subclinicalPoolPer100k = 40; // undiagnosed nodules that WOULD be found on a scan
+
+function simulateGroup(screeningRate, trials) {
+  let found = 0;
+  for (let i = 0; i < trials; i++) {
+    // baseline cancers are always found eventually
+    if (Math.random() < trueRatePer100k / 100000) found++;
+    // extra subclinical findings ONLY surface if you actually scan for them
+    if (Math.random() < screeningRate && Math.random() < subclinicalPoolPer100k / 100000) found++;
+  }
+  return found;
+}
+
+const trials = 2000000; // simulate 2,000,000 person-years per group
+const monitored = simulateGroup(0.35, trials);   // new-drug patients: scanned often
+const unmonitored = simulateGroup(0.05, trials); // usual care: scanned rarely
+
+const rateMonitored = monitored / (trials / 100000);
+const rateUnmonitored = unmonitored / (trials / 100000);
+
+console.log("Monitored group detected rate: " + rateMonitored.toFixed(1) + " per 100k");
+console.log("Unmonitored group detected rate: " + rateUnmonitored.toFixed(1) + " per 100k");
+console.log("Apparent RR from screening intensity alone: " + (rateMonitored / rateUnmonitored).toFixed(2));
+
+return "true biology never changed — only how hard anyone looked";`} />
+
+Run that a few times and the "apparent RR" bounces around well above 1.0 even though the two simulated populations were built with *the same* true cancer rate — the only difference was how often each group got scanned. This does not prove the real-world thyroid-cancer signal is entirely detection bias; Duchemin and Silverii's teams considered and could not fully rule out this explanation either, which is exactly why they report a signal without claiming to have proven causation. What it does prove is that "a statistically significant excess showed up" and "the drug causes this cancer" are two different claims, and the gap between them is filled by exactly the kind of mechanism this sandbox just demonstrated.
+
+<Quiz client:visible caption="check your reading of the evidence"
+  questions={[
+    { prompt: "A meta-analysis reports RR 1.55 (95% CI 1.05–2.27) for a rare cancer. What is the most defensible one-sentence summary?", choices: ["The drug causes a 55% increase in that cancer", "A statistically significant excess was found, but causation is not established and the absolute risk is small", "The finding is meaningless because the cancer is rare"], answer: 1, explain: "The CI excludes 1 (real signal, not noise) but that is a different claim from proven causation — and 'rare' does not mean 'ignorable,' it means the absolute gap needs to be computed explicitly." },
+    { prompt: "Why did the same colorectal-cancer paper report both a harmful pooled RR (2.31) and a null incidence OR (1.73) for the same drug class?", choices: ["The authors made an arithmetic error", "Different pooling metrics and comparator mixes produced different, both-defensible answers from overlapping data", "Colorectal cancer risk genuinely changed between the two analyses"], answer: 1, explain: "This is confounding-by-comparator and metric choice in action — the same underlying studies, aggregated two different ways, gave two different verdicts. The null incidence-based OR carries I² = 100%, flagging that those studies did not even agree with each other; the harmful pooled RR's own heterogeneity is far lower, I² = 36%." },
+    { prompt: "A cancer-risk analysis is co-authored mostly by employees of the drug's own manufacturer and finds no increased risk. What should you do with that finding?", choices: ["Discard it entirely as biased", "Treat it as one data point requiring independent replication, exactly as you would any single study", "Treat it as more trustworthy since the company knows the drug best"], answer: 1, explain: "Disclosed financial conflict does not falsify the math, but it does mean the finding needs independent corroboration before it settles the question — symmetric scrutiny applies to industry-funded null results and to independent positive findings alike." },
+    { prompt: "A study reports kidney cancer HR 1.38 (95% CI 0.99–1.93, p = .04) and its own authors call it 'marginally nonsignificant.' Why isn't p = .04 the final word?", choices: ["The authors are wrong; p < .05 always means the finding is real", "The confidence interval's lower bound sits at 0.99, just barely including the null value of 1.0, so the interval and the single p-value threshold nearly disagree", "Hazard ratios above 1.0 are never meaningful"], answer: 1, explain: "The confidence interval carries more information than the p-value: it shows the full plausible range, and a lower bound of 0.99 means 'no effect' is still barely inside that range — exactly why the authors themselves hedged the finding rather than declaring it proven." }
+  ]} />
+
+## A short checklist for the next one of these headlines
+
+You will see another version of this story — a different drug, a different cancer, the same headline shape. Here is the sequence that separates a real signal from a scary number, in the order it is worth asking.
+
+<Stepper client:visible mode="reveal" caption="Reading any drug-cancer headline, in order"
+  steps={[
+    { title: "1. What is the comparator?", body: "<p>Versus placebo? Versus another drug? Versus nothing (a raw incidence rate)? The comparator's own background risk can move the reported number as much as the drug does — this primer's colorectal-cancer sandbox showed the identical true rate producing both a 'protective' and a 'harmful' verdict depending only on which comparator was chosen.</p>" },
+    { title: "2. What is the study design?", body: "<p>A randomized trial, a retrospective claims-database cohort, and a target-trial emulation are not interchangeable. RCTs remove confounding by indication through assignment; observational designs need the reader to ask what a physician's original prescribing choice might be correlated with.</p>" },
+    { title: "3. Does the confidence interval cross 1.0?", body: "<p>If it does, the finding is not statistically distinguishable from no effect, no matter how the point estimate is described in prose. If it does not, ask how close the boundary sits to 1.0 — a lower bound of 1.08 is a real but fragile signal, not a settled fact.</p>" },
+    { title: "4. What is the absolute risk, not just the relative one?", body: "<p>Convert the relative risk into cases-per-100,000 using a real published baseline rate. A dramatic-sounding relative number can translate into a handful of extra cases per 100,000 people per year — still worth knowing, rarely worth panicking over.</p>" },
+    { title: "5. Who funded it, and has it been independently replicated?", body: "<p>A disclosed conflict of interest is not disqualifying, but it raises the bar for replication before you treat a 'no risk' or 'protective' finding as final — the same bar you should hold an independent team's positive finding to as well.</p>" },
+    { title: "6. Is it peer-reviewed, or presented?", body: "<p>A conference abstract (like the ASCO 2025 colorectal data in this primer) is real evidence, earlier in the pipeline than a published, peer-reviewed paper — worth citing, worth flagging as such, and worth re-checking once it clears review.</p>" }
+  ]} />
+
+## Where this leaves you
+
+Collapse the whole grid into a mental model rather than a list. GLP-1 receptors sit on tissue across the entire body, so a single hormone-mimicking drug plausibly touches a dozen cancer types through at least three distinct mechanisms — metabolic (less mitogenic insulin signaling), immune (independent of weight loss), and direct receptor stimulation (the one rodent-model finding still unresolved in humans). Layer study design on top of biology and the picture sharpens rather than blurs: colorectal cancer looks genuinely protective in every clean, single-comparator analysis, muddies only when a paper pools mismatched comparators together; pancreatic and breast cancer sit flat at null in the largest, best-designed evidence; kidney cancer sits right on the boundary between null and real, depending on which design you ask; and thyroid cancer carries a real, three-times-independently-replicated excess signal whose own finders — on both the "it's real" and the "it's not" sides — refuse to call it proven, because a plausible detection-bias mechanism sits right next to a plausible biological one, and only more data resolves which is doing the work.
+
+That is not an unsatisfying answer. It is the correct one, and it is available to anyone willing to read past the headline into the comparator, the design, the interval, and the funding line — the same six questions, asked in order, on every drug-safety story you will meet next. The next time a relative risk shows up in your feed, do not ask whether to be scared. Ask which of those six questions the article answered, and which ones it quietly skipped.
