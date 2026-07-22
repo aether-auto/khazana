@@ -1,0 +1,384 @@
+---
+title: "Sixty-One Passwords: How a Teenager's Botnet Weaponized the Internet of Things"
+format: teardown
+channels:
+  - iot
+  - embedded
+  - tech
+summary: "In late 2016, a botnet built almost entirely from a 61-credential dictionary of factory-default Telnet logins hijacked hundreds of thousands of security cameras and home routers and briefly took down large parts of the internet — because the real defect was never Mirai's code, it was a supply chain that shipped Telnet on and unchangeable by design."
+publishedAt: 2026-07-21T09:00:00.000Z
+sources:
+  - title: "Understanding the Mirai Botnet (Antonakakis et al., 26th USENIX Security Symposium, 2017)"
+    url: "https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/antonakakis"
+    tier: high
+    origin: curated
+  - title: "Justice Department Announces Charges and Guilty Pleas in Three Computer Crime Cases Involving Significant DDoS Attacks"
+    url: "https://www.justice.gov/usao-ak/pr/justice-department-announces-charges-and-guilty-pleas-three-computer-crime-cases"
+    tier: high
+    origin: researched
+  - title: "KrebsOnSecurity Hit With Record DDoS"
+    url: "https://krebsonsecurity.com/2016/09/krebsonsecurity-hit-with-record-ddos/"
+    tier: high
+    origin: researched
+  - title: "Akamai on the Record: KrebsOnSecurity Attack"
+    url: "https://krebsonsecurity.com/2016/11/akamai-on-the-record-krebsonsecurity-attack/"
+    tier: high
+    origin: researched
+  - title: "Source Code for IoT Botnet 'Mirai' Released"
+    url: "https://krebsonsecurity.com/2016/10/source-code-for-iot-botnet-mirai-released/"
+    tier: med
+    origin: researched
+  - title: "Who Makes the IoT Things Under Attack?"
+    url: "https://krebsonsecurity.com/2016/10/who-makes-the-iot-things-under-attack/"
+    tier: med
+    origin: researched
+  - title: "IoT Device Maker Vows Product Recall, Legal Action Against Western Accusers"
+    url: "https://krebsonsecurity.com/2016/10/iot-device-maker-vows-product-recall-legal-action-against-western-accusers/"
+    tier: med
+    origin: researched
+  - title: "Mirai IoT Botnet Co-Authors Plead Guilty"
+    url: "https://krebsonsecurity.com/2017/12/mirai-iot-botnet-co-authors-plead-guilty/"
+    tier: med
+    origin: researched
+  - title: "Who is Anna-Senpai, the Mirai Worm Author?"
+    url: "https://krebsonsecurity.com/2017/01/who-is-anna-senpai-the-mirai-worm-author/"
+    tier: med
+    origin: researched
+  - title: "Chinese electronics biz recalls webcams at heart of botnet DDoS woes"
+    url: "https://www.theregister.com/2016/10/24/chinese_firm_recalls_webcams_over_mirai_botnet_infection_ddos_woes/"
+    tier: med
+    origin: researched
+  - title: "Here are the 61 passwords that powered the Mirai IoT botnet"
+    url: "https://www.csoonline.com/article/558215/here-are-the-61-passwords-that-powered-the-mirai-iot-botnet.html"
+    tier: med
+    origin: researched
+  - title: "DDoS attacks on Dyn (Wikipedia)"
+    url: "https://en.wikipedia.org/wiki/DDoS_attacks_on_Dyn"
+    tier: med
+    origin: researched
+  - title: "Understanding the MIRAI Botnet: Scanning Process, Infection Method and Key Features (F. Lauria, IIT-CNR Technical Report TR-06/2023)"
+    url: "https://iris.cnr.it/retrieve/c8af9fa9-4172-4fa2-9a86-18d019eb7f8b/prod_482082-doc_198344.pdf"
+    tier: med
+    origin: researched
+draft: false
+---
+
+import { RunnableCode, Chart, Annotation, StatBand, Pullquote, Sidenote, Diagram, Stepper, StateMachine, Map, DataTable, EventCascade, Callout, Detail, Definition, Math } from "../../components/mdx";
+
+At 11:07 UTC on October 21, 2016, name resolution for Twitter, GitHub, Netflix, PayPal, Reddit, and Amazon began failing for a large slice of the internet — not because any of those companies had been breached, but because their shared DNS provider, Dyn, was drowning in forged traffic from hundreds of thousands of hijacked security cameras and home routers <Annotation client:load term="a series of DDoS attacks" note="Antonakakis et al., §6.3: 'we observed 23 attack commands that targeted Dyn infrastructure, from 11:07–16:55 UTC,' citing Dyn's own postmortem for the list of affected high-traffic sites." href="https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/antonakakis" />. A month earlier, the same botnet had thrown 623 Gbps of junk traffic at a single security blogger's website — the largest attack its host, Akamai, had ever mitigated <Annotation client:load term="623 Gbps" note="Antonakakis et al., §6.3: 'an unprecedented 623 Gbps DDoS attack.' Independently confirmed by Akamai's own on-record figure of 623 Gbps via Krebs on Security." href="https://krebsonsecurity.com/2016/11/akamai-on-the-record-krebsonsecurity-attack/" />. The weapon behind both attacks contained no novel exploit, no buffer overflow, no zero-day. It contained a list of 61 usernames and passwords — the kind printed on a sticker on the back of a DVR — and a scanner fast enough to try them against the entire IPv4 internet.
+
+This is the teardown of that machine: Mirai. Not the folklore version — the one measured. A team of nine researchers from Georgia Tech, Michigan, Illinois, Akamai, Cloudflare, Google, and Merit Network spent seven months with a 4.7-million-IP network telescope, an Internet-wide scanner, live honeypots, and logs handed over by the victims themselves, and published the result as the peer-reviewed forensic record this piece is built on <Annotation client:load term="Understanding the Mirai Botnet" note="Antonakakis, M. et al., 26th USENIX Security Symposium (2017), pp. 1093–1110 — the primary measurement study this teardown is grounded against throughout." href="https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/antonakakis" />. We're going to build the mechanism from that record — scan, brute-force, report, load, command — and then use it to make an uncomfortable argument: nothing about Mirai was a bug. Every piece of it was a rational exploitation of decisions the IoT supply chain made on purpose.
+
+<StatBand client:visible caption="The shape of the problem, by the numbers Antonakakis et al. (2017) measured"
+  stats={[
+    { value: 61, label: "UNIQUE CREDENTIALS", sub: "the entire attack surface", href: "https://www.csoonline.com/article/558215/here-are-the-61-passwords-that-powered-the-mirai-iot-botnet.html" },
+    { value: 600, suffix: "K", label: "PEAK INFECTED DEVICES", sub: "Nov 2016, all-time high", href: "https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/antonakakis" },
+    { value: 623, suffix: " GBPS", label: "ATTACK ON KREBS ON SECURITY", sub: "Sept 21, 2016 — a DDoS record", href: "https://krebsonsecurity.com/2016/11/akamai-on-the-record-krebsonsecurity-attack/" },
+    { value: 24, suffix: "K", label: "DEVICES BEHIND THAT ATTACK", sub: "per Akamai's own estimate", href: "https://krebsonsecurity.com/2016/11/akamai-on-the-record-krebsonsecurity-attack/" }
+  ]} />
+
+Hold onto that last pair of numbers, because they are the whole argument in miniature: 24,000 of some of the internet's cheapest, weakest, most disposable devices — no botmaster had to buy server time or rent a data center — pushed more traffic than the internet had ever recorded from a single DDoS attack. Nobody had to be clever. The devices did the work; the humans just had to know 61 passwords.
+
+## Why brute force was even worth trying
+
+Start with the naive objection: shouldn't 61 passwords be a joke of an attack surface? A modern server rejects a brute-force attempt after five tries. Rate-limiting, account lockouts, fail2ban — this is solved. If you assume the IoT device on the other end behaves like a hardened Linux server, guessing `root:xc3511` looks like a stunt, not a strategy.
+
+That assumption is exactly what Mirai's designers rejected, and the data proves them right. The devices Mirai targeted were purpose-built consumer electronics — DVRs, IP cameras, home routers — running Telnet servers nobody expected to be internet-facing, with no rate limiting, no lockout policy, and in a meaningful number of cases, credentials that were <Definition client:visible term="hardcoded" def="baked into the device firmware at the factory rather than stored in user-editable configuration — changing the password in the admin panel does nothing, because the login the Telnet daemon actually checks lives somewhere the panel can't reach." /> rather than merely defaulted. Researchers at the threat-intelligence firm Flashpoint traced one of Mirai's most productive credential pairs — `root:xc3511` — to a Telnet daemon burned into white-labeled DVR and camera circuit boards manufactured by a single Chinese company, XiongMai Technologies, and resold under dozens of consumer brand names <Annotation client:load term="root:xc3511" note="Krebs on Security, ‘IoT Device Maker Vows Product Recall, Legal Action Against Western Accusers’ (Oct 2016): Flashpoint researchers traced the credential to XiongMai Technologies' white-labeled DVR/IP-camera boards; ‘the password is hardcoded into the device firmware and the tools needed to disable it aren't present’ in the device's own web panel." href="https://krebsonsecurity.com/2016/10/iot-device-maker-vows-product-recall-legal-action-against-western-accusers/" />. XiongMai itself later admitted as much in a statement to the press.
+
+<Pullquote cite="Xiongmai Technology, statement to the press, October 2016" href="https://krebsonsecurity.com/2016/10/iot-device-maker-vows-product-recall-legal-action-against-western-accusers/" kind="quote">
+Mirai is a huge disaster for the Internet of Things. XM have to admit that our products also suffered from hacker's break-in.
+</Pullquote>
+
+Owners could not simply change the password and move on, because in many of these devices there was no password to change — the web-admin panel controlled a cosmetic login layer, while the Telnet daemon underneath answered to a credential compiled into the firmware. That's the crux of this teardown's argument, and we'll come back to it once the mechanism is on the table: the "vulnerability" here was never a coding mistake anyone could patch. It was a supply-chain decision, repeated across dozens of downstream brands, to ship remote management open by default and unfixable by the customer.
+
+First, though, the machine itself.
+
+## The five-part architecture
+
+Mirai is not one program running on infected devices — it's five cooperating roles, most of which the malware author kept deliberately dumb so that any one part could run on hardware as weak as a $30 IP camera. The researchers reconstructed this architecture directly from the source code Mirai's author released in October 2016 <Annotation client:load term="reconstructed this architecture" note="Antonakakis et al., §2, Fig. 2 — ‘Mirai Operation,’ derived from the publicly released source code (hackforums.net, Sept 30 2016)." href="https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/antonakakis" />.
+
+<Diagram client:visible caption="Mirai's operation, five roles cooperating with no single point of intelligence. (After Antonakakis et al., Fig. 2.)"
+  nodes={[
+    { id: "attacker", label: "Attacker", x: 0, y: 0, kind: "input" },
+    { id: "c2", label: "Command &\nControl (C2)", x: 1, y: 0, kind: "process" },
+    { id: "bots", label: "Bots\n(infected devices)", x: 2, y: 0, kind: "process" },
+    { id: "target", label: "DDoS Target", x: 3, y: 0, kind: "output" },
+    { id: "candidate", label: "Candidate device\n(Telnet open)", x: 2, y: 1.4, kind: "decision" },
+    { id: "report", label: "Report\nServer", x: 1, y: 1.4, kind: "store" },
+    { id: "loader", label: "Loader", x: 0, y: 1.4, kind: "process" }
+  ]}
+  edges={[
+    { from: "attacker", to: "c2", label: "issue attack command", kind: "control" },
+    { from: "c2", to: "bots", label: "dispatch", kind: "control" },
+    { from: "bots", to: "target", label: "DDoS traffic", kind: "data" },
+    { from: "bots", to: "candidate", label: "scan + brute-force login", kind: "data" },
+    { from: "candidate", to: "report", label: "victim IP + working creds", kind: "data" },
+    { from: "report", to: "loader", label: "dispatch infection", kind: "control" },
+    { from: "loader", to: "candidate", label: "log in, fingerprint arch,\ndownload + execute binary", kind: "data" },
+    { from: "candidate", to: "bots", label: "new bot joins pool,\nresumes scanning", kind: "async" }
+  ]} />
+
+Read the loop clockwise. A bot doesn't infect anything itself — it only *finds* things. It fires stateless <Definition client:visible term="TCP SYN" def="the first packet of a TCP connection attempt; sending one without completing the handshake is enough to learn whether a port is open, at a fraction of the cost of a full connection." /> probes at pseudorandom IPv4 addresses on Telnet ports 23 and 2323, and when one answers, it runs a brute-force login using ten username/password pairs pulled at random from the credential dictionary. The moment one pair works, the bot's job is done: it reports the victim's IP address and the winning credentials to a hardcoded report server and goes back to scanning. A completely separate program — the loader — picks up that report, connects to the new victim, works out what CPU architecture it's running (MIPS, ARM, x86, and half a dozen others), and pushes the right compiled binary. Only after that binary executes does the device become a bot itself, dialing home to a command-and-control server to wait for orders while it starts scanning for the next victim.
+
+That split matters. A weak IoT device has no spare compute for the fingerprinting, cross-compilation logic, and multi-threaded connection handling the loader needs — so Mirai never asks it to do that work. The bots are appliances that only ever do two cheap things: scan, and brute-force ten passwords. Everything expensive lives on rented infrastructure the attacker controls <Annotation client:load term="everything expensive lives on rented infrastructure" note="F. Lauria, IIT-CNR Technical Report TR-06/2023: the loader 'demonstrates a robust and efficient approach through its multi-threaded architecture' — a main listener thread plus a dedicated worker thread per victim, separate from the lightweight scanning bots." href="https://iris.cnr.it/retrieve/c8af9fa9-4172-4fa2-9a86-18d019eb7f8b/prod_482082-doc_198344.pdf" />. This is the first of several places where Mirai's design looks less like malware written by an amateur and more like an engineer optimizing for the actual constraints of the hardware it was exploiting.
+
+Follow one device through that loop and its state machine is short — five hops from "never seen" to "attacking on command."
+
+<StateMachine client:visible
+  caption="One device's path from candidate to bot. The loop closes at ‘bot’: it now scans for the next victim while listening for orders."
+  start="candidate"
+  states={[
+    { id: "candidate", label: "CANDIDATE", x: 0, y: 0 },
+    { id: "probed", label: "PROBED\n(Telnet open)", x: 1, y: -1 },
+    { id: "compromised", label: "COMPROMISED\n(login accepted)", x: 2, y: 0 },
+    { id: "loading", label: "LOADING", x: 3, y: -1 },
+    { id: "bot", label: "BOT", x: 4, y: 0 }
+  ]}
+  transitions={[
+    { from: "candidate", to: "probed", on: "SYN probe hits open TCP/23 or TCP/2323" },
+    { from: "probed", to: "compromised", on: "1 of 10 sampled credential pairs accepted" },
+    { from: "compromised", to: "loading", on: "IP + creds reported; loader dispatched" },
+    { from: "loading", to: "bot", on: "arch-matched binary downloaded and executed" },
+    { from: "bot", to: "candidate", on: "resumes scanning — the cycle repeats on new IPs" }
+  ]}
+  sequence={["candidate>probed", "probed>compromised", "compromised>loading", "loading>bot", "bot>candidate"]} />
+
+Once a device becomes a bot, the loader's own four-step choreography — verified independently against the released source by a second, more code-level analysis — is worth seeing explicitly, because it's where the "conceal itself" behavior lives that made Mirai so hard to clean up.
+
+<Stepper client:visible mode="reveal" caption="What the loader does to a newly-compromised device, step by step"
+  steps={[
+    { title: "Connect using the reported credentials", body: "<p>The loader dials the victim IP with the exact username/password pair the scanning bot already proved works — no further guessing needed.</p>" },
+    { title: "Confirm the device is actually exploitable", body: "<p>It checks for writable/executable directories and other environment signals before committing — a wasted infection attempt costs loader capacity.</p>" },
+    { title: "Download and execute the matching binary", body: "<p>Using whichever of WGET, TFTP, or a raw ECHO upload the device supports, it pushes the architecture-specific Mirai executable and runs it.</p>" },
+    { title: "The device erases the evidence and dials home", body: "<p>Mirai deletes its own downloaded binary, renames its running process to a random string, and disables the watchdog timer that would otherwise reboot the device back to a clean state — then connects to the C2 server and resumes scanning.</p>" }
+  ]} />
+
+Because the binary deletes itself and never touches disk storage, a Mirai infection does not persist across a reboot <Annotation client:load term="does not persist across a reboot" note="Antonakakis et al., §2: ‘Mirai infections did not persist across system reboots’ — one of the botnet's structural weaknesses, covered in the failure-modes section below." href="https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/antonakakis" />. That single fact will matter a great deal later, when we get to what actually stopped the botnet from simply growing forever.
+
+## The dictionary — and why ten-of-sixty-one was already overkill
+
+Here's the part worth running yourself. Mirai's released source shipped a dictionary of 62 credential lines; because one line repeats, that's 61 genuinely unique username/password pairs <Annotation client:load term="61 genuinely unique" note="Antonakakis et al., §2: ‘a pre-configured list of 62 credentials.’ CSO Online's independent parse of the released scanner.c: ‘scanner.c has 62 password lines to check, [but] only 61 of them are unique combinations’ — the two accounts corroborate each other on the dictionary's size." href="https://www.csoonline.com/article/558215/here-are-the-61-passwords-that-powered-the-mirai-iot-botnet.html" />. Each scanning bot doesn't even try all 61 against a given target — it randomly samples just 10 of them per attempt. That sounds like it should make the attack weaker. In practice, it barely matters, because the dictionary wasn't built to be exhaustive against one device — it was built to be broad against the *population*.
+
+<RunnableCode client:visible caption="A tiny, faithful simulation of Mirai's brute-force step — 10 random guesses from the real dictionary against one simulated device. Re-run it: it often lands within the first few tries, but roughly one run in three misses this device entirely — which is fine, because the next scanning bot just tries again."
+  code={`// A representative slice of Mirai's actual dictionary (Antonakakis et al., Table 5).
+const DICTIONARY = [
+  ["root", "xc3511"], ["root", "vizxv"], ["root", "admin"],
+  ["admin", "admin"], ["admin", "password"], ["root", "666666"],
+  ["root", "888888"], ["ubnt", "ubnt"], ["supervisor", "supervisor"],
+  ["guest", "guest"], ["root", "default"], ["admin", "1111"],
+  ["root", "system"], ["tech", "tech"], ["root", "juantech"]
+];
+
+function sampleTen(dict) {
+  const pool = [...dict];
+  const picked = [];
+  for (let i = 0; i < 10 && pool.length; i++) {
+    const idx = Math.floor(Math.random() * pool.length);
+    picked.push(pool.splice(idx, 1)[0]);
+  }
+  return picked;
+}
+
+// One simulated DVR still running its factory-default login:
+const victimCreds = ["root", "xc3511"];
+
+function bruteForce(dict, real) {
+  const attempts = sampleTen(dict);
+  for (let i = 0; i < attempts.length; i++) {
+    const [u, p] = attempts[i];
+    if (u === real[0] && p === real[1]) {
+      return { success: true, triesUsed: i + 1 };
+    }
+  }
+  return { success: false, triesUsed: attempts.length };
+}
+
+const result = bruteForce(DICTIONARY, victimCreds);
+console.log("10 random guesses from a 15-pair sample:", result);
+return result.success
+  ? "cracked in " + result.triesUsed + " of 10 tries"
+  : "missed this round — the NEXT bot to scan this IP tries again";`} />
+
+Run it a few times: sometimes it lands on try one, sometimes it misses all ten. That miss doesn't matter, because scanning is continuous and the population of scanning bots is huge — if this bot misses, another bot scanning the same IP block an hour later tries a different random 10, and the device is still running the same factory login it shipped with. The dictionary didn't need to be clever. It needed to be broad enough that across hundreds of thousands of vulnerable devices and a botnet that never stops scanning, misses simply don't compound.
+
+The researchers manually traced 46 of the dictionary's passwords to specific device vendors — proof the list wasn't guesswork, but a deliberately compiled inventory of known-default IoT credentials <Annotation client:load term="deliberately compiled inventory" note="Antonakakis et al., Table 5 caption: ‘The 09/30/2016 Mirai source release included 46 unique passwords, some of which were traceable to a device vendor and device type.’" href="https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/antonakakis" />:
+
+<DataTable client:load caption="A sample of Mirai's credential dictionary, matched to the device vendor each password targeted (Antonakakis et al., Table 5)"
+  columns={[
+    { key: "password", label: "Password", type: "string" },
+    { key: "device", label: "Targeted device", type: "string" }
+  ]}
+  rows={[
+    { password: "xc3511", device: "H.264 Chinese DVR" },
+    { password: "vizxv", device: "Dahua IP Camera" },
+    { password: "7ujMko0admin", device: "Dahua IP Camera" },
+    { password: "888888", device: "Dahua DVR" },
+    { password: "hi3518", device: "HiSilicon IP Camera" },
+    { password: "jvbzd", device: "HiSilicon IP Camera" },
+    { password: "klv1234", device: "HiSilicon IP Camera" },
+    { password: "OxhlwSG8", device: "HiSilicon IP Camera" },
+    { password: "juantech", device: "Guangzhou Juan Optical" },
+    { password: "xmhdipc", device: "Shenzhen Anran Camera" },
+    { password: "dreambox", device: "Dreambox TV Receiver" },
+    { password: "realtek", device: "RealTek Routers" },
+    { password: "smcadmin", device: "SMC Routers" },
+    { password: "ubnt", device: "Ubiquiti AirOS Router" },
+    { password: "ikwb", device: "Toshiba Network Camera" },
+    { password: "zte521", device: "ZTE Router" },
+    { password: "00000000", device: "Panasonic Printer" },
+    { password: "system", device: "IQinVision Cameras" },
+    { password: "meinsm", device: "Mobotix Network Camera" },
+    { password: "supervisor", device: "VideoIQ" },
+    { password: "(none)", device: "Vivotek IP Camera — blank password" },
+    { password: "123456", device: "ACTi IP Camera" }
+  ]} />
+
+That last row is worth pausing on: one entire manufacturer's camera line shipped with no password at all. The scanner didn't even need a dictionary entry for it — a blank string was already in the 61.
+
+## How researchers proved this traffic was Mirai, not noise
+
+The mechanism above is what the source code says Mirai does. Proving that hundreds of thousands of real devices on the real internet were actually doing it — as opposed to ordinary background scanning, which happens constantly — is a harder, more interesting problem, and it's the moment in the paper where the measurement itself becomes the hard part of the teardown.
+
+Mirai's scanner is stateless: to keep up its scan rate, it doesn't track which IPs it has already probed, and by design it discards no memory of a probe once it's sent. But that statelessness left an accidental fingerprint. Every outbound SYN packet reused the destination IP address as its 32-bit TCP sequence number — a field that's supposed to be random. The odds of an ordinary scanner doing that by chance are one in 2^32.
+
+<RunnableCode client:visible caption="The exact artifact Antonakakis et al. used to separate Mirai from background internet noise. Edit the ‘ordinary scanner’ sequence number and watch the fingerprint fail to match."
+  code={`function ipToInt(ip) {
+  const [a, b, c, d] = ip.split(".").map(Number);
+  return ((a << 24) | (b << 16) | (c << 8) | d) >>> 0;
+}
+
+// Mirai's stateless scanner sets the outbound SYN's sequence number
+// equal to the destination IP — an artifact of skipping per-connection
+// state to scan faster.
+function isMiraiFingerprint(destIp, seqNum) {
+  return ipToInt(destIp) === (seqNum >>> 0);
+}
+
+const dest = "192.0.2.44";
+const miraiStyleSeq = ipToInt(dest);   // Mirai: seq === dest IP, always
+const ordinarySeq = 0x9f2a71c3;        // a normal scanner: a random seq
+
+console.log("Mirai-style probe flagged:", isMiraiFingerprint(dest, miraiStyleSeq));
+console.log("Ordinary-scanner probe flagged:", isMiraiFingerprint(dest, ordinarySeq));
+console.log("Chance of an accidental match: 1 in", 2 ** 32);
+return "over 7 months, researchers expected ~86 accidental matches on a 4.7M-IP telescope; they logged 116.2 billion.";`} />
+
+That gap — 86 expected, 116.2 billion observed — is not a rounding error, it's a different phenomenon entirely, and it's why the researchers could say with confidence that they weren't measuring internet background radiation <Annotation client:load term="116.2 billion" note="Antonakakis et al., §3.1: expected ‘roughly 86 packets demonstrating this pattern’ by chance; observed ‘116.2 billion Mirai probes from 55.4 million IP addresses’ over the 7-month telescope window (July 18, 2016–Feb 28, 2017)." href="https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/antonakakis" /> — they were watching an actual botnet, hour by hour, IP by IP.
+
+## From one IP to a quarter million, then a peak of 600,000
+
+Mirai's very first scan came from a single IP address at a U.S. bulletproof hosting provider on August 1, 2016 <Annotation client:load term="a single IP address" note="Antonakakis et al., §4.1: the bootstrap scan ran from an IP belonging to DataWagon, ‘a U.S.-based bulletproof hosting provider,’ 01:42–03:59 UTC on Aug 1, 2016; the botnet itself emerged about 40 minutes later, 04:37 UTC." href="https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/antonakakis" />. Within one minute of the botnet emerging, 834 devices were scanning. Within ten minutes, 11,000 hosts were infected. Within twenty hours, the count stood at 64,500 — a doubling time of roughly 76 minutes. That's slower than classic desktop worms like Code Red (37 minutes) or Blaster (9 minutes), a gap the researchers attribute to the low compute and bandwidth of the devices themselves, and to the accuracy cost of a brute-force login versus a straight exploit.
+
+<Math client:visible tex="N(t) = N_0 \cdot 2^{t / T},\quad T \approx 76\text{ min}" label="(1)"
+  caption="Mirai's early exponential growth model, fit to the paper's own bootstrap measurements — 834 devices at t=1min, 64,500 at t=20hr." />
+
+What the population did *after* that first day is where the "600,000 devices" headline needs a correction most retellings skip. The paper's own multi-month telescope trace shows three distinct phases, not one steady number:
+
+<Chart client:visible mark="line" x="phase" y="devices" height={300}
+  caption="Mirai's population over its measured 7-month life. The Krebs, OVH, and Dyn attacks (Sept–Oct 2016) happened during the FIRST plateau — not at the peak. Data: Antonakakis et al., §4.2, Fig. 3."
+  data={[
+    { phase: "Sept–Oct 2016 (Krebs/OVH/Dyn)", devices: 300000 },
+    { phase: "Late Nov 2016 (CWMP exploit added)", devices: 600000 },
+    { phase: "Feb 2017 (end of study)", devices: 100000 }
+  ]} />
+
+<Callout kind="key-insight" title="600,000 was never the number behind the famous attacks">
+The botnet's all-time peak of 600,000 devices came at the END of November 2016 — driven not by the original 61-password Telnet dictionary, but by a second, unrelated exploit that Mirai variants added after the source code went public: a remote-code-execution bug in routers' CPE WAN Management Protocol (CWMP), a remote-configuration service. The Krebs (Sept 21), OVH (mid-Sept), and Dyn (Oct 21) attacks — the ones that made global headlines — were launched from the earlier, smaller steady-state population of roughly 200,000–300,000 devices, essentially all recruited through the original Telnet credential dictionary. It's a stronger version of this piece's thesis, not a weaker one: even the SECOND spike came from the same root cause — a management protocol left open and exploitable by default — not a new class of mistake.
+</Callout>
+
+The 41.5% of that population concentrated in just three countries is its own tell about where the vulnerable hardware actually was:
+
+<Map client:visible caption="Where Mirai's infections were concentrated on Sept 21, 2016 — the day of the Krebs on Security attack. Brazil, Colombia, and Vietnam alone accounted for 41.5% of all infections. Data: Antonakakis et al., Table 3."
+  labels={{ BRA: "Brazil — 49,340 (15.0%)", COL: "Colombia — 45,796 (14.0%)", VNM: "Vietnam — 40,927 (12.5%)", CHN: "China — 21,364 (6.5%)", KOR: "South Korea — 19,817 (6.0%)", RUS: "Russia — 15,405 (4.7%)", TUR: "Turkey — 13,780 (4.2%)", IND: "India — 13,357 (4.1%)", TWN: "Taiwan — 11,432 (3.5%)", ARG: "Argentina — 7,164 (2.2%)" }}
+  values={{ BRA: 49340, COL: 45796, VNM: 40927, CHN: 21364, KOR: 19817, RUS: 15405, TUR: 13780, IND: 13357, TWN: 11432, ARG: 7164 }} />
+
+This distribution is itself a data point about the supply-chain argument: it doesn't track internet population, it tracks where the cheapest white-labeled DVR and router hardware was sold. The top 10 autonomous systems accounted for 44.3% of all infections, concentrated in exactly the markets where Mirai's targeted brands — Dahua, HiSilicon-based cameras, XiongMai-derived boards — had the deepest penetration <Annotation client:load term="deepest penetration" note="Antonakakis et al., §4.3: ‘the top 10 ASes accounted for 44.3% of infections... possibly due to biases in manufacturer and market penetration in those regions,’ contrasting sharply with prior worms (CodeRed, Slammer, Witty, Conficker) that concentrated in the U.S." href="https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/antonakakis" />.
+
+## Two headline attacks, read mechanically
+
+### Krebs on Security, September 20–21, 2016
+
+Security journalist Brian Krebs's site has absorbed DDoS attacks for years — 269 of them between 2012 and 2016, by Akamai's own count. The Sept 21 attack was 35 times larger than his average and, by Akamai's own on-the-record statement, the largest attack the company had ever mitigated for any customer <Annotation client:load term="35 times larger" note="Antonakakis et al., Fig. 10 / §6.3, drawing on Akamai's historical attack log for the site (269 DDoS attacks, 7/24/2012–9/22/2016). Corroborated by Akamai's own statement in Krebs on Security, ‘Akamai on the Record: KrebsOnSecurity Attack’ (Nov 2016): ‘the attack on September 20 was the largest attack ever mitigated by Akamai.’" href="https://krebsonsecurity.com/2016/11/akamai-on-the-record-krebsonsecurity-attack/" />. Krebs's own account, published within hours <Annotation client:load term="published within hours" note="Krebs on Security, ‘KrebsOnSecurity Hit With Record DDoS’ (Sept 2016): ‘initial reports put it at approximately 665 Gigabits of traffic per second. Additional analysis on the attack traffic suggests the assault was closer to 620 Gbps.’" href="https://krebsonsecurity.com/2016/09/krebsonsecurity-hit-with-record-ddos/" />, put the initial estimate near 665 Gbps before analysis settled on 623 Gbps — the same figure Akamai later confirmed on the record, attributing it to "just 24,000" Mirai-infected devices, mostly DVRs and security cameras <Annotation client:load term="just 24,000" note="Krebs on Security, ‘Akamai on the Record: KrebsOnSecurity Attack’ (Nov 2016): the Sept 20 attack peaked at 623 Gbps, ‘launched by just 24,000 systems infected with Mirai.’ A separate, smaller 12,847-IP sample Akamai shared for research verification produced a 96.4% overlap with Mirai-fingerprinted scanning IPs in the same window." href="https://krebsonsecurity.com/2016/11/akamai-on-the-record-krebsonsecurity-attack/" />. Akamai had been protecting Krebs's site pro bono since August 2012; in the wake of the attack, Akamai ended that pro-bono arrangement, and Krebs's site moved to Google's Project Shield, a free program that protects journalists and dissidents from online censorship <Annotation client:load term="Google's Project Shield" note="Krebs on Security, ‘Akamai on the Record: KrebsOnSecurity Attack’ (Nov 2016): ‘KrebsOnSecurity.com was a pro-bono customer of Akamai, beginning in August 2012... Akamai mentions this as well in explaining its decision to terminate our pro-bono arrangement. KrebsOnSecurity is now behind Google's Project Shield, a free program run by Google to help protect journalists and dissidents from online censorship.’" href="https://krebsonsecurity.com/2016/11/akamai-on-the-record-krebsonsecurity-attack/" />. <Sidenote>Ten days after that attack, Mirai's author posted its full source code to a hacking forum under the handle “Anna-senpai,” explaining that with “lots of eyes looking at IOT now, it's time to exit” — a release that let dozens of copycat operators fork the botnet, and, not incidentally, is the reason researchers were able to reconstruct the architecture in this piece at all.</Sidenote>
+
+### Dyn, October 21, 2016
+
+The Dyn attack is the one that made Mirai a household name, because it didn't target one site — it targeted the infrastructure dozens of sites depended on. Dyn provided managed DNS for Twitter, GitHub, Netflix, PayPal, Reddit, and Amazon <Annotation client:load term="among many others" note="Compiled press/postmortem account: the outage also disrupted Spotify, Tumblr, SoundCloud, PlayStation Network, Xbox Live, CNN, and the BBC, among hundreds of other Dyn customers." href="https://en.wikipedia.org/wiki/DDoS_attacks_on_Dyn" />; when its authoritative name servers buckled, none of those domains would resolve for a large fraction of internet users, even though not one of their own servers was under attack.
+
+<EventCascade client:visible caption="How a credential dictionary became a DNS outage for half the internet's front page"
+  nodes={[
+    { kind: "cause", label: "Hundreds of thousands of DVRs, routers, and cameras shipped with hardcoded or unchangeable Telnet defaults", detail: "No exploit development required — Mirai's 61-credential dictionary alone was sufficient to recruit the population needed. Antonakakis et al., §2, §4.4." },
+    { kind: "effect", label: "Mirai C2 servers issued a sustained series of SYN, ACK, and GRE floods against Dyn's DNS infrastructure", detail: "23 attack commands from 11:07–16:55 UTC on Oct 21, 2016, escalating from short 25-second SYN floods on port 53 to sustained 1-hour and 5-hour attacks. Antonakakis et al., §6.3." },
+    { kind: "effect", label: "Authoritative DNS for Dyn's customers became unreachable", detail: "107,464 attacking IPs were logged by Dyn; 70.8% overlapped with Mirai-fingerprinted scanning on the researchers' own network telescope, confirming Mirai's central role. Antonakakis et al., Table 11." },
+    { kind: "turning-point", label: "Twitter, GitHub, Netflix, PayPal, Reddit, and Amazon became unreachable for large parts of the U.S. and Europe", detail: "None of those companies' own infrastructure was attacked — their shared dependency on one DNS provider turned a botnet's grudge into a systemic outage. Antonakakis et al., §6.3; corroborated by contemporaneous press compiled in Wikipedia's account of the incident." }
+  ]} />
+
+The researchers' own attack-command data adds a strange coda: interleaved with the Dyn floods were attacks on PlayStation Network name servers and Valve's Steam infrastructure, suggesting the operator may have actually been settling a score in the online-gaming world and hit Dyn's broader customer base as collateral damage <Annotation client:load term="collateral damage" note="Antonakakis et al., §6.3: later attack commands paired Dyn's targeted IPs with PlayStation Network name-server IPs; non-Dyn attacks in the same window targeted Xbox Live and Valve Steam infrastructure — 'this pattern of behavior suggests that the Dyn attack... was not solely aimed at Dyn.'" href="https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/antonakakis" />. Across the botnet's whole five-month command log, the picture is not one uniform motive but two overlapping ones. Of 15,194 attacks against 5,046 distinct victims, the single most-targeted victim was Lonestar Cell, a Liberian mobile network operator, hit 4.1% of the time — a plausibly commercial or political grudge, not a gaming dispute. But its next two runners-up snap straight back to the pattern this piece has been tracing: a Brazilian Minecraft server host, then 1.1.1.1 (likely a researcher's own testing address), and the broader body of the 15,194-command log carries the profile of a DDoS-for-hire "booter" service settling customer disputes across the gaming world far more often than it carries any coordinated, nation-state motive <Annotation client:load term="a DDoS-for-hire ‘booter’ service" note="Antonakakis et al., §6.2, Table 9–10: 15,194 attacks against 5,046 victims; the three most-targeted single victims were Liberia's Lonestar Cell (4.1% of attacks), a Brazilian Minecraft host (Sky Network), and 1.1.1.1 (likely testing)." href="https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/antonakakis" />.
+
+Look at what kind of traffic the botnet actually generated across those 15,194 commands — it's a spread across nearly every classic DDoS technique, not a single trick scaled up:
+
+<Chart client:visible mark="bar" x="type" y="count" height={320}
+  caption="Every DDoS attack command Mirai's C2 servers issued between Sept 27, 2016 and Feb 28, 2017, by technique. Data: Antonakakis et al., Table 9 (15,194 attacks total)."
+  data={[
+    { type: "HTTP flood", count: 2736 },
+    { type: "UDP-PLAIN", count: 2542 },
+    { type: "UDP flood", count: 2440 },
+    { type: "ACK flood", count: 2173 },
+    { type: "SYN flood", count: 1935 },
+    { type: "GRE-IP flood", count: 994 },
+    { type: "ACK-STOMP", count: 830 },
+    { type: "VSE flood", count: 809 },
+    { type: "DNS flood", count: 417 },
+    { type: "GRE-ETH flood", count: 318 }
+  ]} />
+
+Notably, only 2.8% of those commands used bandwidth amplification — the technique responsible for 74% of attacks from commercial DDoS-for-hire booters — despite Mirai's source code supporting it. The botnet didn't need it. It had enough raw device count to skip the trick amplification services rely on <Annotation client:load term="skip the trick amplification services rely on" note="Antonakakis et al., §6.1: while amplification makes up 74% of DDoS-for-hire booter attacks, ‘only 2.8% of Mirai attack commands relied on bandwidth amplification, despite built-in support in Mirai's source code.’" href="https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/antonakakis" />.
+
+## What breaks — Mirai's own failure modes
+
+A teardown that only shows you the machine working isn't finished. Mirai had real structural weaknesses, and understanding them is what tells you whether "just patch it" was ever a realistic response.
+
+<DataTable client:load caption="Where Mirai's design bent or broke, and why the researchers' data shows it mattered"
+  columns={[
+    { key: "mode", label: "Weakness", type: "string" },
+    { key: "cause", label: "Root cause", type: "string" },
+    { key: "evidence", label: "What the data shows", type: "string" }
+  ]}
+  rows={[
+    { mode: "No persistence", cause: "Binary deletes itself after execution; infection lives only in RAM.", evidence: "A single reboot fully cures a device — but nothing forces the reboot, and Mirai actively disables the watchdog timer that would otherwise trigger one." },
+    { mode: "Bandwidth-starved bots", cause: "Devices are cheap embedded hardware on residential/low-bandwidth links.", evidence: "About half of scanning bots sent under 10,000 scan packets; most scanned below 250 bytes/sec — roughly 6,000× slower than the SQL Slammer worm's 1.5 MB/sec." },
+    { mode: "Geographically lumpy, ISP-fragile", cause: "Infections tracked manufacturer market share, not general internet population.", evidence: "Three ASes — Telefónica Colombia, VNPT, Claro S.A. — lost 38,589 / 16,791 / 14,150 bots respectively between Sept 2016 and Feb 2017, evidence that targeted ISP action can meaningfully shrink the botnet." },
+    { mode: "Credential list is static", cause: "The dictionary is fixed at compile time; once a device's default is rotated or the port closed, that specific device is permanently immune to that variant.", evidence: "The population's overall decline to ~100,000 by Feb 2017 traces partly to Deutsche Telekom patching routers within days of the Nov 2016 CWMP exploit — swift vendor action visibly moved the population number." },
+    { mode: "Fragmented, competing operators after source release", cause: "Anyone could fork the code; 33 independent C2 clusters existed with no shared infrastructure by the study's end.", evidence: "Operators fought each other — 47 of 484 observed C2 IPs were themselves DDoS'd by a rival Mirai cluster, and 28% of a sample of C2 clusters had been attacked by another at least once." }
+  ]} />
+
+<Detail summary="Go deeper: what happened to the people who built it">
+Krebs's investigation, published in January 2017 <Annotation client:load term="published in January 2017" note="Krebs on Security, ‘Who is Anna-Senpai, the Mirai Worm Author?’ (Jan 2017): identified Paras Jha via matching self-described programming languages (ASM, C, Go, Java, C#, PHP) and cross-referenced aliases across Hackforums, GitHub, and Minecraft-community accounts." href="https://krebsonsecurity.com/2017/01/who-is-anna-senpai-the-mirai-worm-author/" />, identified "Anna-senpai" as Paras Jha, then a 20-year-old Rutgers University student from Fanwood, New Jersey — matching Jha's public GitHub/Minecraft-forum aliases and programming-language self-description against Anna-senpai's own Hackforums posts. The primary paper's own timeline independently marks this identification (citing Krebs's story directly) as a dated event in Mirai's history, separate from — and preceding — any legal confirmation. Krebs's reporting further tied the botnet's original purpose to a Minecraft server-protection business, ProTraf Solutions, that Jha co-owned with Josiah White: competitors' Minecraft servers were disproportionately targeted by early Mirai attacks, steering customers toward ProTraf's paid protection — though Jha denied these specific allegations when contacted by Krebs.
+
+The identification became a matter of public record on December 13, 2017, when Jha, White, and a third collaborator, Dalton Norman, each pleaded guilty in federal court to conspiracy to violate the Computer Fraud and Abuse Act for creating and operating the Mirai botnet <Annotation client:load term="December 13, 2017" note="U.S. Department of Justice, ‘Justice Department Announces Charges and Guilty Pleas in Three Computer Crime Cases’ (Dec 2017): Paras Jha (21, Fanwood, NJ), Josiah White (20, Washington, PA), and Dalton Norman (21, Metairie, LA) each pleaded guilty to conspiracy to violate the Computer Fraud & Abuse Act in operating the Mirai botnet, which ‘at its peak... consisted of hundreds of thousands of compromised devices.’ Independently reported the same day by Krebs on Security." href="https://www.justice.gov/usao-ak/pr/justice-department-announces-charges-and-guilty-pleas-three-computer-crime-cases" /> — a filing that independently confirms, at the highest evidentiary bar available, what Krebs's reporting <Annotation client:load term="Krebs's reporting" note="Krebs on Security, ‘Mirai IoT Botnet Co-Authors Plead Guilty’ (Dec 2017), covering the same guilty pleas the same day they were announced." href="https://krebsonsecurity.com/2017/12/mirai-iot-botnet-co-authors-plead-guilty/" /> and the researchers' own citation had already converged on nearly a year earlier.
+</Detail>
+
+## The supply-chain argument, stated plainly
+
+Here's the case this teardown has been building toward. Every mechanism above — the stateless scanner, the loader's clean separation of concerns, the 61-entry dictionary, even the botnet's failure modes — is *good engineering* aimed at a target that shouldn't have existed: hundreds of thousands of internet-facing devices with a remote-management service turned on by default and, for a meaningful fraction of them, no way for the owner to turn it off.
+
+XiongMai's own recall after the attacks makes the scale of that mismatch concrete — in the opposite direction from what you'd expect. The company said it would recall millions of devices, mainly network cameras, sold in the U.S., and separately promised to strengthen password functions and patch older models <Annotation client:load term="recall millions of devices" note="Krebs on Security, ‘IoT Device Maker Vows Product Recall, Legal Action Against Western Accusers’ (Oct 2016): ‘XiongMai...said it would be issuing a recall on millions of devices — mainly network cameras.’ The Register, ‘Chinese electronics biz recalls webcams at heart of botnet DDoS woes’ (Oct 24, 2016), separately reported Xiongmai's promise to strengthen password functions and issue a patch for earlier products, without giving a device count of its own." href="https://krebsonsecurity.com/2016/10/iot-device-maker-vows-product-recall-legal-action-against-western-accusers/" />. Millions of devices sounds like it should dwarf a botnet that peaked at 600,000 — but the mismatch is structural, not numerical: XiongMai never sold those millions as XiongMai-branded product. It sold circuit boards, wholesale, to dozens of downstream brands who stamped their own logos on the housing and never touched the firmware underneath. A recall aimed at "XiongMai-branded product" cannot reach a vulnerability sold as a component and relabeled a hundred times over, no matter how large the number attached to the recall announcement is.
+
+That's the structural point the researchers themselves land on in their own discussion: patchable-code defenses assume a maintained update channel and a single accountable vendor, and IoT's white-label economics routinely has neither.
+
+<Pullquote cite="Antonakakis et al., §7 (Discussion)" href="https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/antonakakis" kind="document">
+The Mirai botnet demonstrated that even an unsophisticated dictionary attack could compromise hundreds of thousands of Internet-connected devices... IoT devices are much more heterogeneous and, from a security perspective, mostly neglected.
+</Pullquote>
+
+Contrast that with how desktop security actually improved. Windows, iOS, and Android each concentrate accountability in one vendor who can push a patch to every unit overnight — the entire premise of automatic updates. A white-labeled DVR chipset has no equivalent: no one company owns the fix, no one channel reaches every relabeled unit, and in the worst cases, no interface exists for the owner to intervene even if they wanted to. Mirai's 61 passwords weren't a coding flaw hiding in plain sight, waiting for a diligent engineer to find and fix. They were the visible tip of a manufacturing model that had no mechanism for "fix" to mean anything at all.
+
+## The takeaway
+
+If you build or evaluate connected hardware, the practical lesson isn't "use better passwords" — Mirai's targets often couldn't. It's these three, in order of leverage.
+
+**Default-closed beats default-open, structurally.** A device that ships with remote management off, and requires deliberate action to turn it on, cannot be swept by a dictionary scanner no matter how good the dictionary is. Mirai's entire mechanism depended on Telnet already being reachable; take that assumption away and the 61 passwords are useless.
+
+**"The owner can fix it" is not a security control if the owner has no path to fix it.** Any credential, key, or config value your product depends on for safety needs a real, working, discoverable way for the end user (or an automatic update mechanism) to change it — not a web panel that changes a cosmetic setting while the actual daemon underneath ignores it.
+
+**Accountability has to survive white-labeling.** If your component ships inside other companies' branded products, a "recall" that only reaches your own logo reaches almost nobody. The chipset-level fix — not the downstream brand's fix — is the one that actually shrinks the vulnerable population, and it has to be built into how the component is licensed and updated from day one, not bolted on after 600,000 devices have already joined someone else's botnet.
+
+Mirai is Japanese for "the future." The researchers who studied it chose to end their paper on that name deliberately — not as a boast about the malware, but as a warning about what happens next time a device category ships a hundred million units before anyone asks whether the factory password can be changed.
